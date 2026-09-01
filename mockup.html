@@ -1,0 +1,646 @@
+<title>Animal Dex</title>
+<style>
+/* ---- House palette (artifact-style) ---- */
+:root {
+  --bg: #fbfaf7; --fg: #22282e; --muted: #5d6670; --faint: #8b939b;
+  --rule: #dcdfd9; --card: #ffffff; --code-bg: #eef0ea;
+  --accent: #0e6e63; --accent-soft: #e3efec;
+  --ok: #2f6b4f;
+  --warn: #9a6a1c; --warn-soft: #f6ecd9;
+  --stop: #9c3a3a; --stop-soft: #f6e6e4;
+  /* mockup-only tokens */
+  --sil: #3a4148; --sil-bg: #e7e9e3;
+  --photo-a: #cfe3d2; --photo-b: #9fc4ad;
+  --sky-a: #d9e7ee; --sky-b: #b7cfdc;
+  --dusk-a: #e8ddc8; --dusk-b: #cdb996;
+  --photo-sil: #2e2a24;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171c21; --fg: #d9dee2; --muted: #97a1aa; --faint: #7c858e;
+    --rule: #323a41; --card: #1e242a; --code-bg: #232a30;
+    --accent: #4cbcab; --accent-soft: #1e2f2c;
+    --ok: #7fc6a0;
+    --warn: #d5a04a; --warn-soft: #2e2718;
+    --stop: #e08b84; --stop-soft: #33201e;
+    --sil: #11151a; --sil-bg: #2b333b;
+    --photo-a: #3c5546; --photo-b: #2c4236;
+    --sky-a: #34495a; --sky-b: #273a49;
+    --dusk-a: #55482f; --dusk-b: #423823;
+    --photo-sil: #0f141a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171c21; --fg: #d9dee2; --muted: #97a1aa; --faint: #7c858e;
+  --rule: #323a41; --card: #1e242a; --code-bg: #232a30;
+  --accent: #4cbcab; --accent-soft: #1e2f2c;
+  --ok: #7fc6a0;
+  --warn: #d5a04a; --warn-soft: #2e2718;
+  --stop: #e08b84; --stop-soft: #33201e;
+  --sil: #11151a; --sil-bg: #2b333b;
+  --photo-a: #3c5546; --photo-b: #2c4236;
+  --sky-a: #34495a; --sky-b: #273a49;
+  --dusk-a: #55482f; --dusk-b: #423823;
+  --photo-sil: #0f141a;
+}
+
+/* ---- Board chrome ---- */
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+main { max-width: 88rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+h1, h2 {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  line-height: 1.25; text-wrap: balance;
+}
+h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
+.eyebrow { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+           color: var(--accent); font-weight: 600; margin: 0 0 .5rem; }
+.byline { color: var(--muted); font-size: .9rem; margin-bottom: 1.5rem; }
+.lede { font-size: 1.05rem; max-width: 47rem; margin: 0 0 2.5rem; }
+
+.board { display: flex; flex-wrap: wrap; gap: 2.5rem 2rem;
+         justify-content: center; align-items: flex-start; }
+.shot { width: 352px; max-width: 100%; }
+.shot h2 { font-size: 1.15rem; margin: 0 0 .15rem; }
+.shot .cap { font-size: .82rem; color: var(--muted); line-height: 1.45;
+             margin: 0 0 .8rem; min-height: 2.4em; }
+
+/* ---- Phone frame ---- */
+.phone { width: 100%; height: 706px; border-radius: 26px;
+         border: 1px solid var(--rule); background: var(--card);
+         box-shadow: 0 10px 30px rgba(0,0,0,.10);
+         overflow: hidden; display: flex; flex-direction: column;
+         font-size: 13.5px; line-height: 1.4; }
+.status { flex: none; display: flex; justify-content: space-between;
+          padding: .5rem 1.1rem .25rem; font-size: .7rem; font-weight: 600;
+          color: var(--muted); font-variant-numeric: tabular-nums; }
+.screen { flex: 1; display: flex; flex-direction: column; overflow: hidden;
+          padding: 0 .8rem; }
+.appbar { flex: none; display: flex; align-items: baseline; gap: .5rem;
+          padding: .45rem .2rem .5rem; }
+.appbar .t { font-family: "Iowan Old Style", Palatino, Georgia, serif;
+             font-size: 1.25rem; font-weight: 700; }
+.appbar .region { font-size: .64rem; font-weight: 700; letter-spacing: .08em;
+                  text-transform: uppercase; color: var(--warn);
+                  background: var(--warn-soft); border-radius: 999px;
+                  padding: .1rem .5rem; }
+.appbar .prog { margin-left: auto; font-size: .78rem; font-weight: 700;
+                color: var(--accent); background: var(--accent-soft);
+                padding: .1rem .5rem; border-radius: 999px;
+                font-variant-numeric: tabular-nums; }
+.back { color: var(--muted); font-size: 1rem; text-decoration: none; }
+
+.searchbar { flex: none; background: var(--code-bg); border-radius: 10px;
+             padding: .4rem .7rem; color: var(--faint); font-size: .82rem;
+             margin-bottom: .5rem; }
+.searchbar b { color: var(--fg); font-weight: 600; }
+.chips { flex: none; display: flex; gap: .35rem; flex-wrap: nowrap;
+         overflow: hidden; margin-bottom: .55rem; }
+.chip { flex: none; font-size: .7rem; font-weight: 600; color: var(--muted);
+        border: 1px solid var(--rule); border-radius: 999px;
+        padding: .12rem .55rem; white-space: nowrap; }
+.chip.on { color: var(--accent); border-color: var(--accent);
+           background: var(--accent-soft); }
+
+/* Dex grid */
+.grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: .5rem; align-content: start; overflow: hidden; }
+.cell { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
+        background: var(--card); }
+.cell .art { height: 74px; display: flex; align-items: center;
+             justify-content: center; }
+.cell .art svg { width: 56px; height: 56px; }
+.cell.caught .art { background: linear-gradient(160deg, var(--photo-a), var(--photo-b)); }
+.cell.caught .art.sky { background: linear-gradient(160deg, var(--sky-a), var(--sky-b)); }
+.cell.caught .art.dusk { background: linear-gradient(160deg, var(--dusk-a), var(--dusk-b)); }
+.cell.caught .art svg { fill: var(--photo-sil); opacity: .9; }
+.cell.uncaught .art { background: var(--sil-bg); }
+.cell.uncaught .art svg { fill: var(--sil); }
+.cell .lbl { padding: .22rem .4rem .3rem; font-size: .64rem; line-height: 1.25; }
+.cell .num { color: var(--faint); font-weight: 600;
+             font-variant-numeric: tabular-nums; }
+.cell .nm { font-weight: 600; display: block; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+.cell.uncaught .nm { color: var(--muted); }
+
+/* Bottom nav */
+.nav { flex: none; display: flex; border-top: 1px solid var(--rule);
+       margin: .5rem -.8rem 0; padding: .45rem 0 .6rem; }
+.nav div { flex: 1; text-align: center; font-size: .66rem; font-weight: 600;
+           color: var(--faint); }
+.nav div.on { color: var(--accent); }
+.nav .ic { display: block; font-size: 1rem; line-height: 1.1; }
+.fab { position: relative; }
+.fab span { position: absolute; right: 14px; bottom: 64px;
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--accent); color: var(--card);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+
+/* Detail screen */
+.hero { flex: none; height: 158px; border-radius: 12px; overflow: hidden;
+        background: linear-gradient(165deg, var(--dusk-a), var(--dusk-b));
+        display: flex; align-items: center; justify-content: center;
+        position: relative; }
+.hero svg { width: 120px; height: 120px; fill: var(--photo-sil); opacity: .9; }
+.hero .credit { position: absolute; right: .5rem; bottom: .3rem;
+                font-size: .58rem; color: rgba(0,0,0,.55);
+                background: rgba(255,255,255,.55); border-radius: 4px;
+                padding: 0 .3rem; }
+.dhead { flex: none; display: flex; align-items: baseline; gap: .5rem;
+         margin: .5rem 0 .1rem; }
+.dhead .nm { font-family: "Iowan Old Style", Palatino, Georgia, serif;
+             font-size: 1.2rem; font-weight: 700; }
+.dhead .num { margin-left: auto; color: var(--faint); font-weight: 600;
+              font-size: .8rem; }
+.sci { font-style: italic; color: var(--muted); font-size: .8rem; }
+.ecoline { font-size: .68rem; font-weight: 600; color: var(--warn);
+           margin-top: .15rem; }
+.caughtchip { display: inline-block; margin: .3rem 0 .1rem; font-size: .68rem;
+              font-weight: 700; color: var(--ok); background: var(--accent-soft);
+              border-radius: 999px; padding: .08rem .5rem; }
+.sechd { font-size: .66rem; letter-spacing: .1em; text-transform: uppercase;
+         font-weight: 700; color: var(--faint); margin: .5rem 0 .15rem; }
+.htext { font-size: .8rem; color: var(--fg); margin: 0; }
+.player { display: flex; align-items: center; gap: .55rem;
+          background: var(--code-bg); border-radius: 10px;
+          padding: .45rem .6rem; margin-top: .15rem; }
+.player .btn { width: 30px; height: 30px; border-radius: 50%; flex: none;
+               background: var(--accent); color: var(--card);
+               display: flex; align-items: center; justify-content: center;
+               font-size: .8rem; }
+.wave { flex: 1; display: flex; align-items: center; gap: 2px; height: 22px; }
+.wave i { flex: 1; background: var(--accent); opacity: .55; border-radius: 1px; }
+.player .src { font-size: .6rem; color: var(--faint); text-align: right;
+               line-height: 1.25; }
+.strip { display: flex; gap: .4rem; margin-top: .15rem; }
+.strip .ph { flex: 1; height: 62px; border-radius: 8px; overflow: hidden;
+             background: linear-gradient(150deg, var(--photo-a), var(--photo-b));
+             display: flex; flex-direction: column; justify-content: flex-end; }
+.strip .ph.sky { background: linear-gradient(150deg, var(--sky-a), var(--sky-b)); }
+.strip .ph.dusk { background: linear-gradient(150deg, var(--dusk-a), var(--dusk-b)); }
+.strip .ph em { font-style: normal; font-size: .56rem; font-weight: 600;
+                color: #fff; background: rgba(0,0,0,.4);
+                padding: 0 .3rem .05rem; }
+.strip .ph.add { background: none; border: 1.5px dashed var(--rule);
+                 align-items: center; justify-content: center;
+                 color: var(--faint); font-size: 1.1rem; }
+.linkrow { display: flex; justify-content: space-between; align-items: center;
+           border: 1px solid var(--rule); border-radius: 10px;
+           padding: .45rem .65rem; margin-top: .5rem; font-size: .78rem;
+           font-weight: 600; color: var(--accent); }
+.attr { font-size: .58rem; color: var(--faint); margin-top: .45rem;
+        line-height: 1.4; }
+
+/* Register screen */
+.results { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
+           margin-top: .1rem; }
+.results .s { display: flex; align-items: center; gap: .55rem;
+              padding: .42rem .6rem; border-top: 1px solid var(--rule); }
+.results .s:first-child { border-top: 0; }
+.results .s.pick { background: var(--accent-soft); }
+.results .thumb { width: 30px; height: 30px; border-radius: 6px; flex: none;
+                  background: var(--sil-bg); display: flex; align-items: center;
+                  justify-content: center; }
+.results .thumb svg { width: 22px; height: 22px; fill: var(--sil); }
+.results .nm { font-weight: 600; font-size: .8rem; line-height: 1.2; }
+.results .sci2 { font-size: .66rem; color: var(--muted); font-style: italic; }
+.results .state { margin-left: auto; font-size: .64rem; font-weight: 700;
+                  color: var(--faint); }
+.results .s.pick .state { color: var(--accent); }
+.attach { display: flex; gap: .55rem; align-items: stretch; margin-top: .15rem; }
+.attach .pic { width: 116px; height: 96px; border-radius: 10px; flex: none;
+               background: linear-gradient(160deg, var(--dusk-a), var(--dusk-b));
+               display: flex; align-items: center; justify-content: center; }
+.attach .pic svg { width: 70px; height: 70px; fill: var(--photo-sil); opacity: .9; }
+.attach .pmeta { font-size: .68rem; color: var(--muted); line-height: 1.5;
+                 display: flex; flex-direction: column; justify-content: center; }
+.attach .pmeta b { color: var(--fg); }
+.attach .chg { align-self: flex-start; margin-top: .3rem; font-size: .66rem;
+               font-weight: 700; color: var(--accent);
+               border: 1px solid var(--accent); border-radius: 999px;
+               padding: .08rem .5rem; }
+.lens { font-size: .7rem; font-weight: 600; color: var(--accent);
+        margin-top: .45rem; }
+.meta { display: flex; gap: .4rem; margin-top: .45rem; font-size: .68rem;
+        color: var(--muted); flex-wrap: wrap; }
+.meta span { background: var(--code-bg); border-radius: 999px;
+             padding: .12rem .55rem; }
+.cta { flex: none; margin-top: auto; margin-bottom: .8rem;
+       background: var(--accent); color: var(--card); text-align: center;
+       font-weight: 700; font-size: .9rem; border-radius: 12px;
+       padding: .6rem; }
+.cta.ghost { background: none; color: var(--muted); border: 1px solid var(--rule);
+             margin-top: 0; margin-bottom: .5rem; font-weight: 600;
+             font-size: .78rem; padding: .45rem; }
+
+/* Unlock reveal */
+.reveal { flex: 1; display: flex; flex-direction: column; align-items: center;
+          justify-content: center; text-align: center;
+          background: radial-gradient(circle at 50% 38%,
+            var(--accent-soft) 0%, transparent 62%); }
+.reveal .halo { width: 172px; height: 172px; border-radius: 50%;
+                border: 3px solid var(--accent); padding: 6px;
+                margin-bottom: 1rem; }
+.reveal .halo .in { width: 100%; height: 100%; border-radius: 50%;
+                    overflow: hidden; display: flex; align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(160deg, var(--dusk-a), var(--dusk-b)); }
+.reveal svg { width: 108px; height: 108px; fill: var(--photo-sil); opacity: .9; }
+.reveal .new { font-size: .7rem; letter-spacing: .18em; text-transform: uppercase;
+               font-weight: 700; color: var(--accent); }
+.reveal .nm { font-family: "Iowan Old Style", Palatino, Georgia, serif;
+              font-size: 1.5rem; font-weight: 700; margin: .1rem 0 0; }
+.reveal .num { color: var(--faint); font-weight: 600; font-size: .85rem; }
+.reveal .where { font-size: .78rem; color: var(--muted); margin-top: .5rem; }
+.reveal .count { margin-top: .9rem; font-size: .95rem; font-weight: 700;
+                 color: var(--accent); background: var(--accent-soft);
+                 border-radius: 999px; padding: .2rem .9rem;
+                 font-variant-numeric: tabular-nums; }
+
+/* Stats */
+.big { flex: none; text-align: center; margin: .5rem 0 .3rem; }
+.big .n { font-family: "Iowan Old Style", Palatino, Georgia, serif;
+          font-size: 2.3rem; font-weight: 700; line-height: 1;
+          font-variant-numeric: tabular-nums; }
+.big .n small { font-size: 1.1rem; color: var(--faint); font-weight: 600; }
+.big .pct { font-size: .74rem; color: var(--muted); margin-top: .15rem; }
+.meter { height: 8px; border-radius: 999px; background: var(--code-bg);
+         overflow: hidden; margin: .45rem 0 .1rem; }
+.meter i { display: block; height: 100%; background: var(--accent);
+           border-radius: 999px; }
+.bars { margin-top: .15rem; }
+.brow { display: grid; grid-template-columns: 8.4em 1fr 3.2em;
+        align-items: center; gap: .5rem; font-size: .7rem;
+        margin-bottom: .3rem; }
+.brow .bl { color: var(--muted); font-weight: 600; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+.brow .bar { height: 7px; border-radius: 999px; background: var(--code-bg);
+             overflow: hidden; }
+.brow .bar i { display: block; height: 100%; background: var(--accent);
+               opacity: .85; }
+.brow.eco .bar i { background: var(--warn); }
+.brow .bv { text-align: right; color: var(--faint); font-weight: 600;
+            font-variant-numeric: tabular-nums; }
+.recent { display: flex; gap: .4rem; margin-top: .15rem; }
+.recent .ph { flex: 1; border: 1px solid var(--rule); border-radius: 8px;
+              overflow: hidden; }
+.recent .art { height: 44px; background: linear-gradient(150deg, var(--photo-a), var(--photo-b));
+               display: flex; align-items: center; justify-content: center; }
+.recent .art.sky { background: linear-gradient(150deg, var(--sky-a), var(--sky-b)); }
+.recent .art.dusk { background: linear-gradient(150deg, var(--dusk-a), var(--dusk-b)); }
+.recent .art svg { width: 32px; height: 32px; fill: var(--photo-sil); opacity: .9; }
+.recent .lbl { font-size: .56rem; padding: .1rem .3rem .2rem; line-height: 1.3; }
+.recent .lbl b { display: block; white-space: nowrap; overflow: hidden;
+                 text-overflow: ellipsis; }
+.recent .lbl span { color: var(--faint); }
+
+/* Add-species confirm */
+.conf { margin-left: auto; font-size: .62rem; font-weight: 700;
+        color: var(--ok); background: var(--accent-soft);
+        border-radius: 999px; padding: .06rem .45rem; }
+.altlink { font-size: .7rem; font-weight: 600; color: var(--accent);
+           margin: .3rem 0 0 .2rem; }
+.minihero { flex: none; height: 96px; border-radius: 10px; overflow: hidden;
+            background: linear-gradient(165deg, var(--sky-a), var(--sky-b));
+            display: flex; align-items: center; justify-content: center;
+            position: relative; margin-top: .15rem; }
+.minihero svg { width: 72px; height: 72px; fill: var(--photo-sil); opacity: .9; }
+.minihero .credit { position: absolute; right: .5rem; bottom: .3rem;
+                    font-size: .58rem; color: rgba(0,0,0,.55);
+                    background: rgba(255,255,255,.55); border-radius: 4px;
+                    padding: 0 .3rem; }
+.callrow { display: flex; align-items: center; gap: .5rem;
+           background: var(--code-bg); border-radius: 10px;
+           padding: .38rem .6rem; font-size: .72rem; color: var(--muted);
+           margin-top: .15rem; }
+.callrow b { color: var(--ok); }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.edit { font-size: .62rem; font-weight: 600; color: var(--faint); }
+
+@media (max-width: 400px) { .shot { width: 320px; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="a-owl" viewBox="0 0 100 100">
+      <path d="M31 29 L37 11 L46 24 L54 24 L63 11 L69 29 C76 41 78 58 70 73 C64 85 56 91 50 91 C44 91 36 85 30 73 C22 58 24 41 31 29 Z"/>
+    </symbol>
+    <symbol id="a-bird" viewBox="0 0 100 100">
+      <path d="M26 84 L48 84 L44 74 C32 70 24 60 26 48 C28 34 40 26 51 28 C56 18 68 15 76 23 L86 29 L76 34 C78 48 71 62 57 69 L60 84 Z"/>
+    </symbol>
+    <symbol id="a-bird2" viewBox="0 0 100 100">
+      <path d="M26 84 L48 84 L44 74 C32 70 24 60 26 48 C28 36 38 28 48 28 L44 14 L58 24 C64 22 72 24 76 30 L86 34 L76 38 C78 50 70 62 57 69 L60 84 Z"/>
+    </symbol>
+    <symbol id="a-hum" viewBox="0 0 100 100">
+      <path d="M10 40 L36 45 C38 35 48 28 58 31 C68 34 73 44 69 53 C66 61 57 65 48 62 L52 78 L44 75 L42 62 C37 60 34 56 33 51 Z M60 31 C64 20 74 13 83 17 C77 21 70 27 68 34 Z"/>
+    </symbol>
+    <symbol id="a-heron" viewBox="0 0 100 100">
+      <path d="M34 92 L38 72 C26 66 20 52 26 40 C31 30 42 25 51 28 L55 13 L66 11 L60 24 C63 32 58 39 52 41 L51 54 C51 66 45 76 40 80 L44 92 Z"/>
+    </symbol>
+    <symbol id="a-fox" viewBox="0 0 100 100">
+      <path d="M28 88 C20 86 15 77 18 68 C21 59 28 52 36 47 L31 26 L44 37 C48 35 56 35 60 37 L73 26 L68 47 C78 54 83 66 79 76 C76 84 68 89 58 90 C70 84 72 72 64 66 C70 76 62 86 50 86 Z"/>
+    </symbol>
+    <symbol id="a-squirrel" viewBox="0 0 100 100">
+      <path d="M62 88 C50 88 41 80 41 70 C41 61 48 54 56 52 C51 46 52 37 58 32 C65 27 74 30 77 37 C80 44 77 51 71 54 C78 57 82 64 82 71 L74 71 C74 64 68 59 61 60 C54 61 50 67 52 74 C54 80 60 82 66 80 Z M40 84 C26 82 16 68 20 52 C23 39 34 30 46 30 C36 34 29 44 29 55 C29 68 38 78 50 80 Z"/>
+    </symbol>
+    <symbol id="a-butterfly" viewBox="0 0 100 100">
+      <path d="M50 32 C41 13 18 10 14 26 C10 40 28 51 44 51 C28 51 12 61 16 75 C20 89 42 86 50 66 C58 86 80 89 84 75 C88 61 72 51 56 51 C72 51 90 40 86 26 C82 10 59 13 50 32 Z M48 28 L52 28 L52 74 L48 74 Z"/>
+    </symbol>
+    <symbol id="a-quad" viewBox="0 0 100 100">
+      <path d="M22 88 L26 68 C18 60 18 46 26 40 L24 24 L34 34 L42 30 L40 16 L52 30 C62 28 72 33 77 42 L86 39 L82 50 C86 60 82 71 74 77 L76 88 L68 88 L66 79 L44 79 L42 88 Z"/>
+    </symbol>
+    <symbol id="a-sealion" viewBox="0 0 100 100">
+      <path d="M14 74 C18 60 30 48 46 44 C42 36 46 26 56 24 C66 22 74 30 73 39 C82 44 88 54 88 64 L80 62 C78 56 74 50 68 48 C64 60 54 70 40 74 L46 82 L28 82 L33 74 C26 76 19 76 14 74 Z"/>
+    </symbol>
+    <symbol id="a-lizard" viewBox="0 0 100 100">
+      <path d="M12 34 C20 27 31 28 36 36 L54 41 C64 37 76 41 80 51 C84 61 78 70 68 72 L74 84 L64 80 L62 72 C54 72 48 68 46 61 L34 57 C26 59 18 55 15 47 L6 52 L10 41 Z"/>
+    </symbol>
+    <symbol id="a-frog" viewBox="0 0 100 100">
+      <path d="M31 40 C26 31 35 25 41 31 C47 27 54 27 59 31 C66 25 75 31 70 40 C78 48 80 60 72 68 L79 78 L64 74 C56 78 44 78 36 74 L22 78 L29 68 C21 60 23 48 31 40 Z"/>
+    </symbol>
+    <symbol id="a-slug" viewBox="0 0 100 100">
+      <path d="M18 70 C14 60 22 50 34 48 C40 38 52 32 64 34 L69 22 L73 35 L82 26 L81 40 C88 46 90 55 84 62 C76 71 60 76 44 76 L18 76 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main>
+  <p class="eyebrow">Product design · mockups · v3</p>
+  <h1>Animal Dex</h1>
+  <p class="byline">Design board · v3 · 2026-09-01 · companion to DESIGN.md</p>
+  <p class="lede">A personal Pokédex for real animals, Pacific region. The catalogue
+  ships with the app, grouped by ecosystem; a species unlocks when you register a
+  photo of it from your gallery — the photo is linked, never copied, and there is
+  deliberately no in-app identification. Species you photograph that aren't in
+  the catalogue become your own entries, auto-populated from public sources.
+  Six frames below — static mockups, not a working app. Animal art is
+  placeholder SVG standing in for photos.</p>
+
+  <div class="board">
+
+    <!-- ============ 1. Dex Grid ============ -->
+    <div class="shot">
+      <h2>Dex Grid</h2>
+      <p class="cap">Home, headed by the region. Caught species show your photo;
+      uncaught are silhouettes. Ecosystem chips filter; user-added species trail
+      the catalogue below the fold.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen fab">
+          <div class="appbar"><span class="t">Animal Dex</span>
+            <span class="region">Pacific</span>
+            <span class="prog">47 / 120</span></div>
+          <div class="searchbar">🔍&nbsp; Search species…</div>
+          <div class="chips">
+            <span class="chip on">All</span><span class="chip">Uncaught</span>
+            <span class="chip">Birds</span><span class="chip">Coastal Rainforest</span>
+            <span class="chip">Oak &amp; Chaparral</span><span class="chip">High Desert</span>
+          </div>
+          <div class="grid">
+            <div class="cell caught"><div class="art sky"><svg><use href="#a-heron"/></svg></div>
+              <div class="lbl"><span class="num">#003</span><span class="nm">Great Blue Heron</span></div></div>
+            <div class="cell caught"><div class="art"><svg><use href="#a-hum"/></svg></div>
+              <div class="lbl"><span class="num">#008</span><span class="nm">Anna's Hummingbird</span></div></div>
+            <div class="cell caught"><div class="art sky"><svg><use href="#a-bird2"/></svg></div>
+              <div class="lbl"><span class="num">#014</span><span class="nm">Steller's Jay</span></div></div>
+            <div class="cell caught"><div class="art dusk"><svg><use href="#a-owl"/></svg></div>
+              <div class="lbl"><span class="num">#021</span><span class="nm">W. Screech-Owl</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-quad"/></svg></div>
+              <div class="lbl"><span class="num">#041</span><span class="nm">Black-tailed Deer</span></div></div>
+            <div class="cell caught"><div class="art"><svg><use href="#a-squirrel"/></svg></div>
+              <div class="lbl"><span class="num">#046</span><span class="nm">Douglas Squirrel</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-fox"/></svg></div>
+              <div class="lbl"><span class="num">#049</span><span class="nm">Coyote</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-sealion"/></svg></div>
+              <div class="lbl"><span class="num">#052</span><span class="nm">CA Sea Lion</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-lizard"/></svg></div>
+              <div class="lbl"><span class="num">#066</span><span class="nm">W. Fence Lizard</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-frog"/></svg></div>
+              <div class="lbl"><span class="num">#077</span><span class="nm">Pacific Tree Frog</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#a-slug"/></svg></div>
+              <div class="lbl"><span class="num">#088</span><span class="nm">Banana Slug</span></div></div>
+            <div class="cell caught"><div class="art"><svg><use href="#a-butterfly"/></svg></div>
+              <div class="lbl"><span class="num">#101</span><span class="nm">Monarch Butterfly</span></div></div>
+          </div>
+          <span title="Register">＋</span>
+          <div class="nav">
+            <div class="on"><span class="ic">▦</span>Dex</div>
+            <div><span class="ic">◎</span>Map</div>
+            <div><span class="ic">▲</span>Stats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 2. Entry Detail ============ -->
+    <div class="shot">
+      <h2>Entry Detail — caught</h2>
+      <p class="cap">Reference image, ecosystems, habitat, streamed call with
+      attribution, your gallery-linked photo strip, and the outbound link.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen">
+          <div class="appbar"><span class="back">← Dex</span></div>
+          <div class="hero"><svg><use href="#a-owl"/></svg>
+            <span class="credit">Reference photo · Wikimedia · CC BY-SA</span></div>
+          <div class="dhead"><span class="nm">Western Screech-Owl</span>
+            <span class="num">#021</span></div>
+          <div class="sci">Megascops kennicottii</div>
+          <div class="ecoline">Oak &amp; Chaparral · Riparian &amp; Wetland · Urban</div>
+          <span class="caughtchip">✓ Caught · Aug 30, 2026</span>
+          <div class="sechd">Habitat</div>
+          <p class="htext">Low-elevation woodlands, streamside groves and suburban
+          parks; roosts by day in tree cavities. Listen for a soft bouncing-ball
+          trill at dusk.</p>
+          <div class="sechd">Call</div>
+          <div class="player">
+            <span class="btn">▶</span>
+            <span class="wave"><i style="height:30%"></i><i style="height:65%"></i><i style="height:95%"></i><i style="height:70%"></i><i style="height:40%"></i><i style="height:85%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:25%"></i><i style="height:75%"></i><i style="height:45%"></i><i style="height:20%"></i></span>
+            <span class="src">0:12 · streamed<br>Xeno-canto · CC BY-NC</span>
+          </div>
+          <div class="sechd">My photos (2) · linked from gallery</div>
+          <div class="strip">
+            <div class="ph dusk"><em>Aug 30 2026</em></div>
+            <div class="ph"><em>Sep 1 2026</em></div>
+            <div class="ph add">＋</div>
+          </div>
+          <div class="linkrow"><span>Learn more · All About Birds</span><span>↗</span></div>
+          <p class="attr">Your photos stay in your gallery and are linked by
+          reference — the app keeps only a small thumbnail. Reference image and
+          audio stream from their sources and are cached after first view.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 3. Register a Species ============ -->
+    <div class="shot">
+      <h2>Register a Species</h2>
+      <p class="cap">Species-first, no identification: search the catalogue by
+      name (offline), attach a gallery photo, register. Names not found become
+      user-added species.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>Offline ▂ 62%</span></div>
+        <div class="screen">
+          <div class="appbar"><span class="back">←</span>
+            <span class="t" style="font-size:1.05rem">Register a Species</span></div>
+          <div class="searchbar">🔍&nbsp; <b>western</b>▏</div>
+          <div class="results">
+            <div class="s pick">
+              <span class="thumb"><svg><use href="#a-owl"/></svg></span>
+              <span><span class="nm">Western Screech-Owl</span><br>
+                <span class="sci2">Megascops kennicottii</span></span>
+              <span class="state">✓ selected</span>
+            </div>
+            <div class="s">
+              <span class="thumb"><svg><use href="#a-lizard"/></svg></span>
+              <span><span class="nm">Western Fence Lizard</span><br>
+                <span class="sci2">Sceloporus occidentalis</span></span>
+              <span class="state">uncaught</span>
+            </div>
+            <div class="s">
+              <span class="thumb"><svg><use href="#a-bird"/></svg></span>
+              <span><span class="nm">Western Tanager</span><br>
+                <span class="sci2">Piranga ludoviciana</span></span>
+              <span class="state">uncaught</span>
+            </div>
+          </div>
+          <div class="sechd">Photo · from your gallery</div>
+          <div class="attach">
+            <div class="pic"><svg><use href="#a-owl"/></svg></div>
+            <div class="pmeta"><b>IMG_20260830_1942.jpg</b>
+              <span>Google Photos · Aug 30, 2026</span>
+              <span class="chg">Change photo</span></div>
+          </div>
+          <div class="lens">Not sure what it is? Open photo in Google Lens ↗</div>
+          <div class="meta"><span>📍 Shevlin Park, Bend</span><span>🕘 Aug 30, 2026 · 19:42</span></div>
+          <div class="cta">Register — Western Screech-Owl</div>
+          <div class="cta ghost">Not in the list? Add your own species ＋</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 4. Unlock reveal ============ -->
+    <div class="shot">
+      <h2>Unlock Reveal</h2>
+      <p class="cap">The first-catch moment: silhouette resolves into your photo,
+      the counter ticks up. Quick, tactile, skippable — repeats get only a toast.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen">
+          <div class="reveal">
+            <div class="halo"><div class="in"><svg><use href="#a-owl"/></svg></div></div>
+            <span class="new">New species</span>
+            <div class="nm">Western Screech-Owl</div>
+            <span class="num">#021 · Megascops kennicottii</span>
+            <span class="where">Aug 30, 2026 · Shevlin Park, Bend</span>
+            <span class="count">47 / 120 caught</span>
+          </div>
+          <div class="cta" style="margin-bottom:1rem">View entry</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 5. Stats ============ -->
+    <div class="shot">
+      <h2>Collection Stats</h2>
+      <p class="cap">Progress overall, by ecosystem (a species can count in
+      several), and by class — the map of what is left to find.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen">
+          <div class="appbar"><span class="t">Stats</span>
+            <span class="region">Pacific</span></div>
+          <div class="big">
+            <div class="n">47<small> / 120</small></div>
+            <div class="pct">39% caught · +3 of your own · last new catch Aug 30, 2026</div>
+            <div class="meter"><i style="width:39%"></i></div>
+          </div>
+          <div class="sechd">By ecosystem</div>
+          <div class="bars">
+            <div class="brow eco"><span class="bl">Coastal Rainforest</span><span class="bar"><i style="width:50%"></i></span><span class="bv">12/24</span></div>
+            <div class="brow eco"><span class="bl">Oak &amp; Chaparral</span><span class="bar"><i style="width:50%"></i></span><span class="bv">13/26</span></div>
+            <div class="brow eco"><span class="bl">Riparian &amp; Wetland</span><span class="bar"><i style="width:50%"></i></span><span class="bv">11/22</span></div>
+            <div class="brow eco"><span class="bl">Urban &amp; Suburban</span><span class="bar"><i style="width:61%"></i></span><span class="bv">11/18</span></div>
+            <div class="brow eco"><span class="bl">Shoreline &amp; Kelp</span><span class="bar"><i style="width:21%"></i></span><span class="bv">3/14</span></div>
+            <div class="brow eco"><span class="bl">High Desert</span><span class="bar"><i style="width:11%"></i></span><span class="bv">2/19</span></div>
+            <div class="brow eco"><span class="bl">Sierra Alpine</span><span class="bar"><i style="width:0%"></i></span><span class="bv">0/11</span></div>
+          </div>
+          <div class="sechd">By class</div>
+          <div class="bars">
+            <div class="brow"><span class="bl">Birds</span><span class="bar"><i style="width:54%"></i></span><span class="bv">28/52</span></div>
+            <div class="brow"><span class="bl">Mammals</span><span class="bar"><i style="width:40%"></i></span><span class="bv">8/20</span></div>
+            <div class="brow"><span class="bl">Invertebrates</span><span class="bar"><i style="width:27%"></i></span><span class="bv">6/22</span></div>
+            <div class="brow"><span class="bl">Reptiles</span><span class="bar"><i style="width:22%"></i></span><span class="bv">2/9</span></div>
+            <div class="brow"><span class="bl">Amphibians</span><span class="bar"><i style="width:14%"></i></span><span class="bv">1/7</span></div>
+            <div class="brow"><span class="bl">Fish</span><span class="bar"><i style="width:20%"></i></span><span class="bv">2/10</span></div>
+          </div>
+          <div class="sechd">Recently caught</div>
+          <div class="recent">
+            <div class="ph"><div class="art dusk"><svg><use href="#a-owl"/></svg></div>
+              <div class="lbl"><b>Screech-Owl</b><span>Aug 30</span></div></div>
+            <div class="ph"><div class="art"><svg><use href="#a-butterfly"/></svg></div>
+              <div class="lbl"><b>Monarch</b><span>Aug 23</span></div></div>
+            <div class="ph"><div class="art sky"><svg><use href="#a-heron"/></svg></div>
+              <div class="lbl"><b>G. B. Heron</b><span>Aug 09</span></div></div>
+            <div class="ph"><div class="art"><svg><use href="#a-squirrel"/></svg></div>
+              <div class="lbl"><b>D. Squirrel</b><span>Jul 28</span></div></div>
+          </div>
+          <div class="nav" style="margin-top:auto">
+            <div><span class="ic">▦</span>Dex</div>
+            <div><span class="ic">◎</span>Map</div>
+            <div class="on"><span class="ic">▲</span>Stats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 6. Add Your Own Species — confirm ============ -->
+    <div class="shot">
+      <h2>Add Your Own Species — confirm</h2>
+      <p class="cap">A name not in the catalogue: GBIF resolves it, Wikipedia
+      supplies text and image, Xeno-canto the call. Ecosystems stay a manual
+      pick; nothing is saved until you accept.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen">
+          <div class="appbar"><span class="back">←</span>
+            <span class="t" style="font-size:1.05rem">Add Your Own Species</span></div>
+          <div class="sechd">Best match · GBIF</div>
+          <div class="results">
+            <div class="s pick">
+              <span class="thumb"><svg><use href="#a-bird"/></svg></span>
+              <span><span class="nm">Varied Thrush</span><br>
+                <span class="sci2">Ixoreus naevius · bird</span></span>
+              <span class="conf">exact match</span>
+            </div>
+          </div>
+          <div class="altlink">Not this one? 2 other matches ›</div>
+          <div class="sechd">Image · Wikipedia <span class="edit">✎ change</span></div>
+          <div class="minihero"><svg><use href="#a-bird"/></svg>
+            <span class="credit">Wikimedia Commons · CC BY-SA</span></div>
+          <div class="sechd">Habitat · Wikipedia <span class="edit">✎ edit</span></div>
+          <p class="htext">Breeds in dense, moist coniferous forest along the
+          Pacific coast; in winter moves into lowland woods, parks and
+          gardens.</p>
+          <div class="sechd">Call</div>
+          <div class="callrow"><b>✓ Call found</b> · Xeno-canto · CC BY-NC</div>
+          <div class="sechd">Ecosystems · your pick</div>
+          <div class="chips wrap">
+            <span class="chip on">Coastal Rainforest ✓</span>
+            <span class="chip on">Urban &amp; Suburban ✓</span>
+            <span class="chip">Oak &amp; Chaparral</span>
+            <span class="chip">Riparian &amp; Wetland</span>
+          </div>
+          <div class="cta">Add to my dex — U04 Varied Thrush</div>
+          <div class="cta ghost">Edit all details by hand</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
