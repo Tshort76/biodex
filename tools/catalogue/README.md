@@ -209,14 +209,20 @@ Wikipedia and Commons steps, with Xeno-canto replaced by Dr. Duke's.
 - **`medicinal` is not an input field.** It is derived from Duke's, below. A
   curator who disagrees with the derivation pins it with
   `"overrides": { "medicinal": true }`, and the asset's `provenance.uses`
-  records the pin.
+  records the pin as `override`. Yerba Santa is the live case: a well-known
+  regional medicinal with one Duke's activity, which the pin fixes for that one
+  species rather than moving the threshold for all eighty.
 - `dukeName` optionally pins the Duke's join for a species Duke's files under an
   older name.
 - `usesNote` is at most 240 characters. It is **required** when `edible` is true
   (name the part and the season) and whenever Duke's records the species as a
-  poison (then it must contain a sentence beginning `Caution:`). It is
-  **forbidden** when the species ends up with no use tag at all, because the app
-  has nowhere to render it.
+  poison (then it must contain a sentence beginning `Caution:`). A species with
+  **no use tag** may carry a note, but only a `Caution:` sentence and nothing
+  else: the app reduces an untagged plant's note to its caution (`keptUsesNote`
+  in `domain/UserSpecies.kt`, applied by the curated importer too), because the
+  rest of a note describes a use the entry no longer claims while a warning
+  outlives the tags it arrived with. Writing prose there is a build failure
+  rather than a silent truncation.
 - `wikipediaTitle` and `overrides` work exactly as they do for animals.
 
 **Edible is curated; medicinal is sourced.** Duke's holds essentially no food
@@ -316,10 +322,10 @@ Before writing, and exiting non-zero on any failure:
 - every animal carries `uses: []` and empty Duke's fields;
 - `silhouetteRes` consistent with the class and the kingdom;
 - `duke_ethnobot.json` parses and contains every name a plant joined on;
-- **and the poison rule: a plant Duke's records as poisonous, which carries a
-  use tag, must have a sentence beginning `Caution:` in its note.** This is what
-  makes the cautioned set a decision of the source rather than of whoever wrote
-  the notes.
+- **and the poison rule: every plant Duke's records as poisonous must have a
+  sentence beginning `Caution:` in its note** — tagged or untagged, no
+  exemption. This is what makes the cautioned set a decision of the source
+  rather than of whoever wrote the notes.
 
 To see the poison rule bite, delete the `Caution:` sentence from a species the
 report lists under "DUKE'S — POISON RECORDED" and run against the copy:
@@ -330,13 +336,16 @@ python3 build_catalogue.py --plants /tmp/broken.json --out /tmp/x.json
 # VALIDATION FAILED: … its usesNote has no 'Caution:' sentence   (exit 1)
 ```
 
-**One gap worth knowing.** A species Duke's flags as a poison but which ends up
-with *no* use tag — no edible tag from the curator, fewer than three Duke's
-activities — cannot carry a caution: the app forbids a `usesNote` without a use
-tag, and a plant with no uses renders nothing in that slot. The build does not
-fail on those; it lists them under "DUKE'S POISON BUT NO USE TAG" so the curator
-sees them. Pinning `overrides.medicinal` to force a tag would be dishonest about
-the source, so it is not the answer.
+A poison-flagged species with no use tag ships as a caution and nothing else —
+Monterey Cypress is the one in this list — and the report shows them under
+"DUKE'S POISON, CAUTION ONLY". Western Wild Ginger is the same shape without a
+Duke's poison record: aristolochic acid is a nephrotoxin and a carcinogen, and
+that warning is worth an entry of its own even though the plant claims no use.
+
+The caution rule and the app's rendering are the same rule on purpose.
+`caution_split()` here is a character-for-character mirror of `UsesNote.cautionSplit`
+in `domain/Models.kt`, so a note cannot pass the build and then render with its
+warning buried in the body.
 
 ## Safety, and what is actually hand-written
 
@@ -346,10 +355,15 @@ are kept to a part and a season, they never say a plant is safe, and every
 species with a toxic part or a dangerous lookalike carries a `Caution:` sentence
 whether or not Duke's flags it — the elderberry's raw fruit, the death-camas
 lookalike beside camas and nodding onion, water hemlock in the same stream as
-watercress, iris beside cattail. See DESIGN.md D14/M30 and ARCHITECTURE.md R11.
+watercress, iris beside cattail, yew beside the spruce tips. See DESIGN.md
+D14/M30 and ARCHITECTURE.md R11.
 
 If you are not confident about a species' edibility or its lookalikes, **drop
-the tag or swap the species**. A missing tag costs nothing.
+the tag or swap the species**. A missing tag costs nothing. Bracken is the
+worked example: fiddleheads are genuinely eaten in several cuisines, but
+ptaquiloside is an established carcinogen, so the species stays in the dex with
+a caution and no edible tag. A tag whose own note tells the reader not to eat
+the plant should not exist.
 
 ## Changing the catalogue later
 

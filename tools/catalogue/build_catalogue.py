@@ -878,16 +878,51 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
 
 
 
-CAUTION_RE = re.compile(r"(?:^|(?<=[.!?])\s)Caution:", re.I)
+# A character-for-character mirror of the app's `UsesNote.CAUTION` regex
+# (domain/Models.kt): anchored at a sentence start — the beginning of the
+# string, or just after `.`, `!`, `?` or a newline — so "use caution: it stains"
+# mid-sentence is left alone.
+CAUTION_RE = re.compile(r"(^|[.!?\n]\s*)caution:", re.I)
+
+
+def caution_split(note):
+    """`(body, caution)` — the app's `UsesNote.cautionSplit` (11.2), in Python.
+
+    The build enforces the caution rule and the screen renders the emphasis, so
+    the two must be the same rule or a note can pass validation and then render
+    with its warning buried in the body.
+    """
+    text = (note or "").strip()
+    if not text:
+        return "", None
+    match = CAUTION_RE.search(text)
+    if not match:
+        return text, None
+    start = match.start() + len(match.group(1))
+    return text[:start].strip(), (text[start:].strip() or None)
 
 
 def has_caution(note) -> bool:
-    """True when the note carries a sentence beginning `Caution:`.
+    """True when the note carries a sentence beginning `Caution:`."""
+    return caution_split(note)[1] is not None
 
-    Matched at a sentence start so the same rule the app's `UsesNote.cautionSplit`
-    uses to render the emphasis is the rule the build enforces (11.2).
+
+def kept_uses_note(note, uses):
+    """The app's `keptUsesNote` (domain/UserSpecies.kt), in Python.
+
+    A tagged plant keeps its note whole. An untagged one keeps the `Caution:`
+    sentence and nothing else — the rest of a note describes a use no longer
+    claimed, but a warning outlives the tags it arrived with. Slice 12 made this
+    the rule on the user-added write path, on backup restore and in the curated
+    importer (`CatalogueReconciler`), which is what lets the pipeline write a
+    caution-only note at all.
     """
-    return bool(note) and bool(CAUTION_RE.search(note))
+    text = (note or "").strip()
+    if not text:
+        return None
+    if uses:
+        return text
+    return caution_split(text)[1]
 
 
 def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
@@ -990,7 +1025,7 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
         "callAttribution": None,
         "silhouetteRes": silhouette,
         "uses": uses,
-        "usesNote": uses_note if uses else None,
+        "usesNote": kept_uses_note(uses_note, uses),
         # These three come straight from the Duke's hit, tag or no tag: they are
         # what the source recorded, and the `medicinal` tag is a rule applied on
         # top of them rather than a filter over them.
@@ -1074,8 +1109,8 @@ def validate(catalogue, ecosystem_ids, internals):
                 problems.append(f"{sid}: undeclared ecosystem {eco}")
         if set(s["uses"]) - {"edible", "medicinal"}:
             problems.append(f"{sid}: uses outside {{edible, medicinal}}: {s['uses']}")
-        if not s["uses"] and s["usesNote"]:
-            problems.append(f"{sid}: usesNote present but no use tag")
+        if not s["uses"] and s["usesNote"] and not has_caution(s["usesNote"]):
+            problems.append(f"{sid}: usesNote with no use tag and no Caution: sentence")
         if not s["medicinalActivities"] and s["usesAttribution"]:
             problems.append(f"{sid}: usesAttribution set with no Duke's activities")
 
@@ -1110,12 +1145,23 @@ def validate(catalogue, ecosystem_ids, internals):
                         f"{sid}: medicinal={medicinal} disagrees with "
                         f"{len(s['medicinalActivities'])} Duke's activities"
                     )
-            # The poison rule (11.3). A Duke's `Poison` record makes a `Caution:`
-            # sentence mandatory, so the cautioned set is decided by the source.
-            if internal.get("poison") and s["uses"] and not has_caution(s["usesNote"]):
+            # The poison rule (11.3), unconditional: a Duke's `Poison` record makes
+            # a `Caution:` sentence mandatory whether or not the species carries a
+            # use tag, so the cautioned set is decided by the source rather than by
+            # whoever wrote the notes. An untagged species keeps the caution alone.
+            if internal.get("poison") and not has_caution(s["usesNote"]):
                 problems.append(
-                    f"{sid}: Duke's records a Poison for this species and it carries a "
-                    f"use tag, but its usesNote has no 'Caution:' sentence"
+                    f"{sid}: Duke's records a Poison for this species but its "
+                    f"usesNote has no 'Caution:' sentence"
+                )
+            # A curator note on an untagged species is reduced to its caution, so
+            # anything else written there would be silently discarded.
+            curated = internal.get("curatedNote")
+            if not s["uses"] and curated and caution_split(curated)[0]:
+                problems.append(
+                    f"{sid}: usesNote on a species with no use tag must be a "
+                    f"'Caution:' sentence only — the rest describes a use it does "
+                    f"not claim and is dropped on import"
                 )
         else:
             problems.append(f"{sid}: unknown kingdom {s['kingdom']}")
@@ -1238,7 +1284,7 @@ def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_by
     block("DUKE'S — NO RECORD (an ordinary outcome, not a failure)", report["duke_no_record"])
     block("DUKE'S — POISON RECORDED (each must carry a Caution: sentence)", report["duke_poison"])
     block(
-        "DUKE'S POISON BUT NO USE TAG — the caution has nowhere to render",
+        "DUKE'S POISON, CAUTION ONLY — no use tag, so the note is the warning alone",
         [
             f"{s['commonName']} ({s['scientificName']})"
             for s in plants
@@ -1339,8 +1385,8 @@ def main():
             "distinct": record.pop("_dukeDistinct", 0),
             "recordCount": record.pop("_dukeRecordCount", 0),
             "dukeMatchedName": record.pop("_dukeMatchedName", None),
+            "curatedNote": record.pop("_curatedNote", None),
         }
-        record.pop("_curatedNote", None)
 
     catalogue = {
         "catalogueVersion": region.get("catalogueVersion", 1),

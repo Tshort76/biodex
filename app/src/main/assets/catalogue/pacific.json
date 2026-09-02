@@ -5320,7 +5320,7 @@
       "callAttribution": null,
       "silhouetteRes": "sil_tree_conifer",
       "uses": [],
-      "usesNote": null,
+      "usesNote": "Caution: recorded as poisonous. The foliage and cones are not a food, and the sawdust and foliage oil irritate skin and airways.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5894,7 +5894,7 @@
       "id": "pacific-willow",
       "dexNumber": 34,
       "commonName": "Pacific Willow",
-      "scientificName": "Salix lucida subsp. lasiandra",
+      "scientificName": "Salix lucida",
       "taxClass": "tree",
       "kingdom": "plant",
       "ecosystemIds": [
@@ -5915,7 +5915,7 @@
       "usesAttribution": null,
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
-        "scientificName": "override",
+        "scientificName": "gbif",
         "taxClass": "curated",
         "silhouetteRes": "gbif:class:Magnoliopsida/order:Malpighiales",
         "duke": "duke:none",
@@ -6892,7 +6892,9 @@
       "imageAttribution": "Wikimedia Commons · Public domain · Breck Breckenridge",
       "callAttribution": null,
       "silhouetteRes": "sil_shrub",
-      "uses": [],
+      "uses": [
+        "medicinal"
+      ],
       "usesNote": null,
       "medicinalActivities": [
         "Poultice"
@@ -6907,7 +6909,7 @@
         "duke": "duke:accepted",
         "uses": {
           "edible": "curated",
-          "medicinal": "duke:accepted"
+          "medicinal": "override"
         },
         "wikipediaTitle": "wikipedia:scientific:Eriodictyon californicum",
         "description": "wikipedia:summary",
@@ -7347,7 +7349,7 @@
       "callAttribution": null,
       "silhouetteRes": "sil_herb",
       "uses": [],
-      "usesNote": null,
+      "usesNote": "Caution: wild gingers contain aristolochic acid, which damages the kidneys and causes cancer. Despite a long history as a flavouring and a remedy, this plant is not eaten. It is not culinary ginger.",
       "medicinalActivities": [
         "Tonic"
       ],
@@ -8141,10 +8143,9 @@
       "callAttribution": null,
       "silhouetteRes": "sil_fern",
       "uses": [
-        "edible",
         "medicinal"
       ],
-      "usesNote": "Fiddleheads, spring — eaten cooked in several cuisines. Caution: bracken contains ptaquiloside, a carcinogen that cooking only reduces, and this catalogue does not recommend eating it.",
+      "usesNote": "Caution: bracken fiddleheads are eaten in several cuisines, but the plant contains ptaquiloside, an established carcinogen that cooking only reduces. This catalogue does not tag it edible.",
       "medicinalActivities": [
         "Vermifuge",
         "Diarrhea",

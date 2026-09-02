@@ -116,7 +116,8 @@
 
     { "dexNumber": 21, "commonName": "Monterey Cypress", "scientificName": "Hesperocyparis macrocarpa",
       "plantClass": "tree",
-      "ecosystemIds": ["rocky-shore-kelp", "urban-suburban"] },
+      "ecosystemIds": ["rocky-shore-kelp", "urban-suburban"],
+      "usesNote": "Caution: recorded as poisonous. The foliage and cones are not a food, and the sawdust and foliage oil irritate skin and airways." },
 
     { "dexNumber": 22, "commonName": "Coast Live Oak", "scientificName": "Quercus agrifolia",
       "plantClass": "tree",
@@ -180,9 +181,8 @@
       "plantClass": "tree",
       "ecosystemIds": ["riparian-wetland"],
       "overrides": {
-        "scientificName": "Salix lucida subsp. lasiandra",
         "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations." },
-      "_comment": "GBIF lumps this into Salix lucida, whose article covers the whole complex including the Pacific willow; the habitat text is written rather than fetched for that reason." },
+      "_comment": "GBIF lumps this into Salix lucida, and the Wikipedia article covers that whole complex — 'shining willow, Pacific willow, red willow'. The entry therefore ships GBIF's accepted species name rather than the subspecies trinomial, so the name and the source article agree. No article for subsp. lasiandra exists to pin. The habitat text is written rather than fetched because the article's is about the complex." },
 
     { "dexNumber": 35, "commonName": "California Bay Laurel", "scientificName": "Umbellularia californica",
       "plantClass": "tree",
@@ -305,7 +305,8 @@
 
     { "dexNumber": 55, "commonName": "Yerba Santa", "scientificName": "Eriodictyon californicum",
       "plantClass": "shrub",
-      "ecosystemIds": ["oak-chaparral"] },
+      "ecosystemIds": ["oak-chaparral"],
+      "overrides": { "medicinal": true } },
 
     { "dexNumber": 56, "commonName": "Chokecherry", "scientificName": "Prunus virginiana",
       "plantClass": "shrub",
@@ -356,7 +357,8 @@
 
     { "dexNumber": 64, "commonName": "Western Wild Ginger", "scientificName": "Asarum caudatum",
       "plantClass": "herb",
-      "ecosystemIds": ["coastal-rainforest"] },
+      "ecosystemIds": ["coastal-rainforest"],
+      "usesNote": "Caution: wild gingers contain aristolochic acid, which damages the kidneys and causes cancer. Despite a long history as a flavouring and a remedy, this plant is not eaten. It is not culinary ginger." },
 
     { "dexNumber": 65, "commonName": "Self-heal", "scientificName": "Prunella vulgaris",
       "plantClass": "herb",
@@ -445,7 +447,6 @@
     { "dexNumber": 80, "commonName": "Bracken", "scientificName": "Pteridium aquilinum",
       "plantClass": "fern",
       "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
-      "edible": true,
-      "usesNote": "Fiddleheads, spring — eaten cooked in several cuisines. Caution: bracken contains ptaquiloside, a carcinogen that cooking only reduces, and this catalogue does not recommend eating it." }
+      "usesNote": "Caution: bracken fiddleheads are eaten in several cuisines, but the plant contains ptaquiloside, an established carcinogen that cooking only reduces. This catalogue does not tag it edible." }
   ]
 }
