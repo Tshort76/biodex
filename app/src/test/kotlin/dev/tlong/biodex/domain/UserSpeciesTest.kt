@@ -292,10 +292,71 @@ class UserSpeciesTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `a note with no use tag behind it is dropped`() {
+    fun `a note with no use tag and no caution is dropped`() {
         val out = elder.copy(uses = emptySet(), usesNote = "Berries in late summer.").normalized()
 
-        assertNull("a note has nowhere to render without a tag", out.usesNote)
+        assertNull("a description has nowhere to render without a tag", out.usesNote)
+    }
+
+    @Test
+    fun `a caution survives with no use tags at all`() {
+        // The exception the whole plant safety story rests on: a recorded toxicity is a fact
+        // about the species, not a qualifier on a use the user happened to claim. The person
+        // it protects tagged nothing and comes back months later.
+        val out = elder.copy(
+            uses = emptySet(),
+            usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+        ).normalized()
+
+        assertEquals(
+            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+            out.usesNote,
+        )
+    }
+
+    @Test
+    fun `an untagged note is reduced to its caution and nothing else`() {
+        val out = elder.copy(
+            uses = emptySet(),
+            usesNote = "Berries in late summer — cook them. Caution: raw berries are toxic.",
+        ).normalized()
+
+        assertEquals("Caution: raw berries are toxic.", out.usesNote)
+    }
+
+    @Test
+    fun `a tagged note is kept whole, caution and all`() {
+        val whole = "Berries in late summer — cook them. Caution: raw berries are toxic."
+        val out = elder.copy(uses = setOf(PlantUse.EDIBLE), usesNote = whole).normalized()
+
+        assertEquals(whole, out.usesNote)
+    }
+
+    @Test
+    fun `an animal still carries no note, caution or not`() {
+        val out = elder.copy(
+            kingdom = Kingdom.ANIMAL,
+            taxClass = TaxClass.BIRD,
+            usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+        ).normalized()
+
+        assertNull(out.usesNote)
+    }
+
+    @Test
+    fun `a hand-written caution survives a backfill that empties an untouched uses`() {
+        // M21 keeps the note; the relaxed invariant is what stops 11.1 taking it back when the
+        // tags it arrived beside go away.
+        val out = previewFields(
+            stored = elder.copy(usesNote = "Caution: the berries here are the red kind."),
+            lookup = LookupFields(uses = emptySet(), medicinalActivities = emptyList()),
+            lockedFields = setOf(SpeciesField.USES_NOTE),
+            editValues = null,
+            editedNow = emptySet(),
+        )
+
+        assertEquals(emptySet<PlantUse>(), out.uses)
+        assertEquals("Caution: the berries here are the red kind.", out.usesNote)
     }
 
     @Test

@@ -314,6 +314,41 @@ class UserSpeciesRoomTest {
         assertFalse(stored.detailsPending)
     }
 
+    /**
+     * The safety exception, through a real database: a plant nobody tagged still comes back
+     * carrying the toxicity Duke's recorded for it. This is the row the warning has to reach —
+     * the one opened months after the session where the confirm card's warning was on screen.
+     */
+    @Test
+    fun anUntaggedPlantKeepsItsCautionAcrossSessions() = runBlocking {
+        val bracken = SpeciesFields(
+            commonName = "Bracken",
+            scientificName = "Pteridium aquilinum",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.FERN,
+            uses = emptySet(),
+            usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+        )
+        val registrar = AddSpeciesRegistrar(
+            store = repository,
+            captures = throwingRegistrar(),
+            newSpeciesId = { "user-1" },
+        )
+
+        registrar.create(bracken, emptyList(), photoUri = null)
+
+        val stored = repository.userSpecies("user-1")!!
+        assertTrue(stored.fields.uses.isEmpty())
+        assertEquals(
+            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+            stored.fields.usesNote,
+        )
+
+        // …and a later re-write of that row does not quietly lose it either.
+        repository.upsertUserSpecies(stored, null)
+        assertEquals(stored.fields.usesNote, repository.userSpecies("user-1")!!.fields.usesNote)
+    }
+
     @Test
     fun aCuratedSpeciesIsNotReachableAsAUserSpecies() = runBlocking {
         assertNull(repository.userSpecies("western-screech-owl"))

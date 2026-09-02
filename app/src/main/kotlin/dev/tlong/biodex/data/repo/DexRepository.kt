@@ -27,6 +27,7 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Entry
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
@@ -358,9 +359,10 @@ internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
     silhouetteRes = silhouetteRes,
     userEditedFields = userEditedFields,
     uses = restoredUses,
-    // The same rule the importer applies: a note with no use behind it is dropped, so a
-    // hand-edited archive cannot produce a species whose note has nowhere to render.
-    usesNote = usesNote?.takeIf { restoredUses.isNotEmpty() },
+    // A note with no use behind it is dropped, so a hand-edited archive cannot produce a
+    // species whose note has nowhere to render — but a `Caution:` sentence survives with no
+    // tags, because a restore must not be the step that quietly loses a recorded toxicity.
+    usesNote = keptUsesNote(usesNote, PlantUse.setFromWireNames(restoredUses)),
     medicinalActivities = medicinalActivities,
     medicinalRecordCount = medicinalRecordCount,
     usesAttribution = usesAttribution?.takeIf {

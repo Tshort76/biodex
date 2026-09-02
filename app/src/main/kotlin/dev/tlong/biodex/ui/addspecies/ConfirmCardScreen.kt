@@ -618,29 +618,22 @@ private fun UsesEditor(
                 .padding(10.dp),
         )
     }
-    // The note field appears only once there is a tag to hang it on. `usesNote` is null
-    // whenever `uses` is empty (11.1), so an editor offered before then would swallow every
-    // keystroke it was given — the field would look live and save nothing.
-    if (state.uses.isEmpty()) {
-        Text(
-            text = "Tag a use to add a note.",
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.faint,
-        )
-    } else {
+    if (state.noteEditable) {
         FieldEditor(
             value = state.fields.usesNote.orEmpty(),
             placeholder = "Which part, when — and any caution",
             onValueChange = onEditUsesNote,
         )
-    }
-
-    if (state.cautionWillBeDropped) {
+    } else {
         Text(
-            text = "Duke's records this species as poisonous. The note is only saved with a use " +
-                "tag, so tag it or the caution goes with it.",
+            text = if (state.noteCaution != null) {
+                "The caution above is saved whether or not you tag a use. Tag one to add a " +
+                    "note of your own."
+            } else {
+                "Tag a use to add a note."
+            },
             style = MaterialTheme.typography.labelSmall,
-            color = colors.warn,
+            color = colors.faint,
         )
     }
 

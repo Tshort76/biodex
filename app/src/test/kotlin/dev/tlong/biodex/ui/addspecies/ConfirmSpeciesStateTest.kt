@@ -402,11 +402,10 @@ class ConfirmSpeciesStateTest {
             state.noteCaution,
         )
         assertEquals("", state.noteBody)
-        assertFalse(state.cautionWillBeDropped)
     }
 
     @Test
-    fun `an untagged poisonous plant is warned that its caution will not be saved`() {
+    fun `an untagged poisonous plant keeps its caution`() {
         val state = plantCard(
             details = plantDetails(
                 uses = emptySet(),
@@ -415,9 +414,17 @@ class ConfirmSpeciesStateTest {
             ),
         )
 
-        // 11.1: usesNote is null when uses is empty, so the pre-filled caution goes with it.
-        assertNull(state.fields.usesNote)
-        assertTrue(state.cautionWillBeDropped)
+        // Bracken is the shape: one Duke's activity, so no medicinal tag, but a Poison record.
+        // The warning has to outlive the tag it arrived without, or the app is telling someone
+        // nothing about a plant a source calls poisonous.
+        assertTrue(state.uses.isEmpty())
+        assertTrue(state.poisonRecorded)
+        assertEquals(
+            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+            state.fields.usesNote,
+        )
+        assertEquals(state.fields.usesNote, state.noteCaution)
+        assertFalse("nothing to type into until a tag exists", state.noteEditable)
     }
 
     @Test
@@ -441,7 +448,7 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `a note typed with no use tag cannot be saved, so the card does not offer the field`() {
+    fun `a plain note typed with no use tag cannot be saved, so the field is not offered`() {
         val state = plantCard(
             details = plantDetails(uses = emptySet(), duke = null),
             edits = ConfirmCardEdits(
@@ -455,10 +462,11 @@ class ConfirmSpeciesStateTest {
             ),
         )
 
-        // 11.1 wins over the typing, so the screen hides the editor while this is true rather
-        // than showing a field that swallows every keystroke.
+        // A description with no tag has nowhere to render, so the screen hides the editor
+        // rather than showing a field that swallows every keystroke.
         assertTrue(state.uses.isEmpty())
         assertNull(state.fields.usesNote)
+        assertFalse(state.noteEditable)
     }
 
     @Test

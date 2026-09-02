@@ -135,14 +135,15 @@ sealed interface ConfirmSpeciesUiState {
                 return "Duke's records ${record.recordCount} traditional uses$suffix"
             }
 
-        /**
-         * A poison record is worth saying out loud even when the caution sentence cannot be
-         * saved. `usesNote` is null whenever `uses` is empty (11.1), so an untagged plant drops
-         * the pre-filled caution on save — and this line is what stops that being silent.
-         */
         val poisonRecorded: Boolean get() = duke?.poison == true
 
-        val cautionWillBeDropped: Boolean get() = poisonRecorded && fields.uses.isEmpty()
+        /**
+         * The note field is offered only once there is a tag to hang a note on. Without one,
+         * `keptUsesNote` reduces whatever is typed to its caution sentence, so an editor here
+         * would look live and quietly discard most of what went into it. The caution itself is
+         * unaffected: it is rendered above, and it is saved whether or not anything is tagged.
+         */
+        val noteEditable: Boolean get() = fields.uses.isNotEmpty()
 
         /** S09's split, so the card emphasises the same words the detail screen will. */
         val noteBody: String get() = UsesNote.cautionSplit(fields.usesNote).first

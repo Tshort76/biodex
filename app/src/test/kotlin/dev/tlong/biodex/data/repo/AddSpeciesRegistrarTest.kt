@@ -273,9 +273,25 @@ class AddSpeciesRegistrarTest {
     }
 
     @Test
-    fun `a plant with no use tag is saved without its note, however it arrived`() = runBlocking {
+    fun `an untagged plant keeps its caution and loses the rest of the note`() = runBlocking {
         val created = registrar.create(
             fields = elderberry.copy(uses = emptySet()),
+            ecosystemIds = emptyList(),
+            photoUri = "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        // The part-and-season half describes a use nothing is tagged with; the caution is a
+        // fact about the species and outlives the tags entirely.
+        assertEquals(
+            "Caution: raw berries are toxic.",
+            store.species.getValue(created.speciesId).fields.usesNote,
+        )
+    }
+
+    @Test
+    fun `an untagged plant with a plain note is saved without it`() = runBlocking {
+        val created = registrar.create(
+            fields = elderberry.copy(uses = emptySet(), usesNote = "Berries, late summer."),
             ecosystemIds = emptyList(),
             photoUri = "content://photo/1",
         ) as AddSpeciesRegistrar.CreateResult.Created

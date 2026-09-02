@@ -54,7 +54,7 @@ data class SpeciesFields(
     val infoUrl: String? = null,
     /** Plant-only (D14); empty for every animal and for a plant with no recorded use. */
     val uses: Set<PlantUse> = emptySet(),
-    /** The part-and-season note with any `Caution:` sentence. Null unless [uses] is non-empty. */
+    /** The part-and-season note with any `Caution:` sentence. Kept per [keptUsesNote]. */
     val usesNote: String? = null,
     /** Duke's activity names, most-cited first. Source data, never the user's to edit. */
     val medicinalActivities: List<String> = emptyList(),
@@ -74,6 +74,30 @@ data class SpeciesFields(
 }
 
 /**
+ * The `usesNote` rule, and the one place the app decides whether a warning is allowed to
+ * outlive the tag it arrived with.
+ *
+ * A note is kept whole while the plant carries a use tag. With **no** tags, only a `Caution:`
+ * sentence survives, and it survives alone: a recorded toxicity is safety information about the
+ * species, not a qualifier on a use the user claimed, while the rest of a note describes a use
+ * that is no longer tagged and has nowhere to render.
+ *
+ * **Why the exception exists at all.** Everything about how this app handles plants rests on
+ * never letting the absence of a warning imply safety — it is why there is no "toxic" tag
+ * (tagging some species would imply the untagged ones are safe, D14) and why the pipeline makes
+ * a missing caution a build failure rather than a lint. Dropping a recorded toxicity because
+ * the user did not tick "edible" inverts that exactly, and the person it strands is the one who
+ * photographed something unfamiliar, tagged nothing, and comes back to it months later. The
+ * confirm card's warning cannot cover this: the card lasts one session, and the note is what
+ * persists.
+ */
+fun keptUsesNote(note: String?, uses: Set<PlantUse>): String? {
+    val text = note?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    if (uses.isNotEmpty()) return text
+    return UsesNote.cautionSplit(text).second
+}
+
+/**
  * `TREE` is the one class with two shapes (`sil_tree_conifer` / `sil_tree_broadleaf`, 11.4), so
  * it cannot be spelled `sil_${wireName}` like the rest; broadleaf is the fallback the class map
  * uses too. Every other class is its own name.
@@ -90,7 +114,7 @@ fun defaultSilhouetteFor(taxClass: TaxClass): String =
  *   `CatalogueReconciler.pairKingdomAndClass`, which the importer and the backup import use.
  *   A unit test pins the two against drift.
  * - Uses are plant-only, so an animal carries no uses, no note and no Duke's columns.
- * - `usesNote` is null when `uses` is empty: a note with no tag behind it has nowhere to render.
+ * - `usesNote` is null when `uses` is empty **except for a caution** — see [keptUsesNote].
  * - `usesAttribution` is null unless there is Duke's data to attribute.
  */
 fun SpeciesFields.normalized(): SpeciesFields {
@@ -102,7 +126,8 @@ fun SpeciesFields.normalized(): SpeciesFields {
     return copy(
         taxClass = pairedClass,
         uses = keptUses,
-        usesNote = usesNote?.trim()?.takeIf { it.isNotEmpty() && keptUses.isNotEmpty() },
+        // An animal has no uses slot to render a note in at all, caution or not.
+        usesNote = if (plant) keptUsesNote(usesNote, keptUses) else null,
         medicinalActivities = activities,
         medicinalRecordCount = recordCount,
         usesAttribution = usesAttribution?.takeIf { activities.isNotEmpty() || recordCount > 0 },
