@@ -122,20 +122,73 @@ class RegisterStateTest {
         assertEquals("Register", state().registerLabel)
     }
 
+    // -----------------------------------------------------------------------
+    // D18. The screen pins the search field and docks the buttons, so the list no longer has
+    // to be short to keep them reachable — and arriving with a species chosen has to say where
+    // in the list that species is.
+    // -----------------------------------------------------------------------
+
+    /** Stands in for the two-kingdom catalogue: 200 species, in dex order. */
+    private val fullCatalogue = (1..200).map { species("s-$it", it, "Species $it", null) }
+
+    private fun fullState(query: String = "", preselectedSpeciesId: String? = null) = runBlocking {
+        registerUiState(
+            species = MutableStateFlow(fullCatalogue),
+            query = MutableStateFlow(query),
+            selectedSpeciesId = MutableStateFlow(preselectedSpeciesId),
+            photo = MutableStateFlow(null),
+            registering = MutableStateFlow(false),
+            error = MutableStateFlow(null),
+            preselectedSpeciesId = preselectedSpeciesId,
+        ).first()
+    }
+
     @Test
-    fun `the results list is capped so the photo row and buttons stay reachable`() {
-        val many = (1..80).map { species("s-$it", it, "Species $it", null) }
-        val s = runBlocking {
+    fun `the results list is uncapped - every catalogue species is listed`() {
+        val s = fullState()
+        assertEquals(fullCatalogue.size, s.results.size)
+        assertEquals("s-200", s.results.last().id)
+    }
+
+    @Test
+    fun `arriving with a species preselected reports where it sits in the list`() {
+        val s = fullState(preselectedSpeciesId = "s-137")
+        assertEquals("the row is selected", "s-137", s.selected?.id)
+        assertEquals("and its position is known", 136, s.preselectedIndex)
+        assertEquals("s-137", s.results[s.preselectedIndex!!].id)
+    }
+
+    @Test
+    fun `the preselected index follows the query, and is null once it is filtered away`() {
+        val narrowed = fullState(query = "Species 13", preselectedSpeciesId = "s-137")
+        assertEquals(
+            "s-137",
+            narrowed.results[narrowed.preselectedIndex!!].id,
+        )
+        assertNull(
+            "a query that hides the species leaves nothing to scroll to",
+            fullState(query = "Species 42", preselectedSpeciesId = "s-137").preselectedIndex,
+        )
+    }
+
+    @Test
+    fun `a species the user taps themselves is not an arrival scroll`() {
+        val s = fullState(preselectedSpeciesId = null)
+        assertNull(s.preselectedIndex)
+        // The same state function with a selection made on the screen: still nothing to scroll
+        // to, because the list is already where the user's thumb put it.
+        val tapped = runBlocking {
             registerUiState(
-                species = MutableStateFlow(many),
+                species = MutableStateFlow(fullCatalogue),
                 query = MutableStateFlow(""),
-                selectedSpeciesId = MutableStateFlow(null),
+                selectedSpeciesId = MutableStateFlow("s-137"),
                 photo = MutableStateFlow(null),
                 registering = MutableStateFlow(false),
                 error = MutableStateFlow(null),
             ).first()
         }
-        assertEquals(REGISTER_RESULT_LIMIT, s.results.size)
+        assertEquals("s-137", tapped.selected?.id)
+        assertNull(tapped.preselectedIndex)
     }
 
     // -----------------------------------------------------------------------

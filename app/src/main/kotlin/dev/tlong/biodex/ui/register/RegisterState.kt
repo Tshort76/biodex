@@ -34,6 +34,13 @@ data class RegisterUiState(
     val error: String? = null,
     /** 4.4: shown only when the persisted-grant count is actually near Android's cap. */
     val grantWarning: String? = null,
+    /**
+     * D18. Where the species the screen was *opened for* sits in [results], so the list can be
+     * scrolled to it once on arrival. It is the route's `preselectedSpeciesId` rather than
+     * [selected]: a row the user taps themselves is already under their thumb, and scrolling
+     * to it would be the list jumping for no reason.
+     */
+    val preselectedIndex: Int? = null,
 ) {
     val canRegister: Boolean get() = selected != null && photo != null && !registering
 
@@ -62,20 +69,17 @@ data class RegisterUiState(
 }
 
 /**
- * How many rows the results list shows. The mockup's list is short and the screen has a photo
- * row and two buttons under it; an unbounded list of 120 would bury them.
- */
-const val REGISTER_RESULT_LIMIT = 25
-
-/**
  * Search is the grid's, reused verbatim (M07/M14 use the same rule) and offline by
  * construction — it runs over rows Room already gave us. An empty query lists the catalogue
  * in dex order rather than showing nothing, so a preselected species is visible in context.
+ *
+ * Uncapped (11.4, D18). The old 25-row cap existed only to keep the photo row and the buttons
+ * reachable inside one long scroll; the screen now pins them, and the list is a `LazyColumn`,
+ * so all 200 species are listed.
  */
 internal fun registerResults(species: List<SpeciesSummary>, query: String): List<SpeciesSummary> =
     species.filter { matchesQuery(it, query) }
         .sortedBy { it.dexNumber }
-        .take(REGISTER_RESULT_LIMIT)
 
 fun registerUiState(
     species: Flow<List<SpeciesSummary>>,
@@ -84,15 +88,20 @@ fun registerUiState(
     photo: Flow<PickedPhoto?>,
     registering: Flow<Boolean>,
     error: Flow<String?>,
+    preselectedSpeciesId: String? = null,
 ): Flow<RegisterUiState> =
     combine(species, query, selectedSpeciesId, photo, registering) { all, q, id, pic, busy ->
+        val results = registerResults(all, q)
         RegisterUiState(
             query = q,
-            results = registerResults(all, q),
+            results = results,
             // Resolved against the whole catalogue, not the visible results: a selection made
             // before typing must survive a query that filters it out of view.
             selected = all.firstOrNull { it.id == id },
             photo = pic,
             registering = busy,
+            preselectedIndex = preselectedSpeciesId
+                ?.let { wanted -> results.indexOfFirst { it.id == wanted } }
+                ?.takeIf { it >= 0 },
         )
     }.combine(error) { state, message -> state.copy(error = message) }

@@ -14,20 +14,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +58,7 @@ import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.SilhouetteIcon
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
+import kotlinx.coroutines.flow.first
 
 /**
  * Frame 3 of `mockup.html` (M07, M08, M10, S06). Species-first: search the catalogue offline,
@@ -134,125 +143,168 @@ fun RegisterScreen(
     onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
 ) {
     val colors = DexTheme.colors
-    Scaffold(containerColor = colors.bg) { inner ->
-        Column(
+    val listState = rememberLazyListState()
+
+    // D18's one-shot. `rememberSaveable` survives a rotation and process death, so the list is
+    // never yanked back under a thumb that has already moved; the flag is set *after* the
+    // scroll lands, so an early emission with a not-yet-loaded catalogue does not consume it.
+    var scrolledToPreselection by rememberSaveable { mutableStateOf(false) }
+    val preselectedIndex = state.preselectedIndex
+    LaunchedEffect(preselectedIndex, scrolledToPreselection) {
+        if (scrolledToPreselection || preselectedIndex == null) return@LaunchedEffect
+        // The effect can run before the list has been laid out, and the offset is in pixels.
+        val viewport = snapshotFlow { listState.layoutInfo.viewportSize.height }.first { it > 0 }
+        // A negative offset leaves the row a third of the way down rather than jammed against
+        // the top edge, so the rows above it show it is a list position, not the list's start.
+        listState.scrollToItem(preselectedIndex, -viewport / 3)
+        scrolledToPreselection = true
+    }
+
+    Scaffold(
+        containerColor = colors.bg,
+        // The bars carry their own insets: Scaffold pads only its content slot, and on an
+        // edge-to-edge window that would put the title under the status bar and the ghost
+        // button under the gesture bar.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.bg)
+                    .statusBarsPadding()
+                    .padding(horizontal = 14.dp)
+                    .padding(bottom = 8.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(vertical = 10.dp),
+                ) {
+                    Text(
+                        text = "←",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.muted,
+                        modifier = Modifier.clickable(onClick = onBack),
+                    )
+                    Text(
+                        text = "Register a Species",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
+                        color = colors.fg,
+                    )
+                }
+                SearchField(query = state.query, onQueryChange = onQueryChange)
+            }
+        },
+        bottomBar = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.bg)
+                    .imePadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 14.dp)
+                    .padding(top = 10.dp, bottom = 12.dp),
+            ) {
+                Text(
+                    text = "PHOTO · FROM YOUR GALLERY",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                    ),
+                    color = colors.faint,
+                )
+                PhotoAttachRow(photo = state.photo, onPickPhoto = onPickPhoto)
+
+                state.photo?.let { picked ->
+                    Text(
+                        text = "Not sure what it is? Open photo in Google Lens ↗",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.accent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.accentSoft)
+                            .clickable { onOpenLens(picked.uri) }
+                            .padding(horizontal = 12.dp, vertical = 9.dp),
+                    )
+                }
+
+                state.grantWarning?.let { warning ->
+                    Text(
+                        text = warning,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.warn,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.warnSoft)
+                            .padding(10.dp),
+                    )
+                }
+
+                state.error?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.stop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.stopSoft)
+                            .padding(10.dp),
+                    )
+                }
+
+                PrimaryCta(
+                    label = if (state.registering) "Registering…" else state.registerLabel,
+                    enabled = state.canRegister,
+                    onClick = onRegister,
+                )
+
+                // M08. The flow needs both halves of what only the user has — the name and the
+                // photo (M20 creates an offline entry "from the name and photo alone"), so the
+                // button waits for the photo rather than opening a card that cannot be saved.
+                GhostCta(
+                    label = state.addOwnLabel,
+                    enabled = state.canAddOwn,
+                    onClick = {
+                        val photo = state.photo ?: return@GhostCta
+                        onAddOwnSpecies(state.query.trim(), photo.uri)
+                    },
+                )
+            }
+        },
+    ) { inner ->
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner)
-                .padding(horizontal = 14.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.padding(vertical = 10.dp),
-            ) {
-                Text(
-                    text = "←",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colors.muted,
-                    modifier = Modifier.clickable(onClick = onBack),
-                )
-                Text(
-                    text = "Register a Species",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    color = colors.fg,
-                )
-            }
-
-            SearchField(query = state.query, onQueryChange = onQueryChange)
-
             if (state.noResults) {
-                Text(
-                    text = "No catalogue species matches “${state.query}”. If you photographed " +
-                        "something outside the Pacific catalogue, add it as your own species.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.faint,
-                    modifier = Modifier.padding(vertical = 6.dp),
-                )
+                item(key = "no-results") {
+                    Text(
+                        text = "No catalogue species matches “${state.query}”. If you " +
+                            "photographed something outside the Pacific catalogue, add it as " +
+                            "your own species.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.faint,
+                        modifier = Modifier.padding(vertical = 6.dp),
+                    )
+                }
             }
-
-            state.results.forEach { species ->
+            items(state.results, key = { it.id }) { species ->
                 SpeciesResultRow(
                     species = species,
                     selected = species.id == state.selected?.id,
                     onClick = { onSelectSpecies(species.id) },
                 )
             }
-
-            Text(
-                text = "PHOTO · FROM YOUR GALLERY",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                ),
-                color = colors.faint,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            PhotoAttachRow(photo = state.photo, onPickPhoto = onPickPhoto)
-
-            state.photo?.let { picked ->
-                Text(
-                    text = "Not sure what it is? Open photo in Google Lens ↗",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colors.accent,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.accentSoft)
-                        .clickable { onOpenLens(picked.uri) }
-                        .padding(horizontal = 12.dp, vertical = 9.dp),
-                )
-            }
-
-            state.grantWarning?.let { warning ->
-                Text(
-                    text = warning,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.warn,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colors.warnSoft)
-                        .padding(10.dp),
-                )
-            }
-
-            state.error?.let { message ->
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.stop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colors.stopSoft)
-                        .padding(10.dp),
-                )
-            }
-
-            PrimaryCta(
-                label = if (state.registering) "Registering…" else state.registerLabel,
-                enabled = state.canRegister,
-                onClick = onRegister,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-
-            // M08. The flow needs both halves of what only the user has — the name and the
-            // photo (M20 creates an offline entry "from the name and photo alone"), so the
-            // button waits for the photo rather than opening a card that cannot be saved.
-            GhostCta(
-                label = state.addOwnLabel,
-                enabled = state.canAddOwn,
-                onClick = {
-                    val photo = state.photo ?: return@GhostCta
-                    onAddOwnSpecies(state.query.trim(), photo.uri)
-                },
-                modifier = Modifier.padding(bottom = 24.dp),
-            )
         }
     }
 }
@@ -405,7 +457,9 @@ private fun PhotoAttachRow(photo: PickedPhoto?, onPickPhoto: () -> Unit) {
             )
             Text(
                 text = if (photo == null) {
-                    "Linked, never copied — the app keeps only a small thumbnail."
+                    // The system picker needs an explicit Done tap after a photo is
+                    // highlighted, which is Android's behaviour and not obvious the first time.
+                    "Pick one and tap Done. Linked, never copied — only a thumbnail is kept."
                 } else {
                     "Change photo"
                 },

@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class RegisterViewModel(
     repository: DexRepository,
     private val registrar: CaptureRegistrar,
-    preselectedSpeciesId: String?,
+    private val preselectedSpeciesId: String?,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -47,6 +47,7 @@ class RegisterViewModel(
             photo = photo,
             registering = registering,
             error = error,
+            preselectedSpeciesId = preselectedSpeciesId,
         ),
         _grantWarning,
     ) { state, warning -> state.copy(grantWarning = warning) }
