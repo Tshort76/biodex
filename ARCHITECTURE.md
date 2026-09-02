@@ -253,6 +253,19 @@ Invariants the importer must hold (these are the M-requirements' data-safety cor
 - `userEditedFields` on curated species is always empty in v1 (curated species are not editable, per DESIGN.md §7), so upsert may overwrite all curated fields wholesale. The field exists on the row for user-added species and for C06 promotion later.
 - Species promotion (C06) is out of v1 scope; the importer does not attempt to match user-added species against new curated ones.
 
+### 3.4 Data-layer corrections (recorded by slice 3, 2026-09-01)
+
+Slice 3 built the schema, the importer and the repository for real. Section 3.1's tables, columns, indices and foreign keys are implemented exactly as written, `exportSchema = true` produces `app/schemas/dev.tlong.animaldex.data.db.AppDatabase/1.json` (checked in), and there is no `fallbackToDestructiveMigration` anywhere. Four things needed a decision the document did not make.
+
+| Point | What slice 3 did | Reason |
+|---|---|---|
+| Progress math (6.3) | `DexRepository.dexProgress()` reads four small row flows and computes `DexProgress` in a pure Kotlin function (`domain/DexProgressMath.kt`), rather than in SQL aggregates. | Section 8 requires progress math to be a JVM unit test, and SQL aggregates can only be exercised on a device — the two instructions are in tension, and no phone is available to run the instrumented suite. At 120-plus rows the in-memory pass is free; it is the same reasoning section 6.2 already applies to search and filters. |
+| `entries.favoriteCaptureId` | Nullable, **no foreign key**. | `captures` references `species` and an entry would reference a capture, which makes an insert-order cycle Room rejects. The consequence is explicit: whoever deletes a capture must null this column itself (slice 5's job), or it dangles. |
+| Importer structure | Every decision the importer makes is a pure function, `CatalogueReconciler.decide()`, returning an `ImportPlan` that a `CatalogueStore` applies in one transaction. Room implements the store; the JVM tests use an in-memory fake that reproduces `ON DELETE CASCADE`. | 3.3's invariants are about data safety, not about Room. Splitting them out is what lets "a catalogue update never destroys entries, captures or user-added species" be a unit test rather than a claim. |
+| Missing catalogue asset | The importer logs and returns `AssetMissing`, leaving the database empty; it never throws. Section 9's suggestion of a stand-in `pacific.json` was **not** taken. | Slice 2 owns `app/src/main/assets/catalogue/pacific.json` and was generating it concurrently; writing a stand-in would have clobbered live output. Slice 3's tests run against a ten-species fixture in `app/src/test/resources/` and `app/src/androidTest/assets/` instead, and the instrumented test that asserts 120 species skips itself until the real asset is bundled. |
+
+Two build-file additions, both mechanical: the `room.schemaLocation` KSP argument (3.1 asks for it) and `testOptions.unitTests.isReturnDefaultValues = true`, without which any JVM test reaching an `android.util.Log` call dies on "not mocked". The version catalog was not touched — the importer tests use `runBlocking` rather than adding `kotlinx-coroutines-test`.
+
 ---
 
 ## 4. The photo-reference layer

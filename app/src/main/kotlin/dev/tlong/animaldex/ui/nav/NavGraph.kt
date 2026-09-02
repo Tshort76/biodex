@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dev.tlong.animaldex.ui.grid.TempDexCountLine
 import dev.tlong.animaldex.ui.theme.DexTheme
 import kotlinx.serialization.Serializable
 
@@ -54,6 +55,8 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
         composable<DexGrid> {
             Placeholder(
                 title = "Dex Grid — coming soon",
+                // Slice 3 scaffolding: proves asset → Room → repository → UI on the phone.
+                extra = { TempDexCountLine() },
                 links = listOf(
                     "Entry Detail" to { navController.navigate(EntryDetail("western-screech-owl")) },
                     "Unlock Reveal" to {
@@ -101,6 +104,7 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
 private fun Placeholder(
     title: String,
     detail: String? = null,
+    extra: (@Composable () -> Unit)? = null,
     links: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     Column(
@@ -123,6 +127,7 @@ private fun Placeholder(
                 color = DexTheme.colors.faint,
             )
         }
+        extra?.invoke()
         links.forEach { (label, onClick) ->
             OutlinedButton(onClick = onClick) { Text(label) }
         }

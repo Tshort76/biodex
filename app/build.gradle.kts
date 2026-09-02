@@ -64,6 +64,18 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        // The importer logs through android.util.Log; without this every JVM test that
+        // reaches a log line dies on "not mocked". Nothing under test asserts on logging.
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+// ARCHITECTURE.md 3.1: exportSchema = true with the schema JSON checked into app/schemas/,
+// which is what makes hand-written migrations writable after the first real capture (R7).
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
