@@ -305,6 +305,35 @@ One sentence of policy, not an engineering subsystem: **every code path that rem
 
 A boolean in Jetpack-free `SharedPreferences` (`settings` file; this app does not need DataStore for three booleans — decision: SharedPreferences, rejected DataStore as ceremony). When on, registration additionally streams the full-size bytes to `filesDir/photos/<captureId>.jpg` and sets `localCopyPath`. Turning the setting on later does **not** retroactively copy old captures in v1 (documented in the Settings UI copy). Import from an S01 archive sets `localCopyPath` for restored photos — that is the one other writer.
 
+### 4.6 Photo-layer corrections (recorded by slice 5, 2026-09-01)
+
+Slice 5 built the photo layer, the register flow, the unlock reveal and the photo viewer. Section 4's substance held: persistable grants taken on the picker result, no full-size copy by default, thumbnails written before the transaction, three resolution states, release-on-delete. Nine things needed a decision the document did not make, and one of them corrects an assumption 4.4 makes.
+
+| Point | What slice 5 did | Reason |
+|---|---|---|
+| The `PhotoStore` class (4) | Split in two. `PhotoGateway` is an interface holding **only** the platform calls (grant, EXIF, `ImageDecoder`, probe, file writes), implemented once by `AndroidPhotoGateway`; `CaptureRegistrar` holds every decision above it and takes the gateway plus a `CaptureStore` interface. `DexRepository` implements `CaptureStore`. | No phone exists, and slice 5 is the slice with the widest gap between what can be built and what can be verified. The split is what lets registration, deletion, favouriting and re-linking run end-to-end in the JVM suite against fakes, leaving only genuinely platform-bound code untested. Same reasoning slice 3 used for `CatalogueReconciler` (3.4). |
+| `PhotoRef` states (4.2) | A fourth state, `LocalCopy(relativePath)`. | 4.2 describes the local-copy short-circuit in prose but leaves it implicit in the type. Making it a state means the Photo Viewer's rendering choice is total over the sealed interface — an S03 capture cannot fall through to a "revoked" branch. |
+| **The 5,000-grant policy (4.4)** | Every release is conditional on `SELECT COUNT(*) FROM captures WHERE photoUri = :uri` being 1. | 4.4 says "one grant per capture", but the same gallery photo can legitimately be registered against two species (a frame with a heron and an owl in it). Releasing on the first deletion would silently break the second capture's reference. This is the correction, not a refinement. |
+| Thumbnail failure (4.1 step 3) | Aborts the registration: nothing is written, and a grant taken only for that attempt is released. The Register screen says the photo could not be read and that nothing was saved. | 4.1 orders the thumbnail before the transaction but does not say what happens when it fails. A capture row without its thumbnail is exactly the row M11 and M12 cannot honour. |
+| Grant pressure (4.4) | `grantPressure(count)` returns FINE / NEAR_CAP / AT_CAP at 4,500 and 5,000, and the Register screen shows a warning line for the last two. Settings still owns the informational count (slice 8). | 4.4 asks the app to "behave sanely as it approaches" the cap without saying where. A warning costs one string and no engineering; the proactive pool management 4.4 rejects is still rejected. |
+| Two DAO additions | `CaptureDao.countForUri` and `CaptureDao.updateReference`. | Both are `@Query` methods on an existing DAO: no entity, no column, no schema change, so section 9's "`data/db/` is not edited again" rule is not in play. The checked-in schema JSON is unchanged. |
+| Re-link (4.2) | Keeps the capture's id, `createdAt`, `takenAt` and note; only `photoUri` and `thumbPath` change. A re-link whose thumbnail fails leaves the old reference in place. | 4.2 says "replaces `photoUri`, regenerates the thumbnail, releases the old grant" but not what happens to the rest of the row. Keeping the identity is what stops a re-link from moving the catch date. |
+| S03's switch | `CaptureRegistrar` takes `keepLocalCopy: () -> Boolean`, wired to `{ false }` in `AppContainer`. | 4.5 puts the setting in slice 8. This is the whole of what slice 8 has to change in the registration path. |
+| EXIF | `parseExifDateTime` is a pure function parsing `yyyy:MM:dd HH:mm:ss` in the device's zone, falling back to `TAG_DATETIME` then to registration time. Missing GPS is not logged as anything. | R3 is confirmed in the code's shape rather than argued about: location is an ordinary null, and the timestamp path is the one that carries weight, so it is the one under test. |
+
+### 6.6 UI corrections (recorded by slice 5, 2026-09-01)
+
+| Point | What slice 5 did | Reason |
+|---|---|---|
+| The `EntryDetail` route (6.1) | Gained a second boolean, `photoAdded`, alongside `justUnlocked`. Registration navigates with exactly one of them true. | M09 asks for a "brief acknowledgment" on a repeat registration, and DESIGN.md §4 is explicit that it must not be the reveal. Both are one-shot moments guarded by `rememberSaveable`, so a rotation or process death cannot replay either. |
+| The reveal's glow (6.4) | A flat `accentSoft` halo behind the art, not a radial gradient. | D8's brief is restraint. A gradient reads heavier, and nobody can look at it on a phone yet to judge — the cheaper thing is the thing to ship first. |
+| Grid cell and photo strip | Both render `thumbPath` through Coil with the class silhouette as the **error slot**. Neither resolves a gallery URI. | M11's rule, made structural: the only screen that resolves a URI is the Photo Viewer, so a broken reference cannot blank the collection. The error slot covers the remaining case — a thumbnail file that is somehow gone — with a shape rather than a hole. |
+| Register results | Capped at 25 rows, and an empty query lists the catalogue rather than showing nothing. | The screen carries the photo row and two buttons under the list; 120 unbounded rows would bury them. Search itself reuses the grid's `matchesQuery` verbatim, so M07 and M14 cannot drift apart. |
+| "Add your own species" | Ships **visibly disabled**, labelled "coming in a later update", with the route hook stubbed. | Slice 7 owns M08 and M18–M21. Shipping the button disabled means the screen's shape does not change when that slice lands. |
+| Google Lens (S06) | A plain `ACTION_SEND` image share through the system chooser, with `FLAG_GRANT_READ_URI_PERMISSION`, shown once a photo is attached. | There is no Lens-specific API worth taking a dependency on, and the chooser is what the user's existing workflow already goes through. |
+
+**Not verified.** No phone is connected. `assembleDebug`, `assembleDebugAndroidTest` and `testDebugUnitTest` pass; nobody has run the picker, seen the reveal, or watched a grant survive a reboot. Section 9's slice-5 done-check is entirely outstanding, and the instrumented suite (including the new `AndroidPhotoGatewayTest` and `CaptureRegistrarRoomTest`) has never executed.
+
 ---
 
 ## 5. Network layer

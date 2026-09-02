@@ -19,6 +19,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dev.tlong.animaldex.ui.detail.EntryDetailRoute
 import dev.tlong.animaldex.ui.grid.DexGridRoute
+import dev.tlong.animaldex.ui.photoviewer.PhotoViewerRoute
+import dev.tlong.animaldex.ui.register.RegisterRoute
 import dev.tlong.animaldex.ui.theme.DexTheme
 import kotlinx.serialization.Serializable
 
@@ -31,8 +33,17 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object DexGrid
 
+/**
+ * [justUnlocked] plays the reveal (M09); [photoAdded] is the low-key counterpart for a repeat
+ * registration — a brief "+1", because DESIGN.md §4 reserves ceremony for firsts so that
+ * firsts stay special.
+ */
 @Serializable
-data class EntryDetail(val speciesId: String, val justUnlocked: Boolean = false)
+data class EntryDetail(
+    val speciesId: String,
+    val justUnlocked: Boolean = false,
+    val photoAdded: Boolean = false,
+)
 
 @Serializable
 data class Register(val preselectedSpeciesId: String? = null)
@@ -62,18 +73,35 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
         }
         composable<EntryDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<EntryDetail>()
-            // route.justUnlocked stays unread until slice 5 adds the reveal overlay (6.1).
             EntryDetailRoute(
                 speciesId = route.speciesId,
+                justUnlocked = route.justUnlocked,
+                photoAdded = route.photoAdded,
                 onBack = { navController.popBackStack() },
                 onRegister = { speciesId -> navController.navigate(Register(speciesId)) },
+                onOpenPhoto = { captureId -> navController.navigate(PhotoViewer(captureId)) },
             )
         }
         composable<Register> { backStackEntry ->
             val route = backStackEntry.toRoute<Register>()
-            Placeholder(
-                title = "Register a Species — coming soon",
-                detail = route.preselectedSpeciesId ?: "no species preselected",
+            RegisterRoute(
+                preselectedSpeciesId = route.preselectedSpeciesId,
+                onBack = { navController.popBackStack() },
+                onRegistered = { speciesId, justUnlocked ->
+                    // DESIGN.md §6's navigation rule: after registering, back from the detail
+                    // screen returns to the grid, not to the Register screen.
+                    navController.navigate(
+                        EntryDetail(
+                            speciesId = speciesId,
+                            justUnlocked = justUnlocked,
+                            photoAdded = !justUnlocked,
+                        ),
+                    ) {
+                        popUpTo(DexGrid)
+                    }
+                },
+                // Slice 7 replaces this with `navigate(ConfirmSpecies(draftId))` (M08, M18–M21).
+                onAddOwnSpecies = {},
             )
         }
         composable<ConfirmSpecies> { backStackEntry ->
@@ -82,7 +110,10 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
         }
         composable<PhotoViewer> { backStackEntry ->
             val route = backStackEntry.toRoute<PhotoViewer>()
-            Placeholder(title = "Photo Viewer — coming soon", detail = route.captureId)
+            PhotoViewerRoute(
+                captureId = route.captureId,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable<Stats> { Placeholder(title = "Stats — coming soon") }
         composable<Settings> { Placeholder(title = "Settings — coming soon") }

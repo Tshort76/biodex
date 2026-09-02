@@ -47,11 +47,49 @@ class EntryDetailStateTest {
         userEditedFields = emptyList(),
     )
 
-    private fun state(species: SpeciesDetail?) = runBlocking {
+    private fun state(
+        species: SpeciesDetail?,
+        captures: List<dev.tlong.animaldex.domain.Capture> = emptyList(),
+        progress: dev.tlong.animaldex.domain.DexProgress =
+            dev.tlong.animaldex.domain.DexProgress.Empty,
+    ) = runBlocking {
         entryDetailUiState(
             detail = MutableStateFlow(species),
             ecosystems = MutableStateFlow(ecosystems),
+            captures = MutableStateFlow(captures),
+            progress = MutableStateFlow(progress),
         ).first()
+    }
+
+    @Test
+    fun `the photo strip is the capture list, and it is empty until something is caught`() {
+        assertEquals(emptyList<Any>(), state(detail(listOf("oak-chaparral"))).captures)
+
+        val capture = dev.tlong.animaldex.domain.Capture(
+            id = "cap-1",
+            speciesId = "western-screech-owl",
+            photoUri = "content://media/1",
+            thumbPath = "thumbnails/cap-1.jpg",
+            takenAt = 1L,
+            createdAt = 1L,
+        )
+        val s = state(detail(listOf("oak-chaparral")), captures = listOf(capture))
+        assertEquals(listOf("cap-1"), s.captures.map { it.id })
+    }
+
+    @Test
+    fun `the reveal reads its counter off dex progress, not off the species row`() {
+        val s = state(
+            detail(listOf("oak-chaparral")),
+            progress = dev.tlong.animaldex.domain.DexProgress(
+                regionId = "pacific",
+                overall = dev.tlong.animaldex.domain.Meter(caught = 1, total = 120),
+                perClass = emptyList(),
+                perEcosystem = emptyList(),
+            ),
+        )
+        assertEquals(1, s.caughtCount)
+        assertEquals(120, s.totalCount)
     }
 
     @Test

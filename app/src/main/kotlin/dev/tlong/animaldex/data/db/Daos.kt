@@ -152,6 +152,18 @@ interface CaptureDao {
     @Query("SELECT COUNT(*) FROM captures WHERE speciesId = :speciesId")
     suspend fun countForSpecies(speciesId: String): Int
 
+    /**
+     * The shared-grant check (slice 5). The same gallery photo can be registered against two
+     * species; releasing its persistable grant when one of them is deleted would break the
+     * other's reference too, so release is conditional on this count.
+     */
+    @Query("SELECT COUNT(*) FROM captures WHERE photoUri = :photoUri")
+    suspend fun countForUri(photoUri: String): Int
+
+    /** Re-link (ARCHITECTURE.md 4.2): a new reference and thumbnail under the same capture id. */
+    @Query("UPDATE captures SET photoUri = :photoUri, thumbPath = :thumbPath WHERE id = :captureId")
+    suspend fun updateReference(captureId: String, photoUri: String, thumbPath: String)
+
     /** S08's "recently caught" strip. */
     @Query("SELECT * FROM captures ORDER BY createdAt DESC LIMIT :limit")
     fun observeRecent(limit: Int): Flow<List<CaptureEntity>>

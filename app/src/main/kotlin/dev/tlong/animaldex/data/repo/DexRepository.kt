@@ -1,11 +1,16 @@
 package dev.tlong.animaldex.data.repo
 
+import androidx.room.withTransaction
 import dev.tlong.animaldex.data.db.AppDatabase
 import dev.tlong.animaldex.data.db.CaptureEntity
 import dev.tlong.animaldex.data.db.EcosystemEntity
+import dev.tlong.animaldex.data.db.EntryEntity
 import dev.tlong.animaldex.data.db.EntryStatusRow
 import dev.tlong.animaldex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.animaldex.data.db.SpeciesEntity
+import dev.tlong.animaldex.data.photo.CaptureDeletionPlan
+import dev.tlong.animaldex.data.photo.CaptureStore
+import dev.tlong.animaldex.data.photo.RegistrationPlan
 import dev.tlong.animaldex.domain.Capture
 import dev.tlong.animaldex.domain.DexProgress
 import dev.tlong.animaldex.domain.DexProgressMath
@@ -15,15 +20,16 @@ import dev.tlong.animaldex.domain.SpeciesDetail
 import dev.tlong.animaldex.domain.SpeciesSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /** v1 ships exactly one region (DESIGN.md §2); it is a parameter so C03 stays a content problem. */
 const val DEFAULT_REGION_ID = "pacific"
 
 /**
- * The read surface every screen consumes (ARCHITECTURE.md 3.1, 6.3). Slice 3 exposes reads
- * only — registration, capture deletion and the user-added write paths belong to slices 5
- * and 7, which add them here.
+ * The surface every screen consumes (ARCHITECTURE.md 3.1, 6.3). Slice 3 exposed reads only;
+ * slice 5 adds the capture writes as the [CaptureStore] implementation — the user-added write
+ * paths are still slice 7's.
  *
  * Search and filtering are deliberately *not* here: section 6.2 puts them in the ViewModel,
  * composed over these cold flows in memory.
@@ -31,7 +37,7 @@ const val DEFAULT_REGION_ID = "pacific"
 class DexRepository(
     private val db: AppDatabase,
     private val regionId: String = DEFAULT_REGION_ID,
-) {
+) : CaptureStore {
 
     private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
     private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
@@ -114,7 +120,91 @@ class DexRepository(
                 )
             }
         }
+
+    fun capture(captureId: String): Flow<Capture?> =
+        db.captureDao().observeCapture(captureId).map { it?.toDomain() }
+
+    // -----------------------------------------------------------------------
+    // Writes (slice 5). Every decision behind these calls is a pure function in
+    // `data/photo/CapturePlans.kt`; this class only applies plans, in transactions.
+    // -----------------------------------------------------------------------
+
+    override suspend fun entryOnce(speciesId: String): Entry? =
+        db.entryDao().entryOnce(speciesId)?.let {
+            Entry(
+                speciesId = it.speciesId,
+                caughtAt = it.caughtAt,
+                favoriteCaptureId = it.favoriteCaptureId,
+                captureCount = db.captureDao().countForSpecies(speciesId),
+            )
+        }
+
+    override suspend fun captureOnce(captureId: String): Capture? =
+        db.captureDao().captureOnce(captureId)?.toDomain()
+
+    override suspend fun capturesForSpecies(speciesId: String): List<Capture> =
+        db.captureDao().observeCaptures(speciesId).first().map { it.toDomain() }
+
+    override suspend fun captureCountForUri(photoUri: String): Int =
+        db.captureDao().countForUri(photoUri)
+
+    override suspend fun applyRegistration(plan: RegistrationPlan) {
+        db.withTransaction {
+            // The entry goes in first: `captures` has no FK to `entries`, but writing the
+            // capture first would leave a window where the species reads as uncaught.
+            plan.newEntry?.let {
+                db.entryDao().upsert(
+                    EntryEntity(
+                        speciesId = it.speciesId,
+                        caughtAt = it.caughtAt,
+                        favoriteCaptureId = it.favoriteCaptureId,
+                    ),
+                )
+            }
+            db.captureDao().insert(plan.capture.toEntity())
+        }
+    }
+
+    override suspend fun applyDeletion(plan: CaptureDeletionPlan) {
+        db.withTransaction {
+            // Nulling first: `entries.favoriteCaptureId` has no foreign key (3.4), so nothing
+            // else would stop it dangling at a row that is about to vanish.
+            if (plan.clearFavorite) {
+                db.entryDao().setFavoriteCapture(plan.speciesId, null)
+            }
+            db.captureDao().deleteById(plan.captureId)
+            if (plan.deleteEntry) {
+                db.entryDao().deleteBySpeciesId(plan.speciesId)
+            }
+        }
+    }
+
+    override suspend fun setFavoriteCapture(speciesId: String, captureId: String?) {
+        db.entryDao().setFavoriteCapture(speciesId, captureId)
+    }
+
+    override suspend fun updateCaptureReference(
+        captureId: String,
+        photoUri: String,
+        thumbPath: String,
+    ) {
+        db.captureDao().updateReference(captureId, photoUri, thumbPath)
+    }
 }
+
+internal fun Capture.toEntity() = CaptureEntity(
+    id = id,
+    speciesId = speciesId,
+    photoUri = photoUri,
+    thumbPath = thumbPath,
+    localCopyPath = localCopyPath,
+    takenAt = takenAt,
+    lat = lat,
+    lng = lng,
+    locationLabel = locationLabel,
+    note = note,
+    createdAt = createdAt,
+)
 
 /**
  * Grid-cell assembly, kept pure and package-visible so the JVM tests can check the

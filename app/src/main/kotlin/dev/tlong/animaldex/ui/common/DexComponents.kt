@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,15 +17,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import dev.tlong.animaldex.data.photo.ownedFileModel
 import dev.tlong.animaldex.domain.SpeciesSummary
 import dev.tlong.animaldex.ui.theme.DexTheme
 
@@ -111,9 +118,13 @@ fun AttributionLine(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * `.cell` — one grid cell (M01). The art area carries the silhouette on `silBg`; slice 5
- * replaces it with the capture thumbnail named by [SpeciesSummary.thumbPath] when the species
- * is caught, which is why the summary is passed whole rather than picked apart here.
+ * `.cell` — one grid cell (M01). A caught species shows the user's own photo; an uncaught one
+ * shows the class silhouette on `silBg`.
+ *
+ * The photo comes from the capture's **stored thumbnail**, never from the gallery URI (M11).
+ * That is the rule that makes a broken reference a one-photo problem rather than a blank
+ * collection: the grid does not resolve anything, so it cannot fail. If the thumbnail file is
+ * somehow missing, Coil's error slot falls back to the silhouette rather than a hole.
  */
 @Composable
 fun SpeciesCell(
@@ -122,6 +133,8 @@ fun SpeciesCell(
     modifier: Modifier = Modifier,
 ) {
     val colors = DexTheme.colors
+    val filesDir = LocalContext.current.filesDir
+    val thumbModel = remember(species.thumbPath) { ownedFileModel(filesDir, species.thumbPath) }
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
@@ -136,12 +149,28 @@ fun SpeciesCell(
                 .background(colors.silBg),
             contentAlignment = Alignment.Center,
         ) {
-            SilhouetteIcon(
-                silhouetteRes = species.silhouetteRes,
-                taxClass = species.taxClass,
-                size = 56.dp,
-                tint = if (species.caught) colors.accent else colors.sil,
-            )
+            if (thumbModel != null) {
+                AsyncImage(
+                    model = thumbModel,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(
+                        Silhouettes.resolve(
+                            LocalContext.current,
+                            species.silhouetteRes,
+                            species.taxClass,
+                        ),
+                    ),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                SilhouetteIcon(
+                    silhouetteRes = species.silhouetteRes,
+                    taxClass = species.taxClass,
+                    size = 56.dp,
+                    tint = if (species.caught) colors.accent else colors.sil,
+                )
+            }
             if (species.caught) {
                 Text(
                     text = "✓",

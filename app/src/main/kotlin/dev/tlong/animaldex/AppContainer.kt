@@ -6,6 +6,9 @@ import dev.tlong.animaldex.data.catalogue.CatalogueImporter
 import dev.tlong.animaldex.data.catalogue.ImportOutcome
 import dev.tlong.animaldex.data.catalogue.RoomCatalogueStore
 import dev.tlong.animaldex.data.db.AppDatabase
+import dev.tlong.animaldex.data.photo.AndroidPhotoGateway
+import dev.tlong.animaldex.data.photo.CaptureRegistrar
+import dev.tlong.animaldex.data.photo.PhotoGateway
 import dev.tlong.animaldex.data.repo.DexRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +31,22 @@ class AppContainer(val appContext: Context) {
     val database: AppDatabase by lazy { AppDatabase.build(appContext) }
 
     val dexRepository: DexRepository by lazy { DexRepository(database) }
+
+    /** The platform half of the photo layer (ARCHITECTURE.md 4). */
+    val photoGateway: PhotoGateway by lazy { AndroidPhotoGateway(appContext) }
+
+    /**
+     * The core loop's write path. `keepLocalCopy` is S03's setting, hard-wired off here:
+     * slice 8 replaces the lambda with a `SharedPreferences` read (4.5) and nothing else in
+     * the registration path changes.
+     */
+    val captureRegistrar: CaptureRegistrar by lazy {
+        CaptureRegistrar(
+            store = dexRepository,
+            photos = photoGateway,
+            keepLocalCopy = { false },
+        )
+    }
 
     private val catalogueImporter: CatalogueImporter by lazy {
         CatalogueImporter(

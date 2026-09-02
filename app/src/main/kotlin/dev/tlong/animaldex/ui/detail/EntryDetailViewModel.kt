@@ -19,6 +19,8 @@ class EntryDetailViewModel(
     val uiState: StateFlow<EntryDetailUiState> = entryDetailUiState(
         detail = repository.speciesDetail(speciesId),
         ecosystems = repository.ecosystems(),
+        captures = repository.captures(speciesId),
+        progress = repository.dexProgress(),
     ).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
