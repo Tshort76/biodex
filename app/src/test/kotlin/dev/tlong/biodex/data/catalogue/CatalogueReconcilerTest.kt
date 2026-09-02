@@ -318,6 +318,45 @@ class CatalogueReconcilerTest {
     }
 
     @Test
+    fun `a curated caution survives with no use tag, and a plain note still does not`() {
+        val plan = CatalogueReconciler.plan(
+            document(
+                species = listOf(
+                    // Western Wild Ginger's shape: Duke's derives no use tag for it, and its
+                    // caution names aristolochic acid — a nephrotoxin and a carcinogen. There
+                    // is no reading of this app's safety story where that is dead data.
+                    assetSpecies(
+                        "wild-ginger",
+                        taxClass = "herb",
+                        kingdom = "plant",
+                        uses = emptyList(),
+                        usesNote = "Caution: contains aristolochic acid, a known kidney toxin " +
+                            "and carcinogen; do not ingest.",
+                    ),
+                    assetSpecies(
+                        "cypress",
+                        taxClass = "tree",
+                        kingdom = "plant",
+                        uses = emptyList(),
+                        usesNote = "Foliage in winter. Caution: recorded as poisonous.",
+                    ),
+                ),
+            ),
+            existing = emptyList(),
+        )
+
+        val byId = plan.speciesUpserts.associateBy { it.id }
+        assertEquals(
+            "Caution: contains aristolochic acid, a known kidney toxin and carcinogen; " +
+                "do not ingest.",
+            byId.getValue("wild-ginger").usesNote,
+        )
+        // Only the caution survives the missing tag; the part-and-season half describes a use
+        // nothing claims, so it goes the way "Orphaned note." above does.
+        assertEquals("Caution: recorded as poisonous.", byId.getValue("cypress").usesNote)
+    }
+
+    @Test
     fun `the v1 asset's animals import unchanged, with no kingdom field in the file`() {
         val plan = CatalogueReconciler.plan(
             document(species = listOf(assetSpecies("heron", dexNumber = 3))),

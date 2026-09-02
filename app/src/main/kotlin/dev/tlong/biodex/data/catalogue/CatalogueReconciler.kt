@@ -7,6 +7,7 @@ import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
+import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.storedDexNumber
 
 /**
@@ -149,9 +150,12 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
         silhouetteRes = silhouetteRes ?: "sil_${resolvedClass.wireName}",
         userEditedFields = emptyList(),
         uses = resolvedUses,
-        // A note with no use behind it would render as an orphaned paragraph under a
-        // section header that never appears; the write paths all drop it (11.1).
-        usesNote = usesNote?.takeIf { resolvedUses.isNotEmpty() },
+        // A note with no use behind it would render as an orphaned paragraph under a section
+        // header that never appears, so it goes — **except a `Caution:` sentence**, which
+        // survives with no tags at all (11.1, and `keptUsesNote` for why). A recorded toxicity
+        // is a fact about the species rather than a qualifier on a use somebody claimed, and
+        // dropping it here is what made the pipeline's poison rule exempt untagged species.
+        usesNote = keptUsesNote(usesNote, PlantUse.setFromWireNames(resolvedUses)),
         medicinalActivities = medicinalActivities,
         medicinalRecordCount = medicinalRecordCount,
         // The credit line belongs to Duke's data. Without the data it is a claim about a
