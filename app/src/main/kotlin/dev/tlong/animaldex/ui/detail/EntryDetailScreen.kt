@@ -23,7 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import dev.tlong.animaldex.appContainer
 import dev.tlong.animaldex.data.photo.ownedFileModel
 import dev.tlong.animaldex.domain.Capture
@@ -106,6 +110,7 @@ fun EntryDetailRoute(
             onBack = onBack,
             onRegister = onRegister,
             onOpenPhoto = onOpenPhoto,
+            onToggleCall = viewModel::toggleCall,
         )
         val detail = state.detail
         if (revealPending && detail != null) {
@@ -158,6 +163,7 @@ fun EntryDetailScreen(
     onBack: () -> Unit,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onToggleCall: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -192,11 +198,11 @@ fun EntryDetailScreen(
 
                 else -> DetailBody(
                     detail = detail,
-                    ecosystemNames = state.ecosystemNames,
-                    captures = state.captures,
+                    state = state,
                     filesDir = filesDir,
                     onRegister = onRegister,
                     onOpenPhoto = onOpenPhoto,
+                    onToggleCall = onToggleCall,
                 )
             }
         }
@@ -206,17 +212,24 @@ fun EntryDetailScreen(
 @Composable
 private fun DetailBody(
     detail: SpeciesDetail,
-    ecosystemNames: List<String>,
-    captures: List<Capture>,
+    state: EntryDetailUiState,
     filesDir: String,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onToggleCall: (String) -> Unit,
 ) {
     val colors = DexTheme.colors
     val uriHandler = LocalUriHandler.current
     val summary = detail.summary
+    val ecosystemNames = state.ecosystemNames
+    val captures = state.captures
 
-    Hero(summary = summary, imageAttribution = detail.imageAttribution)
+    Hero(
+        summary = summary,
+        imageUrl = detail.imageUrl,
+        imageAttribution = detail.imageAttribution,
+        online = state.online,
+    )
 
     Row(
         verticalAlignment = Alignment.Bottom,
@@ -266,7 +279,10 @@ private fun DetailBody(
     )
 
     SectionHeader("Call")
-    CallPlayerRow(callUrl = detail.callUrl, callAttribution = detail.callAttribution)
+    CallPlayerRow(
+        state = state.callRow,
+        onToggle = { detail.callUrl?.let(onToggleCall) },
+    )
 
     if (captures.isNotEmpty()) {
         SectionHeader("My photos (${captures.size}) · linked from gallery")
@@ -379,13 +395,39 @@ private fun PhotoStrip(
 }
 
 /**
- * `.hero` — the silhouette on `silBg` today. Slice 6 loads [SpeciesDetail.imageUrl] through
- * Coil into this box and keeps the silhouette as its error and offline placeholder (D3), so
- * the frame, the credit chip and the sizing are already what the image will land in.
+ * `.hero` — the frame the whole slice is for. What goes in it is decided by [heroVisual]:
+ * a caught species streams its Wikimedia image through Coil (disk-cached, so S02's "works
+ * offline the second time" is real), and every other case falls back to the class silhouette
+ * D3 asks for rather than to a hole.
+ *
+ * The silhouette is drawn **underneath** the image rather than as Coil's error slot, so the
+ * frame is never empty for the moment between request and first pixel.
  */
 @Composable
-private fun Hero(summary: SpeciesSummary, imageAttribution: String?) {
+private fun Hero(
+    summary: SpeciesSummary,
+    imageUrl: String?,
+    imageAttribution: String?,
+    online: Boolean,
+) {
     val colors = DexTheme.colors
+    // Retrying a failed load means building a *new* Coil painter — resetting our own phase
+    // restarts nothing, because the model has not changed and `onState` never fires again.
+    // Hence the generation counter: it keys the AsyncImage, so coming back online after a
+    // failure re-requests the image without the user leaving and re-entering the screen.
+    // Connectivity deliberately does not key `phase`: an image already on screen must not be
+    // demoted to "loading" (and hidden) just because the phone went into airplane mode.
+    var generation by remember(imageUrl) { mutableIntStateOf(0) }
+    var phase by remember(imageUrl, generation) { mutableStateOf(ImageLoadPhase.LOADING) }
+    LaunchedEffect(online, phase) {
+        if (online && phase == ImageLoadPhase.FAILED) generation++
+    }
+    val visual = heroVisual(
+        imageUrl = imageUrl,
+        caught = summary.caught,
+        phase = phase,
+        online = online,
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -400,7 +442,32 @@ private fun Hero(summary: SpeciesSummary, imageAttribution: String?) {
             size = 120.dp,
             tint = if (summary.caught) colors.accent else colors.sil,
         )
-        if (imageAttribution != null) {
+        // Requested whenever there is something to request, and hidden rather than removed
+        // when it is not the thing on show. Taking a failed image out of the composition would
+        // reset Coil's painter, which reports its way back to Loading — and the hero would
+        // then retry forever against a URL that is not answering.
+        if (summary.caught && imageUrl != null) {
+            key(imageUrl, generation) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = if (visual is HeroVisual.Reference) 1f else 0f,
+                    onState = { coilState ->
+                        when (coilState) {
+                            is AsyncImagePainter.State.Success -> phase = ImageLoadPhase.LOADED
+                            is AsyncImagePainter.State.Error -> phase = ImageLoadPhase.FAILED
+                            is AsyncImagePainter.State.Loading -> phase = ImageLoadPhase.LOADING
+                            // Empty is the painter's disposed/reset state, not an outcome.
+                            is AsyncImagePainter.State.Empty -> Unit
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        // M17: the credit belongs on the photograph, not on a silhouette we drew ourselves.
+        if (visual is HeroVisual.Reference && imageAttribution != null) {
             Text(
                 text = "Reference photo · $imageAttribution",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
@@ -415,6 +482,14 @@ private fun Hero(summary: SpeciesSummary, imageAttribution: String?) {
             )
         }
     }
+    heroNote(visual)?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = colors.faint,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
 }
 
 private val caughtDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
@@ -426,7 +501,7 @@ internal fun formatCaughtDate(caughtAt: Long?): String =
 // Previews (see the note in DexGridScreen.kt).
 // ---------------------------------------------------------------------------
 
-private fun previewDetail(caught: Boolean) = SpeciesDetail(
+private fun previewDetail(caught: Boolean, callUrl: String? = null) = SpeciesDetail(
     summary = SpeciesSummary(
         id = "western-screech-owl",
         regionId = "pacific",
@@ -446,10 +521,10 @@ private fun previewDetail(caught: Boolean) = SpeciesDetail(
         "day in tree cavities. Listen for a soft bouncing-ball trill at dusk.",
     description = null,
     imageUrl = "https://upload.wikimedia.org/example.jpg",
-    callUrl = null,
+    callUrl = callUrl,
     infoUrl = "https://en.wikipedia.org/wiki/Western_screech_owl",
     imageAttribution = "Wikimedia · CC BY-SA",
-    callAttribution = null,
+    callAttribution = "Xeno-canto XC123456 · CC BY-NC 4.0 · R. Smith",
     userEditedFields = emptyList(),
 )
 
@@ -459,7 +534,12 @@ private fun EntryDetailCaughtPreview() {
     AnimalDexTheme {
         EntryDetailScreen(
             state = EntryDetailUiState(
-                detail = previewDetail(caught = true),
+                // The catalogue ships no calls today (5.4); the preview carries one so the
+                // enabled row has a shape somebody can look at.
+                detail = previewDetail(
+                    caught = true,
+                    callUrl = "https://xeno-canto.org/123456/download",
+                ),
                 ecosystemNames = listOf("Oak Woodland & Chaparral", "Riparian & Wetland"),
                 captures = listOf(
                     Capture(

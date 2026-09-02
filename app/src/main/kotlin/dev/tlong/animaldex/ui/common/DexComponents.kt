@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import dev.tlong.animaldex.data.photo.ownedFileModel
 import dev.tlong.animaldex.domain.SpeciesSummary
+import dev.tlong.animaldex.media.CallRowState
 import dev.tlong.animaldex.ui.theme.DexTheme
 
 // ---------------------------------------------------------------------------
@@ -206,53 +207,65 @@ fun SpeciesCell(
 }
 
 /**
- * `.player` — the call row (M04/M06). Slice 4 renders it in one state only: **disabled**.
- * Every `callUrl` in the shipped catalogue is null (no Xeno-canto key yet) and playback is
- * slice 6's, so the row states its unavailability rather than disappearing — the layout the
- * user sees today is the layout that comes alive when calls arrive, with no code change here.
+ * `.player` — the call row (M04/M06). Every state it can show is decided by
+ * [dev.tlong.animaldex.media.callRowState]; this composable only paints one.
+ *
+ * The row renders in **every** state, including the disabled "No call available" one — which
+ * is every species in the shipped catalogue, since no Xeno-canto key exists yet (5.4). It is
+ * deliberately not hidden: the row the user sees today is the row that comes alive when calls
+ * arrive, with no layout change.
  */
 @Composable
 fun CallPlayerRow(
-    callUrl: String?,
-    callAttribution: String?,
+    state: CallRowState,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = DexTheme.colors
-    val available = callUrl != null
+    val buttonColor = when {
+        !state.enabled -> colors.rule
+        state.failed -> colors.stop
+        else -> colors.accent
+    }
+    val waveColor = when {
+        !state.enabled -> colors.faint
+        state.failed -> colors.stop
+        state.playing -> colors.accent
+        else -> colors.accent.copy(alpha = 0.7f)
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(colors.codeBg)
+            .background(if (state.failed) colors.stopSoft else colors.codeBg)
+            .then(if (state.enabled) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
         Box(
             modifier = Modifier
                 .size(30.dp)
                 .clip(CircleShape)
-                .background(if (available) colors.accent else colors.rule),
+                .background(buttonColor),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "▶",
+                text = when {
+                    state.loading -> "…"
+                    state.playing -> "■"
+                    state.failed -> "↻"
+                    else -> "▶"
+                },
                 style = MaterialTheme.typography.labelSmall,
-                color = if (available) colors.card else colors.faint,
+                color = if (state.enabled) colors.card else colors.faint,
             )
         }
-        StaticWaveform(
-            color = if (available) colors.accent else colors.faint,
-            modifier = Modifier.weight(1f),
-        )
+        StaticWaveform(color = waveColor, modifier = Modifier.weight(1f))
         Text(
-            text = if (available) {
-                callAttribution ?: "Xeno-canto"
-            } else {
-                "No call available"
-            },
+            text = state.label,
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 13.sp),
-            color = colors.faint,
+            color = if (state.failed) colors.stop else colors.faint,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1.1f),

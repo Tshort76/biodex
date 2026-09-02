@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Slice 6: the "is there a network" probe of ARCHITECTURE.md 5.3, which is what lets an
+         un-cached reference image say "connect to load it" rather than "could not be loaded".
+         A normal permission: granted at install, no runtime prompt. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".App"

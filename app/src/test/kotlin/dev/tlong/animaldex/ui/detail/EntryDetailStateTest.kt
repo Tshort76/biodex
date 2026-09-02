@@ -5,10 +5,12 @@ import dev.tlong.animaldex.domain.SpeciesDetail
 import dev.tlong.animaldex.domain.SpeciesSource
 import dev.tlong.animaldex.domain.SpeciesSummary
 import dev.tlong.animaldex.domain.TaxClass
+import dev.tlong.animaldex.media.CallPlayback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -21,7 +23,11 @@ class EntryDetailStateTest {
         Ecosystem("riparian-wetland", "pacific", "Riparian & Wetland", 4),
     )
 
-    private fun detail(ecosystemIds: List<String>) = SpeciesDetail(
+    private fun detail(
+        ecosystemIds: List<String>,
+        callUrl: String? = null,
+        caught: Boolean = false,
+    ) = SpeciesDetail(
         summary = SpeciesSummary(
             id = "western-screech-owl",
             regionId = "pacific",
@@ -33,14 +39,14 @@ class EntryDetailStateTest {
             taxClass = TaxClass.BIRD,
             silhouetteRes = "sil_bird",
             ecosystemIds = ecosystemIds,
-            caughtAt = null,
+            caughtAt = if (caught) 1L else null,
             thumbPath = null,
             captureCount = 0,
         ),
         habitatText = "Low-elevation woodlands.",
         description = null,
         imageUrl = null,
-        callUrl = null,
+        callUrl = callUrl,
         infoUrl = null,
         imageAttribution = null,
         callAttribution = null,
@@ -52,12 +58,16 @@ class EntryDetailStateTest {
         captures: List<dev.tlong.animaldex.domain.Capture> = emptyList(),
         progress: dev.tlong.animaldex.domain.DexProgress =
             dev.tlong.animaldex.domain.DexProgress.Empty,
+        playback: CallPlayback = CallPlayback.Idle,
+        online: Boolean = true,
     ) = runBlocking {
         entryDetailUiState(
             detail = MutableStateFlow(species),
             ecosystems = MutableStateFlow(ecosystems),
             captures = MutableStateFlow(captures),
             progress = MutableStateFlow(progress),
+            playback = MutableStateFlow(playback),
+            online = MutableStateFlow(online),
         ).first()
     }
 
@@ -109,6 +119,33 @@ class EntryDetailStateTest {
         val s = state(null)
         assertNull(s.detail)
         assertTrue(s.missing)
+    }
+
+    @Test
+    fun `the call row is derived state - a null callUrl is disabled whatever is playing`() {
+        val s = state(
+            detail(listOf("oak-chaparral")),
+            playback = CallPlayback.Playing("https://xeno-canto.org/1/download"),
+        )
+        assertFalse(s.callRow.enabled)
+        assertFalse(s.callRow.playing)
+    }
+
+    @Test
+    fun `a species whose call is the one playing reads as playing`() {
+        val url = "https://xeno-canto.org/1/download"
+        val s = state(
+            detail(listOf("oak-chaparral"), callUrl = url),
+            playback = CallPlayback.Playing(url),
+        )
+        assertTrue(s.callRow.enabled)
+        assertTrue(s.callRow.playing)
+    }
+
+    @Test
+    fun `connectivity reaches the state - it is what the hero uses to explain a miss`() {
+        assertTrue(state(detail(listOf("oak-chaparral"))).online)
+        assertFalse(state(detail(listOf("oak-chaparral")), online = false).online)
     }
 
     @Test

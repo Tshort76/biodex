@@ -1,6 +1,7 @@
 package dev.tlong.animaldex
 
 import android.content.Context
+import coil3.ImageLoader
 import dev.tlong.animaldex.data.catalogue.AndroidAssetReader
 import dev.tlong.animaldex.data.catalogue.CatalogueImporter
 import dev.tlong.animaldex.data.catalogue.ImportOutcome
@@ -10,6 +11,15 @@ import dev.tlong.animaldex.data.photo.AndroidPhotoGateway
 import dev.tlong.animaldex.data.photo.CaptureRegistrar
 import dev.tlong.animaldex.data.photo.PhotoGateway
 import dev.tlong.animaldex.data.repo.DexRepository
+import dev.tlong.animaldex.media.AndroidNetworkMonitor
+import dev.tlong.animaldex.media.CallPlayer
+import dev.tlong.animaldex.media.ExoCallPlayer
+import dev.tlong.animaldex.media.NetworkMonitor
+import dev.tlong.animaldex.media.buildAudioCache
+import dev.tlong.animaldex.media.buildImageLoader
+import dev.tlong.animaldex.media.callDataSourceFactory
+import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +27,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.Cache
+import okhttp3.OkHttpClient
 
 /**
  * Hand-wired singleton holder — the whole of this app's dependency injection
@@ -48,6 +60,51 @@ class AppContainer(val appContext: Context) {
         )
     }
 
+    /**
+     * ARCHITECTURE.md 5.2's single client. The User-Agent interceptor is not politeness:
+     * Wikimedia rejects generic clients, so without it every reference image 403s.
+     */
+    val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .cache(Cache(File(appContext.cacheDir, "http"), HTTP_CACHE_BYTES))
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .header("User-Agent", USER_AGENT)
+                        .build(),
+                )
+            }
+            .build()
+    }
+
+    /**
+     * Media bytes bypass the 20 MB HTTP cache: images have Coil's 250 MB disk cache and audio
+     * has `SimpleCache`, so letting them also write here would evict slice 7's API responses
+     * for nothing.
+     */
+    private val mediaHttpClient: OkHttpClient by lazy {
+        httpClient.newBuilder().cache(null).build()
+    }
+
+    /** Installed as Coil's app-wide singleton by [App]; see 5.3. */
+    val imageLoader: ImageLoader by lazy { buildImageLoader(appContext, mediaHttpClient) }
+
+    val networkMonitor: NetworkMonitor by lazy { AndroidNetworkMonitor(appContext) }
+
+    /** One per process and per directory — a second one over the same folder throws. */
+    private val audioCache by lazy { buildAudioCache(appContext) }
+
+    /**
+     * One call plays at a time, app-wide (M06). Nothing exercises this today: every `callUrl`
+     * in the shipped catalogue is null for want of a Xeno-canto key (5.4), and the row stays
+     * in its disabled state until the pipeline fills them in.
+     */
+    val callPlayer: CallPlayer by lazy {
+        ExoCallPlayer(appContext, callDataSourceFactory(audioCache, mediaHttpClient))
+    }
+
     private val catalogueImporter: CatalogueImporter by lazy {
         CatalogueImporter(
             assets = AndroidAssetReader(appContext),
@@ -71,6 +128,12 @@ class AppContainer(val appContext: Context) {
         }
     }
 }
+
+/** 5.2: enough to identify the app to Wikimedia, GBIF and Xeno-canto. */
+private const val USER_AGENT = "AnimalDex/1.0 (personal Android app; tlong@unified.health)"
+
+/** 5.2: the API-lookup response cache. Media never writes here — see `mediaHttpClient`. */
+private const val HTTP_CACHE_BYTES = 20L * 1024 * 1024
 
 /** Reaches the container from a composable: `LocalContext.current.appContainer`. */
 val Context.appContainer: AppContainer
