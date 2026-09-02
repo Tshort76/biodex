@@ -145,20 +145,23 @@ class SpeciesLookupRepositoryTest {
     }
 
     @Test
-    fun `the medicinal toggle defaults on for yarrow and off for Oregon grape`() = runBlocking {
+    fun `the medicinal toggle defaults on above the threshold and off below it`() = runBlocking {
         val yarrow = repository(FakeFetcher(plantStubs("Achillea millefolium", 1L)))
             .detailsFor(plant("Achillea millefolium", taxClass = TaxClass.HERB), "Yarrow")
-        val grape = repository(FakeFetcher(plantStubs("Mahonia aquifolium", 2L)))
-            .detailsFor(plant("Mahonia aquifolium"), "Oregon Grape")
+        val swordFern = repository(FakeFetcher(plantStubs("Polystichum munitum", 2L)))
+            .detailsFor(plant("Polystichum munitum", taxClass = TaxClass.FERN), "Western Sword Fern")
 
-        // Yarrow: 105 records over 8 activities. Oregon grape: 4 records over 2 — real numbers
-        // from the source table, and the three-activity rule is what separates them.
+        // Real numbers from the shipped asset: yarrow 105 records over 8 activities, sword fern
+        // 2 over 2. The three-activity rule is the whole of what separates them.
         assertEquals(setOf(PlantUse.MEDICINAL), yarrow.fields.uses)
         assertEquals(105, yarrow.fields.medicinalRecordCount)
         assertEquals(DUKE_ATTRIBUTION, yarrow.fields.usesAttribution)
 
-        assertEquals(emptySet<PlantUse>(), grape.fields.uses)
-        assertEquals(4, grape.fields.medicinalRecordCount)
+        assertEquals(emptySet<PlantUse>(), swordFern.fields.uses)
+        assertEquals(2, swordFern.fields.medicinalRecordCount)
+        // The record is still carried: the tag is a rule applied on top of the source, never a
+        // filter over it, so the card can show what Duke's has even when it tags nothing.
+        assertEquals(2, swordFern.fields.medicinalActivities!!.size)
     }
 
     @Test
@@ -175,7 +178,7 @@ class SpeciesLookupRepositoryTest {
 
         val details = repository(fetcher).detailsFor(plant("Berberis aquifolium", 3L), "Oregon Grape")
 
-        assertEquals(4, details.duke?.recordCount)
+        assertEquals(3, details.duke?.recordCount)
         assertTrue(details.dukeConsulted)
     }
 

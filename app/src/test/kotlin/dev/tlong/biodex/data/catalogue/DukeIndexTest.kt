@@ -9,9 +9,10 @@ import org.junit.Test
 
 /**
  * The bundled Duke's index (ARCHITECTURE.md 11.2). Everything here runs against
- * `test/resources/catalogue/duke_fixture.json`, a twelve-taxon slice whose numbers are the ones
- * measured in the real `ETHNOBOT.csv`: yarrow 105 records, elder 60 with a `Poison` row, Oregon
- * grape 4 under its *Mahonia* name, and nothing at all for devil's club.
+ * `test/resources/catalogue/duke_fixture.json`, a twelve-taxon **verified subset** of the
+ * shipped asset — every count copied row for row, so a test that passes here describes the data
+ * the phone actually has rather than a plausible invention. Devil's club and Oregon grape's
+ * *Berberis* name are absent on purpose; both absences are the point of a test below.
  */
 class DukeIndexTest {
 
@@ -34,7 +35,7 @@ class DukeIndexTest {
 
         assertEquals(105, record.recordCount)
         assertEquals(8, record.activities.size)
-        assertEquals("Astringent", record.activities.first())
+        assertEquals("Tonic", record.activities.first())
         assertFalse(record.poison)
     }
 
@@ -47,17 +48,17 @@ class DukeIndexTest {
         assertNull(duke.lookup("Berberis aquifolium"))
 
         val record = duke.lookup("Berberis aquifolium", listOf("Mahonia aquifolium"))!!
-        assertEquals(4, record.recordCount)
+        assertEquals(3, record.recordCount)
     }
 
     @Test
     fun `the first hit wins, in the order the names were given`() {
         val record = index().lookup(
             accepted = "Sambucus cerulea",
-            synonyms = listOf("Sambucus caerulea", "Sambucus nigra"),
+            synonyms = listOf("Arbutus menziesii", "Sambucus nigra"),
         )!!
 
-        assertEquals("the earlier synonym must win", 3, record.recordCount)
+        assertEquals("the earlier synonym must win", 5, record.recordCount)
     }
 
     @Test
@@ -83,11 +84,12 @@ class DukeIndexTest {
     fun `three distinct activities is the medicinal threshold, on both sides of it`() {
         val duke = index()
 
-        // Above: yarrow, 8 activities. On it: Douglas-fir, exactly 3. Below: Oregon grape, 2.
+        // Above: yarrow, 8 activities. Exactly on it: Oregon grape, 3 — the boundary is load
+        // bearing and five of the shipped 80 sit on it. Below: sword fern 2, yerba santa 1.
         assertTrue(DukeIndex.medicinalByRule(duke.lookup("Achillea millefolium")))
-        assertTrue(DukeIndex.medicinalByRule(duke.lookup("Pseudotsuga menziesii")))
-        assertFalse(DukeIndex.medicinalByRule(duke.lookup("Mahonia aquifolium")))
-        assertFalse(DukeIndex.medicinalByRule(duke.lookup("Thuja plicata")))
+        assertTrue(DukeIndex.medicinalByRule(duke.lookup("Mahonia aquifolium")))
+        assertFalse(DukeIndex.medicinalByRule(duke.lookup("Polystichum munitum")))
+        assertFalse(DukeIndex.medicinalByRule(duke.lookup("Eriodictyon californicum")))
     }
 
     @Test
@@ -126,9 +128,22 @@ class DukeIndexTest {
 
     @Test
     fun `both asset shapes parse, so whichever the pipeline emits works`() {
+        // The shipped asset carries inline activity strings under `taxa`; 11.3 also describes a
+        // deduplicated string table. Both parse, so neither shape can break the app.
         val inline = index("duke_fixture_inline.json")
 
         assertEquals(3, inline.lookup("Achillea millefolium")!!.activities.size)
         assertEquals(listOf("Astringent", "Laxative"), inline.lookup("Mahonia aquifolium")!!.activities)
+    }
+
+    @Test
+    fun `a poisonous species below the medicinal threshold is a real and common shape`() {
+        // 516 of the asset's 13,010 taxa are poisonous and carry fewer than three activities.
+        // They get no medicinal tag, so their caution is the only thing the app ever says about
+        // them — which is why a caution now outlives the tags it arrived without.
+        val record = index().lookup("Cercocarpus montanus")!!
+
+        assertTrue(record.poison)
+        assertFalse(DukeIndex.medicinalByRule(record))
     }
 }

@@ -1,21 +1,124 @@
 {
-  "activities": [
-    "Astringent", "Diuretic", "Vulnerary", "Antiinflammatory", "Diaphoretic",
-    "Laxative", "Emetic", "Febrifuge", "Analgesic", "Antiseptic",
-    "Expectorant", "Sedative", "Tonic", "Antitumor"
-  ],
+  "_comment": "A verified subset of the shipped app/src/main/assets/catalogue/duke_ethnobot.json, copied row for row on 2026-09-02. Every count here is the real one, so a test that reads this fixture describes the data the phone actually has. Absent on purpose: Oplopanax horridus, Vaccinium ovatum, Rhododendron macrophyllum and Berberis aquifolium \u2014 'no Duke's record' is an ordinary state, and Oregon grape is filed only under Mahonia, which is what the synonym pass is for.",
   "taxa": {
-    "Achillea millefolium": { "a": [0, 1, 2, 3, 4, 8, 9, 12], "n": 105, "p": false },
-    "Urtica dioica": { "a": [1, 2, 3, 5, 12, 10], "n": 79 },
-    "Sambucus nigra": { "a": [4, 1, 5, 6, 7], "n": 60, "p": true },
-    "Sambucus caerulea": { "a": [4, 5, 7], "n": 3 },
-    "Arctostaphylos uva-ursi": { "a": [0, 1, 9, 12], "n": 27 },
-    "Pseudotsuga menziesii": { "a": [10, 9, 2], "n": 11 },
-    "Thuja plicata": { "a": [10, 2], "n": 7 },
-    "Rubus spectabilis": { "a": [0, 2], "n": 5 },
-    "Mahonia aquifolium": { "a": [0, 5], "n": 4 },
-    "Taxus brevifolia": { "a": [13, 8, 11], "n": 9, "p": true },
-    "Pteridium aquilinum": { "a": [1], "n": 6, "p": true },
-    "Rubus ursinus": { "a": [0], "n": 2 }
+    "achillea millefolium": {
+      "a": [
+        "Tonic",
+        "Stimulant",
+        "Wound",
+        "Hemostat",
+        "Poultice",
+        "Ache(Head)",
+        "Cancer",
+        "Carminative"
+      ],
+      "n": 105
+    },
+    "urtica dioica": {
+      "a": [
+        "Rheumatism",
+        "Depurative",
+        "Diuretic",
+        "Alopecia",
+        "Anodyne",
+        "Counterirritant",
+        "Gout",
+        "Paralysis"
+      ],
+      "n": 79
+    },
+    "sambucus nigra": {
+      "a": [
+        "Sudorific",
+        "Diaphoretic",
+        "Rheumatism",
+        "Cathartic",
+        "Depurative",
+        "Diuretic",
+        "Emetic",
+        "Expectorant"
+      ],
+      "n": 58,
+      "p": true
+    },
+    "mahonia aquifolium": {
+      "a": [
+        "Tonic",
+        "Bactericide",
+        "Alterative"
+      ],
+      "n": 3,
+      "p": true
+    },
+    "pseudotsuga menziesii": {
+      "a": [
+        "Bactericide",
+        "Coffee",
+        "Diarrhea",
+        "Insecticide",
+        "Rheumatism",
+        "Tea",
+        "Venereal",
+        "Cold"
+      ],
+      "n": 11
+    },
+    "polystichum munitum": {
+      "a": [
+        "Boil",
+        "Sore"
+      ],
+      "n": 2
+    },
+    "eriodictyon californicum": {
+      "a": [
+        "Poultice"
+      ],
+      "n": 1
+    },
+    "yucca brevifolia": {
+      "a": [
+        "Gonorrhea",
+        "Emetic"
+      ],
+      "n": 2
+    },
+    "taxus brevifolia": {
+      "a": [
+        "Depilatory",
+        "Emmenagogue",
+        "Fumitory"
+      ],
+      "n": 3
+    },
+    "cercocarpus montanus": {
+      "a": [
+        "Laxative",
+        "Cyanogenetic"
+      ],
+      "n": 3,
+      "p": true
+    },
+    "rubus ursinus": {
+      "a": [
+        "Hemoptysis",
+        "Sore",
+        "Tea",
+        "Hematemesis",
+        "Swelling",
+        "Diarrhea"
+      ],
+      "n": 6
+    },
+    "arbutus menziesii": {
+      "a": [
+        "Burn",
+        "Cold",
+        "Diabetes",
+        "Rheumatism",
+        "Wound"
+      ],
+      "n": 5
+    }
   }
 }
