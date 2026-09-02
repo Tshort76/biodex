@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plant silhouette (ARCHITECTURE.md 11.4, M25): the path is a byte-copy of
+     mockup.html's <symbol id="p-conifer"> so the shapes on the phone are the shapes the
+     design board shows. Drawn at runtime with a ColorFilter tint over silBg. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M50 6 L64 30 L57 30 L70 50 L62 50 L78 72 L55 72 L55 92 L45 92 L45 72 L22 72 L38 50 L30 50 L43 30 L36 30 Z" />
+</vector>

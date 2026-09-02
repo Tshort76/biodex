@@ -2,6 +2,7 @@ package dev.tlong.biodex.ui.stats
 
 import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.EcosystemProgress
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -37,6 +38,26 @@ data class StatsUiState(
 
     /** M29: the header's plant pill, on the same rule as the grid's. */
     val showPlantPill: Boolean get() = plants.total > 0
+
+    /**
+     * The one switch between the shipped one-kingdom screen and M26's two-kingdom one. While
+     * a region has no plants in it — which is every install until slice 10's asset lands —
+     * every plant element would read `0/0`, so the screen renders exactly as it shipped.
+     */
+    val showPlants: Boolean get() = plants.total > 0
+
+    /** D9's addendum across both kingdoms: "+3 of your own" stays one number (11.4). */
+    val userAdded: Int get() = overall.userAdded + plants.userAdded
+
+    /**
+     * 11.4's "By class" groups. `perClass` carries only classes the catalogue actually has,
+     * so a group with nothing in it is an empty list and its sub-header is not drawn.
+     */
+    val animalClasses: List<ClassRow>
+        get() = classes.filter { it.taxClass.kingdom == Kingdom.ANIMAL }
+
+    val plantClasses: List<ClassRow>
+        get() = classes.filter { it.taxClass.kingdom == Kingdom.PLANT }
 }
 
 data class ClassRow(val taxClass: TaxClass, val label: String, val meter: Meter)

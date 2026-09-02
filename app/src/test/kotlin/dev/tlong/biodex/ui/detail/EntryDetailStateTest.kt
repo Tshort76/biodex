@@ -159,8 +159,8 @@ class EntryDetailStateTest {
             detail(listOf("oak-chaparral")),
             playback = CallPlayback.Playing("https://xeno-canto.org/1/download"),
         )
-        assertFalse(s.callRow.enabled)
-        assertFalse(s.callRow.playing)
+        assertFalse(s.callRow!!.enabled)
+        assertFalse(s.callRow!!.playing)
     }
 
     @Test
@@ -170,8 +170,8 @@ class EntryDetailStateTest {
             detail(listOf("oak-chaparral"), callUrl = url),
             playback = CallPlayback.Playing(url),
         )
-        assertTrue(s.callRow.enabled)
-        assertTrue(s.callRow.playing)
+        assertTrue(s.callRow!!.enabled)
+        assertTrue(s.callRow!!.playing)
     }
 
     @Test

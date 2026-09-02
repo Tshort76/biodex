@@ -1,0 +1,143 @@
+{
+  "catalogueVersion": 2,
+  "regionId": "pacific",
+  "regionName": "Pacific USA",
+  "ecosystems": [
+    { "id": "coastal-rainforest", "name": "Coastal Rainforest", "sortOrder": 1 },
+    { "id": "rocky-shore-kelp", "name": "Shoreline, Dunes & Kelp", "sortOrder": 2 },
+    { "id": "oak-chaparral", "name": "Oak Woodland & Chaparral", "sortOrder": 3 },
+    { "id": "riparian-wetland", "name": "Riparian & Wetland", "sortOrder": 4 },
+    { "id": "high-desert", "name": "High Desert & Sagebrush", "sortOrder": 5 },
+    { "id": "alpine", "name": "Sierra & Cascade Mountains", "sortOrder": 6 },
+    { "id": "urban-suburban", "name": "Urban & Suburban", "sortOrder": 7 }
+  ],
+  "species": [
+    {
+      "id": "great-blue-heron", "dexNumber": 3, "commonName": "Great Blue Heron",
+      "scientificName": "Ardea herodias", "kingdom": "animal", "taxClass": "bird",
+      "ecosystemIds": ["riparian-wetland", "rocky-shore-kelp"],
+      "habitatText": "Shallow fresh and salt water from tidal flats to suburban ponds.",
+      "callUrl": "https://xeno-canto.org/fixture/100001/download",
+      "callAttribution": "Xeno-canto XC100001 · CC BY-NC 4.0 · R. Fixture",
+      "silhouetteRes": "sil_bird"
+    },
+    {
+      "id": "western-screech-owl", "dexNumber": 21, "commonName": "Western Screech-Owl",
+      "scientificName": "Megascops kennicottii", "kingdom": "animal", "taxClass": "bird",
+      "ecosystemIds": ["oak-chaparral", "riparian-wetland", "urban-suburban"],
+      "habitatText": "Low-elevation woodlands, streamside groves and suburban parks.",
+      "callUrl": "https://xeno-canto.org/fixture/100002/download",
+      "callAttribution": "Xeno-canto XC100002 · CC BY-NC 4.0 · S. Fixture",
+      "silhouetteRes": "sil_bird"
+    },
+    {
+      "id": "steller-jay", "dexNumber": 34, "commonName": "Steller's Jay",
+      "scientificName": "Cyanocitta stelleri", "kingdom": "animal", "taxClass": "bird",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "habitatText": "Conifer forest from the coast to the subalpine.",
+      "silhouetteRes": "sil_bird"
+    },
+    {
+      "id": "black-tailed-deer", "dexNumber": 41, "commonName": "Black-tailed Deer",
+      "scientificName": "Odocoileus hemionus columbianus", "kingdom": "animal",
+      "taxClass": "mammal", "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "habitatText": "Forest edges and brushy slopes.", "silhouetteRes": "sil_mammal"
+    },
+    {
+      "id": "coyote", "dexNumber": 49, "commonName": "Coyote",
+      "scientificName": "Canis latrans", "kingdom": "animal", "taxClass": "mammal",
+      "ecosystemIds": ["oak-chaparral", "high-desert", "urban-suburban"],
+      "habitatText": "Everywhere, from ranchland to city parks.", "silhouetteRes": "sil_mammal"
+    },
+    {
+      "id": "western-fence-lizard", "dexNumber": 66, "commonName": "Western Fence Lizard",
+      "scientificName": "Sceloporus occidentalis", "kingdom": "animal", "taxClass": "reptile",
+      "ecosystemIds": ["oak-chaparral"], "habitatText": "Sunny rocks, fence rails and logs.",
+      "silhouetteRes": "sil_reptile"
+    },
+    {
+      "id": "pacific-tree-frog", "dexNumber": 77, "commonName": "Pacific Tree Frog",
+      "scientificName": "Pseudacris regilla", "kingdom": "animal", "taxClass": "amphibian",
+      "ecosystemIds": ["riparian-wetland"], "habitatText": "Ponds, ditches and damp gardens.",
+      "silhouetteRes": "sil_amphibian"
+    },
+    {
+      "id": "chinook-salmon", "dexNumber": 84, "commonName": "Chinook Salmon",
+      "scientificName": "Oncorhynchus tshawytscha", "kingdom": "animal", "taxClass": "fish",
+      "ecosystemIds": ["riparian-wetland", "rocky-shore-kelp"],
+      "habitatText": "Cold rivers and the nearshore Pacific.", "silhouetteRes": "sil_fish"
+    },
+    {
+      "id": "banana-slug", "dexNumber": 88, "commonName": "Banana Slug",
+      "scientificName": "Ariolimax columbianus", "kingdom": "animal",
+      "taxClass": "other_invertebrate", "ecosystemIds": ["coastal-rainforest"],
+      "habitatText": "Damp redwood and hemlock forest floor.",
+      "silhouetteRes": "sil_other_invertebrate"
+    },
+    {
+      "id": "monarch-butterfly", "dexNumber": 101, "commonName": "Monarch Butterfly",
+      "scientificName": "Danaus plexippus", "kingdom": "animal", "taxClass": "insect",
+      "ecosystemIds": ["oak-chaparral", "urban-suburban"],
+      "habitatText": "Milkweed patches, and coastal groves in winter.",
+      "silhouetteRes": "sil_insect"
+    },
+
+    {
+      "id": "douglas-fir", "dexNumber": 1, "commonName": "Douglas-fir",
+      "scientificName": "Pseudotsuga menziesii", "kingdom": "plant", "taxClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "habitatText": "The dominant conifer of the region's lower and middle slopes.",
+      "silhouetteRes": "sil_tree_conifer",
+      "uses": []
+    },
+    {
+      "id": "pacific-madrone", "dexNumber": 28, "commonName": "Pacific Madrone",
+      "scientificName": "Arbutus menziesii", "kingdom": "plant", "taxClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "habitatText": "Dry, well-drained slopes near the coast, often with oaks.",
+      "silhouetteRes": "sil_tree_broadleaf",
+      "uses": ["edible"],
+      "usesNote": "Berries, autumn — mealy raw, better cooked or dried."
+    },
+    {
+      "id": "blue-elderberry", "dexNumber": 47, "commonName": "Blue Elderberry",
+      "scientificName": "Sambucus cerulea", "kingdom": "plant", "taxClass": "shrub",
+      "ecosystemIds": ["riparian-wetland", "oak-chaparral", "urban-suburban"],
+      "habitatText": "Streambanks, canyon bottoms and open slopes.",
+      "silhouetteRes": "sil_shrub",
+      "uses": ["edible", "medicinal"],
+      "usesNote": "Berries, late summer to early autumn — cook or dry before eating; flowers for cordial and tea. Caution: raw berries, leaves, stems and bark are toxic; red-berried elders are not this species.",
+      "medicinalActivities": ["Diaphoretic", "Diuretic", "Laxative", "Emetic", "Febrifuge"],
+      "medicinalRecordCount": 60,
+      "usesAttribution": "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
+    },
+    {
+      "id": "common-yarrow", "dexNumber": 61, "commonName": "Common Yarrow",
+      "scientificName": "Achillea millefolium", "kingdom": "plant", "taxClass": "herb",
+      "ecosystemIds": ["oak-chaparral", "alpine", "urban-suburban"],
+      "habitatText": "Meadows, roadsides and open slopes to treeline.",
+      "silhouetteRes": "sil_herb",
+      "uses": ["medicinal"],
+      "medicinalActivities": ["Astringent", "Diuretic", "Wound", "Antiseptic"],
+      "medicinalRecordCount": 105,
+      "usesAttribution": "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
+    },
+    {
+      "id": "miners-lettuce", "dexNumber": 59, "commonName": "Miner's Lettuce",
+      "scientificName": "Claytonia perfoliata", "kingdom": "plant", "taxClass": "herb",
+      "ecosystemIds": ["oak-chaparral", "coastal-rainforest"],
+      "habitatText": "Shaded, damp ground under oaks in late winter and spring.",
+      "silhouetteRes": "sil_herb",
+      "uses": ["edible"],
+      "usesNote": "Whole plant, late winter to spring — a salad green while it is still tender."
+    },
+    {
+      "id": "western-sword-fern", "dexNumber": 78, "commonName": "Western Sword Fern",
+      "scientificName": "Polystichum munitum", "kingdom": "plant", "taxClass": "fern",
+      "ecosystemIds": ["coastal-rainforest"],
+      "habitatText": "The forest floor of the coastal rainforest, in deep shade.",
+      "silhouetteRes": "sil_fern",
+      "uses": []
+    }
+  ]
+}

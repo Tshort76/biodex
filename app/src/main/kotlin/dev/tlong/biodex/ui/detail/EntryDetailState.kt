@@ -3,10 +3,12 @@ package dev.tlong.biodex.ui.detail
 import dev.tlong.biodex.domain.Capture
 import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.media.CallPlayback
 import dev.tlong.biodex.media.CallRowState
 import dev.tlong.biodex.media.callRowState
+import dev.tlong.biodex.ui.common.UsesContent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -33,14 +35,40 @@ data class EntryDetailUiState(
 
     val favoriteCaptureId: String? get() = captures.firstOrNull()?.id
 
-    /** The call row's whole state, decided in one pure place rather than in the composable. */
-    val callRow: CallRowState
-        get() = callRowState(
-            callUrl = detail?.callUrl,
-            callAttribution = detail?.callAttribution,
-            playback = playback,
-            online = online,
-        )
+    /**
+     * The call row's whole state, decided in one pure place rather than in the composable —
+     * and **null for a plant in every playback state** (M24, D15). A plant has no call slot
+     * at all, so "disabled" is the wrong answer here: the row does not exist.
+     */
+    val callRow: CallRowState?
+        get() {
+            if (detail?.summary?.kingdom == Kingdom.PLANT) return null
+            return callRowState(
+                callUrl = detail?.callUrl,
+                callAttribution = detail?.callAttribution,
+                playback = playback,
+                online = online,
+            )
+        }
+
+    /**
+     * What fills the call row's slot instead (M24). Null for an animal, and null for a plant
+     * with no documented use — in which case habitat is followed straight by the photo strip
+     * and nothing is drawn, not an empty section.
+     */
+    val uses: UsesContent?
+        get() {
+            val species = detail ?: return null
+            if (species.summary.kingdom != Kingdom.PLANT) return null
+            if (species.summary.uses.isEmpty()) return null
+            return UsesContent(
+                uses = species.summary.uses,
+                usesNote = species.usesNote,
+                medicinalActivities = species.medicinalActivities,
+                medicinalRecordCount = species.medicinalRecordCount,
+                usesAttribution = species.usesAttribution,
+            )
+        }
 }
 
 fun entryDetailUiState(

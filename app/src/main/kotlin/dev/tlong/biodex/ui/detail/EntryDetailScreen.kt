@@ -58,6 +58,7 @@ import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.ScientificName
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
+import dev.tlong.biodex.ui.common.UsesSection
 import dev.tlong.biodex.ui.reveal.RevealContent
 import dev.tlong.biodex.ui.reveal.UnlockRevealOverlay
 import dev.tlong.biodex.ui.theme.BioDexTheme
@@ -128,6 +129,7 @@ fun EntryDetailRoute(
                     displayNumber = detail.summary.displayNumber,
                     scientificName = detail.summary.scientificName,
                     taxClass = detail.summary.taxClass,
+                    kingdom = detail.summary.kingdom,
                     silhouetteRes = detail.summary.silhouetteRes,
                     thumbnailModel = ownedFileModel(
                         container.appContext.filesDir,
@@ -254,10 +256,18 @@ private fun DetailBody(
         Text(
             text = summary.displayNumber,
             style = MaterialTheme.typography.labelMedium,
-            color = colors.faint,
+            // `.pnum` — the P-number is the kingdom mark (M26), and the mockup gives it the
+            // plant colour so a glance at the header says which list this entry is on.
+            color = if (summary.kingdom == Kingdom.PLANT) colors.ok else colors.faint,
         )
     }
-    summary.scientificName?.let { ScientificName(it) }
+    // Frame 7's `.sci` reads "Sambucus cerulea · shrub": a plant's growth form is not
+    // guessable from its silhouette the way a bird's class is, so the plant detail names it.
+    summary.scientificName?.let { name ->
+        ScientificName(
+            if (summary.kingdom == Kingdom.PLANT) "$name · ${summary.taxClass.wireName}" else name,
+        )
+    }
 
     if (ecosystemNames.isNotEmpty()) {
         Text(
@@ -308,11 +318,18 @@ private fun DetailBody(
         },
     )
 
-    SectionHeader("Call")
-    CallPlayerRow(
-        state = state.callRow,
-        onToggle = { detail.callUrl?.let(onToggleCall) },
-    )
+    // The kingdom-switched slot (M24, D15). An animal keeps the call row in every state,
+    // including the disabled one — 6.5's reasoning is unchanged for animals. A plant has no
+    // call slot at all: its uses take the place, and a plant with no documented use gets
+    // nothing here, so Habitat is followed straight by the photo strip.
+    state.callRow?.let { callRow ->
+        SectionHeader("Call")
+        CallPlayerRow(
+            state = callRow,
+            onToggle = { detail.callUrl?.let(onToggleCall) },
+        )
+    }
+    state.uses?.let { UsesSection(content = it, modifier = Modifier.padding(top = 2.dp)) }
 
     if (captures.isNotEmpty()) {
         SectionHeader("My photos (${captures.size}) · linked from gallery")

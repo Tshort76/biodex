@@ -33,6 +33,13 @@ object Silhouettes {
         TaxClass.FISH to R.drawable.sil_fish,
         TaxClass.INSECT to R.drawable.sil_insect,
         TaxClass.OTHER_INVERTEBRATE to R.drawable.sil_other_invertebrate,
+        // The class fallback for a tree is the broadleaf shape; the conifer one is chosen
+        // per species by the pipeline, which writes `sil_tree_conifer` into the asset's
+        // `silhouetteRes` and reaches this map only when that name fails to resolve (11.4).
+        TaxClass.TREE to R.drawable.sil_tree_broadleaf,
+        TaxClass.SHRUB to R.drawable.sil_shrub,
+        TaxClass.HERB to R.drawable.sil_herb,
+        TaxClass.FERN to R.drawable.sil_fern,
     )
 
     private val resolved = mutableMapOf<String, Int>()

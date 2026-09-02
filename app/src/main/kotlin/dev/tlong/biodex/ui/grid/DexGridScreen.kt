@@ -43,6 +43,7 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -73,6 +74,8 @@ fun DexGridRoute(
         state = state,
         onQueryChange = viewModel::onQueryChange,
         onCaughtFilter = viewModel::onCaughtFilter,
+        onKingdomFilter = viewModel::onKingdomFilter,
+        onUseFilter = viewModel::onUseFilter,
         onClassFilter = viewModel::onClassFilter,
         onEcosystemFilter = viewModel::onEcosystemFilter,
         onClearFilters = viewModel::onClearFilters,
@@ -88,6 +91,8 @@ fun DexGridScreen(
     state: DexGridUiState,
     onQueryChange: (String) -> Unit,
     onCaughtFilter: (CaughtFilter) -> Unit,
+    onKingdomFilter: (Kingdom) -> Unit,
+    onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
     onClearFilters: () -> Unit,
@@ -126,6 +131,8 @@ fun DexGridScreen(
             FilterChipRow(
                 state = state,
                 onCaughtFilter = onCaughtFilter,
+                onKingdomFilter = onKingdomFilter,
+                onUseFilter = onUseFilter,
                 onClassFilter = onClassFilter,
                 onEcosystemFilter = onEcosystemFilter,
                 onClearFilters = onClearFilters,
@@ -249,14 +256,20 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 /**
- * `.chips` — one horizontally scrolling row holding all three filter dimensions in the
- * mockup's order: All, caught state, classes, then ecosystems. They compose (M14): picking a
- * class chip and an ecosystem chip narrows to species satisfying both.
+ * `.chips` — one horizontally scrolling row holding all five filter dimensions in the
+ * mockup's order: All, caught state, kingdoms, uses, classes, then ecosystems. They compose
+ * (M14/M23): picking `Plants` and `Edible` narrows to plants with an edible use, and every
+ * dimension ANDs with the search query.
+ *
+ * The class chips are the selected kingdom's (M23) — which is also the fix for the row
+ * offering Trees / Shrubs / Herbs / Ferns against a catalogue that had no plants in it.
  */
 @Composable
 private fun FilterChipRow(
     state: DexGridUiState,
     onCaughtFilter: (CaughtFilter) -> Unit,
+    onKingdomFilter: (Kingdom) -> Unit,
+    onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
     onClearFilters: () -> Unit,
@@ -283,7 +296,23 @@ private fun FilterChipRow(
             selected = state.filters.caught == CaughtFilter.UNCAUGHT,
             onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
         )
-        TaxClass.entries.forEach { taxClass ->
+        if (state.showKingdomChips) {
+            Kingdom.entries.forEach { kingdom ->
+                DexFilterChip(
+                    label = kingdomChipLabel(kingdom),
+                    selected = state.filters.kingdom == kingdom,
+                    onClick = { onKingdomFilter(kingdom) },
+                )
+            }
+            PlantUse.entries.forEach { use ->
+                DexFilterChip(
+                    label = useChipLabel(use),
+                    selected = state.filters.use == use,
+                    onClick = { onUseFilter(use) },
+                )
+            }
+        }
+        classChips(state.filters, state.availableClasses).forEach { taxClass ->
             DexFilterChip(
                 label = taxClass.chipLabel(),
                 selected = state.filters.taxClass == taxClass,
@@ -397,6 +426,8 @@ private fun DexGridPreview() {
             ),
             onQueryChange = {},
             onCaughtFilter = {},
+            onKingdomFilter = {},
+            onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},
             onClearFilters = {},
@@ -426,6 +457,8 @@ private fun DexGridSearchPreview() {
             ),
             onQueryChange = {},
             onCaughtFilter = {},
+            onKingdomFilter = {},
+            onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},
             onClearFilters = {},

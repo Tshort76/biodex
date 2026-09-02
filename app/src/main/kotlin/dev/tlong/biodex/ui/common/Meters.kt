@@ -3,10 +3,12 @@ package dev.tlong.biodex.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -46,13 +48,94 @@ fun EcosystemMeter(
     modifier: Modifier = Modifier,
 ) = MeterRow(label, meter, DexTheme.colors.warn, modifier)
 
-/** `.brow` — one taxonomic class's progress. */
+/**
+ * `.brow.eco.two` — one ecosystem, both kingdoms. Two thin stacked bars (animal `warn`,
+ * plant `ok`) and one value cell reading `12/24 · 2/15`.
+ *
+ * The two kingdoms are never blended into one bar, here least of all: an ecosystem row is
+ * the answer to "what is left to find here", and 12 of 24 animals is a different errand
+ * from 2 of 15 plants (D13).
+ */
+@Composable
+fun EcosystemMeterPair(
+    label: String,
+    animals: Meter,
+    plants: Meter,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DexTheme.colors
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            color = colors.muted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(96.dp),
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            modifier = Modifier.weight(1f),
+        ) {
+            MeterBar(
+                fraction = animals.fraction,
+                fill = colors.warn,
+                height = 5,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            MeterBar(
+                fraction = plants.fraction,
+                fill = colors.ok,
+                height = 5,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Text(
+            text = "${animals.caught}/${animals.total} · ${plants.caught}/${plants.total}",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFeatureSettings = "tnum",
+            ),
+            color = colors.fg,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            // Wide enough for `12/24 · 2/15`; the single-kingdom row's 44dp is not.
+            modifier = Modifier.width(74.dp),
+        )
+    }
+}
+
+/**
+ * `.brow` — one taxonomic class's progress. [fill] is `accent` for an animal class and `ok`
+ * for a plant one (`.brow.plant`), which is the same colour language the two progress pills
+ * and the two overall meters use.
+ */
 @Composable
 fun ClassMeter(
     label: String,
     meter: Meter,
     modifier: Modifier = Modifier,
-) = MeterRow(label, meter, DexTheme.colors.accent, modifier)
+    fill: Color = DexTheme.colors.accent,
+) = MeterRow(label, meter, fill, modifier)
+
+/** `.subhd` — the small muted heading over a group of class bars ("Animals", "Plants"). */
+@Composable
+fun MeterGroupHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+        ),
+        color = DexTheme.colors.muted,
+        modifier = modifier.padding(top = 4.dp, bottom = 1.dp),
+    )
+}
 
 @Composable
 private fun MeterRow(

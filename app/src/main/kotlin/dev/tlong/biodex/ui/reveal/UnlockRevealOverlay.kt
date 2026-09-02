@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import coil3.compose.AsyncImage
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.SilhouetteIcon
 import dev.tlong.biodex.ui.theme.BioDexTheme
@@ -55,6 +56,8 @@ data class RevealContent(
     val displayNumber: String,
     val scientificName: String?,
     val taxClass: TaxClass,
+    /** S10: the counter names the list it incremented, so "4 / 80" is never ambiguous. */
+    val kingdom: Kingdom,
     val silhouetteRes: String,
     /** The `file://` model for the new capture's thumbnail; null falls back to the silhouette. */
     val thumbnailModel: String?,
@@ -62,6 +65,18 @@ data class RevealContent(
     val totalCount: Int,
     val whereAndWhen: String?,
 )
+
+/**
+ * S10's counter. The two kingdoms are two life lists (D13), so "47 / 120" alone would leave
+ * the user working out which one just moved — the label says it: "4 / 80 plants".
+ */
+internal fun revealCounterLabel(content: RevealContent): String {
+    val noun = when (content.kingdom) {
+        Kingdom.ANIMAL -> "animals"
+        Kingdom.PLANT -> "plants"
+    }
+    return "${content.caughtCount} / ${content.totalCount} $noun"
+}
 
 @Composable
 fun UnlockRevealOverlay(
@@ -168,7 +183,7 @@ fun UnlockRevealOverlay(
             )
         }
         Text(
-            text = "${content.caughtCount} / ${content.totalCount} caught",
+            text = revealCounterLabel(content),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = colors.accent,
             modifier = Modifier.padding(top = 16.dp),
@@ -192,6 +207,7 @@ private fun UnlockRevealPreview() {
                 displayNumber = "#021",
                 scientificName = "Megascops kennicottii",
                 taxClass = TaxClass.BIRD,
+                kingdom = Kingdom.ANIMAL,
                 silhouetteRes = "sil_bird",
                 thumbnailModel = null,
                 caughtCount = 47,
