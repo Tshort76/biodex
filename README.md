@@ -1,4 +1,4 @@
-# Animal Dex
+# BioDex
 
 A personal Android app that turns a real-world wildlife life list into a Pokédex: a curated Pacific-region catalogue of species, each starting as a silhouette and unlocking when you register a photo of it from your phone's gallery. Photos stay in the gallery and are referenced, never copied; progress is tracked per ecosystem and per taxonomic class.
 

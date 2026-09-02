@@ -16,11 +16,11 @@ val xcApiKey: String = Properties().apply {
 }.getProperty("xc.api.key", "")
 
 android {
-    namespace = "dev.tlong.animaldex"
+    namespace = "dev.tlong.biodex"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.tlong.animaldex"
+        applicationId = "dev.tlong.biodex"
         minSdk = 29
         targetSdk = 36
         versionCode = 1

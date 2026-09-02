@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AnimalDex"
+rootProject.name = "BioDex"
 include(":app")

@@ -1,6 +1,6 @@
 # Licenses and attribution
 
-Animal Dex is a personal, non-commercial app. Everything below is what it uses and under
+BioDex is a personal, non-commercial app. Everything below is what it uses and under
 what terms. Photographs you register are yours; they never leave the device.
 
 ## Species text and images — Wikipedia and Wikimedia Commons

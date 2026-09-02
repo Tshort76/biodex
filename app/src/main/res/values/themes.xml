@@ -2,7 +2,7 @@
 <resources>
     <!-- Platform theme only: Compose supplies the real palette (ARCHITECTURE 6.4).
          DayNight so the system bars follow the system dark setting. -->
-    <style name="Theme.AnimalDex" parent="@android:style/Theme.DeviceDefault.DayNight">
+    <style name="Theme.BioDex" parent="@android:style/Theme.DeviceDefault.DayNight">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowBackground">@color/dex_bg</item>
