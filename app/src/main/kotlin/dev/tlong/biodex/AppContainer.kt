@@ -176,7 +176,7 @@ class AppContainer(val appContext: Context) {
 }
 
 /** 5.2: enough to identify the app to Wikimedia and GBIF. */
-private const val USER_AGENT = "BioDex/1.0 (personal Android app; tlong@unified.health)"
+private const val USER_AGENT = "BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)"
 
 /** 5.2: the API-lookup response cache. Media never writes here — see `mediaHttpClient`. */
 private const val HTTP_CACHE_BYTES = 20L * 1024 * 1024

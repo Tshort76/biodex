@@ -43,7 +43,7 @@ DUKE_CACHE_DIR = CACHE_DIR / "duke"
 ASSET_DIR = HERE / ".." / ".." / "app" / "src" / "main" / "assets" / "catalogue"
 DEFAULT_OUT = ASSET_DIR / "pacific.json"
 
-USER_AGENT = "BioDex/1.0 (personal Android app; tlong@unified.health)"
+USER_AGENT = "BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)"
 
 # Dr. Duke's Phytochemical and Ethnobotanical Databases (USDA ARS), CC0.
 # The data.gov and Ag Data Commons landing pages 403 a plain fetch; the figshare

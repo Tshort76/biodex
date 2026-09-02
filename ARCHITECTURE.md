@@ -378,7 +378,7 @@ Everything else the app shows is bundled. There is no other network traffic; pho
 
 One `OkHttpClient` singleton in `AppContainer`, with:
 
-- `User-Agent: BioDex/1.0 (personal Android app; tlong@unified.health)` — Wikipedia requires a descriptive UA and this is also good citizenship at GBIF.
+- `User-Agent: BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)` — Wikipedia requires a descriptive UA and this is also good citizenship at GBIF.
 - An HTTP response cache (`Cache(cacheDir/http, 20 MB)`) — makes repeated lookups and backfill retries cheap.
 - 10 s connect / 20 s read timeouts.
 
@@ -810,7 +810,7 @@ That is 40 / 18 / 19 / 3 as growth forms, with about 35 edible tags; the `M` mar
 
 ### 11.5 The rename
 
-Mechanical, and the reason slice 9 is sequential: `git mv app/src/{main,test,androidTest}/kotlin/dev/tlong/animaldex → …/biodex`, then `package dev.tlong.animaldex` → `package dev.tlong.biodex` and every `import dev.tlong.animaldex.` in every `.kt` under `app/src`; `namespace` and `applicationId` in `app/build.gradle.kts`; `rootProject.name` in `settings.gradle.kts`; `app_name` in `strings.xml` → "BioDex"; the theme name in `themes.xml`; `AnimalDexTheme`/`AnimalDexColors` → `BioDexTheme`/`BioDexColors`; the database file name in `AppContainer` → `biodex.db`; the `User-Agent` → `BioDex/1.0 (personal Android app; tlong@unified.health)`; the share-sheet title in `SettingsScreen` ("Save your BioDex backup"); the archive message in `BackupService`; the `FileProvider` authority is `${applicationId}.files` and follows automatically. `licenses.md` and the pipeline script's `USER_AGENT` too. The launcher icon is unchanged. `grep -ri animaldex` and `grep -r "Animal Dex"` over the repository must both come back empty except in this document's history and DESIGN.md's changelog line — that grep is slice 9's first done-check.
+Mechanical, and the reason slice 9 is sequential: `git mv app/src/{main,test,androidTest}/kotlin/dev/tlong/animaldex → …/biodex`, then `package dev.tlong.animaldex` → `package dev.tlong.biodex` and every `import dev.tlong.animaldex.` in every `.kt` under `app/src`; `namespace` and `applicationId` in `app/build.gradle.kts`; `rootProject.name` in `settings.gradle.kts`; `app_name` in `strings.xml` → "BioDex"; the theme name in `themes.xml`; `AnimalDexTheme`/`AnimalDexColors` → `BioDexTheme`/`BioDexColors`; the database file name in `AppContainer` → `biodex.db`; the `User-Agent` → `BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)`; the share-sheet title in `SettingsScreen` ("Save your BioDex backup"); the archive message in `BackupService`; the `FileProvider` authority is `${applicationId}.files` and follows automatically. `licenses.md` and the pipeline script's `USER_AGENT` too. The launcher icon is unchanged. `grep -ri animaldex` and `grep -r "Animal Dex"` over the repository must both come back empty except in this document's history and DESIGN.md's changelog line — that grep is slice 9's first done-check.
 
 On the phone: `adb uninstall dev.tlong.animaldex` by hand, then `./gradlew installDebug`. Two launcher entries would otherwise coexist, which is harmless but confusing.
 
