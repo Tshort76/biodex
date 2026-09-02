@@ -80,7 +80,8 @@
 
     { "dexNumber": 13, "commonName": "Western Redcedar", "scientificName": "Thuja plicata",
       "plantClass": "tree",
-      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "usesNote": "Caution: the foliage is rich in thujone and is toxic taken internally; the wood dust irritates skin and airways. This tree is not a food." },
 
     { "dexNumber": 14, "commonName": "Sitka Spruce", "scientificName": "Picea sitchensis",
       "plantClass": "tree",
@@ -110,7 +111,8 @@
 
     { "dexNumber": 20, "commonName": "Pacific Yew", "scientificName": "Taxus brevifolia",
       "plantClass": "tree",
-      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "usesNote": "Caution: every part of this tree is deadly poisonous — needles, bark, wood, and the seed inside the red berry-like aril. Nothing from it is a food, and the recorded uses below are history, not a recommendation." },
 
     { "dexNumber": 21, "commonName": "Monterey Cypress", "scientificName": "Hesperocyparis macrocarpa",
       "plantClass": "tree",
@@ -179,7 +181,8 @@
       "ecosystemIds": ["riparian-wetland"],
       "overrides": {
         "scientificName": "Salix lucida subsp. lasiandra",
-        "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations. GBIF lumps it into Salix lucida, whose article covers the same complex." } },
+        "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations." },
+      "_comment": "GBIF lumps this into Salix lucida, whose article covers the whole complex including the Pacific willow; the habitat text is written rather than fetched for that reason." },
 
     { "dexNumber": 35, "commonName": "California Bay Laurel", "scientificName": "Umbellularia californica",
       "plantClass": "tree",
@@ -392,7 +395,8 @@
 
     { "dexNumber": 71, "commonName": "California Poppy", "scientificName": "Eschscholzia californica",
       "plantClass": "herb",
-      "ecosystemIds": ["oak-chaparral", "urban-suburban", "high-desert"] },
+      "ecosystemIds": ["oak-chaparral", "urban-suburban", "high-desert"],
+      "usesNote": "Caution: this poppy carries sedative alkaloids and Duke's itself lists it as cyanogenetic. It is not a food, and it is the California state flower — leave it where it grows." },
 
     { "dexNumber": 72, "commonName": "Nodding Onion", "scientificName": "Allium cernuum",
       "plantClass": "herb",

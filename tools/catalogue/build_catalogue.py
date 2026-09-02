@@ -187,12 +187,24 @@ def tax_class_for(gbif_class: str | None, phylum: str | None = None) -> str:
     return "other_invertebrate"
 
 
-def gbif_synonyms(usage_key, refresh: bool):
-    """The accepted taxon's synonyms, as `Genus species` binomials.
+def gbif_synonyms(usage_key, accepted_name, refresh: bool):
+    """The accepted taxon's synonyms that keep its specific epithet.
 
     R15: Duke's keys on genus and species strings from its own era, so an
-    accepted name GBIF has since moved (Oregon grape *Berberis* / *Mahonia*)
-    misses on the first try. This is one extra cached request per plant.
+    accepted name GBIF has since moved (Oregon grape *Berberis* / *Mahonia*,
+    crabapple *Pyrus* / *Malus*, yerba buena *Satureja* / *Micromeria*) misses
+    on the first try. This is one extra cached request per plant.
+
+    **Only same-epithet synonyms are returned, and that filter is the whole
+    safety story here.** GBIF's synonym list also carries taxa its backbone has
+    lumped, and those are different plants: it offers *Chamaecyparis lawsoniana*
+    (Port Orford cedar) for coast redwood, *Platanus occidentalis* (the eastern
+    sycamore) for the California one, and *Quercus lyrata* for valley oak.
+    Joining Duke's on any of those would attach one plant's traditional uses to
+    another and read perfectly plausibly. A genuine nomenclatural synonym almost
+    always keeps the epithet when the genus moves, so the epithet is the check;
+    the gender variants Latin allows (*Oplopanax horridus* / *horridum*) fall
+    outside it and are what the curator's `dukeName` pin exists for.
     """
     if not usage_key:
         return []
@@ -200,9 +212,11 @@ def gbif_synonyms(usage_key, refresh: bool):
     payload = fetch_json(url, refresh=refresh, delay=DELAY_GBIF)[0] or {}
     names = []
     for result in payload.get("results", []):
-        # `species` is the binomial with any infraspecific epithet dropped, which
-        # is the level Duke's files things at; canonicalName is the fallback.
-        name = result.get("species") or result.get("canonicalName")
+        # On a synonym record GBIF's classification fields (kingdom..species)
+        # describe the ACCEPTED taxon, not the synonym — reading `species` here
+        # returns the accepted name every time. The synonym's own name is
+        # `canonicalName`.
+        name = result.get("canonicalName") or result.get("scientificName")
         if not name:
             continue
         parts = name.split()
@@ -210,6 +224,9 @@ def gbif_synonyms(usage_key, refresh: bool):
             binomial = f"{parts[0]} {parts[1]}"
             if binomial not in names:
                 names.append(binomial)
+    epithet = (accepted_name or "").split()[-1].lower() if accepted_name else None
+    if epithet:
+        names = [n for n in names if n.split()[1].lower() == epithet]
     return names
 
 
@@ -893,7 +910,9 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
     gbif_class = match.get("class")
     gbif_order = match.get("order")
     gbif_kingdom = match.get("kingdom")
-    usage_key = match.get("usageKey") or match.get("speciesKey")
+    # For a SYNONYM match, `usageKey` is the synonym's own key and its
+    # /synonyms list is empty; the accepted taxon is the one that has synonyms.
+    usage_key = match.get("acceptedUsageKey") or match.get("usageKey") or match.get("speciesKey")
 
     if (gbif_kingdom or "").strip().lower() != "plantae":
         raise SystemExit(
@@ -918,7 +937,7 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
     prov["silhouetteRes"] = f"gbif:class:{gbif_class}/order:{gbif_order}"
 
     # --- Duke's -----------------------------------------------------------
-    synonyms = gbif_synonyms(usage_key, refresh)
+    synonyms = gbif_synonyms(usage_key, accepted, refresh)
     record, duke_prov = duke_lookup(duke_index, accepted, synonyms, entry.get("dukeName"))
     prov["duke"] = duke_prov
 

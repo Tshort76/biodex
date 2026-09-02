@@ -4947,7 +4947,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": null,
+      "usesNote": "Caution: the foliage is rich in thujone and is toxic taken internally; the wood dust irritates skin and airways. This tree is not a food.",
       "medicinalActivities": [
         "Ache(Back)",
         "Carbuncle",
@@ -5274,7 +5274,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": null,
+      "usesNote": "Caution: every part of this tree is deadly poisonous — needles, bark, wood, and the seed inside the red berry-like aril. Nothing from it is a food, and the recorded uses below are history, not a recommendation.",
       "medicinalActivities": [
         "Depilatory",
         "Emmenagogue",
@@ -5900,7 +5900,7 @@
       "ecosystemIds": [
         "riparian-wetland"
       ],
-      "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations. GBIF lumps it into Salix lucida, whose article covers the same complex.",
+      "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations.",
       "description": "Salix lucida, the shining willow, Pacific willow, red willow, or whiplash willow, is a species of willow native to northern and western North America, occurring in wetland habitats. It is the largest willow found in British Columbia.",
       "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Salix_lucida%2801%29.jpg",
       "callUrl": null,
@@ -6114,10 +6114,10 @@
         "scientificName": "gbif",
         "taxClass": "curated",
         "silhouetteRes": "gbif:class:Magnoliopsida/order:Rosales",
-        "duke": "duke:pinned:Pyrus fusca",
+        "duke": "duke:synonym:Pyrus fusca",
         "uses": {
           "edible": "curated",
-          "medicinal": "duke:pinned:Pyrus fusca"
+          "medicinal": "duke:synonym:Pyrus fusca"
         },
         "wikipediaTitle": "wikipedia:scientific:Malus fusca",
         "description": "wikipedia:summary",
@@ -7657,10 +7657,10 @@
         "scientificName": "override",
         "taxClass": "curated",
         "silhouetteRes": "gbif:class:Magnoliopsida/order:Lamiales",
-        "duke": "duke:pinned:Satureja douglasii",
+        "duke": "duke:synonym:Satureja douglasii",
         "uses": {
           "edible": "curated",
-          "medicinal": "duke:pinned:Satureja douglasii"
+          "medicinal": "duke:synonym:Satureja douglasii"
         },
         "wikipediaTitle": "wikipedia:pinned:Clinopodium douglasii",
         "description": "wikipedia:summary",
@@ -7693,7 +7693,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": null,
+      "usesNote": "Caution: this poppy carries sedative alkaloids and Duke's itself lists it as cyanogenetic. It is not a food, and it is the California state flower — leave it where it grows.",
       "medicinalActivities": [
         "Anodyne",
         "Soporific",
