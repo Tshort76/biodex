@@ -1,24 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Simple paw-print mark, drawn inside the adaptive-icon 108dp viewport
-     (safe zone is the centre 66dp). -->
+<!-- Deliberately empty. The icon art is a raster and lives in the background
+     layer (@mipmap/ic_launcher_art); an adaptive icon still needs a foreground,
+     so this is a transparent placeholder rather than a second drawing. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#FBFAF7"
-        android:pathData="M54,58m-16,0a16,13 0,1 1,32 0a16,13 0,1 1,-32 0" />
-    <path
-        android:fillColor="#FBFAF7"
-        android:pathData="M38,38m-7,0a7,9 0,1 1,14 0a7,9 0,1 1,-14 0" />
-    <path
-        android:fillColor="#FBFAF7"
-        android:pathData="M70,38m-7,0a7,9 0,1 1,14 0a7,9 0,1 1,-14 0" />
-    <path
-        android:fillColor="#FBFAF7"
-        android:pathData="M28,52m-6,0a6,8 0,1 1,12 0a6,8 0,1 1,-12 0" />
-    <path
-        android:fillColor="#FBFAF7"
-        android:pathData="M80,52m-6,0a6,8 0,1 1,12 0a6,8 0,1 1,-12 0" />
-</vector>
+    android:viewportHeight="108" />

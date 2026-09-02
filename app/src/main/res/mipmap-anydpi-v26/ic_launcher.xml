@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The BioDex mark: a bird, an oak leaf and a butterfly around the dex ring,
+     carved in walnut. The art is full-bleed in the background layer, composed so
+     the emblem sits inside the 66dp safe zone and survives every launcher mask.
+     No monochrome layer: a photographic mark cannot theme cleanly, so themed
+     launchers fall back to this icon rather than showing a muddy silhouette. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background" />
+    <background android:drawable="@mipmap/ic_launcher_art" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
-    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
 </adaptive-icon>
