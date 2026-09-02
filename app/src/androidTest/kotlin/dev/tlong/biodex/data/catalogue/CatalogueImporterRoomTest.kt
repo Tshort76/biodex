@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.tlong.biodex.data.db.AppDatabase
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.MetaEntity
@@ -136,16 +137,20 @@ class CatalogueImporterRoomTest {
      * so this file is useful before that asset lands.
      */
     @Test
-    fun theRealBundledCatalogueImportsOneHundredAndTwentySpecies() = runBlocking {
+    fun theRealBundledCatalogueImportsBothKingdoms() = runBlocking {
         assumeTrue("assets/$CATALOGUE_ASSET_PATH is not bundled yet", bundledCatalogueExists())
 
         val outcome = CatalogueImporter(AndroidAssetReader(appContext), RoomCatalogueStore(db)).import()
 
         assertTrue("import failed: $outcome", outcome is ImportOutcome.Imported)
         val species = db.speciesDao().speciesOnce("pacific")
-        assertEquals(120, species.size)
+        assertEquals(200, species.size)
         assertTrue(species.all { it.source == SpeciesSource.CURATED })
-        assertEquals((1..120).toList(), species.map { it.dexNumber }.sorted())
+        val animals = species.filter { it.kingdom == Kingdom.ANIMAL }
+        val plants = species.filter { it.kingdom == Kingdom.PLANT }
+        assertEquals(120, animals.size)
+        assertEquals(80, plants.size)
+        assertEquals((1..120).toList(), animals.map { it.dexNumber }.sorted())
         assertEquals(7, db.ecosystemDao().ecosystemsOnce("pacific").size)
         assertTrue(db.ecosystemDao().membershipsOnce("pacific").isNotEmpty())
     }

@@ -50,6 +50,7 @@ class UserSpeciesRoomTest {
         db.ecosystemDao().upsertAll(
             listOf(
                 EcosystemEntity("coastal-rainforest", "pacific", "Coastal Rainforest", 1),
+                EcosystemEntity("riparian-wetland", "pacific", "Riparian & Wetland", 4),
                 EcosystemEntity("urban-suburban", "pacific", "Urban & Suburban", 7),
             ),
         )
