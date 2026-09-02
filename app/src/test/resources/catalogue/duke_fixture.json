@@ -1,5 +1,5 @@
 {
-  "_comment": "A verified subset of the shipped app/src/main/assets/catalogue/duke_ethnobot.json, copied row for row on 2026-09-02. Every count here is the real one, so a test that reads this fixture describes the data the phone actually has. Absent on purpose: Oplopanax horridus, Vaccinium ovatum, Rhododendron macrophyllum and Berberis aquifolium \u2014 'no Duke's record' is an ordinary state, and Oregon grape is filed only under Mahonia, which is what the synonym pass is for.",
+  "_comment": "A verified subset of the shipped app/src/main/assets/catalogue/duke_ethnobot.json, copied row for row on 2026-09-02. Every count here is the real one, so a test that reads this fixture describes the data the phone actually has. Absent on purpose: Oplopanax horridus, Vaccinium ovatum, Rhododendron macrophyllum and Berberis aquifolium \u2014 'no Duke's record' is an ordinary state, and Oregon grape is filed only under Mahonia, which is what the synonym pass is for. Chamaecyparis lawsoniana is here for one reason: GBIF offers it as a synonym of coast redwood, which has no Duke's record of its own, so it is the row an unguarded synonym join would wrongly attach.",
   "taxa": {
     "achillea millefolium": {
       "a": [
@@ -119,6 +119,12 @@
         "Wound"
       ],
       "n": 5
+    },
+    "chamaecyparis lawsoniana": {
+      "a": [
+        "Diuretic"
+      ],
+      "n": 1
     }
   }
 }

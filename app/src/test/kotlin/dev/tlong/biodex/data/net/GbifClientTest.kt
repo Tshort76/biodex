@@ -312,7 +312,7 @@ class GbifClientTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `synonyms come back as canonical names`() = runBlocking {
+    fun `synonyms come back as binomials, deduplicated`() = runBlocking {
         val fetcher = FakeFetcher(
             mapOf(
                 synonymsUrl(2882802L) to
@@ -320,10 +320,50 @@ class GbifClientTest {
             ),
         )
 
-        val synonyms = GbifClient(fetcher).synonyms(2882802L)
+        val synonyms = GbifClient(fetcher).synonyms(2882802L, "Arbutus menziesii")
 
-        assertTrue("Arbutus procera" in synonyms)
+        // GBIF's list is mostly trinomial cultivar names; Duke's is keyed on genus and species,
+        // so every name is cut to its binomial before it is offered as a join key.
+        assertTrue(synonyms.all { it.split(" ").size == 2 })
         assertEquals("duplicates are dropped", synonyms.size, synonyms.distinct().size)
+    }
+
+    @Test
+    fun `a synonym that changes the epithet is rejected — it is a different plant`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                synonymsUrl(2683909L) to
+                    FetchResult.Body(Fixtures.read("gbif_synonyms_sequoia_sempervirens.json")),
+            ),
+        )
+
+        val synonyms = GbifClient(fetcher).synonyms(2683909L, "Sequoia sempervirens")
+
+        // Live payload, 2026-09-02: GBIF really does file Port Orford cedar under coast
+        // redwood. Duke's has a record for Chamaecyparis lawsoniana and none for Sequoia
+        // sempervirens, so without this filter a user-added redwood would be shown another
+        // tree's traditional uses — fluent, plausible and wrong (D10).
+        assertFalse(synonyms.any { it.startsWith("Chamaecyparis") })
+        assertFalse(synonyms.any { it == "Sequoia religiosa" || it == "Sequoia taxifolia" })
+        // The real nomenclatural synonyms, which moved genus and kept the epithet, survive.
+        assertTrue("Taxodium sempervirens" in synonyms)
+        assertTrue("Steinhauera sempervirens" in synonyms)
+        assertTrue(synonyms.all { it.split(" ")[1].lowercase() == "sempervirens" })
+    }
+
+    @Test
+    fun `the epithet filter keeps the genus move R15 is actually about`() {
+        // Berberis to Mahonia is the case the synonym pass exists for, and the filter must not
+        // be what breaks it: the genus moves, the epithet does not.
+        val body = """{"results":[
+            {"canonicalName":"Berberis aquifolium"},
+            {"canonicalName":"Odostemon aquifolium"},
+            {"canonicalName":"Mahonia diversifolia"}
+        ]}"""
+
+        val synonyms = parseGbifSynonyms(body, "Mahonia aquifolium")
+
+        assertEquals(listOf("Berberis aquifolium", "Odostemon aquifolium"), synonyms)
     }
 
     @Test
@@ -368,6 +408,6 @@ class GbifClientTest {
             ),
         )
 
-        assertEquals(emptyList<String>(), GbifClient(fetcher).synonyms(3033868L))
+        assertEquals(emptyList<String>(), GbifClient(fetcher).synonyms(3033868L, "Mahonia aquifolium"))
     }
 }

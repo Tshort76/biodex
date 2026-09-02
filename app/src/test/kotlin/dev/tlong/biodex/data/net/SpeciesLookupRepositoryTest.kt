@@ -183,6 +183,29 @@ class SpeciesLookupRepositoryTest {
     }
 
     @Test
+    fun `the Duke's join never borrows another plant's record through a lumped synonym`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                summaryUrl("Sequoia sempervirens") to
+                    FetchResult.Body(Fixtures.read("wiki_summary_notfound.json")),
+                synonymsUrl(2683909L) to
+                    FetchResult.Body(Fixtures.read("gbif_synonyms_sequoia_sempervirens.json")),
+            ),
+        )
+
+        val details = repository(fetcher)
+            .detailsFor(plant("Sequoia sempervirens", 2683909L, TaxClass.TREE), "Coast Redwood")
+
+        // Duke's has nothing for coast redwood and one record for Port Orford cedar, which
+        // GBIF lists among its synonyms. "No Duke's record" is the honest answer; the other
+        // tree's uses would have been a fluent, plausible lie.
+        assertNull(details.duke)
+        assertTrue(details.dukeConsulted)
+        assertEquals(emptySet<PlantUse>(), details.fields.uses)
+        assertNull(details.fields.usesAttribution)
+    }
+
+    @Test
     fun `a poison record pre-fills the caution sentence`() = runBlocking {
         val details = repository(FakeFetcher(plantStubs("Sambucus nigra", 4L)))
             .detailsFor(plant("Sambucus nigra"), "Blue Elderberry")

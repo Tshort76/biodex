@@ -66,14 +66,32 @@ class GbifClient(private val fetcher: JsonFetcher) {
     }
 
     /**
-     * GBIF's synonyms for one accepted usage, which is what the Duke's join needs (11.2, R15).
+     * GBIF's synonyms for one accepted usage, which is what the Duke's join needs (11.2, R15) —
+     * **filtered to the ones that keep the accepted name's specific epithet.**
+     *
+     * That filter is the whole safety story of this method. GBIF's synonym list also carries
+     * taxa its backbone has lumped, and those are *different plants*: it offers
+     * *Chamaecyparis lawsoniana* (Port Orford cedar) as a synonym of coast redwood, the eastern
+     * sycamore *Platanus occidentalis* for the California one, and *Quercus lyrata* for valley
+     * oak — all verified live on 2026-09-02. Joining Duke's on any of them attaches one plant's
+     * traditional uses to another and reads perfectly plausibly, which is the Roosevelt Elk
+     * failure (D10) with no confirmation card in front of it: two of those three would put a
+     * **medicinal tag** on a species Duke's has no record for at all.
+     *
+     * A genuine nomenclatural synonym almost always keeps its epithet when the genus moves —
+     * *Berberis* / *Mahonia aquifolium* is the case R15 is about — so the epithet is the check.
+     * The build-time pipeline applies the identical rule in `gbif_synonyms`; the Latin gender
+     * variants it lets through (*Oplopanax horridus* / *horridum*) are what the curator's
+     * `dukeName` pin exists for, and a user-added plant simply misses, which is an ordinary
+     * state rather than a wrong answer.
+     *
      * A species with no usage key, or a request that fails, degrades to an empty list: the
      * accepted binomial is still tried, and a miss is an ordinary state.
      */
-    suspend fun synonyms(usageKey: Long?): List<String> {
+    suspend fun synonyms(usageKey: Long?, acceptedName: String? = null): List<String> {
         if (usageKey == null) return emptyList()
         return when (val response = fetcher.get(synonymsUrl(usageKey))) {
-            is FetchResult.Body -> parseGbifSynonyms(response.text)
+            is FetchResult.Body -> parseGbifSynonyms(response.text, acceptedName)
             else -> emptyList()
         }
     }
@@ -322,12 +340,31 @@ internal fun rankVernacularCandidates(candidates: List<SpeciesCandidate>): List<
         .sortedWith(compareBy({ it.extinct }, { it.matchKind != MatchKind.VERNACULAR_EXACT }))
         .take(GBIF_CANDIDATE_LIMIT)
 
-/** GBIF's synonyms payload: the canonical names of the usages it has folded into one accepted. */
-internal fun parseGbifSynonyms(body: String): List<String> =
-    (body.asJsonObject()?.get("results") as? JsonArray)
+/**
+ * GBIF's synonyms payload, reduced to binomials and filtered to [acceptedName]'s epithet.
+ *
+ * Every name is cut to its first two tokens before the check and before it is returned, because
+ * Duke's is keyed on genus and species: GBIF's list is full of trinomial cultivar names
+ * (*Sequoia sempervirens pendula*) whose binomial is the join key. A null [acceptedName] skips
+ * the filter, which is only for callers that are not joining an external dataset.
+ *
+ * Note which field the name comes from. On a **synonym** record GBIF's classification fields —
+ * `kingdom` down to `species` — describe the *accepted* taxon, not the synonym, so reading
+ * `species` here would return the accepted name every time and the filter would pass everything.
+ * `canonicalName` is the synonym's own name.
+ */
+internal fun parseGbifSynonyms(body: String, acceptedName: String? = null): List<String> {
+    val epithet = acceptedName?.trim()?.split(' ')?.getOrNull(1)?.lowercase()
+    return (body.asJsonObject()?.get("results") as? JsonArray)
         .orEmpty()
         .mapNotNull { (it as? JsonObject)?.string("canonicalName") }
+        .mapNotNull { name ->
+            val parts = name.trim().split(' ').filter { it.isNotEmpty() }
+            if (parts.size < 2) null else parts[0] + " " + parts[1]
+        }
+        .filter { epithet == null || it.split(' ')[1].lowercase() == epithet }
         .distinct()
+}
 
 private fun JsonObject.englishVernaculars(): List<String> =
     (this["vernacularNames"] as? JsonArray)

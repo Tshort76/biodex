@@ -57,7 +57,9 @@ class SpeciesLookupRepository(
             // the Duke's join misses without them: Oregon grape has four records under
             // *Mahonia aquifolium* and none under *Berberis aquifolium* (R15).
             val call = async { if (plant) LookupResult.NotFound else xenoCanto.bestCall(candidate.scientificName) }
-            val synonyms = async { if (plant) gbif.synonyms(candidate.usageKey) else emptyList() }
+            val synonyms = async {
+                if (plant) gbif.synonyms(candidate.usageKey, candidate.scientificName) else emptyList()
+            }
             val facts = article.await()
             val recording = call.await()
             val dukeRecord = if (plant) {
