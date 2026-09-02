@@ -268,6 +268,28 @@ Two build-file additions, both mechanical: the `room.schemaLocation` KSP argumen
 
 ---
 
+### 3.5 Export and import (recorded by slice 8, 2026-09-01)
+
+S01 had no design section before this one — section 9's slice brief is its whole specification ("ZIP via `ShareSheet`: metadata JSON + thumbnails + resolvable full-size copies") — so everything here is a decision slice 8 made, not a deviation from one.
+
+**The archive.** `manifest.json` at the root, `thumbnails/<captureId>.jpg`, `photos/<captureId>.jpg`. A plain ZIP any file manager opens, with no app-specific container, because the point of a backup is that it outlives the thing that wrote it. Written to `cacheDir/exports/` and shared as a `content://` URI through a `FileProvider` (`${applicationId}.files`, `res/xml/file_paths.xml` exposing that one directory and nothing else).
+
+| Point | What slice 8 did | Reason |
+|---|---|---|
+| **The manifest is written last, from what landed** | The export plans optimistically, writes every photo it can, collects the entry names that actually succeeded, and only then builds the manifest — filtering every `thumbEntry`/`photoEntry` through that set. | A reference can resolve at plan time and fail while its bytes are copying. Building the manifest from intent would produce an archive that names photos it does not contain, which is the exact failure S01 exists to prevent: the user believes they have a backup. The invariant "the manifest never names a file the archive does not hold" is true by construction and is the slice's most important unit test. |
+| Photo bytes are buffered before the entry is opened | `writeEntry` reads the whole file/stream into memory, then opens the `ZipEntry` and writes it. | A `ZipOutputStream` entry cannot be un-opened. Streaming straight through would leave a truncated zero-byte `photos/<id>.jpg` behind on failure — a file a human browsing the archive would read as a photo. One image in memory at a time is the cost. |
+| Unexportable photos are reported by **reason**, not as one number | `PhotoDisposition` carries `MISSING_REVOKED` / `MISSING_OFFLINE` / `MISSING_UNREADABLE`, and the Settings copy says which is which. | 4.2's two broken states mean different things to the user: a revoked reference will never export (the gallery photo is gone), a cloud-only one usually will on the next try with a connection. Collapsing them would tell the user their photos are lost when half of them are one retry away. |
+| Curated species export as identity only; an import never creates one | The manifest carries every curated species' id, number and name, but `planImport` inserts **only** user-added species. Captures of a curated species this install does not have are skipped and counted. | The bundled asset owns curated rows (3.3). Letting an archive create one would put a species in the database that the next catalogue import cannot reconcile, and would let a file talk the app into inventing catalogue entries. `BackupSpecies.toEntity` hard-codes `source = USER` for the same reason. |
+| Import merges, never replaces | Existing species, entries and captures are left untouched; capture ids already present are skipped (so a second import of the same archive is a no-op); an existing entry keeps its identity and its favorite and only takes an **earlier** `caughtAt`. | "Restores onto a fresh install without destroying anything already there" is the brief. Idempotency falls out of the capture-id skip, which is what makes a re-import safe rather than merely non-destructive. |
+| Restored photos become **local copies**, and no grant is recreated | A restored `photos/<id>.jpg` is written to `filesDir/photos/` and set as `localCopyPath`; the archived `photoUri` is kept for provenance only and never passed to `takePersistableUriPermission`. | 4.5 already names import as the second writer of `localCopyPath`. A grant belonging to another phone's gallery cannot be held here, and resolution short-circuits to the local copy (4.2) so the archived URI is never probed. A capture whose photo was not in the archive restores as thumbnail-plus-`Revoked`, which M12 already handles. |
+| Rows are written after files, and only for files that arrived | `withRestoredFiles` recomputes the plan from the set of entries actually extracted, dropping `localCopyPath` for any photo that failed. | The same ordering rule registration follows (4.1 step 3): nothing in the database may name a file that is not on disk. |
+| A restored `favoriteCaptureId` is validated | Nulled when the capture it names is not present after the merge. | `entries.favoriteCaptureId` has no foreign key (3.4), so nothing else would stop it dangling. The DAO's status query then falls back to the earliest capture. |
+| The platform seam | `BackupGateway` (resolve, owned-file read/write, gallery open, archive open, export sink, share URI) with `AndroidBackupGateway` as its only implementation. | The pattern of 3.4, 4.6 and 5.6. It is what lets a **real** export run through a real `ZipOutputStream` and be imported back in the JVM suite against an in-memory filesystem — the round trip is a test, not a claim. |
+
+**Two DAO additions**, both `@Query` methods on existing DAOs (the rule slice 5 established for `countForUri`): `EntryDao.entriesOnce`, `CaptureDao.capturesOnce` and `CaptureDao.captureIdsOnce`. No entity, no column, no schema change; the checked-in schema JSON is unchanged.
+
+---
+
 ## 4. The photo-reference layer
 
 All of this lives in `data/photo/`. The public surface is one class, `PhotoStore`, plus a `PhotoRef` resolution result type.
@@ -320,6 +342,15 @@ Slice 5 built the photo layer, the register flow, the unlock reveal and the phot
 | Re-link (4.2) | Keeps the capture's id, `createdAt`, `takenAt` and note; only `photoUri` and `thumbPath` change. A re-link whose thumbnail fails leaves the old reference in place. | 4.2 says "replaces `photoUri`, regenerates the thumbnail, releases the old grant" but not what happens to the rest of the row. Keeping the identity is what stops a re-link from moving the catch date. |
 | S03's switch | `CaptureRegistrar` takes `keepLocalCopy: () -> Boolean`, wired to `{ false }` in `AppContainer`. | 4.5 puts the setting in slice 8. This is the whole of what slice 8 has to change in the registration path. |
 | EXIF | `parseExifDateTime` is a pure function parsing `yyyy:MM:dd HH:mm:ss` in the device's zone, falling back to `TAG_DATETIME` then to registration time. Missing GPS is not logged as anything. | R3 is confirmed in the code's shape rather than argued about: location is an ordinary null, and the timestamp path is the one that carries weight, so it is the one under test. |
+
+### 4.7 Settings and grants (recorded by slice 8, 2026-09-01)
+
+| Point | What slice 8 did | Reason |
+|---|---|---|
+| S03's switch (4.5, 4.6) | `AppContainer.captureRegistrar` now takes `keepLocalCopy = settings::keepLocalCopyNow` — a **live read** of `SharedPreferences` on every registration, not a captured value. | Flipping the switch has to affect the next photo, not the next process. This is the whole of what slice 5 left for this slice, and it is one line. |
+| Not retroactive (4.5) | Unchanged, and now stated in the Settings copy beside the switch. | 4.5 rules out copying old captures in v1 and asks for the UI to say so; the sentence is the requirement, not polish. |
+| The grant count (4.4) | Settings shows `n of 5000 photo permissions held`, in `warn` colour with an instruction once `grantPressure()` leaves `FINE`. | 4.4 asks for the informational count; slice 5 already built the threshold function for the Register screen's warning, so the two surfaces cannot disagree. |
+| Cache management (5.3) | `CacheManager` takes the container's **existing** `SimpleCache` and `ImageLoader` as suppliers, reports images / call audio / lookups separately, and clears only the first two. | A second `SimpleCache` over `media_audio` throws — the cache is process-wide and directory-locked — so the manager could not construct its own. Clearing never touches `filesDir`: thumbnails and local copies are permanent artifacts (4.3), not cache. |
 
 ### 6.6 UI corrections (recorded by slice 5, 2026-09-01)
 
@@ -500,6 +531,24 @@ The confirm card, the draft holder and the backfill trigger are recorded in **5.
 | The draft holder (6.1) | In-memory (`ConcurrentHashMap` in `AppContainer`). The Confirm route renders a `Missing` state when its draft is gone rather than crashing. | 6.1 asks for exactly this, and a draft's whole life is two screens — persisting it would mean a table for something that must not outlive a process. Process death mid-flow is the one case that state must cover, and it does. |
 | Ecosystems on a backfill | The write path takes `ecosystemIds: List<String>?`, where `null` means "leave them alone", and only the card's own accept passes a list. | D10: no API maps species onto these seven ecosystems, so nothing automatic may ever write them. Making it a nullable argument rather than a convention is what makes "a backfill never touches the user's pick" a test. |
 | Which fields the card lets you edit | Common name, scientific name, class and habitat text. The mockup's "✎ change" on the image, and editors for the description and the outbound link, are **not** built. | M19 asks for "edit any field by hand"; this is a deliberate v1 trim, not an oversight. The four built are the ones that decide what the entry *is* — a wrong class picks the wrong silhouette, a wrong scientific name mis-keys every future backfill. Nothing structural is missing: `applyFieldEdits` and `mergeLookup` already treat an edited `imageUrl` as user-owned (and lock its credit line with it), so a later slice adds an affordance and no logic. |
+
+---
+
+### 6.9 UI corrections (recorded by slice 8, 2026-09-01)
+
+Slice 8 built the Stats and Settings screens, the licenses screen and the two meters slice 4 deferred. 6.4's palette and 6.2's state-holder pattern held; the export and import decisions behind the Settings screen are recorded in **3.5** with the layer they belong to.
+
+| Point | What slice 8 did | Reason |
+|---|---|---|
+| `EcosystemMeter` / `ClassMeter` (6.4) | Built as one shared row — label, track, `12/24` in tabular figures, and a fixed-width slot for D9's `+1` — differing only in fill colour: **ecosystem meters `warn`, class meters `accent`**, as 6.4 specifies. | Slice 4 deferred these to their only caller. One row means the two breakdowns cannot drift apart; the colour is the only thing that distinguishes them, which is what the mockup does. |
+| **Seven class bars, not the mockup's six** | Insects and other invertebrates get their own rows rather than a merged "Invertebrates". | The catalogue, the filter chips and the silhouettes all treat them as separate classes. A stats screen that groups differently from the grid it is meant to reconcile with makes the user do arithmetic — and reconciling by hand-count is this slice's phone check. |
+| The recently-caught strip (S08) | Sourced from **caught species** ordered by `caughtAt`, not from recent captures. | S08 asks for recently *caught* things and for the date of the last new catch. Sourcing from captures would list the same species twice for two photos, and a `+1` photo of a species caught last spring would push it to the front of the strip and move the "last new catch" date. `SpeciesSummary` already carries name, date and thumbnail, so this also needs no new query. |
+| Stats' data source (6.3) | The screen reads the *same* `dexProgress()` flow the grid header reads. | 6.3 says they share it. Making that literal is what makes "the stats reconcile with the grid" structural rather than a coincidence of two similar computations. |
+| The Settings screen's shape | Sections — Photos (S03 switch + grant count), Backup (export/import + the outcome message), Caches, About + Licenses — as cards in the mockup's language. | `mockup.html` has no settings frame. Following its vocabulary (section headers, cards, accent CTA, ghost button) rather than inventing a second visual language was the cheaper and more consistent choice. |
+| Licenses as a route | `Licenses` is an eighth route, rendered from `assets/licenses.md` by a renderer that understands `#`, `##`, `-` and paragraphs — and nothing else. | The text is long enough to need its own screen and its own scroll. A Markdown library for four constructs would be a dependency for nothing. |
+| Stats' back affordance | The bottom bar's Dex tab and the back arrow both `popBackStack()`. | Stats is always reached from the grid, so popping returns exactly where the user was, and the back stack never grows a Grid → Stats → Grid chain. |
+
+**Not verified.** No phone is connected. `assembleDebug`, `assembleDebugAndroidTest` and `testDebugUnitTest` pass (242 tests, up from 201). Section 9's slice-8 done-check is entirely outstanding: nobody has hand-counted the stats against the grid, seen an export reach a file manager, imported an archive, watched a cache clear leave thumbnails intact, or confirmed that toggling S03 makes the next registration write `filesDir/photos/`.
 
 ---
 

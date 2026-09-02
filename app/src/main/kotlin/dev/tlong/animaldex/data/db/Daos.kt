@@ -131,6 +131,10 @@ interface EntryDao {
     @Query("SELECT speciesId FROM entries")
     suspend fun speciesIdsWithEntries(): List<String>
 
+    /** S01's export reads the whole life list in one pass. */
+    @Query("SELECT * FROM entries")
+    suspend fun entriesOnce(): List<EntryEntity>
+
     @Upsert
     suspend fun upsert(entry: EntryEntity)
 
@@ -171,6 +175,13 @@ interface CaptureDao {
     /** S08's "recently caught" strip. */
     @Query("SELECT * FROM captures ORDER BY createdAt DESC LIMIT :limit")
     fun observeRecent(limit: Int): Flow<List<CaptureEntity>>
+
+    /** S01's export, oldest first so the archive reads in the order the catches happened. */
+    @Query("SELECT * FROM captures ORDER BY createdAt ASC")
+    suspend fun capturesOnce(): List<CaptureEntity>
+
+    @Query("SELECT id FROM captures")
+    suspend fun captureIdsOnce(): List<String>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(capture: CaptureEntity)

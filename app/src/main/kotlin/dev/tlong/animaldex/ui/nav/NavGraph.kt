@@ -24,6 +24,9 @@ import dev.tlong.animaldex.ui.detail.EntryDetailRoute
 import dev.tlong.animaldex.ui.grid.DexGridRoute
 import dev.tlong.animaldex.ui.photoviewer.PhotoViewerRoute
 import dev.tlong.animaldex.ui.register.RegisterRoute
+import dev.tlong.animaldex.ui.settings.LicensesRoute
+import dev.tlong.animaldex.ui.settings.SettingsRoute
+import dev.tlong.animaldex.ui.stats.StatsRoute
 import dev.tlong.animaldex.ui.theme.DexTheme
 import kotlinx.serialization.Serializable
 
@@ -62,6 +65,10 @@ data object Stats
 
 @Serializable
 data object Settings
+
+/** Reached from Settings; a route rather than a dialog because the text is long. */
+@Serializable
+data object Licenses
 
 @Composable
 fun AnimalDexNavHost(navController: NavHostController = rememberNavController()) {
@@ -144,15 +151,30 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
                 onBack = { navController.popBackStack() },
             )
         }
-        composable<Stats> { Placeholder(title = "Stats — coming soon") }
-        composable<Settings> { Placeholder(title = "Settings — coming soon") }
+        composable<Stats> {
+            StatsRoute(
+                // The bottom bar's Dex tab and the back arrow are the same move: Stats is
+                // always reached from the grid, so popping returns exactly where the user was.
+                onBack = { navController.popBackStack() },
+                onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
+            )
+        }
+        composable<Settings> {
+            SettingsRoute(
+                onBack = { navController.popBackStack() },
+                onOpenLicenses = { navController.navigate(Licenses) },
+            )
+        }
+        composable<Licenses> { LicensesRoute(onBack = { navController.popBackStack() }) }
     }
 }
 
 /**
- * What a route shows until its own slice replaces it. Slice 4 replaced the grid and the
- * detail bodies; Register, Confirm, Photo Viewer, Stats and Settings still land here.
+ * What a route shows until its own slice replaces it. Nothing lands here any more: slice 8
+ * replaced the last two placeholders (Stats and Settings). Kept as the shape a future route
+ * starts from.
  */
+@Suppress("unused")
 @Composable
 private fun Placeholder(
     title: String,

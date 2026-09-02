@@ -2,6 +2,9 @@ package dev.tlong.animaldex
 
 import android.content.Context
 import coil3.ImageLoader
+import dev.tlong.animaldex.data.backup.AndroidBackupGateway
+import dev.tlong.animaldex.data.backup.BackupGateway
+import dev.tlong.animaldex.data.backup.BackupService
 import dev.tlong.animaldex.data.catalogue.AndroidAssetReader
 import dev.tlong.animaldex.data.catalogue.CatalogueImporter
 import dev.tlong.animaldex.data.catalogue.ImportOutcome
@@ -18,7 +21,9 @@ import dev.tlong.animaldex.data.photo.CaptureRegistrar
 import dev.tlong.animaldex.data.photo.PhotoGateway
 import dev.tlong.animaldex.data.repo.AddSpeciesRegistrar
 import dev.tlong.animaldex.data.repo.DexRepository
+import dev.tlong.animaldex.data.settings.AppSettings
 import dev.tlong.animaldex.media.AndroidNetworkMonitor
+import dev.tlong.animaldex.media.CacheManager
 import dev.tlong.animaldex.media.CallPlayer
 import dev.tlong.animaldex.media.ExoCallPlayer
 import dev.tlong.animaldex.media.NetworkMonitor
@@ -55,16 +60,19 @@ class AppContainer(val appContext: Context) {
     /** The platform half of the photo layer (ARCHITECTURE.md 4). */
     val photoGateway: PhotoGateway by lazy { AndroidPhotoGateway(appContext) }
 
+    /** S03 and the app's other preferences (4.5: plain SharedPreferences). */
+    val settings: AppSettings by lazy { AppSettings(appContext) }
+
     /**
-     * The core loop's write path. `keepLocalCopy` is S03's setting, hard-wired off here:
-     * slice 8 replaces the lambda with a `SharedPreferences` read (4.5) and nothing else in
-     * the registration path changes.
+     * The core loop's write path. `keepLocalCopy` is S03's setting, read **on every
+     * registration** rather than captured: flipping the switch has to affect the next photo,
+     * not the next process.
      */
     val captureRegistrar: CaptureRegistrar by lazy {
         CaptureRegistrar(
             store = dexRepository,
             photos = photoGateway,
-            keepLocalCopy = { false },
+            keepLocalCopy = settings::keepLocalCopyNow,
         )
     }
 
@@ -105,6 +113,19 @@ class AppContainer(val appContext: Context) {
     private val audioCache by lazy { buildAudioCache(appContext) }
 
     /**
+     * Settings' cache management (5.3). It is handed the *existing* `SimpleCache`, because
+     * opening a second one over `media_audio` throws — the reason this lives here and not
+     * inside the Settings ViewModel.
+     */
+    val cacheManager: CacheManager by lazy {
+        CacheManager(
+            context = appContext,
+            imageLoader = { imageLoader },
+            audioCache = { audioCache },
+        )
+    }
+
+    /**
      * One call plays at a time, app-wide (M06). Nothing exercises this today: every `callUrl`
      * in the shipped catalogue is null for want of a Xeno-canto key (5.4), and the row stays
      * in its disabled state until the pipeline fills them in.
@@ -139,6 +160,18 @@ class AppContainer(val appContext: Context) {
 
     val addSpeciesRegistrar: AddSpeciesRegistrar by lazy {
         AddSpeciesRegistrar(store = dexRepository, captures = captureRegistrar)
+    }
+
+    // -----------------------------------------------------------------------
+    // Export and import (slice 8, S01).
+    // -----------------------------------------------------------------------
+
+    private val backupGateway: BackupGateway by lazy {
+        AndroidBackupGateway(appContext, photoGateway)
+    }
+
+    val backupService: BackupService by lazy {
+        BackupService(store = dexRepository, gateway = backupGateway)
     }
 
     private val catalogueImporter: CatalogueImporter by lazy {

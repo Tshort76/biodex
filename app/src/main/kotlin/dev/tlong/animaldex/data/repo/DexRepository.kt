@@ -1,6 +1,13 @@
 package dev.tlong.animaldex.data.repo
 
 import androidx.room.withTransaction
+import dev.tlong.animaldex.data.backup.BackupEntry
+import dev.tlong.animaldex.data.backup.BackupSnapshot
+import dev.tlong.animaldex.data.backup.BackupSpecies
+import dev.tlong.animaldex.data.backup.BackupStore
+import dev.tlong.animaldex.data.backup.ImportPlan
+import dev.tlong.animaldex.data.backup.LocalEntry
+import dev.tlong.animaldex.data.backup.LocalSnapshot
 import dev.tlong.animaldex.data.db.AppDatabase
 import dev.tlong.animaldex.data.db.CaptureEntity
 import dev.tlong.animaldex.data.db.EcosystemEntity
@@ -20,6 +27,8 @@ import dev.tlong.animaldex.domain.SpeciesDetail
 import dev.tlong.animaldex.domain.SpeciesFields
 import dev.tlong.animaldex.domain.SpeciesSource
 import dev.tlong.animaldex.domain.SpeciesSummary
+import dev.tlong.animaldex.domain.TaxClass
+import dev.tlong.animaldex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.animaldex.domain.UserSpeciesRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -40,7 +49,7 @@ const val DEFAULT_REGION_ID = "pacific"
 class DexRepository(
     private val db: AppDatabase,
     private val regionId: String = DEFAULT_REGION_ID,
-) : CaptureStore, UserSpeciesStore {
+) : CaptureStore, UserSpeciesStore, BackupStore {
 
     private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
     private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
@@ -228,7 +237,107 @@ class DexRepository(
     override suspend fun deleteUserSpecies(speciesId: String) {
         db.speciesDao().deleteByIds(listOf(speciesId))
     }
+
+    // -----------------------------------------------------------------------
+    // Export and import (slice 8, S01). Every rule lives in `data/backup/`; this
+    // half reads rows and applies a plan.
+    // -----------------------------------------------------------------------
+
+    override suspend fun backupSnapshot(): BackupSnapshot {
+        val species = db.speciesDao().speciesOnce(regionId)
+        val ecosystemsBySpecies = db.ecosystemDao().membershipsOnce(regionId)
+            .groupBy({ it.speciesId }, { it.ecosystemId })
+        return BackupSnapshot(
+            regionId = regionId,
+            species = species.map { it.toBackup(ecosystemsBySpecies[it.id].orEmpty()) },
+            entries = db.entryDao().entriesOnce().map {
+                BackupEntry(it.speciesId, it.caughtAt, it.favoriteCaptureId)
+            },
+            captures = db.captureDao().capturesOnce().map { it.toDomain() },
+        )
+    }
+
+    override suspend fun localSnapshot(): LocalSnapshot {
+        val species = db.speciesDao().speciesOnce(regionId)
+        return LocalSnapshot(
+            speciesSources = species.associate { it.id to it.source },
+            usedUserDexNumbers = species.filter { it.dexNumber > USER_DEX_NUMBER_BASE }
+                .map { it.dexNumber }
+                .toSet(),
+            captureIds = db.captureDao().captureIdsOnce().toSet(),
+            entries = db.entryDao().entriesOnce()
+                .associate { it.speciesId to LocalEntry(it.caughtAt, it.favoriteCaptureId) },
+            ecosystemIds = db.ecosystemDao().ecosystemsOnce(regionId).map { it.id }.toSet(),
+        )
+    }
+
+    override suspend fun applyImport(plan: ImportPlan) {
+        db.withTransaction {
+            // Species first: both captures and entries carry a foreign key to it.
+            plan.speciesToInsert.forEach { db.speciesDao().upsert(it.toEntity(regionId)) }
+            plan.memberships.forEach { (speciesId, ecosystemIds) ->
+                if (ecosystemIds.isNotEmpty()) {
+                    db.ecosystemDao().upsertMemberships(
+                        ecosystemIds.map { SpeciesEcosystemCrossRef(speciesId, it) },
+                    )
+                }
+            }
+            plan.capturesToInsert.forEach { db.captureDao().upsert(it.capture.toEntity()) }
+            plan.entriesToWrite.forEach {
+                db.entryDao().upsert(
+                    EntryEntity(
+                        speciesId = it.speciesId,
+                        caughtAt = it.caughtAt,
+                        favoriteCaptureId = it.favoriteCaptureId,
+                    ),
+                )
+            }
+        }
+    }
 }
+
+internal fun SpeciesEntity.toBackup(ecosystemIds: List<String>) = BackupSpecies(
+    id = id,
+    source = source.wireName,
+    dexNumber = dexNumber,
+    commonName = commonName,
+    taxClass = taxClass.wireName,
+    silhouetteRes = silhouetteRes,
+    scientificName = scientificName,
+    detailsPending = detailsPending,
+    habitatText = habitatText,
+    description = description,
+    imageUrl = imageUrl,
+    callUrl = callUrl,
+    infoUrl = infoUrl,
+    imageAttribution = imageAttribution,
+    callAttribution = callAttribution,
+    userEditedFields = userEditedFields,
+    ecosystemIds = ecosystemIds,
+)
+
+internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
+    id = id,
+    regionId = regionId,
+    dexNumber = dexNumber,
+    // Only user-added species are ever inserted by an import (`planImport`), so the source
+    // is not read back from the archive: a file cannot talk this app into creating a
+    // catalogue species the bundled asset does not have.
+    source = SpeciesSource.USER,
+    detailsPending = detailsPending,
+    commonName = commonName,
+    scientificName = scientificName,
+    taxClass = TaxClass.fromWireName(taxClass),
+    habitatText = habitatText,
+    description = description,
+    imageUrl = imageUrl,
+    callUrl = callUrl,
+    infoUrl = infoUrl,
+    imageAttribution = imageAttribution,
+    callAttribution = callAttribution,
+    silhouetteRes = silhouetteRes,
+    userEditedFields = userEditedFields,
+)
 
 internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
     id = id,
