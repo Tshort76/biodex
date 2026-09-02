@@ -1,0 +1,19 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Catalogue pipeline
+tools/catalogue/cache/

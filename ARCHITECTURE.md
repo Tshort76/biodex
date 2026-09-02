@@ -61,6 +61,22 @@ The picker story is unaffected: `ActivityResultContracts.PickVisualMedia` uses t
 
 Debug build only, installed with `adb install -r app/build/outputs/apk/debug/app-debug.apk` (or `./gradlew installDebug` with the phone connected). The default debug keystore is generated automatically. No release build type configuration, no minification (`isMinifyEnabled = false` everywhere), no Play Store metadata. `local.properties` carries `sdk.dir=/opt/homebrew/share/android-commandlinetools` and is git-ignored.
 
+### 1.5 Version corrections (recorded by slice 1, 2026-09-01)
+
+Slice 1 built the stack for real. Everything in 1.1 held: Gradle 8.13, AGP 8.13.2, Kotlin 2.3.10, the matching Compose and serialization compiler plugins, and KSP `2.3.11` all resolved and compiled with no change. Room 2.8.4, Coil 3.5.0, Media3 1.10.0, OkHttp 4.12.0, kotlinx-serialization 1.9.0, kotlinx-coroutines 1.10.2 and activity-compose 1.13.0 also resolved as pinned, so risk R1's two named worries (the KSP plugin id and serialization 1.9.0) did not materialize.
+
+Three androidx versions in 1.2 did not. Each of them declares a hard floor of **AGP 9.1.0 and compileSdk 37**, which `assembleDebug` enforces as a build failure, not a warning. Rather than move the whole toolchain to AGP 9 (the decision in 1.1 rejects that deliberately, and API 37 is not installed on the build machine), each library steps back to the newest release that builds against AGP 8.13.2 / compileSdk 36. The version catalog carries the same note at each entry.
+
+| Library | Planned | Actual | Reason |
+|---|---|---|---|
+| Compose BOM | 2026.08.00 | **2026.06.01** | 2026.08.00 carries Compose 1.12.0, which requires AGP 9.1+ / compileSdk 37. 2026.06.01 carries Compose 1.11.4 and Material 3 in the same line. |
+| Navigation Compose | 2.10.0 | **2.9.8** | Same AGP 9.1+ / compileSdk 37 floor. Type-safe `@Serializable` route objects have shipped since Navigation 2.8, so section 6.1's routing design is unaffected. |
+| Lifecycle | 2.11.0 | **2.10.0** | Same AGP 9.1+ / compileSdk 37 floor. `collectAsStateWithLifecycle()` and the Compose ViewModel helpers behave identically. |
+
+One further detail worth knowing rather than correcting: `androidx.exifinterface` is pinned at 1.4.1 but Media3 pulls 1.4.2, so Gradle resolves the graph to 1.4.2. Nothing depends on the difference.
+
+Any later slice that wants to move to AGP 9 must move Gradle to 9.6, install `platforms;android-37`, and re-verify — a deliberate decision, not a drive-by upgrade.
+
 ---
 
 ## 2. Module and package layout
