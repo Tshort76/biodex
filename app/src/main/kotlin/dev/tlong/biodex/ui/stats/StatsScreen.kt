@@ -41,6 +41,7 @@ import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.ui.common.ClassMeter
 import dev.tlong.biodex.ui.common.EcosystemMeter
 import dev.tlong.biodex.ui.common.MeterBar
+import dev.tlong.biodex.ui.common.ProgressPill
 import dev.tlong.biodex.ui.common.RegionPill
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.Silhouettes
@@ -105,6 +106,23 @@ fun StatsScreen(
                 if (state.regionLabel.isNotEmpty()) RegionPill(state.regionLabel)
             }
 
+            // M29's two pills, under the title rather than beside it: the Stats header has
+            // no settings button to compete with, so the numbers get their own line.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(bottom = 4.dp),
+            ) {
+                ProgressPill(caught = state.overall.caught, total = state.overall.total)
+                if (state.showPlantPill) {
+                    ProgressPill(
+                        caught = state.plants.caught,
+                        total = state.plants.total,
+                        color = colors.ok,
+                        glyph = "\uD83C\uDF3F",
+                    )
+                }
+            }
+
             OverallMeter(state)
 
             SectionHeader("By ecosystem")
@@ -115,7 +133,7 @@ fun StatsScreen(
                     state.ecosystems.forEach { progress ->
                         EcosystemMeter(
                             label = progress.ecosystem.name,
-                            meter = progress.meter,
+                            meter = progress.animals,
                         )
                     }
                 }

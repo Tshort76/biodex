@@ -73,7 +73,9 @@ class ImportMergeTest {
 
         assertEquals(1, plan.capturesAdded())
         assertEquals(1, plan.speciesToInsert.size)
-        assertEquals(1001, plan.speciesToInsert.single().dexNumber)
+        // The archived number is never kept: a v3 archive's 1001 would now sort among the
+        // plants, so every restored user species is allocated a fresh U-number (11.1).
+        assertEquals(9001, plan.speciesToInsert.single().dexNumber)
         assertEquals("cap1", plan.entriesToWrite.single().favoriteCaptureId)
         // An ecosystem this install does not have would fail the foreign key and lose the
         // whole transaction, so it is dropped rather than carried.
@@ -194,15 +196,16 @@ class ImportMergeTest {
     }
 
     @Test
-    fun `a user species keeps its U-number when free and takes the next when taken`() {
+    fun `restored user species are renumbered onto the current base, in manifest order`() {
         val plan = planImport(
             manifest(species = listOf(userSpecies("user-1", 1001), userSpecies("user-2", 1002))),
-            freshInstall.copy(usedUserDexNumbers = setOf(1001)),
+            freshInstall.copy(usedUserDexNumbers = setOf(9001)),
         )
 
-        assertEquals(1002, plan.speciesToInsert.first { it.id == "user-1" }.dexNumber)
-        // 1002 has now been taken by the renumbering, so the second falls to 1003.
-        assertEquals(1003, plan.speciesToInsert.first { it.id == "user-2" }.dexNumber)
+        // 9001 is already this install's, so the archive's two species take the next free
+        // pair — in the order the manifest lists them, which the export writes in dex order.
+        assertEquals(9002, plan.speciesToInsert.first { it.id == "user-1" }.dexNumber)
+        assertEquals(9003, plan.speciesToInsert.first { it.id == "user-2" }.dexNumber)
     }
 
     @Test

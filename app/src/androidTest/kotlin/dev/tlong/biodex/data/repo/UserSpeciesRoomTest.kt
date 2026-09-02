@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.tlong.biodex.data.db.AppDatabase
 import dev.tlong.biodex.data.db.EcosystemEntity
+import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesField
@@ -29,7 +30,7 @@ import org.junit.runner.RunWith
  * `MAX(dexNumber)` allocates U-numbers correctly beside a curated catalogue, and that replacing
  * one user species' ecosystem memberships leaves every other species' rows alone.
  *
- * Has never executed: no device has been connected to this project (risk R6).
+ * First run on a real device at slice 9, on a Pixel 7 Pro (API 37).
  */
 @RunWith(AndroidJUnit4::class)
 class UserSpeciesRoomTest {
@@ -82,11 +83,11 @@ class UserSpeciesRoomTest {
         assertNull(repository.maxUserDexNumber("pacific"))
 
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "Varied Thrush")),
+            record("user-1", 9001, SpeciesFields(commonName = "Varied Thrush")),
             listOf("coastal-rainforest"),
         )
 
-        assertEquals(1001, repository.maxUserDexNumber("pacific"))
+        assertEquals(9001, repository.maxUserDexNumber("pacific"))
     }
 
     @Test
@@ -94,7 +95,7 @@ class UserSpeciesRoomTest {
         repository.upsertUserSpecies(
             record(
                 "user-1",
-                1001,
+                9001,
                 SpeciesFields(
                     commonName = "Varied Thrush",
                     scientificName = "Ixoreus naevius",
@@ -115,30 +116,38 @@ class UserSpeciesRoomTest {
     @Test
     fun aUserSpeciesIsExcludedFromTheCuratedMeter() = runBlocking {
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "Varied Thrush")),
+            record("user-1", 9001, SpeciesFields(commonName = "Varied Thrush")),
             listOf("coastal-rainforest"),
         )
+
+        // The addendum counts user species that are *caught*, and a species is caught only
+        // when it has an entry — which in the app it always does, because the only way to
+        // add one is to register a photo. Written without that row, this test asked for a
+        // count the math deliberately does not produce (found when a device first ran it).
+        db.entryDao().upsert(EntryEntity("user-1", caughtAt = 1_700_000_000_000L))
 
         val progress = repository.dexProgress().first()
 
         // M02/D9: user-added species are an addendum, never part of the 120.
         assertEquals(1, progress.totalSpecies)
         assertEquals(1, progress.userAddedCount)
+        assertEquals(1, progress.animals.total)
+        assertEquals(1, progress.animals.userAdded)
     }
 
     @Test
     fun replacingOneSpeciesMembershipsLeavesOthersAlone() = runBlocking {
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "One")),
+            record("user-1", 9001, SpeciesFields(commonName = "One")),
             listOf("coastal-rainforest"),
         )
         repository.upsertUserSpecies(
-            record("user-2", 1002, SpeciesFields(commonName = "Two")),
+            record("user-2", 9002, SpeciesFields(commonName = "Two")),
             listOf("urban-suburban"),
         )
 
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "One")),
+            record("user-1", 9001, SpeciesFields(commonName = "One")),
             listOf("urban-suburban"),
         )
 
@@ -152,7 +161,7 @@ class UserSpeciesRoomTest {
     @Test
     fun aNullEcosystemListLeavesTheUsersPickAlone() = runBlocking {
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "One"), pending = true),
+            record("user-1", 9001, SpeciesFields(commonName = "One"), pending = true),
             listOf("coastal-rainforest"),
         )
 
@@ -178,7 +187,7 @@ class UserSpeciesRoomTest {
             newSpeciesId = { "user-1" },
         )
         repository.upsertUserSpecies(
-            record("user-1", 1001, SpeciesFields(commonName = "Varied Thrush"), pending = true),
+            record("user-1", 9001, SpeciesFields(commonName = "Varied Thrush"), pending = true),
             emptyList(),
         )
 

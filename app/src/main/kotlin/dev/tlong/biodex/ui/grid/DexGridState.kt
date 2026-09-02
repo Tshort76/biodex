@@ -2,6 +2,7 @@ package dev.tlong.biodex.ui.grid
 
 import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.Flow
@@ -31,9 +32,11 @@ data class DexGridFilters(
 }
 
 data class DexGridUiState(
+    /** The region's own name, read from the `regions` table — "Pacific USA" (11.1). */
     val regionLabel: String = "",
-    val caughtCount: Int = 0,
-    val totalCount: Int = 0,
+    /** The two kingdoms' meters, rendered as two pills. Plants hide while the total is 0. */
+    val animals: Meter = Meter(0, 0, 0),
+    val plants: Meter = Meter(0, 0, 0),
     val query: String = "",
     val filters: DexGridFilters = DexGridFilters(),
     val ecosystems: List<Ecosystem> = emptyList(),
@@ -42,6 +45,9 @@ data class DexGridUiState(
     val loading: Boolean = true,
 ) {
     val isFiltered: Boolean get() = query.isNotBlank() || !filters.isEmpty
+
+    /** M29: a plant pill on a dex with no plants in it would only ever read `0/0`. */
+    val showPlantPill: Boolean get() = plants.total > 0
 }
 
 /** Case-insensitive substring over common and scientific name (M14). */
@@ -66,7 +72,8 @@ internal fun matchesFilters(species: SpeciesSummary, filters: DexGridFilters): B
 /**
  * Search and filters compose: a species survives only if it satisfies every active narrowing.
  * Dex order is the grid's order (M01), and user-added species trail the catalogue because
- * their dex numbers start above [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE] (M02).
+ * their dex numbers start above [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE], with the
+ * plants between the two (M02).
  */
 fun filterSpecies(
     species: List<SpeciesSummary>,
@@ -86,13 +93,12 @@ fun dexGridUiState(
     progress: Flow<DexProgress>,
     query: Flow<String>,
     filters: Flow<DexGridFilters>,
-    regionLabel: (String) -> String = ::regionLabelFor,
 ): Flow<DexGridUiState> =
     combine(species, ecosystems, progress, query, filters) { all, ecos, prog, q, f ->
         DexGridUiState(
-            regionLabel = regionLabel(prog.regionId),
-            caughtCount = prog.caughtCount,
-            totalCount = prog.totalSpecies,
+            regionLabel = prog.regionName,
+            animals = prog.animals,
+            plants = prog.plants,
             query = q,
             filters = f,
             ecosystems = ecos,
@@ -100,17 +106,6 @@ fun dexGridUiState(
             loading = all.isEmpty() && prog.totalSpecies == 0,
         )
     }
-
-/**
- * The region's display name (M01's header). The catalogue asset carries `regionName` but
- * slice 3 does not import it into Room, and this slice does not touch the schema — see
- * ARCHITECTURE.md 6.5. One region ships in v1; C03 turns this into a table read.
- */
-fun regionLabelFor(regionId: String): String = when (regionId) {
-    "pacific" -> "Pacific"
-    "" -> ""
-    else -> regionId.replaceFirstChar { it.uppercase() }
-}
 
 /** The label the class chips show; the mockup uses the plural common word, not the enum. */
 fun TaxClass.chipLabel(): String = when (this) {
@@ -121,4 +116,8 @@ fun TaxClass.chipLabel(): String = when (this) {
     TaxClass.FISH -> "Fish"
     TaxClass.INSECT -> "Insects"
     TaxClass.OTHER_INVERTEBRATE -> "Invertebrates"
+    TaxClass.TREE -> "Trees"
+    TaxClass.SHRUB -> "Shrubs"
+    TaxClass.HERB -> "Herbs"
+    TaxClass.FERN -> "Ferns"
 }

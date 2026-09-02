@@ -4,13 +4,14 @@ import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesFields
+import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.detailsPendingFor
 import dev.tlong.biodex.domain.displayDexNumber
 import dev.tlong.biodex.domain.previewFields
-import dev.tlong.biodex.domain.SpeciesSource
 
 /**
  * Frame 6 of `mockup.html` — "Add Your Own Species — confirm" — as one pure function
@@ -71,7 +72,9 @@ sealed interface ConfirmSpeciesUiState {
             get() = alternatives.size.takeIf { it > 0 }
                 ?.let { "Not this one? $it other match${if (it == 1) "" else "es"} ›" }
 
-        val dexLabel: String get() = displayDexNumber(dexNumber, SpeciesSource.USER)
+        // Slice 12 gives the card a kingdom; until then every user-added species is an
+        // animal, and a U-number does not read the kingdom anyway.
+        val dexLabel: String get() = displayDexNumber(dexNumber, SpeciesSource.USER, Kingdom.ANIMAL)
 
         val imageFound: Boolean get() = fields.imageUrl != null
         val habitatFound: Boolean get() = !fields.habitatText.isNullOrBlank()

@@ -494,12 +494,16 @@ private fun FieldEditor(value: String, placeholder: String, onValueChange: (Stri
 @Composable
 private fun TaxClassPicker(selected: TaxClass, onSelect: (TaxClass) -> Unit) {
     val colors = DexTheme.colors
+    // Only the selected class's own kingdom is offered. Until slice 12 gives this card a
+    // kingdom of its own, the selected class is the only thing that knows which kingdom the
+    // species is in — and without this filter the card would offer "tree" for a sparrow.
+    val offered = TaxClass.of(selected.kingdom)
     androidx.compose.foundation.layout.FlowRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        TaxClass.entries.forEach { taxClass ->
+        offered.forEach { taxClass ->
             val on = taxClass == selected
             Text(
                 text = taxClass.wireName.replace('_', ' '),

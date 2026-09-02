@@ -33,7 +33,7 @@ class BackupRoundTripTest {
     private val thrush = BackupSpecies(
         id = "user-1",
         source = "user",
-        dexNumber = 1001,
+        dexNumber = 9001,
         commonName = "Varied Thrush",
         taxClass = "bird",
         silhouetteRes = "sil_bird",
@@ -245,5 +245,81 @@ class BackupRoundTripTest {
             }
         }
         error("no manifest in the archive")
+    }
+
+    // -----------------------------------------------------------------------
+    // The BioDex manifest fields (11.1). An archive outlives the app that wrote it, so
+    // both directions matter: a plant must survive the round trip, and a v3 archive
+    // written before plants existed must still open.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a plant round-trips with its kingdom, uses, note and Duke's columns`() = runBlocking {
+        val elder = BackupSpecies(
+            id = "user-2",
+            source = "user",
+            dexNumber = 9002,
+            commonName = "Blue Elderberry",
+            taxClass = "shrub",
+            silhouetteRes = "sil_shrub",
+            kingdom = "plant",
+            uses = listOf("edible", "medicinal"),
+            usesNote = "Berries, late summer. Caution: raw berries are toxic.",
+            medicinalActivities = listOf("astringent", "diuretic"),
+            medicinalRecordCount = 60,
+            usesAttribution = "Dr. Duke's · USDA ARS · CC0",
+        )
+        // An export with nothing caught writes no archive at all, so the plant needs a
+        // capture behind it — which is also the only way a user-added species exists.
+        val photo = capture("plant-shot", speciesId = "user-2")
+        val gateway = FakeBackupGateway(
+            ownedFiles = mutableMapOf("thumbnails/plant-shot.jpg" to "thumb".toByteArray()),
+            gallery = mutableMapOf(photo.photoUri to "full".toByteArray()),
+            refs = mutableMapOf("plant-shot" to PhotoRef.Available(photo.photoUri)),
+        )
+        val store = FakeBackupStore(
+            snapshot = BackupSnapshot(
+                regionId = "pacific",
+                species = listOf(owl, elder),
+                entries = listOf(BackupEntry("user-2", 100L, "plant-shot")),
+                captures = listOf(photo),
+            ),
+        )
+
+        BackupService(store, gateway).export()
+        val restored = manifestOf(gateway.archives.values.single())
+            .species.single { it.id == "user-2" }
+
+        assertEquals("BioDex", manifestOf(gateway.archives.values.single()).app)
+        assertEquals("plant", restored.kingdom)
+        assertEquals(listOf("edible", "medicinal"), restored.uses)
+        assertEquals("Berries, late summer. Caution: raw berries are toxic.", restored.usesNote)
+        assertEquals(listOf("astringent", "diuretic"), restored.medicinalActivities)
+        assertEquals(60, restored.medicinalRecordCount)
+        assertEquals("Dr. Duke's · USDA ARS · CC0", restored.usesAttribution)
+    }
+
+    @Test
+    fun `a v3 archive with none of the new fields still parses, as the animal it was`() {
+        val v3 = """
+            {"formatVersion":1,"app":"AnimalDex","exportedAt":1,"regionId":"pacific",
+             "species":[{"id":"user-1","source":"user","dexNumber":1001,
+                         "commonName":"Varied Thrush","taxClass":"bird",
+                         "silhouetteRes":"sil_bird"}],
+             "entries":[],"captures":[]}
+        """.trimIndent()
+
+        val manifest = Json { ignoreUnknownKeys = true }.decodeFromString<BackupManifest>(v3)
+        val species = manifest.species.single()
+
+        assertEquals("animal", species.kingdom)
+        assertTrue(species.uses.isEmpty())
+        assertNull(species.usesNote)
+        assertEquals(0, species.medicinalRecordCount)
+        assertNull(species.usesAttribution)
+
+        // And its 1001 is re-based, because that number now sits among the plants.
+        val plan = planImport(manifest, LocalSnapshot())
+        assertEquals(9001, plan.speciesToInsert.single().dexNumber)
     }
 }

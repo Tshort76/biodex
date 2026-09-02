@@ -1,6 +1,7 @@
 package dev.tlong.biodex.data.db
 
 import androidx.room.TypeConverter
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.serialization.json.Json
@@ -20,6 +21,12 @@ class Converters {
 
     @TypeConverter
     fun stringToTaxClass(value: String): TaxClass = TaxClass.fromWireName(value)
+
+    @TypeConverter
+    fun kingdomToString(value: Kingdom): String = value.wireName
+
+    @TypeConverter
+    fun stringToKingdom(value: String): Kingdom = Kingdom.fromWireName(value)
 
     @TypeConverter
     fun sourceToString(value: SpeciesSource): String = value.wireName

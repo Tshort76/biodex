@@ -58,8 +58,14 @@ fun entryDetailUiState(
             detail = species,
             ecosystemNames = ecosystemNamesFor(species, ecos),
             captures = caps,
-            caughtCount = prog.caughtCount,
-            totalCount = prog.totalSpecies,
+            // S10's reveal counts the species' own kingdom — "4 / 80 plants", never the
+            // two lists added together. Slice 11 adds the label; the number is right from
+            // the moment plants exist, which is what stops the reveal reading 1/200 for
+            // the hours between slice 10's asset and slice 11's UI.
+            caughtCount = species?.let { prog.meterFor(it.summary.kingdom).caught }
+                ?: prog.caughtCount,
+            totalCount = species?.let { prog.meterFor(it.summary.kingdom).total }
+                ?: prog.totalSpecies,
             loading = false,
         )
     }

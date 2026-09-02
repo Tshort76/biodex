@@ -3,7 +3,6 @@ package dev.tlong.biodex.ui.grid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -34,12 +34,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Meter
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -115,8 +118,8 @@ fun DexGridScreen(
         ) {
             GridAppBar(
                 regionLabel = state.regionLabel,
-                caught = state.caughtCount,
-                total = state.totalCount,
+                animals = state.animals,
+                plants = state.plants.takeIf { state.showPlantPill },
                 onOpenSettings = onOpenSettings,
             )
             SearchField(query = state.query, onQueryChange = onQueryChange)
@@ -148,16 +151,23 @@ fun DexGridScreen(
     }
 }
 
+/**
+ * M29's header: the name, the region, and one progress pill per kingdom.
+ *
+ * "PACIFIC USA" and two pills are a lot to fit next to a title on a phone, so the title is
+ * the thing that gives way — `weight(1f, fill = false)` lets it shrink and ellipsise while
+ * the numbers, which are the point of the header, stay whole.
+ */
 @Composable
 private fun GridAppBar(
     regionLabel: String,
-    caught: Int,
-    total: Int,
+    animals: Meter,
+    plants: Meter?,
     onOpenSettings: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
@@ -166,11 +176,22 @@ private fun GridAppBar(
             text = "BioDex",
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = DexTheme.colors.fg,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
         if (regionLabel.isNotEmpty()) RegionPill(regionLabel)
         Box(modifier = Modifier.weight(1f))
-        ProgressPill(caught = caught, total = total)
-        TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 6.dp)) {
+        ProgressPill(caught = animals.caught, total = animals.total)
+        plants?.let {
+            ProgressPill(
+                caught = it.caught,
+                total = it.total,
+                color = DexTheme.colors.ok,
+                glyph = "\uD83C\uDF3F",
+            )
+        }
+        TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 4.dp)) {
             Text(text = "⚙", color = DexTheme.colors.muted)
         }
     }
@@ -341,6 +362,7 @@ internal fun previewSpecies(
     commonName = name,
     scientificName = "Genus species",
     taxClass = taxClass,
+    kingdom = taxClass.kingdom,
     silhouetteRes = "sil_" + taxClass.wireName,
     ecosystemIds = ecosystems,
     caughtAt = if (caught) 1_756_512_000_000L else null,
@@ -354,9 +376,8 @@ private fun DexGridPreview() {
     BioDexTheme {
         DexGridScreen(
             state = DexGridUiState(
-                regionLabel = "Pacific",
-                caughtCount = 3,
-                totalCount = 120,
+                regionLabel = "Pacific USA",
+                animals = Meter(3, 120),
                 ecosystems = listOf(
                     Ecosystem("coastal-rainforest", "pacific", "Coastal Rainforest", 1),
                     Ecosystem("oak-chaparral", "pacific", "Oak Woodland & Chaparral", 3),
@@ -394,9 +415,8 @@ private fun DexGridSearchPreview() {
     BioDexTheme {
         DexGridScreen(
             state = DexGridUiState(
-                regionLabel = "Pacific",
-                caughtCount = 3,
-                totalCount = 120,
+                regionLabel = "Pacific USA",
+                animals = Meter(3, 120),
                 query = "western",
                 filters = DexGridFilters(taxClass = TaxClass.REPTILE),
                 species = listOf(

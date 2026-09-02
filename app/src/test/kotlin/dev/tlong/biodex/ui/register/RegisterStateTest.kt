@@ -1,5 +1,6 @@
 package dev.tlong.biodex.ui.register
 
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -29,6 +30,7 @@ class RegisterStateTest {
             commonName = common,
             scientificName = scientific,
             taxClass = TaxClass.BIRD,
+            kingdom = Kingdom.ANIMAL,
             silhouetteRes = "sil_bird",
             ecosystemIds = emptyList(),
             caughtAt = null,

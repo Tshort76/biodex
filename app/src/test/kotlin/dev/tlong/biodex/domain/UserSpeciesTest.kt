@@ -163,10 +163,15 @@ class UserSpeciesTest {
 
     @Test
     fun `the first user species is U01 and they climb from there`() {
-        assertEquals(1001, nextUserDexNumber(null))
-        assertEquals("U01", displayDexNumber(1001, SpeciesSource.USER))
-        assertEquals(1002, nextUserDexNumber(1001))
-        assertEquals("U04", displayDexNumber(nextUserDexNumber(1003), SpeciesSource.USER))
+        // The base moved from 1000 to 9000 with BioDex, so that user numbers sit above the
+        // plant range rather than below it (ARCHITECTURE.md 11.1).
+        assertEquals(9001, nextUserDexNumber(null))
+        assertEquals("U01", displayDexNumber(9001, SpeciesSource.USER, Kingdom.ANIMAL))
+        assertEquals(9002, nextUserDexNumber(9001))
+        assertEquals(
+            "U04",
+            displayDexNumber(nextUserDexNumber(9003), SpeciesSource.USER, Kingdom.ANIMAL),
+        )
     }
 
     @Test

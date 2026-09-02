@@ -41,6 +41,7 @@ class DexGridStateTest {
         commonName = name,
         scientificName = scientific,
         taxClass = taxClass,
+        kingdom = taxClass.kingdom,
         silhouetteRes = "sil_" + taxClass.wireName,
         ecosystemIds = ecosystems,
         caughtAt = if (caught) 1_756_512_000_000L else null,
@@ -94,7 +95,9 @@ class DexGridStateTest {
 
     private val progress = DexProgress(
         regionId = "pacific",
-        overall = Meter(caught = 1, total = 120, userAdded = 1),
+        regionName = "Pacific USA",
+        animals = Meter(caught = 1, total = 120, userAdded = 1),
+        plants = Meter(0, 0, 0),
         perClass = emptyList(),
         perEcosystem = emptyList(),
     )
@@ -205,9 +208,12 @@ class DexGridStateTest {
     @Test
     fun `header reads the region and the curated fraction, excluding user-added species`() {
         val s = state()
-        assertEquals("Pacific", s.regionLabel)
-        assertEquals(1, s.caughtCount)
-        assertEquals(120, s.totalCount)
+        // The name comes from the `regions` table now, not from title-casing the id (11.1).
+        assertEquals("Pacific USA", s.regionLabel)
+        assertEquals(Meter(caught = 1, total = 120, userAdded = 1), s.animals)
+        // No plants in the catalogue yet, so the header shows one pill, not two.
+        assertEquals(Meter(0, 0, 0), s.plants)
+        assertFalse(s.showPlantPill)
         assertFalse(s.loading)
     }
 

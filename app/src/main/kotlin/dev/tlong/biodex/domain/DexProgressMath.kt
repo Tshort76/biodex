@@ -4,7 +4,8 @@ package dev.tlong.biodex.domain
  * Progress math (M15 / D9), kept as a pure function so it is testable on the JVM.
  *
  * The rules it encodes, all from DESIGN.md D9:
- *  - Curated species alone form every fraction; the region's meter is `caught / total`.
+ *  - Curated species alone form every fraction; each kingdom's meter is `caught / total`,
+ *    and the two are never blended (D13).
  *  - A user-added species never enters a fraction. It is an addendum ("+3 of your own"),
  *    counted in [Meter.userAdded].
  *  - A species belonging to several ecosystems counts in each of them, so ecosystem
@@ -17,6 +18,7 @@ object DexProgressMath {
         val id: String,
         val source: SpeciesSource,
         val taxClass: TaxClass,
+        val kingdom: Kingdom,
         val caught: Boolean,
     )
 
@@ -28,6 +30,7 @@ object DexProgressMath {
 
     fun compute(
         regionId: String,
+        regionName: String,
         species: List<SpeciesRow>,
         memberships: List<MembershipRow>,
         ecosystems: List<Ecosystem>,
@@ -37,10 +40,10 @@ object DexProgressMath {
         // in practice it is always caught; the filter keeps the addendum honest anyway.
         val userAdded = species.filter { it.source == SpeciesSource.USER && it.caught }
 
-        val overall = Meter(
-            caught = curated.count { it.caught },
-            total = curated.size,
-            userAdded = userAdded.size,
+        fun meterFor(kingdom: Kingdom) = Meter(
+            caught = curated.count { it.kingdom == kingdom && it.caught },
+            total = curated.count { it.kingdom == kingdom },
+            userAdded = userAdded.count { it.kingdom == kingdom },
         )
 
         val perClass = TaxClass.entries.mapNotNull { taxClass ->
@@ -69,19 +72,25 @@ object DexProgressMath {
         val perEcosystem = ecosystems.sortedBy { it.sortOrder }.map { ecosystem ->
             val members = membersOf[ecosystem.id].orEmpty().mapNotNull { byId[it] }
             val curatedMembers = members.filter { it.source == SpeciesSource.CURATED }
+            fun kingdomMeter(kingdom: Kingdom) = Meter(
+                caught = curatedMembers.count { it.kingdom == kingdom && it.caught },
+                total = curatedMembers.count { it.kingdom == kingdom },
+                userAdded = members.count {
+                    it.source == SpeciesSource.USER && it.caught && it.kingdom == kingdom
+                },
+            )
             EcosystemProgress(
                 ecosystem = ecosystem,
-                meter = Meter(
-                    caught = curatedMembers.count { it.caught },
-                    total = curatedMembers.size,
-                    userAdded = members.count { it.source == SpeciesSource.USER && it.caught },
-                ),
+                animals = kingdomMeter(Kingdom.ANIMAL),
+                plants = kingdomMeter(Kingdom.PLANT),
             )
         }
 
         return DexProgress(
             regionId = regionId,
-            overall = overall,
+            regionName = regionName,
+            animals = meterFor(Kingdom.ANIMAL),
+            plants = meterFor(Kingdom.PLANT),
             perClass = perClass,
             perEcosystem = perEcosystem,
         )

@@ -8,11 +8,13 @@ import dev.tlong.biodex.data.backup.BackupStore
 import dev.tlong.biodex.data.backup.ImportPlan
 import dev.tlong.biodex.data.backup.LocalEntry
 import dev.tlong.biodex.data.backup.LocalSnapshot
+import dev.tlong.biodex.data.catalogue.pairKingdomAndClass
 import dev.tlong.biodex.data.db.AppDatabase
 import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.EntryStatusRow
+import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
@@ -23,11 +25,12 @@ import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.DexProgressMath
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Entry
+import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
-import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import kotlinx.coroutines.flow.Flow
@@ -57,6 +60,7 @@ class DexRepository(
     private val entryStatusFlow: Flow<List<EntryStatusRow>> = db.entryDao().observeEntryStatuses()
     private val ecosystemFlow: Flow<List<EcosystemEntity>> =
         db.ecosystemDao().observeEcosystems(regionId)
+    private val regionFlow: Flow<RegionEntity?> = db.regionDao().observeRegion(regionId)
 
     /** Every species in dex order — curated first, user-added trailing (M01/M02). */
     fun speciesSummaries(): Flow<List<SpeciesSummary>> =
@@ -73,15 +77,20 @@ class DexRepository(
             membershipFlow,
             entryStatusFlow,
             ecosystemFlow,
-        ) { species, memberships, statuses, ecosystems ->
+            regionFlow,
+        ) { species, memberships, statuses, ecosystems, region ->
             val caught = statuses.map { it.speciesId }.toSet()
             DexProgressMath.compute(
                 regionId = regionId,
+                // Empty until the first import seeds the row; the header simply shows no
+                // region pill for those few hundred milliseconds rather than an id.
+                regionName = region?.name.orEmpty(),
                 species = species.map {
                     DexProgressMath.SpeciesRow(
                         id = it.id,
                         source = it.source,
                         taxClass = it.taxClass,
+                        kingdom = it.kingdom,
                         caught = it.id in caught,
                     )
                 },
@@ -109,6 +118,10 @@ class DexRepository(
                     infoUrl = it.infoUrl,
                     imageAttribution = it.imageAttribution,
                     callAttribution = it.callAttribution,
+                    usesNote = it.usesNote,
+                    medicinalActivities = it.medicinalActivities,
+                    medicinalRecordCount = it.medicinalRecordCount,
+                    usesAttribution = it.usesAttribution,
                     userEditedFields = it.userEditedFields,
                 )
             }
@@ -314,6 +327,12 @@ internal fun SpeciesEntity.toBackup(ecosystemIds: List<String>) = BackupSpecies(
     callAttribution = callAttribution,
     userEditedFields = userEditedFields,
     ecosystemIds = ecosystemIds,
+    kingdom = kingdom.wireName,
+    uses = uses,
+    usesNote = usesNote,
+    medicinalActivities = medicinalActivities,
+    medicinalRecordCount = medicinalRecordCount,
+    usesAttribution = usesAttribution,
 )
 
 internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
@@ -327,7 +346,8 @@ internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
     detailsPending = detailsPending,
     commonName = commonName,
     scientificName = scientificName,
-    taxClass = TaxClass.fromWireName(taxClass),
+    taxClass = pairedClass,
+    kingdom = pairedKingdom,
     habitatText = habitatText,
     description = description,
     imageUrl = imageUrl,
@@ -337,7 +357,23 @@ internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
     callAttribution = callAttribution,
     silhouetteRes = silhouetteRes,
     userEditedFields = userEditedFields,
+    uses = restoredUses,
+    // The same rule the importer applies: a note with no use behind it is dropped, so a
+    // hand-edited archive cannot produce a species whose note has nowhere to render.
+    usesNote = usesNote?.takeIf { restoredUses.isNotEmpty() },
+    medicinalActivities = medicinalActivities,
+    medicinalRecordCount = medicinalRecordCount,
+    usesAttribution = usesAttribution?.takeIf {
+        medicinalRecordCount > 0 || medicinalActivities.isNotEmpty()
+    },
 )
+
+/** An archive is a file a user could have edited, so the pairing invariant is re-checked. */
+private val BackupSpecies.paired get() = pairKingdomAndClass(kingdom, taxClass)
+private val BackupSpecies.pairedKingdom get() = paired.first
+private val BackupSpecies.pairedClass get() = paired.second
+private val BackupSpecies.restoredUses
+    get() = PlantUse.setFromWireNames(uses).sortedBy { it.ordinal }.map { it.wireName }
 
 internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
     id = id,
@@ -377,6 +413,9 @@ internal fun UserSpeciesRecord.toEntity() = SpeciesEntity(
     callAttribution = fields.callAttribution,
     silhouetteRes = fields.silhouetteRes,
     userEditedFields = userEditedFields,
+    // Slice 12 gives the confirm card a kingdom and a uses editor. Until then every
+    // user-added species is an animal, which is what `fields.taxClass` already says.
+    kingdom = fields.taxClass.kingdom,
 )
 
 internal fun Capture.toEntity() = CaptureEntity(
@@ -416,6 +455,8 @@ internal fun assembleSummaries(
             commonName = row.commonName,
             scientificName = row.scientificName,
             taxClass = row.taxClass,
+            kingdom = row.kingdom,
+            uses = PlantUse.setFromWireNames(row.uses),
             silhouetteRes = row.silhouetteRes,
             ecosystemIds = ecosystemsBySpecies[row.id].orEmpty(),
             caughtAt = status?.caughtAt,

@@ -23,6 +23,7 @@ import androidx.room.TypeConverters
         EntryEntity::class,
         CaptureEntity::class,
         MetaEntity::class,
+        RegionEntity::class,
     ],
     version = 1,
     exportSchema = true,
@@ -35,6 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun entryDao(): EntryDao
     abstract fun captureDao(): CaptureDao
     abstract fun metaDao(): MetaDao
+    abstract fun regionDao(): RegionDao
 
     companion object {
         const val NAME = "biodex.db"

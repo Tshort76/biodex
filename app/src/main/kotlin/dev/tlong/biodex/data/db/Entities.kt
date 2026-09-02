@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
 
@@ -25,7 +26,12 @@ import dev.tlong.biodex.domain.TaxClass
 data class SpeciesEntity(
     @PrimaryKey val id: String,
     val regionId: String,
-    /** Curated: 1–120. User-added: 1001, 1002, … (see `USER_DEX_NUMBER_BASE`). */
+    /**
+     * Curated animals 1–120, curated plants 2001–2080, user-added 9001 upward — see
+     * `storedDexNumber`, `PLANT_DEX_NUMBER_BASE` and `USER_DEX_NUMBER_BASE`. One sortable
+     * column orders the whole grid, and `(regionId, dexNumber)` is unique, which is exactly
+     * why the plants need a stored range of their own.
+     */
     val dexNumber: Int,
     val source: SpeciesSource,
     /** User-added only (M20): a lookup is still owed for this row. */
@@ -33,6 +39,8 @@ data class SpeciesEntity(
     val commonName: String,
     val scientificName: String? = null,
     val taxClass: TaxClass,
+    /** Never null. A details-pending user-added species is `animal` until a backfill (11.1). */
+    val kingdom: Kingdom = Kingdom.ANIMAL,
     val habitatText: String? = null,
     val description: String? = null,
     val imageUrl: String? = null,
@@ -44,6 +52,34 @@ data class SpeciesEntity(
     val silhouetteRes: String,
     /** M21: field names the user hand-edited; always empty for curated species in v1. */
     val userEditedFields: List<String> = emptyList(),
+
+    // The uses block (D14/D15). Kept together and every column defaulted, because the
+    // medicinal half is sourced data whose shape follows Dr. Duke's rather than this app:
+    // adding one more nullable column here later costs a field and a default, nothing more.
+
+    /** JSON array of `edible` | `medicinal`. Empty for every animal. */
+    val uses: List<String> = emptyList(),
+    /** The curated part-and-season note with any `Caution:` sentence; null unless `uses` is non-empty. */
+    val usesNote: String? = null,
+    /** Up to eight Duke's activity names, most-cited first; empty when Duke's has nothing. */
+    val medicinalActivities: List<String> = emptyList(),
+    /** Duke's record count; 0 for animals and for plants with no record. */
+    val medicinalRecordCount: Int = 0,
+    /** The Duke's credit line, non-null exactly when the two columns above are populated. */
+    val usesAttribution: String? = null,
+)
+
+/**
+ * The regions the catalogue knows, seeded by the importer from the asset's `regionId` and
+ * `regionName`. v1 ships exactly one row (`pacific` / "Pacific USA"); the table exists so
+ * the header reads a name rather than title-casing an id, which is what the `regionLabelFor`
+ * shim used to do (ARCHITECTURE.md 6.5, 11.1).
+ */
+@Entity(tableName = "regions")
+data class RegionEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val sortOrder: Int = 0,
 )
 
 @Entity(tableName = "ecosystems")

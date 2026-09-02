@@ -57,7 +57,7 @@ class ConfirmSpeciesStateTest {
         existing: UserSpeciesRecord? = null,
         edits: ConfirmCardEdits = ConfirmCardEdits(),
         draft: AddSpeciesDraft = this.draft,
-        nextDexNumber: Int = 1001,
+        nextDexNumber: Int = 9001,
     ) = confirmCardState(
         draft = draft,
         outcome = outcome,
@@ -227,7 +227,7 @@ class ConfirmSpeciesStateTest {
     private fun pendingRecord() = UserSpeciesRecord(
         id = "user-1",
         regionId = "pacific",
-        dexNumber = 1003,
+        dexNumber = 9003,
         detailsPending = true,
         fields = SpeciesFields(commonName = "Varied Thrush"),
     )

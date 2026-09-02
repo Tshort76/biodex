@@ -6,6 +6,7 @@ import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.MetaEntity
+import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.domain.SpeciesSource
 
@@ -22,6 +23,7 @@ class FakeCatalogueStore : CatalogueStore {
 
     val species = linkedMapOf<String, SpeciesEntity>()
     val ecosystems = linkedMapOf<String, EcosystemEntity>()
+    val regions = linkedMapOf<String, RegionEntity>()
     val memberships = mutableSetOf<Pair<String, String>>()
     val entries = linkedMapOf<String, EntryEntity>()
     val captures = mutableListOf<CaptureEntity>()
@@ -41,6 +43,7 @@ class FakeCatalogueStore : CatalogueStore {
 
     override suspend fun apply(plan: ImportPlan) {
         applyCount++
+        regions[plan.region.id] = plan.region
         plan.ecosystems.forEach { ecosystems[it.id] = it }
         plan.speciesUpserts.forEach { species[it.id] = it }
         plan.speciesDeletions.forEach { cascadeDeleteSpecies(it) }
@@ -93,7 +96,7 @@ fun curatedSpecies(
 
 fun userSpecies(
     id: String,
-    dexNumber: Int = 1001,
+    dexNumber: Int = 9001,
     commonName: String = id,
     regionId: String = "pacific",
 ) = SpeciesEntity(

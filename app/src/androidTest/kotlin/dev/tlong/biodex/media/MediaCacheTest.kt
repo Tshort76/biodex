@@ -15,9 +15,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * S02/D4's cache layer, on a device. These have never run — no phone has been connected to
- * this project — but they are the checks that will answer "does a played call survive going
- * offline" without a human toggling airplane mode.
+ * S02/D4's cache layer, on a device. First run at slice 9, on a Pixel 7 Pro: they answer
+ * "does a played call survive going offline" without a human toggling airplane mode.
  *
  * Every test uses its **own** directory under the instrumentation cache: a `SimpleCache` locks
  * its folder for the process, so sharing one with the app's real cache (or between tests
@@ -38,17 +37,34 @@ class MediaCacheTest {
 
     private fun open(): SimpleCache = buildAudioCache(context, directory).also { cache = it }
 
-    private fun write(cache: SimpleCache, key: String, bytes: ByteArray) {
-        val sink = CacheDataSink(cache, bytes.size.toLong())
-        sink.open(
-            DataSpec.Builder()
-                .setUri("https://xeno-canto.org/$key/download")
-                .setKey(key)
-                .setLength(bytes.size.toLong())
-                .build(),
-        )
-        sink.write(bytes, 0, bytes.size)
-        sink.close()
+    private fun write(cache: SimpleCache, key: String, bytes: ByteArray) = write(
+        cache,
+        key,
+        bytes,
+        DataSpec.Builder()
+            .setUri("https://xeno-canto.org/$key/download")
+            .setKey(key)
+            .setLength(bytes.size.toLong())
+            .build(),
+    )
+
+    /**
+     * A `SimpleCache` write has to hold the key's hole span for the whole write: `startFile`
+     * asserts the caller locked the key, so a `CacheDataSink` opened without
+     * `startReadWrite` throws an NPE from inside media3 rather than writing anything. This
+     * is how ExoPlayer's own `CacheWriter` does it, and it is what these tests were missing
+     * the first time a device ran them (slice 9).
+     */
+    private fun write(cache: SimpleCache, key: String, bytes: ByteArray, spec: DataSpec) {
+        val span = cache.startReadWrite(key, 0, bytes.size.toLong())
+        try {
+            val sink = CacheDataSink(cache, bytes.size.toLong())
+            sink.open(spec)
+            sink.write(bytes, 0, bytes.size)
+            sink.close()
+        } finally {
+            cache.releaseHoleSpan(span)
+        }
     }
 
     @Test
@@ -83,15 +99,12 @@ class MediaCacheTest {
         val key = "call-3"
         val bytes = ByteArray(1024) { (it % 251).toByte() }
         val uri = "https://xeno-canto.invalid/$key/download"
-        val sink = CacheDataSink(cache, bytes.size.toLong())
         val spec = DataSpec.Builder()
             .setUri(uri)
             .setKey(key)
             .setLength(bytes.size.toLong())
             .build()
-        sink.open(spec)
-        sink.write(bytes, 0, bytes.size)
-        sink.close()
+        write(cache, key, bytes, spec)
 
         val source = callDataSourceFactory(cache, OkHttpClient()).createDataSource()
         source.open(spec)

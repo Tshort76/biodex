@@ -76,7 +76,7 @@ class AddSpeciesRegistrarTest {
 
         val created = result as AddSpeciesRegistrar.CreateResult.Created
         val record = store.species.getValue(created.speciesId)
-        assertEquals(1001, record.dexNumber)
+        assertEquals(9001, record.dexNumber)
         assertEquals("Ixoreus naevius", record.fields.scientificName)
         assertEquals("sil_bird", record.fields.silhouetteRes)
         assertEquals(listOf("coastal-rainforest", "urban-suburban"), store.memberships[created.speciesId])
@@ -89,8 +89,8 @@ class AddSpeciesRegistrarTest {
         val first = registrar.create(thrush, emptyList(), "content://photo/1")
         val second = registrar.create(thrush.copy(commonName = "Something else"), emptyList(), "content://photo/2")
 
-        assertEquals(1001, (first as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
-        assertEquals(1002, (second as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
+        assertEquals(9001, (first as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
+        assertEquals(9002, (second as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
     }
 
     @Test

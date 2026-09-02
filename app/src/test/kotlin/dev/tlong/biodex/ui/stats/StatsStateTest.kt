@@ -34,6 +34,7 @@ class StatsStateTest {
         commonName = id,
         scientificName = null,
         taxClass = taxClass,
+        kingdom = taxClass.kingdom,
         silhouetteRes = "sil_bird",
         ecosystemIds = ecosystemIds,
         caughtAt = caughtAt,
@@ -43,8 +44,9 @@ class StatsStateTest {
 
     private fun progressOf(species: List<SpeciesSummary>) = DexProgressMath.compute(
         regionId = "pacific",
+        regionName = "Pacific USA",
         species = species.map {
-            DexProgressMath.SpeciesRow(it.id, it.source, it.taxClass, it.caught)
+            DexProgressMath.SpeciesRow(it.id, it.source, it.taxClass, it.kingdom, it.caught)
         },
         memberships = species.flatMap { s ->
             s.ecosystemIds.map { DexProgressMath.MembershipRow(s.id, it) }
@@ -146,8 +148,9 @@ class StatsStateTest {
         )
         val progress = DexProgressMath.compute(
             regionId = "pacific",
+            regionName = "Pacific USA",
             species = species.map {
-                DexProgressMath.SpeciesRow(it.id, it.source, it.taxClass, it.caught)
+                DexProgressMath.SpeciesRow(it.id, it.source, it.taxClass, it.kingdom, it.caught)
             },
             memberships = species.flatMap { s ->
                 s.ecosystemIds.map { DexProgressMath.MembershipRow(s.id, it) }
@@ -160,6 +163,6 @@ class StatsStateTest {
         val state = buildStatsUiState(progress, species)
 
         assertEquals(2, state.ecosystems.size)
-        assertTrue(state.ecosystems.all { it.meter.caught == 1 && it.meter.total == 1 })
+        assertTrue(state.ecosystems.all { it.animals.caught == 1 && it.animals.total == 1 })
     }
 }

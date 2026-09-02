@@ -37,6 +37,9 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
 
     /** Step 2 of ARCHITECTURE.md 3.3: everything below lands in one transaction. */
     override suspend fun apply(plan: ImportPlan) = db.withTransaction {
+        // The region row goes in first: the grid header reads its name, and a species
+        // landing before its region would flash an empty pill on a fresh install.
+        db.regionDao().upsertAll(listOf(plan.region))
         db.ecosystemDao().upsertAll(plan.ecosystems)
         db.speciesDao().upsertAll(plan.speciesUpserts)
 

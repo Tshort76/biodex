@@ -197,6 +197,19 @@ interface CaptureDao {
 }
 
 @Dao
+interface RegionDao {
+
+    @Query("SELECT * FROM regions WHERE id = :regionId")
+    fun observeRegion(regionId: String): Flow<RegionEntity?>
+
+    @Query("SELECT * FROM regions ORDER BY sortOrder ASC")
+    suspend fun regionsOnce(): List<RegionEntity>
+
+    @Upsert
+    suspend fun upsertAll(regions: List<RegionEntity>)
+}
+
+@Dao
 interface MetaDao {
 
     @Query("SELECT value FROM meta WHERE `key` = :key")

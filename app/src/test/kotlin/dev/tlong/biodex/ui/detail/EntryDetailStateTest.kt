@@ -1,5 +1,6 @@
 package dev.tlong.biodex.ui.detail
 
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
@@ -37,6 +38,7 @@ class EntryDetailStateTest {
             commonName = "Western Screech-Owl",
             scientificName = "Megascops kennicottii",
             taxClass = TaxClass.BIRD,
+            kingdom = Kingdom.ANIMAL,
             silhouetteRes = "sil_bird",
             ecosystemIds = ecosystemIds,
             caughtAt = if (caught) 1L else null,
@@ -93,13 +95,43 @@ class EntryDetailStateTest {
             detail(listOf("oak-chaparral")),
             progress = dev.tlong.biodex.domain.DexProgress(
                 regionId = "pacific",
-                overall = dev.tlong.biodex.domain.Meter(caught = 1, total = 120),
+                regionName = "Pacific USA",
+                animals = dev.tlong.biodex.domain.Meter(caught = 1, total = 120),
+                plants = dev.tlong.biodex.domain.Meter(0, 0),
                 perClass = emptyList(),
                 perEcosystem = emptyList(),
             ),
         )
         assertEquals(1, s.caughtCount)
         assertEquals(120, s.totalCount)
+    }
+
+    @Test
+    fun `a plant's reveal counts the plant meter, not both lists added together`() {
+        val elder = detail(listOf("riparian-wetland")).let {
+            it.copy(
+                summary = it.summary.copy(
+                    id = "blue-elderberry",
+                    kingdom = Kingdom.PLANT,
+                    taxClass = TaxClass.SHRUB,
+                ),
+            )
+        }
+        val s = state(
+            elder,
+            progress = dev.tlong.biodex.domain.DexProgress(
+                regionId = "pacific",
+                regionName = "Pacific USA",
+                animals = dev.tlong.biodex.domain.Meter(caught = 47, total = 120),
+                plants = dev.tlong.biodex.domain.Meter(caught = 4, total = 80),
+                perClass = emptyList(),
+                perEcosystem = emptyList(),
+            ),
+        )
+
+        // S10: "4 / 80 plants". 51 / 200 would be a number the user never sees anywhere else.
+        assertEquals(4, s.caughtCount)
+        assertEquals(80, s.totalCount)
     }
 
     @Test

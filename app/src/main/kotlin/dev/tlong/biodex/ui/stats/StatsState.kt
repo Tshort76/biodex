@@ -5,7 +5,6 @@ import dev.tlong.biodex.domain.EcosystemProgress
 import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
-import dev.tlong.biodex.ui.grid.regionLabelFor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -22,7 +21,9 @@ import kotlinx.coroutines.flow.combine
 
 data class StatsUiState(
     val regionLabel: String = "",
+    /** The animal meter. Slice 11 stacks it with [plants] as the screen's two headlines. */
     val overall: Meter = Meter(0, 0, 0),
+    val plants: Meter = Meter(0, 0, 0),
     val ecosystems: List<EcosystemProgress> = emptyList(),
     val classes: List<ClassRow> = emptyList(),
     val recent: List<RecentCatch> = emptyList(),
@@ -33,6 +34,9 @@ data class StatsUiState(
     /** The mockup's `39% caught`, rounded down so 119/120 never reads as 100%. */
     val percentCaught: Int
         get() = if (overall.total == 0) 0 else overall.caught * 100 / overall.total
+
+    /** M29: the header's plant pill, on the same rule as the grid's. */
+    val showPlantPill: Boolean get() = plants.total > 0
 }
 
 data class ClassRow(val taxClass: TaxClass, val label: String, val meter: Meter)
@@ -58,20 +62,19 @@ const val RECENT_CATCH_LIMIT = 12
 fun statsUiState(
     progress: Flow<DexProgress>,
     species: Flow<List<SpeciesSummary>>,
-    regionLabel: (String) -> String = ::regionLabelFor,
 ): Flow<StatsUiState> = combine(progress, species) { dexProgress, allSpecies ->
-    buildStatsUiState(dexProgress, allSpecies, regionLabel)
+    buildStatsUiState(dexProgress, allSpecies)
 }
 
 fun buildStatsUiState(
     progress: DexProgress,
     species: List<SpeciesSummary>,
-    regionLabel: (String) -> String = ::regionLabelFor,
 ): StatsUiState {
     val caught = species.filter { it.caughtAt != null }.sortedByDescending { it.caughtAt }
     return StatsUiState(
-        regionLabel = regionLabel(progress.regionId),
-        overall = progress.overall,
+        regionLabel = progress.regionName,
+        overall = progress.animals,
+        plants = progress.plants,
         ecosystems = progress.perEcosystem,
         classes = progress.perClass.map { (taxClass, meter) ->
             ClassRow(taxClass, classLabel(taxClass), meter)
@@ -105,4 +108,8 @@ fun classLabel(taxClass: TaxClass): String = when (taxClass) {
     TaxClass.FISH -> "Fish"
     TaxClass.INSECT -> "Insects"
     TaxClass.OTHER_INVERTEBRATE -> "Other invertebrates"
+    TaxClass.TREE -> "Trees"
+    TaxClass.SHRUB -> "Shrubs"
+    TaxClass.HERB -> "Herbs"
+    TaxClass.FERN -> "Ferns"
 }

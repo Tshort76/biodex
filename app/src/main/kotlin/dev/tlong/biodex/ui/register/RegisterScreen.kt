@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -486,6 +487,7 @@ private fun previewSpecies(
     commonName = name,
     scientificName = scientific,
     taxClass = taxClass,
+    kingdom = taxClass.kingdom,
     silhouetteRes = silhouette,
     ecosystemIds = listOf("oak-chaparral"),
     caughtAt = null,

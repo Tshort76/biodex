@@ -84,12 +84,12 @@ class SummaryAssemblyTest {
 
     @Test
     fun `dex order is preserved and user-added species render U-numbers`() {
-        // M02: the DAO orders by dexNumber, and user rows start at 1001, so they trail.
+        // M02: the DAO orders by dexNumber, and user rows start at 9001, so they trail.
         val summaries = assembleSummaries(
             species = listOf(
                 species("heron", 3),
                 species("owl", 21),
-                species("user-1", 1001, SpeciesSource.USER),
+                species("user-1", 9001, SpeciesSource.USER),
             ),
             memberships = emptyList(),
             statuses = emptyList(),

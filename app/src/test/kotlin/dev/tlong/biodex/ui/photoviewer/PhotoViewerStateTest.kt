@@ -1,6 +1,7 @@
 package dev.tlong.biodex.ui.photoviewer
 
 import dev.tlong.biodex.data.photo.PhotoRef
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Capture
 import dev.tlong.biodex.domain.Entry
 import dev.tlong.biodex.domain.SpeciesDetail
@@ -43,6 +44,7 @@ class PhotoViewerStateTest {
             commonName = "Western Screech-Owl",
             scientificName = "Megascops kennicottii",
             taxClass = TaxClass.BIRD,
+            kingdom = Kingdom.ANIMAL,
             silhouetteRes = "sil_bird",
             ecosystemIds = emptyList(),
             caughtAt = 1L,

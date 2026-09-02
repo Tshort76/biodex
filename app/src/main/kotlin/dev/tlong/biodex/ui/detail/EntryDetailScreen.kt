@@ -46,6 +46,7 @@ import coil3.compose.AsyncImagePainter
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.Capture
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -540,6 +541,7 @@ private fun previewDetail(caught: Boolean, callUrl: String? = null) = SpeciesDet
         commonName = "Western Screech-Owl",
         scientificName = "Megascops kennicottii",
         taxClass = TaxClass.BIRD,
+        kingdom = Kingdom.ANIMAL,
         silhouetteRes = "sil_bird",
         ecosystemIds = listOf("oak-chaparral", "riparian-wetland", "urban-suburban"),
         caughtAt = if (caught) 1_756_512_000_000L else null,

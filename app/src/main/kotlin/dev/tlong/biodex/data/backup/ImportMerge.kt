@@ -89,7 +89,7 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
     manifest.species.forEach { species ->
         if (local.speciesSources.containsKey(species.id)) return@forEach
         if (SpeciesSource.fromWireName(species.source) == SpeciesSource.USER) {
-            val dexNumber = nextFreeUserDexNumber(species.dexNumber, assignedDexNumbers)
+            val dexNumber = nextFreeUserDexNumber(assignedDexNumbers)
             assignedDexNumbers += dexNumber
             speciesToInsert += species.copy(dexNumber = dexNumber)
             memberships[species.id] =
@@ -219,13 +219,17 @@ fun withRestoredFiles(plan: ImportPlan, restoredEntries: Set<String>): ImportPla
 }
 
 /**
- * U-numbers are unique per region by a database index, so an archive's numbering cannot be
- * trusted against a database that already has user species of its own. The archived number
- * is kept when it is free — an import into an empty install therefore preserves U01, U02, …
- * exactly — and otherwise the species takes the next free one.
+ * Every restored user species is renumbered; the archived number is never kept.
+ *
+ * U-numbers are unique per region by a database index, so an archive's numbering could
+ * never be trusted against a database that already had user species of its own — allocation
+ * was always the fallback. The BioDex base move from 1000 to 9000 makes it the only path
+ * (ARCHITECTURE.md 11.1): a v3 archive's 1001 now sits below the plant range, where it
+ * would sort among the plants and display as a negative U-number. Species are allocated in
+ * manifest order, which the export writes in dex order, so the archive's ordering survives
+ * even though its numbers do not.
  */
-private fun nextFreeUserDexNumber(preferred: Int, taken: Set<Int>): Int {
-    if (preferred > USER_DEX_NUMBER_BASE && preferred !in taken) return preferred
+private fun nextFreeUserDexNumber(taken: Set<Int>): Int {
     var candidate = maxOf(USER_DEX_NUMBER_BASE, taken.maxOrNull() ?: USER_DEX_NUMBER_BASE) + 1
     while (candidate in taken) candidate++
     return candidate

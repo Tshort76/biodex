@@ -34,6 +34,11 @@ data class CatalogueSpecies(
     val commonName: String,
     val scientificName: String? = null,
     @SerialName("taxClass") val taxClass: String,
+    /**
+     * Absent in the v1 asset, which is 120 animals — hence the default. The importer pairs
+     * it with [taxClass] and applies the per-kingdom dex-number base (ARCHITECTURE.md 11.1).
+     */
+    val kingdom: String = "animal",
     val ecosystemIds: List<String> = emptyList(),
     val habitatText: String? = null,
     val description: String? = null,
@@ -43,6 +48,14 @@ data class CatalogueSpecies(
     val imageAttribution: String? = null,
     val callAttribution: String? = null,
     val silhouetteRes: String? = null,
+    // The uses block (11.1). Every field defaults, so the v1 asset — which has none of
+    // them — imports unchanged, and a later pipeline can add one more without a code change
+    // here beyond the field itself.
+    val uses: List<String> = emptyList(),
+    val usesNote: String? = null,
+    val medicinalActivities: List<String> = emptyList(),
+    val medicinalRecordCount: Int = 0,
+    val usesAttribution: String? = null,
 )
 
 /** The asset path the app reads at runtime (ARCHITECTURE.md 3.2). */

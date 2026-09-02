@@ -56,13 +56,26 @@ fun RegionPill(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** `.appbar .prog` — `47 / 120` in accent on accentSoft, tabular so it does not jitter. */
+/**
+ * `.appbar .prog` — `47/120` on accentSoft, tabular so it does not jitter.
+ *
+ * Two of these sit side by side once a region has plants (M29), which is why the colour is a
+ * parameter and the slash has no spaces around it: the animal pill is accent, the plant pill
+ * is `ok` with a leaf, and the pair has to fit beside the title on a phone.
+ */
 @Composable
-fun ProgressPill(caught: Int, total: Int, modifier: Modifier = Modifier) {
+fun ProgressPill(
+    caught: Int,
+    total: Int,
+    modifier: Modifier = Modifier,
+    color: Color = DexTheme.colors.accent,
+    glyph: String? = null,
+) {
     Text(
-        text = "$caught / $total",
+        text = if (glyph == null) "$caught/$total" else "$glyph $caught/$total",
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-        color = DexTheme.colors.accent,
+        maxLines = 1,
+        color = color,
         modifier = modifier
             .clip(CircleShape)
             .background(DexTheme.colors.accentSoft)

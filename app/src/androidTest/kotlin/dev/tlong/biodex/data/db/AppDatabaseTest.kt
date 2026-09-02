@@ -3,6 +3,7 @@ package dev.tlong.biodex.data.db
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.first
@@ -20,7 +21,7 @@ import org.junit.runner.RunWith
  * The two things a JVM cannot honestly fake (ARCHITECTURE.md section 8): that the schema
  * actually builds, and that Room's DAO round-trips and cascades behave as 3.1 claims.
  *
- * NOT RUN as of slice 3 — no phone was attached. These execute the first time one is.
+ * First run on a real device at slice 9, on a Pixel 7 Pro (API 37).
  */
 @RunWith(AndroidJUnit4::class)
 class AppDatabaseTest {
@@ -185,5 +186,48 @@ class AppDatabaseTest {
         )
 
         assertEquals(1002, db.speciesDao().maxUserDexNumber("pacific"))
+    }
+
+    // -----------------------------------------------------------------------
+    // The BioDex schema delta (11.1), against real SQLite: the enum and list converters
+    // are the part a JVM test cannot honestly fake.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun plantRoundTripsKingdomUsesAndDukeColumnsThroughSqlite() = runBlocking {
+        val elder = species("elder", 2047).copy(
+            taxClass = TaxClass.SHRUB,
+            kingdom = Kingdom.PLANT,
+            uses = listOf("edible", "medicinal"),
+            usesNote = "Berries, late summer. Caution: raw berries are toxic.",
+            medicinalActivities = listOf("astringent", "diuretic"),
+            medicinalRecordCount = 60,
+            usesAttribution = "Dr. Duke's · USDA ARS · CC0",
+        )
+        db.speciesDao().upsertAll(listOf(species("heron", 3), elder))
+
+        val stored = db.speciesDao().speciesOnceById("elder")!!
+        assertEquals(Kingdom.PLANT, stored.kingdom)
+        assertEquals(listOf("edible", "medicinal"), stored.uses)
+        assertEquals(listOf("astringent", "diuretic"), stored.medicinalActivities)
+        assertEquals(60, stored.medicinalRecordCount)
+        assertEquals("Dr. Duke's · USDA ARS · CC0", stored.usesAttribution)
+
+        // One sortable column still orders the whole grid: animals, then plants.
+        assertEquals(
+            listOf("heron", "elder"),
+            db.speciesDao().speciesOnce("pacific").map { it.id },
+        )
+
+        // The enum stores its wire name, so a row read raw matches the asset's vocabulary.
+        assertEquals(Kingdom.ANIMAL, db.speciesDao().speciesOnceById("heron")!!.kingdom)
+    }
+
+    @Test
+    fun regionsTableGivesTheHeaderANameRatherThanAnId() = runBlocking {
+        db.regionDao().upsertAll(listOf(RegionEntity("pacific", "Pacific USA", 0)))
+
+        assertEquals("Pacific USA", db.regionDao().observeRegion("pacific").first()!!.name)
+        assertNull(db.regionDao().observeRegion("atlantic").first())
     }
 }
