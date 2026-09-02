@@ -1,0 +1,44 @@
+{
+  "numRecordings": "3",
+  "numSpecies": "1",
+  "page": 1,
+  "numPages": 1,
+  "recordings": [
+    {
+      "id": "111111",
+      "gen": "Ixoreus",
+      "sp": "naevius",
+      "en": "Varied Thrush",
+      "rec": "C. Recordist",
+      "cnt": "United States",
+      "q": "C",
+      "file": "https://xeno-canto.org/111111/download",
+      "lic": "//creativecommons.org/licenses/by-nc-sa/4.0/",
+      "url": "//xeno-canto.org/111111"
+    },
+    {
+      "id": "222222",
+      "gen": "Ixoreus",
+      "sp": "naevius",
+      "en": "Varied Thrush",
+      "rec": "A. Recordist",
+      "cnt": "Canada",
+      "q": "A",
+      "file": "https://xeno-canto.org/222222/download",
+      "lic": "//creativecommons.org/licenses/by-nc/4.0/",
+      "url": "//xeno-canto.org/222222"
+    },
+    {
+      "id": "333333",
+      "gen": "Ixoreus",
+      "sp": "naevius",
+      "en": "Varied Thrush",
+      "rec": "B. Recordist",
+      "cnt": "Canada",
+      "q": "B",
+      "file": "https://xeno-canto.org/333333/download",
+      "lic": "//creativecommons.org/licenses/by-nc/4.0/",
+      "url": "//xeno-canto.org/333333"
+    }
+  ]
+}

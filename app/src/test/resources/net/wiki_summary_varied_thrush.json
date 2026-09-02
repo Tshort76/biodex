@@ -1,0 +1,49 @@
+{
+  "type": "standard",
+  "title": "Varied thrush",
+  "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Varied thrush</span></span>",
+  "namespace": {
+    "id": 0,
+    "text": ""
+  },
+  "wikibase_item": "Q26656",
+  "titles": {
+    "canonical": "Varied_thrush",
+    "normalized": "Varied thrush",
+    "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Varied thrush</span></span>"
+  },
+  "pageid": 412853,
+  "thumbnail": {
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Varied_thrush_%2873976%29.jpg/330px-Varied_thrush_%2873976%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "width": 330,
+    "height": 240
+  },
+  "originalimage": {
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Varied_thrush_%2873976%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "width": 2213,
+    "height": 1607
+  },
+  "lang": "en",
+  "dir": "ltr",
+  "revision": "1371443533",
+  "tid": "474091f4-a152-11f1-a5af-47d853bdff28",
+  "timestamp": "2026-08-26T13:30:18Z",
+  "description": "Species of bird",
+  "description_source": "local",
+  "content_urls": {
+    "desktop": {
+      "page": "https://en.wikipedia.org/wiki/Varied_thrush",
+      "revisions": "https://en.wikipedia.org/wiki/Varied_thrush?action=history",
+      "edit": "https://en.wikipedia.org/wiki/Varied_thrush?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Varied_thrush"
+    },
+    "mobile": {
+      "page": "https://en.wikipedia.org/wiki/Varied_thrush",
+      "revisions": "https://en.wikipedia.org/wiki/Special:History/Varied_thrush",
+      "edit": "https://en.wikipedia.org/wiki/Varied_thrush?action=edit",
+      "talk": "https://en.wikipedia.org/wiki/Talk:Varied_thrush"
+    }
+  },
+  "extract": "The varied thrush is a member of the thrush family, Turdidae. It is the only species in the monotypic genus Ixoreus.",
+  "extract_html": "<p>The <b>varied thrush</b> is a member of the thrush family, Turdidae. It is the only species in the monotypic genus <i><b>Ixoreus</b></i>.</p>"
+}

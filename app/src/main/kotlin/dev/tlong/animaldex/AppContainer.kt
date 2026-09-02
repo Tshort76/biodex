@@ -7,9 +7,16 @@ import dev.tlong.animaldex.data.catalogue.CatalogueImporter
 import dev.tlong.animaldex.data.catalogue.ImportOutcome
 import dev.tlong.animaldex.data.catalogue.RoomCatalogueStore
 import dev.tlong.animaldex.data.db.AppDatabase
+import dev.tlong.animaldex.data.net.GbifClient
+import dev.tlong.animaldex.data.net.JsonFetcher
+import dev.tlong.animaldex.data.net.OkHttpJsonFetcher
+import dev.tlong.animaldex.data.net.SpeciesLookupRepository
+import dev.tlong.animaldex.data.net.WikipediaClient
+import dev.tlong.animaldex.data.net.XenoCantoClient
 import dev.tlong.animaldex.data.photo.AndroidPhotoGateway
 import dev.tlong.animaldex.data.photo.CaptureRegistrar
 import dev.tlong.animaldex.data.photo.PhotoGateway
+import dev.tlong.animaldex.data.repo.AddSpeciesRegistrar
 import dev.tlong.animaldex.data.repo.DexRepository
 import dev.tlong.animaldex.media.AndroidNetworkMonitor
 import dev.tlong.animaldex.media.CallPlayer
@@ -18,6 +25,7 @@ import dev.tlong.animaldex.media.NetworkMonitor
 import dev.tlong.animaldex.media.buildAudioCache
 import dev.tlong.animaldex.media.buildImageLoader
 import dev.tlong.animaldex.media.callDataSourceFactory
+import dev.tlong.animaldex.ui.addspecies.AddSpeciesDraftHolder
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
@@ -103,6 +111,34 @@ class AppContainer(val appContext: Context) {
      */
     val callPlayer: CallPlayer by lazy {
         ExoCallPlayer(appContext, callDataSourceFactory(audioCache, mediaHttpClient))
+    }
+
+    // -----------------------------------------------------------------------
+    // The user-added flow (slice 7, ARCHITECTURE.md 5.2 / M18–M21).
+    // -----------------------------------------------------------------------
+
+    /** The one platform seam of the network layer; everything above it is testable Kotlin. */
+    private val jsonFetcher: JsonFetcher by lazy { OkHttpJsonFetcher(httpClient) }
+
+    /**
+     * Xeno-canto gets its key from `BuildConfig`, which is the empty string until the user
+     * creates one (5.4). The client then answers `NotFound` without a request, and the confirm
+     * card shows "no call found" — the honest answer today, and the one that needs no code
+     * change when a key appears.
+     */
+    val speciesLookupRepository: SpeciesLookupRepository by lazy {
+        SpeciesLookupRepository(
+            gbif = GbifClient(jsonFetcher),
+            wikipedia = WikipediaClient(jsonFetcher),
+            xenoCanto = XenoCantoClient(jsonFetcher, BuildConfig.XC_API_KEY),
+        )
+    }
+
+    /** 6.1's Register→Confirm hand-off. In memory: a draft's whole life is two screens. */
+    val addSpeciesDrafts: AddSpeciesDraftHolder by lazy { AddSpeciesDraftHolder() }
+
+    val addSpeciesRegistrar: AddSpeciesRegistrar by lazy {
+        AddSpeciesRegistrar(store = dexRepository, captures = captureRegistrar)
     }
 
     private val catalogueImporter: CatalogueImporter by lazy {

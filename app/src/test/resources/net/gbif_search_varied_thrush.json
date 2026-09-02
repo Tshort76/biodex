@@ -1,0 +1,343 @@
+{
+  "offset": 0,
+  "limit": 6,
+  "endOfRecords": true,
+  "count": 1,
+  "results": [
+    {
+      "key": 2490926,
+      "nameKey": 5785543,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 2490926,
+      "parentKey": 2490925,
+      "parent": "Ixoreus",
+      "basionymKey": 4408788,
+      "basionym": "Turdus naevius Gmelin, 1789",
+      "kingdom": "Animalia",
+      "phylum": "Chordata",
+      "order": "Passeriformes",
+      "family": "Turdidae",
+      "genus": "Ixoreus",
+      "species": "Ixoreus naevius",
+      "kingdomKey": 1,
+      "phylumKey": 44,
+      "classKey": 212,
+      "orderKey": 729,
+      "familyKey": 5290,
+      "genusKey": 2490925,
+      "speciesKey": 2490926,
+      "scientificName": "Ixoreus naevius (Gmelin, 1789)",
+      "canonicalName": "Ixoreus naevius",
+      "authorship": "(Gmelin, 1789) ",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 5,
+      "numOccurrences": 0,
+      "taxonID": "gbif:2490926",
+      "extinct": false,
+      "habitats": [
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [
+        "LEAST_CONCERN"
+      ],
+      "descriptions": [
+        {
+          "description": "Breeding regions are NA. Breeding subregions are w."
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "varied thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Grive à collier",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Mirlo pecho cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "雜色地鶇",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "變地鶇",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "杂色鸫",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "квічаль рудобровий",
+          "language": "ukr"
+        },
+        {
+          "vernacularName": "Turuncu Ardıç",
+          "language": "tur"
+        },
+        {
+          "vernacularName": "sitkatrast",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "Američki šareni drozd",
+          "language": "srp"
+        },
+        {
+          "vernacularName": "Zorzal pinto",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Mirlo pecho cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Mirlo Cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Álgorásttis",
+          "language": "sme"
+        },
+        {
+          "vernacularName": "pisani droznik",
+          "language": "slv"
+        },
+        {
+          "vernacularName": "drozd obojkový",
+          "language": "slk"
+        },
+        {
+          "vernacularName": "Разноголосый дрозд",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "Изменчивый дрозд",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "tordo-variegado",
+          "language": "por"
+        },
+        {
+          "vernacularName": "rudodrozd",
+          "language": "pol"
+        },
+        {
+          "vernacularName": "båndtrost",
+          "language": "nor"
+        },
+        {
+          "vernacularName": "Bonte Lijster",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "apykaklėtasis dirvinis strazdas",
+          "language": "lit"
+        },
+        {
+          "vernacularName": "Juostakaklis strazdas",
+          "language": "lit"
+        },
+        {
+          "vernacularName": "mainīgais zemesstrazds",
+          "language": "lav"
+        },
+        {
+          "vernacularName": "ムナオビツグミ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "Tordo variopinto",
+          "language": "ita"
+        },
+        {
+          "vernacularName": "Tordo vario",
+          "language": "ita"
+        },
+        {
+          "vernacularName": "Barrþröstur",
+          "language": "isl"
+        },
+        {
+          "vernacularName": "tarka földirigó",
+          "language": "hun"
+        },
+        {
+          "vernacularName": "aljaski drozd",
+          "language": "hrv"
+        },
+        {
+          "vernacularName": "קיכלי צווארון",
+          "language": "heb"
+        },
+        {
+          "vernacularName": "Smólach alabhreac",
+          "language": "gle"
+        },
+        {
+          "vernacularName": "Treshlen yl-daahagh",
+          "language": "gla"
+        },
+        {
+          "vernacularName": "Grive à collier",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "amerikankirjorastas",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "laanerästas",
+          "language": "est"
+        },
+        {
+          "vernacularName": "varia turdo",
+          "language": "epo"
+        },
+        {
+          "vernacularName": "Nigroranĝa turdo",
+          "language": "epo"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Oregon Robin",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Flammedrossel"
+        },
+        {
+          "vernacularName": "Halsbanddrossel",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "drozd pruhokřídlý",
+          "language": "ces"
+        },
+        {
+          "vernacularName": "tord de collar",
+          "language": "cat"
+        },
+        {
+          "vernacularName": "Drask kolier louet",
+          "language": "bre"
+        },
+        {
+          "vernacularName": "tordo-variegado",
+          "language": "por"
+        },
+        {
+          "vernacularName": "Zorzal pinto",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Mirlo pecho cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Grive à collier",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "båndtrost",
+          "language": "nob"
+        },
+        {
+          "vernacularName": "Grive à collier",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Mirlo pecho cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "varied thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Zorzal pinto",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Mirlo pecho cinchado",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "tordo-variegado",
+          "language": "por"
+        },
+        {
+          "vernacularName": "Grive à collier",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Varied Thrush",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "44": "Chordata",
+        "212": "Aves",
+        "729": "Passeriformes",
+        "5290": "Turdidae",
+        "2490925": "Ixoreus"
+      },
+      "class": "Aves"
+    }
+  ],
+  "facets": []
+}

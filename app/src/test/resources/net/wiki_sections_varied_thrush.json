@@ -1,0 +1,117 @@
+{
+  "warnings": {
+    "main": {
+      "warnings": "Subscribe to the mediawiki-api-announce mailing list at <https://lists.wikimedia.org/postorius/lists/mediawiki-api-announce.lists.wikimedia.org/> for notice of API deprecations and breaking changes. Use [[Special:ApiFeatureUsage]] to see usage of deprecated features by your application."
+    },
+    "parse": {
+      "warnings": "\"prop=sections\" has been deprecated. Please use \"prop=tocdata\" instead."
+    }
+  },
+  "parse": {
+    "title": "Varied thrush",
+    "pageid": 412853,
+    "redirects": [],
+    "sections": [
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Taxonomy",
+        "number": "1",
+        "index": "1",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 1131,
+        "anchor": "Taxonomy",
+        "linkAnchor": "Taxonomy"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Description",
+        "number": "2",
+        "index": "2",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 4939,
+        "anchor": "Description",
+        "linkAnchor": "Description"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Distribution and habitat",
+        "number": "3",
+        "index": "3",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 7228,
+        "anchor": "Distribution_and_habitat",
+        "linkAnchor": "Distribution_and_habitat"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Feeding",
+        "number": "4",
+        "index": "4",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 8291,
+        "anchor": "Feeding",
+        "linkAnchor": "Feeding"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Breeding",
+        "number": "5",
+        "index": "5",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 9029,
+        "anchor": "Breeding",
+        "linkAnchor": "Breeding"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Gallery",
+        "number": "6",
+        "index": "6",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 9145,
+        "anchor": "Gallery",
+        "linkAnchor": "Gallery"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "References",
+        "number": "7",
+        "index": "7",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 9346,
+        "anchor": "References",
+        "linkAnchor": "References"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Further reading",
+        "number": "8",
+        "index": "8",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 10860,
+        "anchor": "Further_reading",
+        "linkAnchor": "Further_reading"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "External links",
+        "number": "9",
+        "index": "9",
+        "fromtitle": "Varied_thrush",
+        "byteoffset": 11118,
+        "anchor": "External_links",
+        "linkAnchor": "External_links"
+      }
+    ],
+    "showtoc": true
+  }
+}

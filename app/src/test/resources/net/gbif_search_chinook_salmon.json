@@ -1,0 +1,589 @@
+{
+  "offset": 0,
+  "limit": 6,
+  "endOfRecords": true,
+  "count": 1,
+  "results": [
+    {
+      "key": 5204024,
+      "nameKey": 7788933,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 5204024,
+      "parentKey": 2351426,
+      "parent": "Oncorhynchus",
+      "basionymKey": 2351485,
+      "basionym": "Salmo tshawytscha Walbaum, 1792",
+      "kingdom": "Animalia",
+      "phylum": "Chordata",
+      "order": "Salmoniformes",
+      "family": "Salmonidae",
+      "genus": "Oncorhynchus",
+      "species": "Oncorhynchus tshawytscha",
+      "kingdomKey": 1,
+      "phylumKey": 44,
+      "orderKey": 1313,
+      "familyKey": 8615,
+      "genusKey": 2351426,
+      "speciesKey": 5204024,
+      "scientificName": "Oncorhynchus tshawytscha (Walbaum, 1792)",
+      "canonicalName": "Oncorhynchus tshawytscha",
+      "authorship": "(Walbaum, 1792) ",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 1,
+      "numOccurrences": 0,
+      "taxonID": "gbif:5204024",
+      "habitats": [
+        "FRESHWATER",
+        "MARINE"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [
+        "NOT_APPLICABLE",
+        "LEAST_CONCERN",
+        "LEAST_CONCERN"
+      ],
+      "descriptions": [
+        {
+          "description": "cbd_2014_pathway:stowaway"
+        },
+        {
+          "description": "cbd_2014_pathway:release"
+        },
+        {
+          "description": "cbd_2014_pathway:escape"
+        },
+        {
+          "description": "cbd_2014_pathway:contaminant"
+        },
+        {
+          "description": "Northern America (WGSRPD:7)"
+        },
+        {
+          "description": "Asia"
+        },
+        {
+          "description": "Predaceous fish"
+        },
+        {
+          "description": "Inland surface water habitats (C level 1)"
+        },
+        {
+          "description": "First record from Argentina> details"
+        },
+        {
+          "description": "Chinook Salmon or King Salmon. To 160 cm (63 in) TL (Coad 1995). Northern Japan to Point Hope, Chukchi Sea, Alaska, with strays across northern Alaska to Coppermine River in Canada (Morrow 1980), to central Baja California at Bahía de Sebastian Vizcaino (27 ° 54 ’ N, 114 ° 17 ’ W) (De La Cruz-Agüero 1999). Depth: at sea, surface to 538 m (1,765 ft) (Courtney et al. 2019). Anadromous."
+        },
+        {
+          "description": "First record from Argentina> details"
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Chinook, salmón chinúk, salmón real"
+        },
+        {
+          "vernacularName": "帝王鮭",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "Kungslax",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "salmón boquinegra",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "salmon real",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Salmón chinook",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "činuča",
+          "language": "slv"
+        },
+        {
+          "vernacularName": "Чавыча",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "tshawytscha",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "Salmão-real",
+          "language": "por"
+        },
+        {
+          "vernacularName": "czawycza",
+          "language": "pol"
+        },
+        {
+          "vernacularName": "chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Pacific koningszalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Chinook",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Californische zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "マスノスケ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "salmone reale",
+          "language": "ita"
+        },
+        {
+          "vernacularName": "Kraljevski losos",
+          "language": "hrv"
+        },
+        {
+          "vernacularName": "saumon royal du Pacifique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon royal",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon quinnat",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "kuningaslohi",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "taryaqvak"
+        },
+        {
+          "vernacularName": "tarsarpaq"
+        },
+        {
+          "vernacularName": "spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "king salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Tyee Salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Tyee",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Quinnat Salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pazifik Köningslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Königslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Kongelaks",
+          "language": "dan"
+        },
+        {
+          "vernacularName": "losos čavyča",
+          "language": "ces"
+        },
+        {
+          "vernacularName": "salmón real"
+        },
+        {
+          "vernacularName": "saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "salmón boquinegra",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "king salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "kungslax",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "salmón boquinegra",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "salmon real",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Чавыча",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Pacific koningszalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Californische zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "マスノスケ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "saumon royal du Pacifique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon royal",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon quinnat",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "king salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pazifik Köningslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Königslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "kuningaslohi",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "マスノスケ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "Masunosuke",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "マスノスケ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "Чавыча",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "saumon royal du Pacifique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon royal",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon quinnat",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "salmón boquinegra",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "salmon real",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "king salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Pazifik Köningslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Pacific koningszalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Königslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Californische zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "King salmon, Spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook Salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Kungslax",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "Vrsta lososa",
+          "language": "srp"
+        },
+        {
+          "vernacularName": "Salmão-real",
+          "language": "por"
+        },
+        {
+          "vernacularName": "Salmao-real",
+          "language": "por"
+        },
+        {
+          "vernacularName": "Czawycza",
+          "language": "pol"
+        },
+        {
+          "vernacularName": "Chinook",
+          "language": "nor"
+        },
+        {
+          "vernacularName": "Chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Salmone reale",
+          "language": "ita"
+        },
+        {
+          "vernacularName": "Saumon royal",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Kuningaslohi",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "Salmón real",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Salmón chinook",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Salmon chinook",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Quinnat salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pickled salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "King salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "King salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Quinnat",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Königslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "マスノスケ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "Чавыча",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "spring salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "saumon royal du Pacifique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon royal",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon quinnat",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "saumon chinook",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "salmón boquinegra",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "salmon real",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "king salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Pazifik Köningslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Pacific koningszalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Königslachs",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Chinook salmon",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Chinook zalm",
+          "language": "nld"
+        },
+        {
+          "vernacularName": "Californische zalm",
+          "language": "nld"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "44": "Chordata",
+        "1313": "Salmoniformes",
+        "8615": "Salmonidae",
+        "2351426": "Oncorhynchus"
+      }
+    }
+  ],
+  "facets": []
+}

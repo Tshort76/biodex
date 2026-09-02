@@ -135,4 +135,26 @@ class RegisterStateTest {
         }
         assertEquals(REGISTER_RESULT_LIMIT, s.results.size)
     }
+
+    // -----------------------------------------------------------------------
+    // M08's hand-off into the user-added flow (slice 7).
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `adding your own species needs both the name and the photo`() {
+        assertFalse(state().canAddOwn)
+        assertFalse("a name with no photo is not enough", state(query = "Varied Thrush").canAddOwn)
+        assertFalse("a photo with no name is not enough", state(photo = photo).canAddOwn)
+        assertTrue(state(query = "Varied Thrush", photo = photo).canAddOwn)
+    }
+
+    @Test
+    fun `the button says which half is still missing`() {
+        assertTrue(state().addOwnLabel.contains("Type a name"))
+        assertTrue(state(query = "Varied Thrush").addOwnLabel.contains("Attach a photo"))
+        assertEquals(
+            "Add \u201CVaried Thrush\u201D as your own species \uFF0B",
+            state(query = "Varied Thrush", photo = photo).addOwnLabel,
+        )
+    }
 }

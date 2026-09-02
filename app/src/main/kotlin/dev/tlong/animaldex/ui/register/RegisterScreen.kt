@@ -60,7 +60,7 @@ fun RegisterRoute(
     preselectedSpeciesId: String?,
     onBack: () -> Unit,
     onRegistered: (speciesId: String, justUnlocked: Boolean) -> Unit,
-    onAddOwnSpecies: () -> Unit,
+    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
 ) {
     val context = LocalContext.current
     val container = context.appContainer
@@ -130,7 +130,7 @@ fun RegisterScreen(
     onPickPhoto: () -> Unit,
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
-    onAddOwnSpecies: () -> Unit,
+    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -240,13 +240,16 @@ fun RegisterScreen(
                 modifier = Modifier.padding(top = 6.dp),
             )
 
-            // Slice 7 owns the user-added flow (M08, M18–M21). The button ships visibly
-            // disabled rather than hidden so the Register screen's shape does not change
-            // when that slice lands.
+            // M08. The flow needs both halves of what only the user has — the name and the
+            // photo (M20 creates an offline entry "from the name and photo alone"), so the
+            // button waits for the photo rather than opening a card that cannot be saved.
             GhostCta(
-                label = "Not in the list? Add your own species ＋ (coming in a later update)",
-                enabled = false,
-                onClick = onAddOwnSpecies,
+                label = state.addOwnLabel,
+                enabled = state.canAddOwn,
+                onClick = {
+                    val photo = state.photo ?: return@GhostCta
+                    onAddOwnSpecies(state.query.trim(), photo.uri)
+                },
                 modifier = Modifier.padding(bottom = 24.dp),
             )
         }
@@ -525,7 +528,7 @@ private fun RegisterReadyPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = {},
+            onAddOwnSpecies = { _, _ -> },
         )
     }
 }
@@ -542,7 +545,7 @@ private fun RegisterNoResultsPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = {},
+            onAddOwnSpecies = { _, _ -> },
         )
     }
 }

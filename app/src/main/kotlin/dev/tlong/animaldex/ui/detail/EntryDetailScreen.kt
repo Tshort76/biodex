@@ -80,6 +80,7 @@ fun EntryDetailRoute(
     onBack: () -> Unit,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onBackfillReady: (draftId: String) -> Unit,
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: EntryDetailViewModel = viewModel(
@@ -95,6 +96,12 @@ fun EntryDetailRoute(
 
     // The repeat-registration acknowledgment (M09): a "+1" that shows for a moment and goes.
     // Same one-shot guard, for the same reason.
+    // M20's trigger. The ViewModel decides whether a lookup is owed and whether it succeeded;
+    // this only routes the result, once, to the confirmation card.
+    LaunchedEffect(speciesId) {
+        viewModel.backfillEvents.collect { draftId -> onBackfillReady(draftId) }
+    }
+
     var toastPending by rememberSaveable(speciesId) { mutableStateOf(photoAdded) }
     if (toastPending) {
         LaunchedEffect(speciesId) {
@@ -264,6 +271,28 @@ private fun DetailBody(
         CaughtChip(
             dateLabel = formatCaughtDate(summary.caughtAt),
             modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+
+    // M20. Reached only when the lookup could not run — online, the ViewModel has already
+    // sent the user to the confirmation card by the time this frame is composed.
+    if (summary.detailsPending) {
+        Text(
+            text = if (state.online) {
+                "Details pending — the lookup found nothing for this name yet. It will try " +
+                    "again the next time you open this entry."
+            } else {
+                "Details pending — connect to the internet and open this entry to fill in " +
+                    "its name, habitat and picture."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.warn,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.warnSoft)
+                .padding(10.dp),
         )
     }
 

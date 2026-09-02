@@ -1,0 +1,127 @@
+{
+  "warnings": {
+    "main": {
+      "warnings": "Subscribe to the mediawiki-api-announce mailing list at <https://lists.wikimedia.org/postorius/lists/mediawiki-api-announce.lists.wikimedia.org/> for notice of API deprecations and breaking changes. Use [[Special:ApiFeatureUsage]] to see usage of deprecated features by your application."
+    },
+    "parse": {
+      "warnings": "\"prop=sections\" has been deprecated. Please use \"prop=tocdata\" instead."
+    }
+  },
+  "parse": {
+    "title": "Banana slug",
+    "pageid": 211857,
+    "sections": [
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Species",
+        "number": "1",
+        "index": "1",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 958,
+        "anchor": "Species",
+        "linkAnchor": "Species"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Description",
+        "number": "2",
+        "index": "2",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 4110,
+        "anchor": "Description",
+        "linkAnchor": "Description"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Distribution",
+        "number": "3",
+        "index": "3",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 9662,
+        "anchor": "Distribution",
+        "linkAnchor": "Distribution"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Ecology",
+        "number": "4",
+        "index": "4",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 11447,
+        "anchor": "Ecology",
+        "linkAnchor": "Ecology"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Slime",
+        "number": "5",
+        "index": "5",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 14050,
+        "anchor": "Slime",
+        "linkAnchor": "Slime"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "Reproduction",
+        "number": "6",
+        "index": "6",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 17458,
+        "anchor": "Reproduction",
+        "linkAnchor": "Reproduction"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "In culture",
+        "number": "7",
+        "index": "7",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 20099,
+        "anchor": "In_culture",
+        "linkAnchor": "In_culture"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "References",
+        "number": "8",
+        "index": "8",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 23706,
+        "anchor": "References",
+        "linkAnchor": "References"
+      },
+      {
+        "toclevel": 2,
+        "level": "3",
+        "line": "Footnotes",
+        "number": "8.1",
+        "index": "9",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 24022,
+        "anchor": "Footnotes",
+        "linkAnchor": "Footnotes"
+      },
+      {
+        "toclevel": 1,
+        "level": "2",
+        "line": "External links",
+        "number": "9",
+        "index": "10",
+        "fromtitle": "Banana_slug",
+        "byteoffset": 24051,
+        "anchor": "External_links",
+        "linkAnchor": "External_links"
+      }
+    ],
+    "showtoc": true
+  }
+}

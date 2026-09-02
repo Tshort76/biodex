@@ -45,6 +45,20 @@ data class RegisterUiState(
 
     val registerLabel: String
         get() = selected?.let { "Register — ${it.commonName}" } ?: "Register"
+
+    /**
+     * M08 into M18–M21. The flow needs the two things only the user has: a name that is not in
+     * the catalogue, and the photo. Offered as soon as a name is typed — the button explains
+     * what it still wants rather than disappearing.
+     */
+    val canAddOwn: Boolean get() = query.isNotBlank() && photo != null && !registering
+
+    val addOwnLabel: String
+        get() = when {
+            query.isBlank() -> "Not in the list? Type a name to add your own species ＋"
+            photo == null -> "Attach a photo to add “${query.trim()}” as your own species ＋"
+            else -> "Add “${query.trim()}” as your own species ＋"
+        }
 }
 
 /**

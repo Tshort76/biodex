@@ -17,7 +17,10 @@ import dev.tlong.animaldex.domain.DexProgressMath
 import dev.tlong.animaldex.domain.Ecosystem
 import dev.tlong.animaldex.domain.Entry
 import dev.tlong.animaldex.domain.SpeciesDetail
+import dev.tlong.animaldex.domain.SpeciesFields
+import dev.tlong.animaldex.domain.SpeciesSource
 import dev.tlong.animaldex.domain.SpeciesSummary
+import dev.tlong.animaldex.domain.UserSpeciesRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -37,7 +40,7 @@ const val DEFAULT_REGION_ID = "pacific"
 class DexRepository(
     private val db: AppDatabase,
     private val regionId: String = DEFAULT_REGION_ID,
-) : CaptureStore {
+) : CaptureStore, UserSpeciesStore {
 
     private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
     private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
@@ -190,7 +193,82 @@ class DexRepository(
     ) {
         db.captureDao().updateReference(captureId, photoUri, thumbPath)
     }
+
+    // -----------------------------------------------------------------------
+    // User-added species (slice 7). Every decision is in `AddSpeciesRegistrar` and
+    // `domain/UserSpecies.kt`; this half only reads and writes rows.
+    // -----------------------------------------------------------------------
+
+    override suspend fun maxUserDexNumber(regionId: String): Int? =
+        db.speciesDao().maxUserDexNumber(regionId)
+
+    override suspend fun userSpecies(speciesId: String): UserSpeciesRecord? {
+        val row = db.speciesDao().speciesOnceById(speciesId) ?: return null
+        if (row.source != SpeciesSource.USER) return null
+        return row.toUserRecord()
+    }
+
+    override suspend fun upsertUserSpecies(record: UserSpeciesRecord, ecosystemIds: List<String>?) {
+        db.withTransaction {
+            db.speciesDao().upsert(record.toEntity())
+            if (ecosystemIds != null) {
+                // Replaced wholesale for this one species: the card's multi-select is the whole
+                // truth about its ecosystems, and a null list means "leave them alone" (a
+                // backfill never touches D10's manual pick).
+                db.ecosystemDao().deleteMembershipsFor(listOf(record.id))
+                if (ecosystemIds.isNotEmpty()) {
+                    db.ecosystemDao().upsertMemberships(
+                        ecosystemIds.distinct().map { SpeciesEcosystemCrossRef(record.id, it) },
+                    )
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteUserSpecies(speciesId: String) {
+        db.speciesDao().deleteByIds(listOf(speciesId))
+    }
 }
+
+internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
+    id = id,
+    regionId = regionId,
+    dexNumber = dexNumber,
+    detailsPending = detailsPending,
+    fields = SpeciesFields(
+        commonName = commonName,
+        scientificName = scientificName,
+        taxClass = taxClass,
+        habitatText = habitatText,
+        description = description,
+        imageUrl = imageUrl,
+        imageAttribution = imageAttribution,
+        callUrl = callUrl,
+        callAttribution = callAttribution,
+        infoUrl = infoUrl,
+    ),
+    userEditedFields = userEditedFields,
+)
+
+internal fun UserSpeciesRecord.toEntity() = SpeciesEntity(
+    id = id,
+    regionId = regionId,
+    dexNumber = dexNumber,
+    source = SpeciesSource.USER,
+    detailsPending = detailsPending,
+    commonName = fields.commonName,
+    scientificName = fields.scientificName,
+    taxClass = fields.taxClass,
+    habitatText = fields.habitatText,
+    description = fields.description,
+    imageUrl = fields.imageUrl,
+    callUrl = fields.callUrl,
+    infoUrl = fields.infoUrl,
+    imageAttribution = fields.imageAttribution,
+    callAttribution = fields.callAttribution,
+    silhouetteRes = fields.silhouetteRes,
+    userEditedFields = userEditedFields,
+)
 
 internal fun Capture.toEntity() = CaptureEntity(
     id = id,

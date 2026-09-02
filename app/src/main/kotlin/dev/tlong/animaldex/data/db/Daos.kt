@@ -41,6 +41,10 @@ interface SpeciesDao {
     @Query("SELECT * FROM species WHERE regionId = :regionId ORDER BY dexNumber ASC")
     suspend fun speciesOnce(regionId: String): List<SpeciesEntity>
 
+    /** Slice 7's backfill reads the stored row — including `userEditedFields` — before merging. */
+    @Query("SELECT * FROM species WHERE id = :speciesId")
+    suspend fun speciesOnceById(speciesId: String): SpeciesEntity?
+
     @Query("SELECT COUNT(*) FROM species WHERE regionId = :regionId AND source = 'curated'")
     fun observeCuratedCount(regionId: String): Flow<Int>
 

@@ -1,0 +1,886 @@
+{
+  "offset": 0,
+  "limit": 6,
+  "endOfRecords": false,
+  "count": 8,
+  "results": [
+    {
+      "key": 7661013,
+      "nameKey": 986797,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 7661013,
+      "parentKey": 2002212,
+      "parent": "Arsapnia",
+      "basionymKey": 5151932,
+      "basionym": "Capnia coyote Nelson & Baumann, 1987",
+      "kingdom": "Animalia",
+      "phylum": "Arthropoda",
+      "order": "Plecoptera",
+      "family": "Capniidae",
+      "genus": "Arsapnia",
+      "species": "Arsapnia coyote",
+      "kingdomKey": 1,
+      "phylumKey": 54,
+      "classKey": 216,
+      "orderKey": 787,
+      "familyKey": 9386,
+      "genusKey": 2002212,
+      "speciesKey": 7661013,
+      "scientificName": "Arsapnia coyote (Nelson & Baumann, 1987)",
+      "canonicalName": "Arsapnia coyote",
+      "authorship": "(Nelson & Baumann, 1987) ",
+      "publishedIn": "Nelson, C.R. & Baumann, R.W. (1987) New winter stoneflies of the genus Capnia with notes and an annotated checklist of the Capniidae of California (Plecoptera: Capniidae). Entomography, 5, 485–521.",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 0,
+      "numOccurrences": 0,
+      "taxonID": "gbif:7661013",
+      "extinct": false,
+      "habitats": [
+        "FRESHWATER",
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [
+        {
+          "description": "Material examined. USA: California: Los Angeles Co., Little Rock Creek, Cooper Canyon Campground, San Gabriel Mountains, 31 March 1981, R. W. Baumann, J. Stanger, 3 ♂ (BYUC). San Bernardino Co., East Fork of West Fork before Mohave River above Silverwood Lake, 9 January 1988, R. W. Baumann, C. R. Nelson, 1 ♂ (BYUC). Male epiproct (n = 2). Length 575 - 618 μm, width at midlength 223 - 236 μm, Body of epiproct expanded into convex ear-like lobes near midlength (Figs. 67, 70). Width across neck 67 - 83 μm. Shape and general structure similar to those of populations of A. decepta examined. Left side setal spines in clusters of 25 - 28, and 28 - 32 on the right."
+        },
+        {
+          "description": "Capnia coyote Nelson & Baumann, 1987 b: 487. Holotype ♂, (United States National Museum), Little Rock Creek, Cooper Canyon Campground, San Gabriel Mountains, Los Angeles Co., California"
+        },
+        {
+          "description": "Comments. Arsapnia coyote is presently considered an endemic to southern California and the sister species of A. decepta (Nelson & Baumann 1987 b). The two species overlap in many morphological features including epiproct width and setal spine counts, however two of the three longest epiprocts among specimens studied are of this species, and the epiproct length / width ratios (2.58 and 2.61 respectively, Table 6) for these two specimens are the highest observed. Nelson & Baumann (1987 b) distinguished the two species, in part, by virtue of a flatter dorsal epiproct surface and smaller epiproct depth (compare Figs. 69 and 72 with Figs. 4 and 18). Recently, Heinold et al. (2014) supported recognition of A. coyote as a distinct species based on their report of an average genetic divergence of 1.9 % between males of A. coyote and A. decepta."
+        },
+        {
+          "description": "Tergal process (n = 2). Bearing a slight to moderate notch of posteromedian margin (Figs. 67 - 70). Dorsolateral lobes bearing patches of small conical tubercles. Width of process across anterior margin 200 - 280 μm."
+        },
+        {
+          "description": "Coyote Snowfly (Figs. 67 - 72)"
+        },
+        {
+          "description": "Shredders of decayed tree leaves"
+        },
+        {
+          "description": "Holotype."
+        },
+        {
+          "description": "Freshwater, terrestrial."
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Coyote Snowfly",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote Snowfly",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote Snowfly",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote Snowfly",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "54": "Arthropoda",
+        "216": "Insecta",
+        "787": "Plecoptera",
+        "9386": "Capniidae",
+        "2002212": "Arsapnia"
+      },
+      "class": "Insecta"
+    },
+    {
+      "key": 1950350,
+      "nameKey": 116471,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 1950350,
+      "parentKey": 1950334,
+      "parent": "Achalarus",
+      "basionymKey": 12142170,
+      "basionym": "Aethilla toxeus Plötz, 1882",
+      "kingdom": "Animalia",
+      "phylum": "Arthropoda",
+      "order": "Lepidoptera",
+      "family": "Hesperiidae",
+      "genus": "Achalarus",
+      "species": "Achalarus toxeus",
+      "kingdomKey": 1,
+      "phylumKey": 54,
+      "classKey": 216,
+      "orderKey": 797,
+      "familyKey": 6953,
+      "genusKey": 1950334,
+      "speciesKey": 1950350,
+      "scientificName": "Achalarus toxeus (Plötz, 1882)",
+      "canonicalName": "Achalarus toxeus",
+      "authorship": "(Plötz, 1882) ",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 2,
+      "numOccurrences": 0,
+      "taxonID": "gbif:1950350",
+      "habitats": [],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [],
+      "vernacularNames": [
+        {
+          "vernacularName": "Coyote Cloudywing",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote Cloudywing",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "54": "Arthropoda",
+        "216": "Insecta",
+        "797": "Lepidoptera",
+        "6953": "Hesperiidae",
+        "1950334": "Achalarus"
+      },
+      "class": "Insecta"
+    },
+    {
+      "key": 5219153,
+      "nameKey": 1946279,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 5219153,
+      "parentKey": 5219142,
+      "parent": "Canis",
+      "kingdom": "Animalia",
+      "phylum": "Chordata",
+      "order": "Carnivora",
+      "family": "Canidae",
+      "genus": "Canis",
+      "species": "Canis latrans",
+      "kingdomKey": 1,
+      "phylumKey": 44,
+      "classKey": 359,
+      "orderKey": 732,
+      "familyKey": 9701,
+      "genusKey": 5219142,
+      "speciesKey": 5219153,
+      "scientificName": "Canis latrans Say, 1823",
+      "canonicalName": "Canis latrans",
+      "authorship": "Say, 1823",
+      "publishedIn": "InJames, Account Exped. Pittsburgh to Rocky Mtns vol.1 p.168",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 20,
+      "numOccurrences": 0,
+      "taxonID": "gbif:5219153",
+      "extinct": false,
+      "habitats": [
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [
+        "LEAST_CONCERN",
+        "LEAST_CONCERN",
+        "LEAST_CONCERN"
+      ],
+      "descriptions": [
+        {
+          "description": "Canis latrans Say, 1823 Material examined. Costa Rica • Puntarenas Province, Karen Mogensen Wildlife Refuge; 09°52'19\"N, 085°03'48\"W; 384 m alt.; 11.02.2018; vocalisations . Identification. Medium-sized canid, related to the Eurasian golden jackal Canis aureus (Linnaeus, 1758) both for morphology and eco-ethology (Wainwright 2007). The colour of fur varies from grey to different yellow-brown tones in the upperparts and usually has paler underparts. The snout is elongated, the ears are triangular and held erect, and the tail is long with a black tip. Adapted to several habitat types thank to the extremely varied diet. Its range is rapidly expanding from North America to South America. At present the coyote is reported only along the Pacific slope of Costa Rica (Hernández-Hernández and Chávez 2021; Reid and Gόmez Zamora 2022). In the Wildlife Refuge the coyote is recorded year-round, mainly in open areas near or within dry forest habitats."
+        },
+        {
+          "description": "TYPE LOCALITY: U. S. A., Nebraska, Washington Co., Engineer Cantonment, about 12 mi. (19.2 km) S. E. Blair."
+        },
+        {
+          "description": "DISTRIBUTION: Originally may have occurred W. of the Mississippi R., N. to about 55 ° N. lat., and south to Mexico City. Has extended its range north to N. Alaska (U. S. A.), Northwest Territories and Hudson Bay (Canada), south to Costa Rica, and east to the Atlantic coast."
+        },
+        {
+          "description": "COMMENT: Reviewed by Bekoff, 1977, Mamm. Species, 79: 1 - 9. See Young, 1951, The clever coyote, Wildl. Mng. Inst., Washington, D. C., p. 29, for a discussion of distribution."
+        },
+        {
+          "description": "Type Locality: \" Engineer cantonment \" reported at \" latitude 41 ° 25 ' N, and longitude ... 95 ° 47 ' 30 ' W \" (p. XVIII, vol. 2). Reported in Honacki et al. (1982) as \" U. S. A., Nebraska, Washington Co., Engineer Cantonment, about 12 mi. (19.2 km) S. E. Blair \"."
+        },
+        {
+          "description": "Distribution: Canada, Costa Rica, El Salvador, Guatemala, Honduras, Mexico, Nicaragua, USA. Introduced to Florida and Georgia and currently widespread throughout Northern and Central America (Beckoff, 1977, 1999)."
+        },
+        {
+          "description": "Discussion: Revised by Young (1951) and reviewed by Beckoff (1977). Synonyms allocated according to Beckoff (1977) and Hall (1981)."
+        },
+        {
+          "description": "Conservation: IUCN – Lower Risk (lc)."
+        },
+        {
+          "description": "Subspecies:: Subspecies Canis latrans subsp. latrans Say 1823 Subspecies Canis latrans subsp. cagottis C. E. H. Smith 1839 Subspecies Canis latrans subsp. clepticus Elliot 1903 Subspecies Canis latrans subsp. dickeyi Nelson 1932 Subspecies Canis latrans subsp. frustror Woodhouse 1851 Subspecies Canis latrans subsp. goldmani Merriam 1904 Subspecies Canis latrans subsp. hondurensis Goldman 1936 Subspecies Canis latrans subsp. impavidus J. A. Allen 1903 Subspecies Canis latrans subsp. incolatus Hall 1934 Subspecies Canis latrans subsp. jamesi Townsend 1912 Subspecies Canis latrans subsp. lestes Merriam 1897 Subspecies Canis latrans subsp. mearnsi Merriam 1897 Subspecies Canis latrans subsp. microdon Merriam 1897 Subspecies Canis latrans subsp. ochropus Eschscholtz 1829 Subspecies Canis latrans subsp. peninsulae Merriam 1897 Subspecies Canis latrans subsp. texensis Bailey 1905 Subspecies Canis latrans subsp. thamnos Jackson 1949 Subspecies Canis latrans subsp. umpquensis Jackson 1949 Subspecies Canis latrans subsp. vigilis Merriam 1897"
+        },
+        {
+          "description": "Norte América"
+        },
+        {
+          "description": "Subspecies and Distribution. C. l. latrans Say, 1823 — S Canada and USA (Great Plains region). C. l. cagottis Hamilton-Smith, 1839 — SE Mexico. C. l. clepticus Elliot, 1903 — Mexico (N Baja California) and USA (S California). C. l. dickeyi Nelson, 1932 — Costa Rica, El Salvador, W Honduras, Nicaragua, and Panama. C. l. frustror Woodhouse, 1850 — USA (Missouri, Kansas, parts of Oklahoma & E Texas). C. l. goldmani Merriam, 1904 — Belize, Guatemala, and S Mexico. C. l. hondurensis Goldman, 1936 — E Honduras. C. l. impavidus J. A. Allen, 1903 - W Mexico. C. l. incolatus Hall, 1934 - Alaska and NW Canada. C. l. ¡ jamesi Townsend. 1912 - Mexico (Tiburon l. Baia California). c. [l. lestes lam Merriam, 1897 1897 - sw canada Canada and w USA USA Õnzenndunzain Region & NW). v C. l. mearnsi Merriam, 1897 - NW Mexico and SW USA. C. l. mıcrodon Merriam, 1897 — NE Mexico and S USA (S Texas). C. l. ochropus Eschscholtz, 1829 - W USA (W coast). C. l. peninsulae Merriam, 1897 — Mexico (S Baja California). C. l. texensıs Bailey, 1905 - S USA (W Texas 8 c New Mexico). C. l. thamnos Jackson, 1949 - N-C Canada and E USA. C. l. umpquensıs Jackson. 1949 - USA (NW coast). C. l. vigilis Merriam. 1897 — SW Mexico. Coyotes did not originally occur on the USA E coast or Florida. They (probably thamnos) have expanded into the area with the clearing of forests and been introduced to Florida and Georgia (subspecies unknown)."
+        },
+        {
+          "description": "Food and Feeding. Opportunistic, generalist predators that eat a wide variety of food items, ranging from fruit and insects to small mammals to large ungulates and live-stock, typically consuming items in relation to availability. Livestock and wild ungulates are often consumed as carrion, but predation on large ungulates (native and domestic) does occur. Predation on neonates of native ungulates can be high during fawning. Coyotes in suburban areas are adept at exploiting human-made food resources and will readily consume refuse, pet food or other human-related items. Studies of predatory behavior show that Coyote age, habitat, and wind and snow conditions all influence their ability to capture small mammals. Coyotes hunt small mammals alone, even when pack size is large. When preying on native ungulates, cooperation among pack members may facilitate the capture of prey, but is not essential. Environmental factors are important to the success of an attack on adult ungulates, as is the presence of the alpha Coyote pair, and younger animals generally do not participate. The number of Coyotes is not as important as which individuals are involved in the attack. The outcome is also affected by the ability of the quarry to escape into water, its defensive abilities, and its nutritional state. In areas with an ungulate prey base in winter, competition with other sympatric carnivores for a carcass may be intense and there can even be competition among members of the same pack."
+        },
+        {
+          "description": "The ancestral Coyote, C. lepophagus, is believed to have become widespread throughout North America by the late Pliocene. In the north-eastern USA, the eastern Coyote may be a subspecies with some introgression of wolf and dog genes. Nineteen subspecies have been recognized. However, the taxonomic validity of some subspecies is questionable."
+        },
+        {
+          "description": "Descriptive notes. Head-body 74 - 94 cm for males and 74 - 94 cm for females, tail 29 — 36 - 3 cm for males and 26 - 34 - 3 cm for females; weight 7 - 8 - 15 - 8 kg for males and 7 - 7 - 14 - 5 kg for females. Slender appearance with a long, pointed nose, large pointed ears, slender legs with small feet, and a bushy tail. Size varies geographically, although adult males are heavier and larger than adult females. Coyotes range in color from pure gray to rufous; melanistic Coyotes are rare. Fur texture and color varies geographically: northern subspecies have long coarse hair. Coyotes in the desert tend to be fulvous in color, while Coyotes at higher latitudes are darker and grayer. The belly and throat are paler than the rest of the body and have a mantle of darker hair over the shoulders. The tip of the tail is usually black. Hairs are about 50 - 90 mm long, mane hairs tend to be 80 - 110 mm long. Pelage during summer is shorter than in winter. The dental formulais 13 / 3, C 1 / 1, PM 4 / 4, M 2 / 3 = 42."
+        },
+        {
+          "description": "Status and Conservation. CITES not listed. Classified as Least Concern on The [UCN Red List. Coyotes are abundant throughout their range, which may be expanding due to their ability to successfully live in human-modified landscapes. Elimination of Wolves may also have facilitated Coyote expansion. Density varies geographically with food and climate, and seasonally due to mortality, changes in pack structure, predator density and food abundance. Coyotes are considered a pest species in many regions. Control programs temporarily reduce numbers on a short-term basis, but Coyote populations are generally stable in most areas and free of threats throughout their range. Conservation measures have not been needed to maintain viable populations. Coyotes adapt to human environments and occupy most developed habitats, including urban and agricultural areas. Hybridization with dogs and Gray Wolves may be occurring in Some areas."
+        },
+        {
+          "description": "Breeding. Both males and females show annual cyclic changes in reproductive anatomy and physiology. Females are seasonally monoestrous, showing one period of estrus per year between January and March, depending on latitude. Courtship behavior begins 2 - 3 months before copulation. Copulation ends with a copulatory tie lasting up to 25 minutes. The percentage of females breeding each year varies with local conditions and food supply. Usually, about 60 - 90 % of adult females and up to 70 % of female yearlings producelitters. Gestation lasts approximately 63 days. Litter size averages six (range 1 - 9) and may be affected by population density and food availability during the previous winter. In northern latitudes, litter size changes in response to population cycles in Snowshoe Hares (Lepus americanus). Litter size has been found to increase after cold, snowy winters, when more ungulate carcasses are available to ovulating females. Coyotes may den in brush-covered slopes, steep banks, under rock ledges, thickets, and hollow logs. Dens of other animals may also be used, and may have more than one entrance and interconnecting tunnels. The same den may be used from year to year. Denning and pup rearing are the focal point of Coyote families for several months, until the pups are large and mobile. Pups are born blind and helpless in the den. Birth weight is 240 - 275 g. Their eyes open at about 14 days and they emerge from the den at about three weeks. The young are cared for by the parents and other associates, usually siblings from a previous year. Pups are weaned at about 5 - 7 weeks of age and reach adult weight by about nine months."
+        },
+        {
+          "description": "Movements, Home range and Social organization. The basic social unit is the bonded alpha pair, which may breed for up to 10 - 12 years. Associate animals often remain in the pack and possibly inherit the pack or displace members of the breeding pair and become alphas themselves. Associates participate in territorial maintenance and pup rearing, but not to the extent of the alpha pair. Other Coyotes exist outside of the resident packs as transient or nomadic individuals. Transients travel alone over larger areas and do not breed, but will move into territories when vacancies occur. One factor that may affect Coyote sociality is prey size or prey biomass. In populations where rodents are the major prey, Coyotes tend to be in pairs or trios. In populations where Elk and deer are available, large packs of up to ten individuals may form. Coyotes are territorial, with a dominance hierarchy within each resident pack. The dominance hierarchy influences access to food resources within the pack. In captivity, pups show early development of aggressive behavior and engage in dominance fights when 19 - 24 days old. The process of establishing hierarchy within litters appears to last up to 4 - 5 months. Territoriality regulates Coyote numbers as packs space themselves across the landscape in relation to available food and habitat. Home range size varies with energetic requirements, physiographic makeup, habitat, and food distribution. Home range size is influenced by social organization, with transients using larger areas, and residents occupying distinct territories. Only packs (2 - 10 animals) maintain and defend territories, both by direct confrontation and indirectly with scent marking and howling. Fidelity to the home range is high and may persist for many years. Shifts in territorial boundaries may occur in response to the loss of one or both of the alpha pair. Pups, yearlings, and non-breeding adults of lower social rank may disperse from the natal site into adjacent areas or farther afield. Dispersal seems to be voluntary, as social and nutritional pressures intensify during winter when food becomes limited. Juveniles usually disperse during autumn and early winter. Pre-dispersal forays may occur. Coyotes communicate using auditory, visual, olfactory, and tactile cues. Studies have identified different types of vocalizations, seasonal patterns, and the influence of social status on vocalization rates. Howling plays a role in territorial maintenance and pack spacing by advertising boundaries and signaling the presence of alpha animals that will confront intruders and defend the territory. Scent marking contributes to territory maintenance and is performed mostly by alpha individuals. Scent marking may also be an indicator of sexual condition, maturity, or synchrony."
+        },
+        {
+          "description": "Habitat. Coyotes utilize almost all available habitats throughout their range including prairie, forest, desert, mountain, and tropical ecosystems. Their ability to exploit human resources also allows them to occupy urban areas. Water availability may limit distribution in some desert environments."
+        },
+        {
+          "description": "Activity patterns. Coyotes may be active throughout the day, but they tend to be more active during the early morning and around sunset. Activity patterns change seasonally (e. g. during winter, when there is a change in the food base in some areas) or in response to human disturbance and persecution."
+        },
+        {
+          "description": "Canis latrans Say, 1823 Coyote Canis latrans is distributed statewide. Caire et al. (1989) reported records for most Oklahoma counties. Braun and Revelez (2005) reported a new record for Caddo County. New records are reported for Atoka, Blaine, Carter, Grant, Greer, Stephens, and Washington counties. Specimen records of this species are only lacking for the following counties: Alfalfa, Coal, Garvin, Haskell, Kay, Okfuskee, Ottawa, Seminole, and Sequoyah. Specimen records (9).—Atoka County (1): no specific locality, 1 (UCOCV-MAM 7385). Blaine County (2): 33.2 km NW Watonga on US Hwy 281, by North Canadian River, 2 (OMNH 29062-29063). Carter County (1): 1.6 km N Ardmore on Hwy 14, 1 (UCOCV-MAM 129). Grant County (1): no specific locality, 1 (OMNH 39190). Greer County (1): 16.9 km W Willow, 568 m, 1 (OMNH 66042). Stephens County (1): 4.8 km W Velma, 1 (ISM 687209). Washington County (2): no specific locality, 2 (ISM 692935-692936)."
+        },
+        {
+          "description": "Canis latrans previously was noted primarily from central and northern Louisiana, but currently is found statewide. Since Lowery (1974), specimen records were reported from Avoyelles, Cameron, Concordia, East Feliciana, Jefferson, Lafayette, Lincoln, and Point Coupee parishes. Additionally, nonvouchered records were reported from Acadia, Avoyelles, Calcasieu, Franklin, Grant, Jefferson, Jefferson Davis, Lafayette, Lafourche, Livingston, Orleans, Rapides, and West Feliciana parishes. Specimen records (11). — Avoyelles Parish (2): 4 mi E Plaucheville, 30.965 N, - 91.917 W, 1 (LSUMZ 32588); near Plaucheville, 30.965 N, - 91.982 W, 1 (LSUMZ 20070). Cameron Parish (3): 5 mi NW Grand Cheniere, Pumpkin Ridge, 29.803 N, - 93.011 W, 1 (LSUMZ 18596); Hwy. 27 at Sweetlake Catholic Church, 29.984 N, - 93.087 W, 1 (LSUMZ 20904); Sabine National Wildlife Refuge, 29.896 N, - 93.534 W, 1 (LSUMZ 36829). Concordia Parish (2): 31.321 N, - 91.529 W, 2 (LSUMZ 20341 – 20342). East Feliciana Parish (1): 3 mi W Norwood, 30.967 N, - 91.153 W, 1 (LSUMZ 20072). Jefferson Parish (1): Jean Lafitte National Park, 29.786 N, - 90.130 W, 1 (LSUMZ 34294). Lafayette Parish (1): 1.3. mi W of Courthouse, 30.223 N, - 92.040 W, 1 (LSUMZ 34459). Point Coupee Parish (1): 1 mi E Krotz Springs, 30.537 N, - 91.735 W, 1 (LSUMZ 20071). Nonvouchered records (20). — Acadia Parish (2): 30.419 N, - 92.358 W, 1 (iNaturalist 15412873); 30.466 N, - 92.299 W, 1 (iNaturalist 15412853). Calcasieu Parish (3): 30.260 N, - 93.153 W, 1 (iNaturalist 24179317); NW of Helms Rd. x LA 397, 30.072 N, - 93.148 W, 1 (iNaturalist 67011471); 30.082 N, - 93.049 W, 1 (iNaturalist 4890327). Franklin Parish (1): Winnsboro, LA, US, 32.118 N, - 91.715 W, 1 (iNaturalist 33156363). Grant Parish (1): 31.499 N, - 92.467 W, 1 (iNaturalist 75242928). Lafourche Parish (2): Galliano, LA, 29.417 N, - 90.313 W, 1 (iNaturalist 122050345); 29.134 N, - 90.234 W, 1 (iNaturalist 69905836). Livingston Parish (1): 30.544 N, - 90.936 W, 1 (iNaturalist 34969052). Orleans Parish (5): Bayou Sauvage National Wildlife Refuge, New Orleans, LA, 30.056 N, - 89.879 W, 2 (iNaturalist 22944425, 33864462); Read Boulevard East New Orleans, LA, 30.031 N, - 89.961 W, 1 (iNaturalist 6295638); Teche St, New Orleans, LA, 29.948 N, - 90.052 W, 1 (iNaturalist 100348925); Venetian Isles, New Orleans, LA, 30.045 N, - 89.876 W, 1 (iNaturalist 43243683). Rapides Parish (2): 31.147 N, - 92.395 W, 1 (iNaturalist 21016493); 31.255 N, - 92.777 W, 1 (iNaturalist 44218935). West Feliciana Parish (3): 30.773 N, - 91.323 W, 1 (iNaturalist 113319177); 30.997 N, - 91.362 W, 2 (iNaturalist 35549436, 45109337)."
+        },
+        {
+          "description": "TYPE LOCALITY: \" Engineer cantonment \" reported at \" latitude 41 ° 25 ' N, and longitude.,. 95 ° 47 ' 30 ' W \" (p. XVIII, vol. 2). Reported in Honacki et al. (1982) as \" U. S. A., Nebraska, Washington Co., Engineer Cantonment, about 12 mi. (19.2 km) S. E. Blair \"."
+        },
+        {
+          "description": "DISTRIBUTION: Originally may have occurred west of the Mississippi R., north to about 55 ° N, and south to Mexico City. Has extended its range north to N Alaska (USA), Northwest Territories, and Hudson Bay (Canada), approximately to 70 ° N, south to Costa Rica to approximately 10 ° N, and east to the Atlantic coast. Introduced in Florida and Georgia (Bekoff, 1977)."
+        },
+        {
+          "description": "COMMENTS: Revised by Young (1951), and reviewed by Bekoff (1977, Mammalian Species, 79)."
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Prairie Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Kojote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Brush Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "American Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Prairie Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Brush Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "American Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Kojote",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Prairie Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Kojote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Brush Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "American Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "郊狼",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "'iitar"
+        },
+        {
+          "vernacularName": "Géwe"
+        },
+        {
+          "vernacularName": "Койот",
+          "language": "ukr"
+        },
+        {
+          "vernacularName": "kır kurdu",
+          "language": "tur"
+        },
+        {
+          "vernacularName": "หมาป่าโคโยตี",
+          "language": "tha"
+        },
+        {
+          "vernacularName": "prärievarg",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "Amerikansk Schakal",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "којот",
+          "language": "srp"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Coiote",
+          "language": "por"
+        },
+        {
+          "vernacularName": "Kojot Preriowy",
+          "language": "pol"
+        },
+        {
+          "vernacularName": "Wiisagi-ma' iingan",
+          "language": "oji"
+        },
+        {
+          "vernacularName": "Mąʼii",
+          "language": "nav"
+        },
+        {
+          "vernacularName": "Yvhv-lanuce"
+        },
+        {
+          "vernacularName": "Koyote",
+          "language": "msa"
+        },
+        {
+          "vernacularName": "È:rha"
+        },
+        {
+          "vernacularName": "Koijots",
+          "language": "lav"
+        },
+        {
+          "vernacularName": "코요테",
+          "language": "kor"
+        },
+        {
+          "vernacularName": "Шалғын қасқыры",
+          "language": "kaz"
+        },
+        {
+          "vernacularName": "コヨーテ",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "アメリカジャッカル",
+          "language": "jpn"
+        },
+        {
+          "vernacularName": "Amaġuuraq",
+          "language": "ipk"
+        },
+        {
+          "vernacularName": "prérifarkas",
+          "language": "hun"
+        },
+        {
+          "vernacularName": "Iisaw"
+        },
+        {
+          "vernacularName": "זאב ערבות",
+          "language": "heb"
+        },
+        {
+          "vernacularName": "Liùgair",
+          "language": "gla"
+        },
+        {
+          "vernacularName": "coyote",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Coyloup de l'est",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "kojootti",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "Kayu"
+        },
+        {
+          "vernacularName": "Preeriahunt",
+          "language": "est"
+        },
+        {
+          "vernacularName": "Koiott",
+          "language": "est"
+        },
+        {
+          "vernacularName": "Ameerika Šaakal",
+          "language": "est"
+        },
+        {
+          "vernacularName": "Kojoto",
+          "language": "epo"
+        },
+        {
+          "vernacularName": "Yote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "White Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Tweed Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Snow Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Small Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Prairie Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Northwestern Coastal Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Northwest Coast Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "New World Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Mexican Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Little Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Eastern Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Cocyotie",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Cayjotte",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Cased Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Burrowing Dog",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Brush Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Black Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "American Jackal",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Κογιότ",
+          "language": "ell"
+        },
+        {
+          "vernacularName": "Steppenwolf",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Präriewolf",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Nordamerikanischer Präriewolf",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Kojote",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Amerikanischer Schakal",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Prærieulv",
+          "language": "dan"
+        },
+        {
+          "vernacularName": "ᏧᎾᏓᏚᏗ"
+        },
+        {
+          "vernacularName": "isil̃"
+        },
+        {
+          "vernacularName": "kojot prérijní",
+          "language": "ces"
+        },
+        {
+          "vernacularName": "kojot",
+          "language": "ces"
+        },
+        {
+          "vernacularName": "Coiot",
+          "language": "cat"
+        },
+        {
+          "vernacularName": "Американски чакал",
+          "language": "bul"
+        },
+        {
+          "vernacularName": "Каёт",
+          "language": "bel"
+        },
+        {
+          "vernacularName": "koo'oh"
+        },
+        {
+          "vernacularName": "قيوط الساحل الشمال الغربي",
+          "language": "ara"
+        },
+        {
+          "vernacularName": "قيوط",
+          "language": "ara"
+        },
+        {
+          "vernacularName": "ذئب البراري",
+          "language": "ara"
+        },
+        {
+          "vernacularName": "Ifamaɬatli"
+        },
+        {
+          "vernacularName": "Amerikaanse Jakkals",
+          "language": "afr"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "coyote",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Prairie Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Brush Wolf",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Kojote",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "coyote",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "coyote",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Coyote",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "44": "Chordata",
+        "359": "Mammalia",
+        "732": "Carnivora",
+        "9701": "Canidae",
+        "5219142": "Canis"
+      },
+      "class": "Mammalia"
+    },
+    {
+      "key": 6003056,
+      "nameKey": 2457079,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 6003056,
+      "parentKey": 4990909,
+      "parent": "Chrysobothris",
+      "kingdom": "Animalia",
+      "phylum": "Arthropoda",
+      "order": "Coleoptera",
+      "family": "Buprestidae",
+      "genus": "Chrysobothris",
+      "species": "Chrysobothris bacchari",
+      "kingdomKey": 1,
+      "phylumKey": 54,
+      "classKey": 216,
+      "orderKey": 1470,
+      "familyKey": 3789,
+      "genusKey": 4990909,
+      "speciesKey": 6003056,
+      "scientificName": "Chrysobothris bacchari Van Dyke, 1923",
+      "canonicalName": "Chrysobothris bacchari",
+      "authorship": "Van Dyke, 1923",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 0,
+      "numOccurrences": 0,
+      "taxonID": "gbif:6003056",
+      "extinct": false,
+      "habitats": [
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [],
+      "vernacularNames": [
+        {
+          "vernacularName": "Coyote Bush Buprestid",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "54": "Arthropoda",
+        "216": "Insecta",
+        "1470": "Coleoptera",
+        "3789": "Buprestidae",
+        "4990909": "Chrysobothris"
+      },
+      "class": "Insecta"
+    },
+    {
+      "key": 1047838,
+      "nameKey": 11487393,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "9ca92552-f23a-41a8-a140-01abaa31c931",
+      "nubKey": 1047838,
+      "parentKey": 1047834,
+      "parent": "Trirhabda",
+      "kingdom": "Animalia",
+      "phylum": "Arthropoda",
+      "order": "Coleoptera",
+      "family": "Chrysomelidae",
+      "genus": "Trirhabda",
+      "species": "Trirhabda flavolimbata",
+      "kingdomKey": 1,
+      "phylumKey": 54,
+      "classKey": 216,
+      "orderKey": 1470,
+      "familyKey": 7780,
+      "genusKey": 1047834,
+      "speciesKey": 1047838,
+      "scientificName": "Trirhabda flavolimbata (Mannerheim, 1843)",
+      "canonicalName": "Trirhabda flavolimbata",
+      "authorship": "(Mannerheim, 1843) ",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 0,
+      "numOccurrences": 0,
+      "taxonID": "gbif:1047838",
+      "extinct": false,
+      "habitats": [],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [],
+      "vernacularNames": [
+        {
+          "vernacularName": "Coyote Brush Leaf Beetle",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "54": "Arthropoda",
+        "216": "Insecta",
+        "1470": "Coleoptera",
+        "7780": "Chrysomelidae",
+        "1047834": "Trirhabda"
+      },
+      "class": "Insecta"
+    },
+    {
+      "key": 9737015,
+      "nameKey": 5087598,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "c815ecb1-b036-4617-b545-1bb65e0339cd",
+      "nubKey": 9737015,
+      "parentKey": 1859454,
+      "parent": "Hellinsia",
+      "basionymKey": 9818564,
+      "basionym": "Lioptilus grandis Fish, 1881",
+      "kingdom": "Animalia",
+      "phylum": "Arthropoda",
+      "order": "Lepidoptera",
+      "family": "Pterophoridae",
+      "genus": "Hellinsia",
+      "species": "Hellinsia grandis",
+      "kingdomKey": 1,
+      "phylumKey": 54,
+      "classKey": 216,
+      "orderKey": 797,
+      "familyKey": 8863,
+      "genusKey": 1859454,
+      "speciesKey": 9737015,
+      "scientificName": "Hellinsia grandis (Fish, 1881)",
+      "canonicalName": "Hellinsia grandis",
+      "authorship": "(Fish, 1881) ",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 1,
+      "numOccurrences": 0,
+      "taxonID": "gbif:9737015",
+      "extinct": false,
+      "habitats": [
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [],
+      "vernacularNames": [
+        {
+          "vernacularName": "Coyote Brush Borer Plume Moth",
+          "language": "eng"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "1": "Animalia",
+        "54": "Arthropoda",
+        "216": "Insecta",
+        "797": "Lepidoptera",
+        "8863": "Pterophoridae",
+        "1859454": "Hellinsia"
+      },
+      "class": "Insecta"
+    }
+  ],
+  "facets": []
+}

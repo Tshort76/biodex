@@ -11,12 +11,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dev.tlong.animaldex.appContainer
+import dev.tlong.animaldex.ui.addspecies.ConfirmSpeciesRoute
 import dev.tlong.animaldex.ui.detail.EntryDetailRoute
 import dev.tlong.animaldex.ui.grid.DexGridRoute
 import dev.tlong.animaldex.ui.photoviewer.PhotoViewerRoute
@@ -62,6 +65,7 @@ data object Settings
 
 @Composable
 fun AnimalDexNavHost(navController: NavHostController = rememberNavController()) {
+    val container = LocalContext.current.appContainer
     NavHost(navController = navController, startDestination = DexGrid) {
         composable<DexGrid> {
             DexGridRoute(
@@ -80,6 +84,11 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
                 onBack = { navController.popBackStack() },
                 onRegister = { speciesId -> navController.navigate(Register(speciesId)) },
                 onOpenPhoto = { captureId -> navController.navigate(PhotoViewer(captureId)) },
+                // M20: a details-pending entry opened online looks itself up and presents the
+                // same confirmation card. Single-top, so a second emission cannot stack cards.
+                onBackfillReady = { draftId ->
+                    navController.navigate(ConfirmSpecies(draftId)) { launchSingleTop = true }
+                },
             )
         }
         composable<Register> { backStackEntry ->
@@ -100,13 +109,33 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
                         popUpTo(DexGrid)
                     }
                 },
-                // Slice 7 replaces this with `navigate(ConfirmSpecies(draftId))` (M08, M18–M21).
-                onAddOwnSpecies = {},
+                onAddOwnSpecies = { typedName, photoUri ->
+                    val draftId = container.addSpeciesDrafts.put(
+                        typedName = typedName,
+                        photoUri = photoUri,
+                    )
+                    navController.navigate(ConfirmSpecies(draftId))
+                },
             )
         }
         composable<ConfirmSpecies> { backStackEntry ->
             val route = backStackEntry.toRoute<ConfirmSpecies>()
-            Placeholder(title = "Add Species — Confirm — coming soon", detail = route.draftId)
+            ConfirmSpeciesRoute(
+                draftId = route.draftId,
+                onBack = { navController.popBackStack() },
+                // A new user-added species is a first catch by definition, so it gets the
+                // reveal — and back from the detail screen returns to the grid (DESIGN.md §6).
+                onCreated = { speciesId ->
+                    navController.navigate(
+                        EntryDetail(speciesId = speciesId, justUnlocked = true),
+                    ) {
+                        popUpTo(DexGrid)
+                    }
+                },
+                // A backfill only filled in an entry that already exists; going back to it is
+                // the whole of the outcome.
+                onUpdated = { navController.popBackStack() },
+            )
         }
         composable<PhotoViewer> { backStackEntry ->
             val route = backStackEntry.toRoute<PhotoViewer>()
