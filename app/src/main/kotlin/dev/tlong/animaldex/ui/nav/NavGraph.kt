@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,7 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dev.tlong.animaldex.ui.grid.TempDexCountLine
+import dev.tlong.animaldex.ui.detail.EntryDetailRoute
+import dev.tlong.animaldex.ui.grid.DexGridRoute
 import dev.tlong.animaldex.ui.theme.DexTheme
 import kotlinx.serialization.Serializable
 
@@ -53,27 +53,21 @@ data object Settings
 fun AnimalDexNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = DexGrid) {
         composable<DexGrid> {
-            Placeholder(
-                title = "Dex Grid — coming soon",
-                // Slice 3 scaffolding: proves asset → Room → repository → UI on the phone.
-                extra = { TempDexCountLine() },
-                links = listOf(
-                    "Entry Detail" to { navController.navigate(EntryDetail("western-screech-owl")) },
-                    "Unlock Reveal" to {
-                        navController.navigate(EntryDetail("western-screech-owl", justUnlocked = true))
-                    },
-                    "Register" to { navController.navigate(Register()) },
-                    "Confirm Species" to { navController.navigate(ConfirmSpecies("draft-0")) },
-                    "Photo Viewer" to { navController.navigate(PhotoViewer("capture-0")) },
-                    "Stats" to { navController.navigate(Stats) },
-                    "Settings" to { navController.navigate(Settings) },
-                ),
+            DexGridRoute(
+                onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
+                onRegister = { navController.navigate(Register()) },
+                onOpenStats = { navController.navigate(Stats) },
+                onOpenSettings = { navController.navigate(Settings) },
             )
         }
         composable<EntryDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<EntryDetail>()
-            val reveal = if (route.justUnlocked) " (unlock reveal)" else ""
-            Placeholder(title = "Entry Detail — coming soon", detail = route.speciesId + reveal)
+            // route.justUnlocked stays unread until slice 5 adds the reveal overlay (6.1).
+            EntryDetailRoute(
+                speciesId = route.speciesId,
+                onBack = { navController.popBackStack() },
+                onRegister = { speciesId -> navController.navigate(Register(speciesId)) },
+            )
         }
         composable<Register> { backStackEntry ->
             val route = backStackEntry.toRoute<Register>()
@@ -96,16 +90,13 @@ fun AnimalDexNavHost(navController: NavHostController = rememberNavController())
 }
 
 /**
- * The only composable slice 1 ships. Every route renders it until its own slice
- * replaces the route body; the buttons exist so the walking skeleton exercises
- * type-safe navigation on the phone.
+ * What a route shows until its own slice replaces it. Slice 4 replaced the grid and the
+ * detail bodies; Register, Confirm, Photo Viewer, Stats and Settings still land here.
  */
 @Composable
 private fun Placeholder(
     title: String,
     detail: String? = null,
-    extra: (@Composable () -> Unit)? = null,
-    links: List<Pair<String, () -> Unit>> = emptyList(),
 ) {
     Column(
         modifier = Modifier
@@ -126,10 +117,6 @@ private fun Placeholder(
                 style = MaterialTheme.typography.bodySmall,
                 color = DexTheme.colors.faint,
             )
-        }
-        extra?.invoke()
-        links.forEach { (label, onClick) ->
-            OutlinedButton(onClick = onClick) { Text(label) }
         }
     }
 }

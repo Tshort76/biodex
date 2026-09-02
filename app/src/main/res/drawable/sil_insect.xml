@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Class silhouette (ARCHITECTURE.md section 2): adapted from mockup.html's inline
+     SVG defs, drawn at runtime with a ColorFilter tint over the silBg art area. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M50 32 C41 13 18 10 14 26 C10 40 28 51 44 51 C28 51 12 61 16 75 C20 89 42 86 50 66 C58 86 80 89 84 75 C88 61 72 51 56 51 C72 51 90 40 86 26 C82 10 59 13 50 32 Z M48 28 L52 28 L52 74 L48 74 Z" />
+</vector>

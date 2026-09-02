@@ -393,6 +393,25 @@ Search and filters (M14) are ViewModel state combined over the repository's cold
 - **Component vocabulary** in `ui/common/`, each matching a mockup element: `SpeciesCell` (grid cell: art area with photo thumb or silhouette on `silBg`, `#NNN` number in faint, name line), `EcosystemMeter` (warn-colored fill bar, `12/24` tabular value, the `+1` user-added addendum), `ClassMeter` (accent fill), `FilterChip` row (outlined; selected = accent on accentSoft), `CallPlayerRow` (round accent play button, static waveform bars, source/attribution column), `AttributionLine` (faint small text), `ProgressPill` (accent on accentSoft, `47 / 120`). The eco meters use warn, class meters use accent — that distinction is in the mockup and is intentional.
 - **Silhouette treatment**: uncaught art areas are `silBg` with the class silhouette tinted `sil` (a `ColorFilter.tint`); the unlock reveal cross-fades silhouette → thumbnail with a scale from 0.96 and a soft accentSoft radial glow, plus one `HapticFeedbackType.LongPress` tick — restrained per D8.
 
+### 6.5 UI-layer corrections (recorded by slice 4, 2026-09-01)
+
+Slice 4 built the grid and the read-only detail screen. Section 6.1's routes, 6.2's state-holder pattern and 6.4's palette held as written; the theme files slice 1 shipped needed no change. Six things needed a decision the document did not make, and none of them changes a contract a later slice depends on.
+
+| Point | What slice 4 did | Reason |
+|---|---|---|
+| State composition (6.2) | Each screen's `combine` over the repository's cold flows is a **top-level pure function** (`ui/grid/DexGridState.kt`, `ui/detail/EntryDetailState.kt`); the ViewModel is that function plus `stateIn`. | No phone is available, so M14 has to be provable in the JVM suite. A ViewModel's `viewModelScope` needs a Main dispatcher and `kotlinx-coroutines-test`, which the version catalog does not carry; a plain function over `MutableStateFlow` fakes needs neither, and it is the same code the ViewModel runs. |
+| Region display name | `DexProgress` carries `regionId` only — the asset's `regionName` is not imported into Room — so the header maps `"pacific" → "Pacific"` in the UI (`regionLabelFor`). | The alternative is a schema change, and 9's rule is that `data/db/` is not edited again before a real migration. C03 (more regions) turns this into a table read. |
+| `ui/common/` scope (6.4) | Ships `SpeciesCell`, `ProgressPill`, `RegionPill`, `DexFilterChip`, `SectionHeader`, `CallPlayerRow`, `LinkRow`, `CaughtChip`, `AttributionLine`, `SilhouetteIcon`. `EcosystemMeter` and `ClassMeter` are **not** built. | Nothing in slice 4 renders a meter; the Stats screen is slice 8's and is the only caller. Building an unrendered, unviewable component against a guess at its use is how it comes out wrong. |
+| Caught cells and the detail hero | Both render the class silhouette — caught cells tinted `accent` with a small `✓` badge, uncaught tinted `sil` on `silBg`. | The mockup's caught cells show the user's photo and the hero shows the Wikimedia image; neither exists yet (photos are slice 5, reference-image loading slice 6). The frames, sizes and credit chip are in place so those slices only swap what fills them. |
+| Filter chips (M14) | One scrolling row holding three dimensions — caught state, class, ecosystem — single-select within each, AND across them and with the search query. Tapping a selected chip clears it; `All` clears all three. | The mockup shows one flat chip row and gives no clear affordance; composing across dimensions is what M14 asks for, and re-tapping is the cheapest clear. |
+| Fish silhouette | Hand-drawn in the mockup's register; the other six adapt `mockup.html`'s SVG paths (bird, quad→mammal, lizard, frog, butterfly→insect, slug→other invertebrate). | The mockup has no fish shape. |
+
+The call row is rendered in every state, disabled and labelled "No call available" when `callUrl` is null — which is every species in the shipped catalogue, since no Xeno-canto key exists yet. It is deliberately not hidden: the row the user sees today is the row that comes alive when calls arrive, with no layout change (5.4, M18).
+
+Slice 3's two hand-offs are discharged: `ui/grid/TempDexCount.kt` and its hook in `NavGraph.kt` are deleted, and both screens consume `AppContainer.dexRepository` through its read-only surface.
+
+**Not verified.** No phone is connected, so section 9's slice-4 done-check has not run and nobody has seen these screens render. What is proven is `assembleDebug`, and the JVM suite covering search, filter composition and the detail screen's ecosystem resolution.
+
 ---
 
 ## 7. The catalogue build pipeline
