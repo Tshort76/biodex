@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Deliberately empty. The icon art is a raster and lives in the background
-     layer (@mipmap/ic_launcher_art); an adaptive icon still needs a foreground,
-     so this is a transparent placeholder rather than a second drawing. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108" />
