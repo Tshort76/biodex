@@ -1,111 +1,122 @@
 # BioDex
 
-A personal Android app that turns a real-world wildlife life list into a Pokédex: a curated Pacific-region catalogue of species, each starting as a silhouette and unlocking when you register a photo of it from your phone's gallery. Photos stay in the gallery and are referenced, never copied; progress is tracked per ecosystem and per taxonomic class.
+A personal Android app that turns a real-world life list into a Pokédex. It ships with a curated catalogue for one region — the **Pacific USA BioDex**, everything west of the Rocky Mountains — holding 120 animals and 80 plants. Every species starts as a silhouette and unlocks when you photograph it yourself.
 
-Design docs: `DESIGN.md` (product) and `ARCHITECTURE.md` (technical, including the slice map in section 9).
+Your photos stay in your gallery. The app stores a reference and a small thumbnail, never a copy.
 
-## Prerequisites
+There is deliberately **no species identification** in the app. If you don't know what you're looking at, use Google Lens and then type the name in.
 
-- **JDK 17** (Temurin). Check with `java -version`; anything newer is untested and AGP 8.x expects 17.
-- **Android SDK** at `/opt/homebrew/share/android-commandlinetools`, with `platforms;android-36`, `build-tools;36.0.0` and `platform-tools` installed and licenses accepted.
-- No system Gradle and no Android Studio are needed — the repo carries the Gradle 8.13 wrapper.
+---
 
-Create `local.properties` at the repo root (it is git-ignored, so it is not in a fresh clone):
+## Using it
+
+**Catching something.** Tap the **+** button on the grid, or open a species and tap *Register this species*. Search by name, pick the species, attach a photo from your gallery, and register. The species flips from silhouette to your photograph and the counter ticks up. Photograph the same species again and the picture joins its strip without ceremony — the fanfare is reserved for firsts.
+
+The gallery picker needs an explicit **Done** tap after you select a photo. Selecting alone returns nothing.
+
+**Something not in the catalogue.** Type its name and choose *add your own species*. GBIF resolves the name to a real species, Wikipedia supplies habitat text and a photograph, and for a plant Duke's ethnobotanical database supplies its recorded medicinal uses. You get a confirmation card before anything is saved, because a name like "sparrow" matches several species and a silent wrong pick would be permanent. Your own species get **U-numbers** and sit outside the completion fraction, so they never make the dex unfinishable.
+
+Offline, the entry is created immediately from the name and photo alone and filled in the next time you open it with a connection.
+
+**Filtering.** The chip row composes rather than replaces: *Plants* + *Edible* + *Riparian & Wetland* narrows to exactly that. Search matches common and scientific names.
+
+**Plants have a uses section** where an animal has nothing. It reads in a deliberate order — any **caution** first, then the curated note about which part and which season, then a muted line recording what Duke's holds. Those are three different kinds of claim and the layout ranks them by how much they should be trusted.
+
+> **The uses data is documentation, not advice.** Medicinal information is what a public dataset records, edible tags are one person's curation, and neither is an identification. 27 of the 80 plants carry a caution; every plant with a toxicity record in Duke's is *required* to carry one, enforced when the catalogue is built. Never eat or use a plant on the strength of this app.
+
+**Your photos can break.** If you delete a photo from your gallery, the entry stays caught and shows its thumbnail with an offer to re-link. A photo that lives only in Google Photos' cloud and hasn't downloaded may not resolve until you're online. Turning on *Keep a local copy* in Settings makes future registrations immune to this, at the cost of storing the photo twice; it is off by default because linking rather than copying is the point.
+
+**Backups matter more than usual here**, precisely because photos are referenced. See below.
+
+---
+
+## Building and installing
+
+**Prerequisites:** JDK 17 (Temurin) and the Android SDK command-line tools with `platforms;android-36`, `build-tools;36.0.0` and `platform-tools`. No Android Studio and no system Gradle — the repo carries the Gradle 8.13 wrapper.
+
+Create `local.properties` at the repo root (git-ignored, so absent from a fresh clone):
 
 ```properties
 sdk.dir=/opt/homebrew/share/android-commandlinetools
 ```
 
-## Build
-
 ```bash
-./gradlew assembleDebug
+./gradlew assembleDebug     # APK at app/build/outputs/apk/debug/app-debug.apk
+./gradlew installDebug      # build and install onto a connected phone
 ```
 
-The APK lands at `app/build/outputs/apk/debug/app-debug.apk`. Debug is the only build type; there is no release configuration.
+Debug is the only build type; there is no release configuration or signing story, because this is sideloaded onto one phone.
 
-## Install on the phone
-
-`adb` is not on `PATH` — it lives in the SDK:
+**To enable USB debugging:** on the phone, Settings → About phone → tap *Build number* seven times, then Settings → System → Developer options → **USB debugging**. Plug in with a data-capable cable and accept the "Allow USB debugging?" prompt. `adb devices` should read `device`, not `unauthorized`. Turning on **Stay awake** in the same menu saves a lot of unlocking.
 
 ```bash
 export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
 export PATH="$PATH:$ANDROID_HOME/platform-tools"
 
-adb devices                                                    # confirm the phone is listed
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+./gradlew testDebugUnitTest          # 340 JVM tests, no device needed
+./gradlew connectedDebugAndroidTest  # 43 instrumented tests, phone required
+adb exec-out screencap -p > shot.png
 ```
 
-Or, with the phone already connected, let Gradle do both steps:
+> `connectedDebugAndroidTest` **uninstalls the app when it finishes.** If BioDex disappears from your phone after a test run, that is why — reinstall with `./gradlew installDebug`.
 
-```bash
-./gradlew installDebug
-```
+---
 
-### Enabling USB debugging
+## Backups
 
-1. On the phone, open **Settings → About phone** and tap **Build number** seven times to unlock Developer options.
-2. Go to **Settings → System → Developer options** and turn on **USB debugging**.
-3. Plug the phone into the Mac with a data-capable USB cable.
-4. Run `adb devices`. The phone shows a "Allow USB debugging?" dialog the first time — accept it (tick "Always allow from this computer"), then run `adb devices` again and confirm the phone reads `device` rather than `unauthorized`.
-
-## Other useful commands
-
-```bash
-./gradlew testDebugUnitTest          # JVM unit tests, no device needed
-./gradlew connectedDebugAndroidTest  # instrumented tests, phone required
-adb exec-out screencap -p > shot.png # screenshot, for visual checks without Android Studio
-```
-
-## What the finished app does
-
-All eight slices are built. The app is one screen deep in most places, and the loop is:
-
-- **Dex grid** — 120 curated Pacific species in dex order, uncaught ones drawn as a class silhouette. Live search over common and scientific names, and one chip row composing three filters (caught state, class, ecosystem). The header carries the region and the `47 / 120` progress pill; the gear opens Settings.
-- **Entry detail** — for a caught species: your own photos, the Wikimedia reference image with its credit, habitat text, ecosystems, and the outbound link. An uncaught species stays withheld: silhouette, name, number, and a Register button.
-- **Register** — pick a species, attach a gallery photo, and the species unlocks with a brief reveal. The photo is *referenced*, not copied: the app persists a URI grant and keeps its own 640 px thumbnail, so the collection still renders if the gallery photo later disappears. A broken reference shows the thumbnail plus a re-link offer, and never un-catches the species.
-- **Add your own species** — a name outside the catalogue is resolved through GBIF (scientific name and class) and Wikipedia (habitat text and image), and shown as a confirmation card you can edit before anything is written. Offline, the entry is created immediately from the name and photo alone and backfilled the next time you open it online. User-added species get U-numbers and sit outside the completion fraction.
-- **Stats** — overall progress, seven ecosystem meters, class bars, and a recently-caught strip. A species in several ecosystems counts in each, so the ecosystem totals sum past 120 on purpose.
-- **Settings** — the "keep a local copy" switch, cache sizes and a clear button, the photo-permission count, export/import, and the licenses screen.
-
-### Backup: what an export actually contains
-
-`Settings → Export collection` writes one ZIP and hands it to the share sheet:
+`Settings → Export collection…` writes one ZIP and hands it to the share sheet:
 
 ```
-manifest.json            the whole collection: species, entries, captures, and a photo report
-thumbnails/<id>.jpg      every thumbnail the app owns
-photos/<id>.jpg          a full-size copy of every photo whose reference still resolved
+manifest.json          species, entries, captures, and a report on every photo
+thumbnails/<id>.jpg    every thumbnail the app owns
+photos/<id>.jpg        a full-size copy of every photo whose reference resolved
 ```
 
-**A photo whose gallery reference is already broken cannot be exported** — the bytes are gone from the device, and no archive can invent them. The export says so in numbers, splitting the two cases: a *revoked* reference (the photo was deleted from the gallery) will never export, while a *cloud-only or offline* one usually will if you export again with a connection. The thumbnail and every detail of the catch are in the archive either way, so the entry restores; only the full-size photograph is lost.
+**A photo whose gallery reference is already broken cannot be exported.** The bytes are gone from the device and no archive can invent them. The export reports the two cases separately: a *revoked* reference (you deleted the photo) will never export, while a *cloud-only or offline* one usually will if you try again with a connection. The thumbnail and every detail of the catch are in the archive either way, so the entry restores — only the full-size photograph is lost.
 
-The manifest is written last, from the files that actually landed, so it never names a photo the archive does not hold.
+The manifest is written last, from the files that actually landed, so it can never name a photo the archive does not hold.
 
-Import (`Settings → Import from an archive`) merges rather than replaces. It adds species, entries and captures the database does not have, skips capture ids it already has (so importing the same archive twice is a no-op), keeps the local catch date when it is earlier, and never deletes anything. Restored photos are written into app storage as local copies; no URI grant is ever recreated, because a grant from another phone is meaningless here.
+**Import merges, it never replaces.** It adds what is missing, skips capture ids it already has (so importing twice is a no-op), keeps the earlier catch date, and deletes nothing. Restored photos become local copies; no URI grant is recreated, because a grant from another phone means nothing here.
 
-## The catalogue pipeline
+---
 
-The 120-species asset at `app/src/main/assets/catalogue/pacific.json` is generated, and committed, so no build ever touches the network:
+## The catalogue
+
+`app/src/main/assets/catalogue/pacific.json` is generated and committed, so no build touches the network. It is built from three hand-authored input files plus four public sources:
+
+| Source | Supplies | Licence |
+|---|---|---|
+| GBIF | accepted scientific name, kingdom, class, synonyms | open |
+| Wikipedia | habitat prose, description, page link | CC BY-SA |
+| Wikimedia Commons | reference image and its credit | per-image |
+| Dr. Duke's (USDA ARS) | plant medicinal uses, activity list, poison flag | CC0 |
 
 ```bash
 cd tools/catalogue
-python3 -m venv .venv && .venv/bin/pip install requests
-.venv/bin/python build_catalogue.py --out ../../app/src/main/assets/catalogue/pacific.json
+python3 build_catalogue.py --out ../../app/src/main/assets/catalogue/pacific.json
 ```
 
-Responses are cached under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses the cache. The run report lands in `cache/report.txt`. See `tools/catalogue/README.md` for the details.
+Standard library only — no virtualenv, no dependencies. Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it. See `tools/catalogue/README.md`.
 
-## What has never been verified on a device
+Two rules the build enforces rather than trusting:
 
-This is the honest part. **No phone has ever been connected to this project.** Everything below is true as of the last commit:
+- **Every plant with a `Poison` record in Duke's must carry a `Caution:` sentence**, or the build fails naming the species. The cautioned set is decided by a public dataset, not by whoever wrote the entry.
+- **A synonym is only accepted if it keeps the accepted name's specific epithet.** Without this, GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one — which would have shipped confident, fluent, completely wrong data.
 
-- `./gradlew assembleDebug`, `./gradlew assembleDebugAndroidTest` and `./gradlew testDebugUnitTest` pass — 242 JVM unit tests, 0 failures.
-- **Nothing in this app has ever rendered.** No screen has been seen on a device or an emulator, so layout, spacing, colour in real light, the reveal's feel and the dark-theme palette are all unobserved.
-- **No instrumented test has ever run.** The `app/src/androidTest/` suite (Room schema and DAO round-trips, cascade behaviour, the importer against the real 120-species asset, the photo gateway) compiles and has never executed. `./gradlew connectedDebugAndroidTest` is the first thing to run with a phone attached.
-- **The whole photo layer is unexercised against real Android.** Nobody has run the system photo picker, watched a persistable URI grant survive a reboot, seen a revoked grant produce the re-link state, or confirmed that a cloud-only Google Photos item behaves as the code assumes. The exception-to-state mapping in `PhotoRef.kt` is an assertion about what Android throws, not an observation.
-- **No network call has ever been made from the app.** The two API clients are tested against real payloads captured with `curl` and checked in as fixtures; the app itself has never talked to GBIF, Wikipedia or Wikimedia, so the User-Agent has not been proven acceptable to Wikimedia in practice.
-- **Export has never produced a file another app opened**, and import has never read one. The ZIP writing, manifest and merge run end to end in the JVM suite against an in-memory fake filesystem, which proves the rules and not the FileProvider, the share sheet, or the document picker.
-- **The S03 local-copy path has never written a file**, and clearing the caches has never been observed to leave thumbnails and entries intact.
+Edible tags are curatorial judgement and are not derived from any source; the catalogue says so in each entry's provenance.
 
-Each slice's phone check is listed in `ARCHITECTURE.md` section 9. None of them has been performed.
+---
+
+## Design documents
+
+`DESIGN.md` is the product design — the domain model, the numbered requirements, and every product decision with its rationale and what was rejected. `ARCHITECTURE.md` is the technical design, including the slice map the build followed and a running deviation log recording every place the implementation departed from the plan and why. Both are current.
+
+---
+
+## State
+
+340 JVM unit tests and 43 instrumented tests pass. The app runs on a Pixel 7 Pro (Android 17), where the full loop has been walked by hand: the catalogue imports, images load from Wikimedia, the picker attaches a gallery photo, registration unlocks a species, plant cautions render, and the user-added flow resolves live against GBIF and Wikipedia.
+
+What that has **not** covered: a persisted URI grant surviving a reboot; a cloud-only Google Photos item that has never been downloaded; export producing a ZIP another app opens, and import reading one back; and the *Keep a local copy* path writing a file. Those want a real day of use rather than a test.
+
+Bird-call playback was designed, built, and then removed once the app covered plants as well as animals — a call is meaningless for a fern. `ARCHITECTURE.md` section 12.1 records what went and why.
