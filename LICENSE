@@ -1,0 +1,73 @@
+BioDex is licensed in two parts, because the code and the bundled catalogue come
+from different places and carry different obligations.
+
+
+================================================================================
+1. THE CODE — MIT License
+================================================================================
+
+Applies to everything in this repository except the catalogue data named in
+part 2: all Kotlin and Python source, the Gradle build, the resources, the
+tests, and the documentation.
+
+MIT License
+
+Copyright (c) 2026 Tshort76
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================================================
+2. THE CATALOGUE DATA — CC BY-SA 4.0, and upstream terms
+================================================================================
+
+Applies to app/src/main/assets/catalogue/ and to tools/catalogue/data/.
+
+These files are assembled from public sources and are NOT covered by the MIT
+license above. The habitat and description prose is reused from Wikipedia under
+CC BY-SA 4.0, which is a share-alike license: a derivative of that text has to
+carry the same license. So the catalogue as a whole is offered under
+
+    CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+
+with these upstream terms underneath it, per field:
+
+  Wikipedia prose (habitat, description)   CC BY-SA 4.0
+  Wikimedia Commons reference images       per image; the credit and license
+                                           travel with each entry in the JSON
+  GBIF backbone taxonomy (names, class)    CC BY 4.0
+  Dr. Duke's ethnobotanical database       CC0 1.0 (public domain dedication);
+    (app/src/main/assets/catalogue/        the full dedication is in
+     duke_ethnobot.json)                   catalogue/LICENSE-duke.txt
+
+Reference images are referenced by URL rather than redistributed, and each
+entry carries the author and license string Commons reports for it. The app
+shows all of this at Settings -> Licenses and attribution, which renders
+app/src/main/assets/licenses.md.
+
+The edible tags and the short note naming a plant part and a season are this
+project's own curation and fall under part 1, not under any upstream source.
+
+
+================================================================================
+3. NOT COVERED
+================================================================================
+
+Photographs registered by a user of the app are that person's own. They stay on
+their device, and nothing in this license touches them.

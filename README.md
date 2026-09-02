@@ -120,3 +120,9 @@ Two rules the build enforces rather than trusting:
 - **A synonym is only accepted if it keeps the accepted name's specific epithet.** Without this, GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one — which would have shipped confident, fluent, completely wrong data.
 
 Edible tags are curatorial judgement and are not derived from any source; the catalogue says so in each entry's provenance.
+
+---
+
+## License
+
+Code is MIT. The bundled catalogue is CC BY-SA 4.0, because it reuses Wikipedia prose, with GBIF (CC BY 4.0) and Dr. Duke's (CC0) underneath it and per-image Commons credits carried in each entry. `LICENSE` has the split in full, and the app shows the same thing at *Settings → Licenses and attribution*.
