@@ -1,0 +1,234 @@
+{
+  "offset": 0,
+  "limit": 6,
+  "endOfRecords": true,
+  "count": 1,
+  "results": [
+    {
+      "key": 2882802,
+      "nameKey": 899102,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 2882802,
+      "parentKey": 2882796,
+      "parent": "Arbutus",
+      "kingdom": "Plantae",
+      "phylum": "Tracheophyta",
+      "order": "Ericales",
+      "family": "Ericaceae",
+      "genus": "Arbutus",
+      "species": "Arbutus menziesii",
+      "kingdomKey": 6,
+      "phylumKey": 7707728,
+      "classKey": 220,
+      "orderKey": 1353,
+      "familyKey": 2505,
+      "genusKey": 2882796,
+      "speciesKey": 2882802,
+      "scientificName": "Arbutus menziesii Pursh",
+      "canonicalName": "Arbutus menziesii",
+      "authorship": "Pursh",
+      "publishedIn": "Pursh. (1813). In: Fl. Bor. Amer. 1: 282.",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 1,
+      "numOccurrences": 0,
+      "taxonID": "gbif:2882802",
+      "extinct": false,
+      "habitats": [],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [
+        "LEAST_CONCERN"
+      ],
+      "descriptions": [
+        {
+          "description": "tree"
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Pacific Madrone",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "arbousier de Menzies",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "arbousier d'Amérique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Pacific Arbutus",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Oregon Laurel",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Laurelwood",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "arbousier de Menzies",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "arbousier d'Amérique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Pacific madrone",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific arbutus",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "kaliforniskt smultronträd",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "madroño",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "madroña",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Pacific madrone",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "漿果鵑樹",
+          "language": "zho"
+        },
+        {
+          "vernacularName": "kaliforniskt smultronträd",
+          "language": "swe"
+        },
+        {
+          "vernacularName": "madroño",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "madroña",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Madroño del Pacífico",
+          "language": "spa"
+        },
+        {
+          "vernacularName": "Земляничное дерево Менциса",
+          "language": "rus"
+        },
+        {
+          "vernacularName": "chruścina pacyficzna",
+          "language": "pol"
+        },
+        {
+          "vernacularName": "Amerikinis arbutas",
+          "language": "lit"
+        },
+        {
+          "vernacularName": "Kaliforniai szamócafa",
+          "language": "hun"
+        },
+        {
+          "vernacularName": "arbousier de Menzies",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "arbousier d'Amérique",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "kalifornianmansikkapuu",
+          "language": "fin"
+        },
+        {
+          "vernacularName": "Menzies-arbuto",
+          "language": "epo"
+        },
+        {
+          "vernacularName": "refrigerator tree",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "madrona",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific arbutus",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Oregon Laurel",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Laurelwood",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Arbutus Tree",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Arbutus",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Amerikanischer Erdbeerbaum",
+          "language": "deu"
+        },
+        {
+          "vernacularName": "madrone",
+          "language": "dan"
+        },
+        {
+          "vernacularName": "Amerikansk jordbærtræ",
+          "language": "dan"
+        },
+        {
+          "vernacularName": "planika Menziesova",
+          "language": "ces"
+        },
+        {
+          "vernacularName": "Arboç del Pacífic",
+          "language": "cat"
+        },
+        {
+          "vernacularName": "Pacific madrone"
+        },
+        {
+          "vernacularName": "Pacific madrone",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific madrone"
+        },
+        {
+          "vernacularName": "Pacific madrone"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "6": "Plantae",
+        "7707728": "Tracheophyta",
+        "220": "Magnoliopsida",
+        "1353": "Ericales",
+        "2505": "Ericaceae",
+        "2882796": "Arbutus"
+      },
+      "class": "Magnoliopsida"
+    }
+  ],
+  "facets": []
+}

@@ -1,8 +1,10 @@
 package dev.tlong.biodex.data.net
 
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -192,9 +194,180 @@ class GbifClientTest {
                     FetchResult.Body(Fixtures.read("gbif_match_varied_thrush.json")),
                 vernacularSearchUrl("zzqqxx nothing here") to
                     FetchResult.Body(Fixtures.read("gbif_search_zzznotananimal.json")),
+                vernacularSearchUrl("zzqqxx nothing here", PLANTAE_KEY) to
+                    FetchResult.Body(Fixtures.read("gbif_search_zzznotaplant.json")),
             ),
         )
 
         assertEquals(LookupResult.NotFound, GbifClient(fetcher).match("zzqqxx nothing here"))
+    }
+
+    // -----------------------------------------------------------------------
+    // Plants (slice 12). Every payload below was captured live on 2026-09-02.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a plant is read as a plant, not filed as an other-invertebrate`() {
+        val match = parseGbifMatch(Fixtures.read("gbif_match_arbutus_menziesii.json"))!!
+
+        assertEquals("Arbutus menziesii", match.best.scientificName)
+        assertEquals(Kingdom.PLANT, match.best.kingdom)
+        // Magnoliopsida means nothing to the animal class map; routing a madrone through it
+        // would file it as an invertebrate, which is the fish bug in a second kingdom.
+        assertEquals(TaxClass.HERB, match.best.taxClass)
+    }
+
+    @Test
+    fun `a conifer defaults to tree and picks the conifer silhouette`() {
+        val match = parseGbifMatch(Fixtures.read("gbif_match_pseudotsuga_menziesii.json"))!!
+
+        assertEquals(Kingdom.PLANT, match.best.kingdom)
+        assertEquals(TaxClass.TREE, match.best.taxClass)
+        assertEquals("sil_tree_conifer", match.best.silhouetteResOverride)
+    }
+
+    @Test
+    fun `a fern is read from its class`() {
+        val match = parseGbifMatch(Fixtures.read("gbif_match_polystichum_munitum.json"))!!
+
+        assertEquals(TaxClass.FERN, match.best.taxClass)
+        assertNull("only a tree has two shapes", match.best.silhouetteResOverride)
+    }
+
+    @Test
+    fun `the growth-form default leans on the one signal GBIF is reliable about`() {
+        assertEquals(TaxClass.TREE, defaultPlantClass("Pinopsida", "Pinales"))
+        assertEquals(TaxClass.TREE, defaultPlantClass(null, "Pinales"))
+        assertEquals(TaxClass.FERN, defaultPlantClass("Polypodiopsida", "Polypodiales"))
+        // R10: GBIF answers Magnoliopsida for an oak and a dandelion alike, and often nothing
+        // at all, so herb is the default and the user picks the real form on the card.
+        assertEquals(TaxClass.HERB, defaultPlantClass("Magnoliopsida", "Ericales"))
+        assertEquals(TaxClass.HERB, defaultPlantClass(null, "Ericales"))
+        assertEquals(TaxClass.HERB, defaultPlantClass(null, null))
+    }
+
+    @Test
+    fun `a broadleaf tree the user picked keeps the broadleaf shape`() {
+        assertEquals("sil_tree_broadleaf", plantSilhouetteFor(TaxClass.TREE, "Magnoliopsida", "Fagales"))
+        assertNull(plantSilhouetteFor(TaxClass.SHRUB, "Pinopsida", "Pinales"))
+    }
+
+    @Test
+    fun `a plant common name needs the Plantae search — Animalia returns nothing at all`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                matchUrl("Trailing Blackberry") to
+                    FetchResult.Body(Fixtures.read("gbif_match_pacific_madrone.json")),
+                vernacularSearchUrl("Trailing Blackberry") to
+                    FetchResult.Body(Fixtures.read("gbif_search_trailing_blackberry_animals.json")),
+                vernacularSearchUrl("Trailing Blackberry", PLANTAE_KEY) to
+                    FetchResult.Body(Fixtures.read("gbif_search_trailing_blackberry_plants.json")),
+            ),
+        )
+
+        val result = GbifClient(fetcher).match("Trailing Blackberry")
+
+        val best = result.valueOrNull()!!.best
+        assertEquals("Rubus hispidus", best.scientificName)
+        assertEquals(Kingdom.PLANT, best.kingdom)
+        // *Rubus ursinus* is in the list as an alternative — the card's job, not the API's.
+        assertTrue(result.valueOrNull()!!.candidates.any { it.scientificName == "Rubus ursinus" })
+        assertEquals(3, fetcher.requested.size)
+    }
+
+    @Test
+    fun `an exact animal match stops before the plant search`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                matchUrl("Varied Thrush") to
+                    FetchResult.Body(Fixtures.read("gbif_match_varied_thrush.json")),
+                vernacularSearchUrl("Varied Thrush") to
+                    FetchResult.Body(Fixtures.read("gbif_search_varied_thrush.json")),
+            ),
+        )
+
+        GbifClient(fetcher).match("Varied Thrush")
+
+        assertFalse(fetcher.requested.any { it.contains("highertaxonKey=6") })
+    }
+
+    @Test
+    fun `a failed plant search degrades to the animal candidates rather than failing`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                matchUrl("Coyote") to FetchResult.Body(Fixtures.read("gbif_match_varied_thrush.json")),
+                vernacularSearchUrl("Coyote") to
+                    FetchResult.Body(Fixtures.read("gbif_search_coyote.json")),
+                vernacularSearchUrl("Coyote", PLANTAE_KEY) to FetchResult.Failed("timeout"),
+            ),
+        )
+
+        val result = GbifClient(fetcher).match("Coyote")
+
+        assertTrue(result is LookupResult.Found)
+    }
+
+    // -----------------------------------------------------------------------
+    // Synonyms — what the Duke's join needs (R15).
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `synonyms come back as canonical names`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                synonymsUrl(2882802L) to
+                    FetchResult.Body(Fixtures.read("gbif_synonyms_arbutus_menziesii.json")),
+            ),
+        )
+
+        val synonyms = GbifClient(fetcher).synonyms(2882802L)
+
+        assertTrue("Arbutus procera" in synonyms)
+        assertEquals("duplicates are dropped", synonyms.size, synonyms.distinct().size)
+    }
+
+    @Test
+    fun `no usage key and a failed request both degrade to no synonyms, never an error`() = runBlocking {
+        val fetcher = FakeFetcher(mapOf(synonymsUrl(9L) to FetchResult.Failed("offline")))
+
+        assertEquals(emptyList<String>(), GbifClient(fetcher).synonyms(null))
+        assertEquals(emptyList<String>(), GbifClient(fetcher).synonyms(9L))
+        assertEquals("no key means no request at all", 1, fetcher.requested.size)
+    }
+
+    @Test
+    fun `GBIF often folds the synonym away before the app ever sees it`() {
+        // Live, 2026-09-02: asking for *Berberis aquifolium* returns the accepted name
+        // *Mahonia aquifolium* — the name Duke's files Oregon grape under. The synonym pass is
+        // still needed for the cases GBIF has not folded, but this one it solves for us.
+        val match = parseGbifMatch(Fixtures.read("gbif_match_berberis_aquifolium.json"))!!
+
+        assertEquals("Mahonia aquifolium", match.best.scientificName)
+        assertEquals(Kingdom.PLANT, match.best.kingdom)
+    }
+
+    @Test
+    fun `a plant vernacular search reads a real plant`() {
+        val candidates = parseGbifVernacularSearch(
+            Fixtures.read("gbif_search_pacific_madrone_plants.json"),
+            "Pacific Madrone",
+        )
+
+        val madrone = candidates.first()
+        assertEquals("Arbutus menziesii", madrone.scientificName)
+        assertEquals(Kingdom.PLANT, madrone.kingdom)
+        assertEquals(MatchKind.VERNACULAR_EXACT, madrone.matchKind)
+    }
+
+    @Test
+    fun `an accepted usage with no synonyms is an empty list`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                synonymsUrl(3033868L) to
+                    FetchResult.Body(Fixtures.read("gbif_synonyms_mahonia_aquifolium.json")),
+            ),
+        )
+
+        assertEquals(emptyList<String>(), GbifClient(fetcher).synonyms(3033868L))
     }
 }

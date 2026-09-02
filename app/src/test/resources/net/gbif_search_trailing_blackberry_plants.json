@@ -1,0 +1,378 @@
+{
+  "offset": 0,
+  "limit": 6,
+  "endOfRecords": true,
+  "count": 2,
+  "results": [
+    {
+      "key": 2991369,
+      "nameKey": 9923392,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 2991369,
+      "parentKey": 2988638,
+      "parent": "Rubus",
+      "kingdom": "Plantae",
+      "phylum": "Tracheophyta",
+      "order": "Rosales",
+      "family": "Rosaceae",
+      "genus": "Rubus",
+      "species": "Rubus hispidus",
+      "kingdomKey": 6,
+      "phylumKey": 7707728,
+      "classKey": 220,
+      "orderKey": 691,
+      "familyKey": 5015,
+      "genusKey": 2988638,
+      "speciesKey": 2991369,
+      "scientificName": "Rubus hispidus L.",
+      "canonicalName": "Rubus hispidus",
+      "authorship": "L.",
+      "publishedIn": "L. (1753). In: Sp. Pl. 493.",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 0,
+      "numOccurrences": 0,
+      "taxonID": "gbif:2991369",
+      "extinct": false,
+      "habitats": [],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [
+        {
+          "description": "Lectotype (Bailey in Gentes Herb. 1: 249. 1925): Kalm, Herb. Linn. No. 653.4 (LINN)."
+        },
+        {
+          "description": "\" Habitat in Canada. Kalm. \" RCN: 3756."
+        },
+        {
+          "description": "shrub"
+        },
+        {
+          "description": "Habitat in Canada. Kalm. ♄"
+        },
+        {
+          "description": "Caules viticulis longis, procumbentibus, lignosis, una cum petiolis adspersi setis rigidis. Folia ternata, nuda, inciso-serrata: intermedio pedicellato; pedunculi etjam hispidi."
+        },
+        {
+          "description": "3. Rubus foliis ternatis nudis, caulibus petiolisque hispidis."
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "Trailing Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Swamp Dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Running Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Running Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Hispid Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Hispid Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Bristly Dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Trailing Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Swamp Dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Running Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Running Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Hispid Swamp Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Hispid Blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Bristly Dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "trailing blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "running swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "running blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "ronce hispide",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "hispid swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "hispid blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "bristly dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "running blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "ronce hispide",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "trailing blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "running swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "running blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "hispid swamp blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "hispid blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Bristly dewberry"
+        },
+        {
+          "vernacularName": "bristly dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Bristly dewberry"
+        },
+        {
+          "vernacularName": "swamp dewberry"
+        },
+        {
+          "vernacularName": "swamp blackberry"
+        },
+        {
+          "vernacularName": "running blackberry"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "6": "Plantae",
+        "7707728": "Tracheophyta",
+        "220": "Magnoliopsida",
+        "691": "Rosales",
+        "5015": "Rosaceae",
+        "2988638": "Rubus"
+      },
+      "class": "Magnoliopsida"
+    },
+    {
+      "key": 2990646,
+      "nameKey": 9936336,
+      "datasetKey": "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c",
+      "constituentKey": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "nubKey": 2990646,
+      "parentKey": 2988638,
+      "parent": "Rubus",
+      "kingdom": "Plantae",
+      "phylum": "Tracheophyta",
+      "order": "Rosales",
+      "family": "Rosaceae",
+      "genus": "Rubus",
+      "species": "Rubus ursinus",
+      "kingdomKey": 6,
+      "phylumKey": 7707728,
+      "classKey": 220,
+      "orderKey": 691,
+      "familyKey": 5015,
+      "genusKey": 2988638,
+      "speciesKey": 2990646,
+      "scientificName": "Rubus ursinus Cham. & Schltdl.",
+      "canonicalName": "Rubus ursinus",
+      "authorship": "Cham. & Schltdl.",
+      "publishedIn": "Cham. & Schltdl. (1827). In: Linnaea 2: 11.",
+      "nameType": "SCIENTIFIC",
+      "taxonomicStatus": "ACCEPTED",
+      "rank": "SPECIES",
+      "origin": "SOURCE",
+      "numDescendants": 2,
+      "numOccurrences": 0,
+      "taxonID": "gbif:2990646",
+      "extinct": false,
+      "habitats": [
+        "TERRESTRIAL"
+      ],
+      "nomenclaturalStatus": [],
+      "threatStatuses": [],
+      "descriptions": [
+        {
+          "description": "shrub"
+        }
+      ],
+      "vernacularNames": [
+        {
+          "vernacularName": "ronce à grands pétales",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Pacific trailing blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Douglas-berry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "ronce à grands pétales",
+          "language": "fra"
+        },
+        {
+          "vernacularName": "Pacific trailing blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Pacific blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "Douglas-berry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California dewberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California blackberry"
+        },
+        {
+          "vernacularName": "California blackberry",
+          "language": "eng"
+        },
+        {
+          "vernacularName": "California blackberry"
+        },
+        {
+          "vernacularName": "California blackberry"
+        }
+      ],
+      "synonym": false,
+      "higherClassificationMap": {
+        "6": "Plantae",
+        "7707728": "Tracheophyta",
+        "220": "Magnoliopsida",
+        "691": "Rosales",
+        "5015": "Rosaceae",
+        "2988638": "Rubus"
+      },
+      "class": "Magnoliopsida"
+    }
+  ],
+  "facets": []
+}

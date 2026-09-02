@@ -1,5 +1,6 @@
 package dev.tlong.biodex.domain
 
+import dev.tlong.biodex.data.catalogue.pairKingdomAndClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -178,5 +179,187 @@ class UserSpeciesTest {
     fun `a user species' silhouette follows its class`() {
         assertEquals("sil_bird", thrush.silhouetteRes)
         assertEquals("sil_other_invertebrate", SpeciesFields(commonName = "?").silhouetteRes)
+    }
+
+    // -----------------------------------------------------------------------
+    // M21 over the plant fields (slice 12). Uses, the note and the kingdom are
+    // fields like any other: edited by hand, they are the user's from then on.
+    // -----------------------------------------------------------------------
+
+    private val elder = SpeciesFields(
+        commonName = "Blue Elderberry",
+        scientificName = "Sambucus cerulea",
+        kingdom = Kingdom.PLANT,
+        taxClass = TaxClass.SHRUB,
+        uses = setOf(PlantUse.MEDICINAL),
+        usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+        medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
+        medicinalRecordCount = 60,
+        usesAttribution = "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0",
+    )
+
+    @Test
+    fun `a hand-written note survives every later backfill`() {
+        val mine = elder.copy(usesNote = "Berries in late summer — cook them. Caution: never raw.")
+
+        val out = mergeLookup(
+            existing = mine,
+            lookup = LookupFields(
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                uses = setOf(PlantUse.MEDICINAL),
+            ),
+            userEdited = setOf(SpeciesField.USES_NOTE),
+        )
+
+        assertEquals("Berries in late summer — cook them. Caution: never raw.", out.usesNote)
+    }
+
+    @Test
+    fun `a hand-set use tag survives, and an untouched one keeps tracking the index`() {
+        val mine = elder.copy(uses = setOf(PlantUse.EDIBLE))
+
+        // The user turned edible on and medicinal off. A later backfill re-derives medicinal
+        // from Duke's and must not put it back.
+        val out = mergeLookup(
+            existing = mine,
+            lookup = LookupFields(uses = setOf(PlantUse.MEDICINAL), medicinalRecordCount = 61),
+            userEdited = setOf(SpeciesField.USES),
+        )
+
+        assertEquals(setOf(PlantUse.EDIBLE), out.uses)
+        // …while the Duke's columns are source data and are not the user's to own.
+        assertEquals(61, out.medicinalRecordCount)
+    }
+
+    @Test
+    fun `an untouched use tag does track the newest lookup`() {
+        val out = mergeLookup(
+            existing = elder.copy(uses = emptySet()),
+            lookup = LookupFields(uses = setOf(PlantUse.MEDICINAL)),
+            userEdited = emptySet(),
+        )
+
+        assertEquals(setOf(PlantUse.MEDICINAL), out.uses)
+    }
+
+    @Test
+    fun `a lookup with nothing to say never blanks a plant's uses`() {
+        val out = mergeLookup(existing = elder, lookup = LookupFields(), userEdited = emptySet())
+
+        assertEquals(elder.uses, out.uses)
+        assertEquals(elder.usesNote, out.usesNote)
+        assertEquals(60, out.medicinalRecordCount)
+    }
+
+    @Test
+    fun `a hand-picked kingdom survives a backfill that still reads the other one`() {
+        val corrected = elder.copy(kingdom = Kingdom.PLANT, taxClass = TaxClass.SHRUB)
+
+        val out = previewFields(
+            stored = corrected,
+            lookup = LookupFields(kingdom = Kingdom.ANIMAL, taxClass = TaxClass.BIRD),
+            lockedFields = setOf(SpeciesField.KINGDOM),
+            editValues = null,
+            editedNow = emptySet(),
+        )
+
+        assertEquals(Kingdom.PLANT, out.kingdom)
+        // GBIF's bird class arrives unlocked, and the pairing rule sends it back to a plant
+        // class rather than leaving a plant filed as a bird.
+        assertEquals(TaxClass.SHRUB.kingdom, out.taxClass.kingdom)
+    }
+
+    @Test
+    fun `toggling the kingdom takes the class to that kingdom's default`() {
+        val toggled = previewFields(
+            stored = SpeciesFields(commonName = "Salal", taxClass = TaxClass.BIRD),
+            lookup = LookupFields(taxClass = TaxClass.BIRD),
+            lockedFields = setOf(SpeciesField.KINGDOM),
+            editValues = SpeciesFields(
+                commonName = "Salal",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.HERB,
+            ),
+            editedNow = setOf(SpeciesField.KINGDOM),
+        )
+
+        assertEquals(Kingdom.PLANT, toggled.kingdom)
+        assertEquals(TaxClass.HERB, toggled.taxClass)
+    }
+
+    // -----------------------------------------------------------------------
+    // The write-path invariants of 11.1, as a function anything can call.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a note with no use tag behind it is dropped`() {
+        val out = elder.copy(uses = emptySet(), usesNote = "Berries in late summer.").normalized()
+
+        assertNull("a note has nowhere to render without a tag", out.usesNote)
+    }
+
+    @Test
+    fun `a blank note is null, not an empty string`() {
+        assertNull(elder.copy(usesNote = "   ").normalized().usesNote)
+    }
+
+    @Test
+    fun `an animal carries no uses, no note and no Duke's columns`() {
+        val out = elder.copy(kingdom = Kingdom.ANIMAL, taxClass = TaxClass.BIRD).normalized()
+
+        assertEquals(emptySet<PlantUse>(), out.uses)
+        assertNull(out.usesNote)
+        assertEquals(emptyList<String>(), out.medicinalActivities)
+        assertEquals(0, out.medicinalRecordCount)
+        assertNull(out.usesAttribution)
+    }
+
+    @Test
+    fun `a credit with no Duke's data behind it is dropped`() {
+        val out = elder.copy(medicinalActivities = emptyList(), medicinalRecordCount = 0).normalized()
+
+        assertNull(out.usesAttribution)
+    }
+
+    @Test
+    fun `the kingdom wins over a class that does not belong to it`() {
+        assertEquals(
+            TaxClass.HERB,
+            elder.copy(taxClass = TaxClass.BIRD).normalized().taxClass,
+        )
+        assertEquals(
+            TaxClass.OTHER_INVERTEBRATE,
+            elder.copy(kingdom = Kingdom.ANIMAL, taxClass = TaxClass.TREE).normalized().taxClass,
+        )
+    }
+
+    @Test
+    fun `the pairing rule agrees with the one the importer and the backup import use`() {
+        // Two implementations of one rule is exactly how they drift, so they are pinned
+        // against each other rather than merely documented as the same.
+        for (kingdom in Kingdom.entries) {
+            for (taxClass in TaxClass.entries) {
+                val mine = SpeciesFields(commonName = "x", kingdom = kingdom, taxClass = taxClass)
+                    .normalized()
+                val theirs = pairKingdomAndClass(kingdom.wireName, taxClass.wireName)
+                assertEquals(theirs.first, mine.kingdom)
+                assertEquals(theirs.second, mine.taxClass)
+            }
+        }
+    }
+
+    @Test
+    fun `the conifer silhouette is read only while the species is still a tree`() {
+        val fir = SpeciesFields(
+            commonName = "Douglas-fir",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.TREE,
+            silhouetteResOverride = "sil_tree_conifer",
+        )
+
+        assertEquals("sil_tree_conifer", fir.silhouetteRes)
+        assertEquals("sil_shrub", fir.copy(taxClass = TaxClass.SHRUB).silhouetteRes)
+        // A tree with no signal either way is a broadleaf; there is no `sil_tree`.
+        assertEquals("sil_tree_broadleaf", fir.copy(silhouetteResOverride = null).silhouetteRes)
     }
 }

@@ -375,6 +375,17 @@ private val BackupSpecies.pairedClass get() = paired.second
 private val BackupSpecies.restoredUses
     get() = PlantUse.setFromWireNames(uses).sortedBy { it.ordinal }.map { it.wireName }
 
+/**
+ * The two halves of the user-added row's round trip, and the one place a field can go missing
+ * without anything failing.
+ *
+ * **Every column the confirm card can write must appear in both.** A column read here but not
+ * written there survives one save and is wiped by the next re-upsert; a column written but not
+ * read comes back as its default on the following backfill and is then written back over the
+ * good value. Slice 12 hit exactly that: `toEntity` defaulted the plant columns and set the
+ * kingdom from the class, so a re-upsert of a user-added plant silently emptied its uses. The
+ * instrumented round-trip test in `UserSpeciesRoomTest` is what pins the pair together.
+ */
 internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
     id = id,
     regionId = regionId,
@@ -383,6 +394,7 @@ internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
     fields = SpeciesFields(
         commonName = commonName,
         scientificName = scientificName,
+        kingdom = kingdom,
         taxClass = taxClass,
         habitatText = habitatText,
         description = description,
@@ -391,6 +403,14 @@ internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
         callUrl = callUrl,
         callAttribution = callAttribution,
         infoUrl = infoUrl,
+        uses = PlantUse.setFromWireNames(uses),
+        usesNote = usesNote,
+        medicinalActivities = medicinalActivities,
+        medicinalRecordCount = medicinalRecordCount,
+        usesAttribution = usesAttribution,
+        // The stored string is the only record of the conifer/broadleaf pick, and it is read
+        // back only while the class is still `TREE` — the getter enforces that.
+        silhouetteResOverride = silhouetteRes,
     ),
     userEditedFields = userEditedFields,
 )
@@ -413,9 +433,12 @@ internal fun UserSpeciesRecord.toEntity() = SpeciesEntity(
     callAttribution = fields.callAttribution,
     silhouetteRes = fields.silhouetteRes,
     userEditedFields = userEditedFields,
-    // Slice 12 gives the confirm card a kingdom and a uses editor. Until then every
-    // user-added species is an animal, which is what `fields.taxClass` already says.
-    kingdom = fields.taxClass.kingdom,
+    kingdom = fields.kingdom,
+    uses = fields.uses.sortedBy { it.ordinal }.map { it.wireName },
+    usesNote = fields.usesNote,
+    medicinalActivities = fields.medicinalActivities,
+    medicinalRecordCount = fields.medicinalRecordCount,
+    usesAttribution = fields.usesAttribution,
 )
 
 internal fun Capture.toEntity() = CaptureEntity(

@@ -1,5 +1,8 @@
 package dev.tlong.biodex.data.net
 
+import dev.tlong.biodex.data.catalogue.DUKE_ATTRIBUTION
+import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -18,6 +21,7 @@ class SpeciesLookupRepositoryTest {
         gbif = GbifClient(fetcher),
         wikipedia = WikipediaClient(fetcher),
         xenoCanto = XenoCantoClient(fetcher, xcKey),
+        duke = Fixtures.dukeIndex(),
     )
 
     private val fullStubs = mapOf(
@@ -92,5 +96,136 @@ class SpeciesLookupRepositoryTest {
 
         assertTrue(fetcher.requested.contains(summaryUrl("Turdus migratorius")))
         assertFalse(fetcher.requested.contains(summaryUrl("Ixoreus naevius")))
+    }
+
+    // -----------------------------------------------------------------------
+    // Plants (M18, 11.4): a different second source, and never Xeno-canto.
+    // -----------------------------------------------------------------------
+
+    private fun plantStubs(scientificName: String, usageKey: Long) = mapOf(
+        summaryUrl(scientificName) to FetchResult.Body(Fixtures.read("wiki_summary_notfound.json")),
+        synonymsUrl(usageKey) to FetchResult.Body(Fixtures.read("gbif_synonyms_mahonia_aquifolium.json")),
+    )
+
+    private fun plant(
+        scientificName: String,
+        usageKey: Long = 1L,
+        taxClass: TaxClass = TaxClass.SHRUB,
+    ) = SpeciesCandidate(
+        scientificName = scientificName,
+        kingdom = Kingdom.PLANT,
+        taxClass = taxClass,
+        usageKey = usageKey,
+        matchKind = MatchKind.EXACT,
+    )
+
+    @Test
+    fun `a plant makes no Xeno-canto request, even with a key present`() = runBlocking {
+        val fetcher = FakeFetcher(plantStubs("Achillea millefolium", 1L))
+
+        val details = repository(fetcher, xcKey = "a-real-key")
+            .detailsFor(plant("Achillea millefolium"), "Yarrow")
+
+        // M18: plants never query Xeno-canto. Not asked and ignored — not asked at all.
+        assertTrue(fetcher.requested.none { it.contains("xeno-canto") })
+        assertNull(details.fields.callUrl)
+        assertFalse("nothing failed; nothing was asked", details.callFailed)
+    }
+
+    @Test
+    fun `an animal still queries Xeno-canto when a key exists`() = runBlocking {
+        val fetcher = FakeFetcher(
+            fullStubs + (recordingsUrl("Ixoreus naevius", "a-real-key") to
+                FetchResult.Body(Fixtures.read("xc_recordings.json"))),
+        )
+
+        repository(fetcher, xcKey = "a-real-key").lookup("Varied Thrush")
+
+        assertTrue(fetcher.requested.any { it.contains("xeno-canto") })
+    }
+
+    @Test
+    fun `the medicinal toggle defaults on for yarrow and off for Oregon grape`() = runBlocking {
+        val yarrow = repository(FakeFetcher(plantStubs("Achillea millefolium", 1L)))
+            .detailsFor(plant("Achillea millefolium", taxClass = TaxClass.HERB), "Yarrow")
+        val grape = repository(FakeFetcher(plantStubs("Mahonia aquifolium", 2L)))
+            .detailsFor(plant("Mahonia aquifolium"), "Oregon Grape")
+
+        // Yarrow: 105 records over 8 activities. Oregon grape: 4 records over 2 — real numbers
+        // from the source table, and the three-activity rule is what separates them.
+        assertEquals(setOf(PlantUse.MEDICINAL), yarrow.fields.uses)
+        assertEquals(105, yarrow.fields.medicinalRecordCount)
+        assertEquals(DUKE_ATTRIBUTION, yarrow.fields.usesAttribution)
+
+        assertEquals(emptySet<PlantUse>(), grape.fields.uses)
+        assertEquals(4, grape.fields.medicinalRecordCount)
+    }
+
+    @Test
+    fun `the Duke's join goes through GBIF's synonyms, which is where Oregon grape lives`() = runBlocking {
+        val fetcher = FakeFetcher(
+            mapOf(
+                summaryUrl("Berberis aquifolium") to
+                    FetchResult.Body(Fixtures.read("wiki_summary_notfound.json")),
+                synonymsUrl(3L) to FetchResult.Body(
+                    """{"results":[{"canonicalName":"Mahonia aquifolium"}]}""",
+                ),
+            ),
+        )
+
+        val details = repository(fetcher).detailsFor(plant("Berberis aquifolium", 3L), "Oregon Grape")
+
+        assertEquals(4, details.duke?.recordCount)
+        assertTrue(details.dukeConsulted)
+    }
+
+    @Test
+    fun `a poison record pre-fills the caution sentence`() = runBlocking {
+        val details = repository(FakeFetcher(plantStubs("Sambucus nigra", 4L)))
+            .detailsFor(plant("Sambucus nigra"), "Blue Elderberry")
+
+        assertEquals(POISON_CAUTION, details.fields.usesNote)
+        assertTrue(details.duke!!.poison)
+        // The caution is a source's claim about the species, and it says so (M30).
+        assertTrue(details.fields.usesNote!!.startsWith("Caution:"))
+    }
+
+    @Test
+    fun `no Duke's record is an ordinary state — no tag, no note, no credit`() = runBlocking {
+        val details = repository(FakeFetcher(plantStubs("Oplopanax horridus", 5L)))
+            .detailsFor(plant("Oplopanax horridus"), "Devil's Club")
+
+        assertNull(details.duke)
+        assertTrue(details.dukeConsulted)
+        assertEquals(emptySet<PlantUse>(), details.fields.uses)
+        assertNull(details.fields.usesNote)
+        assertNull(details.fields.usesAttribution)
+        assertEquals(0, details.fields.medicinalRecordCount)
+    }
+
+    @Test
+    fun `an animal is never given uses or a Duke's column to fill`() = runBlocking {
+        val resolved = repository(FakeFetcher(fullStubs)).lookup("Varied Thrush") as LookupOutcome.Resolved
+
+        assertNull("null means 'no opinion', which is what an animal has", resolved.details.fields.uses)
+        assertNull(resolved.details.fields.medicinalActivities)
+        assertNull(resolved.details.fields.usesAttribution)
+        assertFalse(resolved.details.dukeConsulted)
+    }
+
+    @Test
+    fun `a missing Duke's asset still produces a plant, just without a tag`() = runBlocking {
+        val repository = SpeciesLookupRepository(
+            gbif = GbifClient(FakeFetcher(emptyMap())),
+            wikipedia = WikipediaClient(FakeFetcher(plantStubs("Achillea millefolium", 1L))),
+            xenoCanto = XenoCantoClient(FakeFetcher(emptyMap()), ""),
+            duke = null,
+        )
+
+        val details = repository.detailsFor(plant("Achillea millefolium"), "Yarrow")
+
+        assertEquals(Kingdom.PLANT, details.fields.kingdom)
+        assertEquals(emptySet<PlantUse>(), details.fields.uses)
+        assertNull(details.duke)
     }
 }

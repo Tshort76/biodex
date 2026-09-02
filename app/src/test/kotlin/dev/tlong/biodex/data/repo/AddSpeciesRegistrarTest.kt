@@ -3,7 +3,9 @@ package dev.tlong.biodex.data.repo
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.FakeCaptureStore
 import dev.tlong.biodex.data.photo.FakePhotoGateway
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.TaxClass
@@ -235,5 +237,142 @@ class AddSpeciesRegistrarTest {
     @Test
     fun `a backfill of a species that no longer exists is a no-op, not a crash`() = runBlocking {
         assertNull(registrar.backfill("user-gone", LookupFields(scientificName = "X")))
+    }
+
+    // -----------------------------------------------------------------------
+    // User-added plants (slice 12).
+    // -----------------------------------------------------------------------
+
+    private val elderberry = SpeciesFields(
+        commonName = "Blue Elderberry",
+        scientificName = "Sambucus cerulea",
+        kingdom = Kingdom.PLANT,
+        taxClass = TaxClass.SHRUB,
+        uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
+        usesNote = "Berries, late summer — cook them. Caution: raw berries are toxic.",
+        medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
+        medicinalRecordCount = 60,
+        usesAttribution = "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0",
+    )
+
+    @Test
+    fun `accepting a plant card writes the kingdom, the form, the uses and no call`() = runBlocking {
+        val created = registrar.create(
+            fields = elderberry,
+            ecosystemIds = listOf("riparian-wetland"),
+            photoUri = "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        val fields = store.species.getValue(created.speciesId).fields
+        assertEquals(Kingdom.PLANT, fields.kingdom)
+        assertEquals(TaxClass.SHRUB, fields.taxClass)
+        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), fields.uses)
+        assertTrue(fields.usesNote!!.contains("Caution:"))
+        assertEquals(60, fields.medicinalRecordCount)
+        assertNull("a plant has no call in any state (M24)", fields.callUrl)
+    }
+
+    @Test
+    fun `a plant with no use tag is saved without its note, however it arrived`() = runBlocking {
+        val created = registrar.create(
+            fields = elderberry.copy(uses = emptySet()),
+            ecosystemIds = emptyList(),
+            photoUri = "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        assertNull(store.species.getValue(created.speciesId).fields.usesNote)
+    }
+
+    @Test
+    fun `a mis-resolved kingdom toggled on the card writes that kingdom's default class`() = runBlocking {
+        // GBIF read it as an animal; the user said plant. The class it came with is an animal's
+        // and must not survive the correction.
+        val created = registrar.create(
+            fields = SpeciesFields(
+                commonName = "Salal",
+                scientificName = "Gaultheria shallon",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.BIRD,
+            ),
+            ecosystemIds = emptyList(),
+            photoUri = "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        val fields = store.species.getValue(created.speciesId).fields
+        assertEquals(Kingdom.PLANT, fields.kingdom)
+        assertEquals(TaxClass.HERB, fields.taxClass)
+    }
+
+    @Test
+    fun `a hand-edited note survives a re-backfill while the tags keep tracking Duke's`() = runBlocking {
+        val created = registrar.create(
+            SpeciesFields(commonName = "Blue Elderberry"),
+            emptyList(),
+            "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        // The user accepts the card, writing their own note over the pre-filled caution.
+        registrar.backfill(
+            speciesId = created.speciesId,
+            lookup = LookupFields(
+                scientificName = "Sambucus cerulea",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+                uses = setOf(PlantUse.MEDICINAL),
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                medicinalRecordCount = 60,
+            ),
+            edits = AddSpeciesRegistrar.FieldEdits(
+                values = elderberry.copy(usesNote = "Berries only, and cook them. Caution: not raw."),
+                fields = listOf(SpeciesField.USES_NOTE),
+            ),
+        )
+
+        // Months later, the index has been regenerated and the backfill runs again.
+        val second = registrar.backfill(
+            speciesId = created.speciesId,
+            lookup = LookupFields(
+                scientificName = "Sambucus cerulea",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+                uses = setOf(PlantUse.MEDICINAL),
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative", "Emetic"),
+                medicinalRecordCount = 61,
+            ),
+        )!!
+
+        assertEquals("Berries only, and cook them. Caution: not raw.", second.fields.usesNote)
+        assertTrue(SpeciesField.USES_NOTE in second.userEditedFields)
+        // The tags and the source columns were never claimed, so they follow the newest lookup.
+        assertEquals(setOf(PlantUse.MEDICINAL), second.fields.uses)
+        assertEquals(61, second.fields.medicinalRecordCount)
+        assertEquals(4, second.fields.medicinalActivities.size)
+    }
+
+    @Test
+    fun `a plant backfilled onto a pending animal stops being an animal`() = runBlocking {
+        val created = registrar.create(
+            SpeciesFields(commonName = "Pacific Rhododendron"),
+            emptyList(),
+            "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        // 5.6's details-pending default is animal / other-invertebrate, corrected on backfill.
+        assertEquals(Kingdom.ANIMAL, store.species.getValue(created.speciesId).fields.kingdom)
+
+        val updated = registrar.backfill(
+            speciesId = created.speciesId,
+            lookup = LookupFields(
+                scientificName = "Rhododendron macrophyllum",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+                uses = emptySet(),
+            ),
+        )!!
+
+        assertEquals(Kingdom.PLANT, updated.fields.kingdom)
+        assertEquals(TaxClass.SHRUB, updated.fields.taxClass)
+        assertEquals("sil_shrub", updated.fields.silhouetteRes)
     }
 }

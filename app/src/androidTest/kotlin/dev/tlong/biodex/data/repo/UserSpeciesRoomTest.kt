@@ -7,7 +7,9 @@ import dev.tlong.biodex.data.db.AppDatabase
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
@@ -215,6 +217,100 @@ class UserSpeciesRoomTest {
         assertTrue(SpeciesField.HABITAT_TEXT in stored.userEditedFields)
         assertEquals("Behind the shed.", stored.fields.habitatText)
         assertEquals("A thrush of the Pacific slope.", stored.fields.description)
+        assertFalse(stored.detailsPending)
+    }
+
+    /**
+     * The regression test for the mapper bug slice 12 was handed: `toEntity` used to default
+     * every plant column and derive the kingdom from the class, so a second write of a
+     * user-added plant silently emptied its uses. Nothing failed when it happened — the row
+     * simply came back without them — which is why this walks a real save, a real read and a
+     * real re-save rather than checking one mapper in isolation.
+     */
+    @Test
+    fun aPlantSurvivesBeingWrittenReadAndWrittenAgain() = runBlocking {
+        val elderberry = SpeciesFields(
+            commonName = "Blue Elderberry",
+            scientificName = "Sambucus cerulea",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.SHRUB,
+            uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
+            usesNote = "Berries, late summer — cook them. Caution: raw berries are toxic.",
+            medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
+            medicinalRecordCount = 60,
+            usesAttribution = "Dr. Duke's Databases · USDA ARS · CC0",
+        )
+        repository.upsertUserSpecies(record("user-1", 9001, elderberry), listOf("riparian-wetland"))
+
+        val readBack = repository.userSpecies("user-1")!!
+        assertEquals(Kingdom.PLANT, readBack.fields.kingdom)
+        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), readBack.fields.uses)
+        assertEquals(60, readBack.fields.medicinalRecordCount)
+
+        // The re-upsert is the one that used to lose everything.
+        repository.upsertUserSpecies(readBack, null)
+
+        val again = repository.userSpecies("user-1")!!
+        assertEquals(Kingdom.PLANT, again.fields.kingdom)
+        assertEquals(TaxClass.SHRUB, again.fields.taxClass)
+        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), again.fields.uses)
+        assertEquals(elderberry.usesNote, again.fields.usesNote)
+        assertEquals(listOf("Diaphoretic", "Diuretic", "Laxative"), again.fields.medicinalActivities)
+        assertEquals(60, again.fields.medicinalRecordCount)
+        assertEquals("Dr. Duke's Databases · USDA ARS · CC0", again.fields.usesAttribution)
+        assertEquals("sil_shrub", again.fields.silhouetteRes)
+    }
+
+    @Test
+    fun aBackfilledPlantKeepsItsUsesThroughEveryLaterBackfill() = runBlocking {
+        val registrar = AddSpeciesRegistrar(
+            store = repository,
+            captures = throwingRegistrar(),
+            newSpeciesId = { "user-1" },
+        )
+        repository.upsertUserSpecies(
+            record("user-1", 9001, SpeciesFields(commonName = "Blue Elderberry"), pending = true),
+            emptyList(),
+        )
+
+        registrar.backfill(
+            speciesId = "user-1",
+            lookup = LookupFields(
+                scientificName = "Sambucus cerulea",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+                uses = setOf(PlantUse.MEDICINAL),
+                medicinalRecordCount = 60,
+            ),
+            edits = AddSpeciesRegistrar.FieldEdits(
+                values = SpeciesFields(
+                    commonName = "Blue Elderberry",
+                    kingdom = Kingdom.PLANT,
+                    taxClass = TaxClass.SHRUB,
+                    uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
+                    usesNote = "Berries only, cooked. Caution: not raw.",
+                ),
+                fields = listOf(SpeciesField.USES, SpeciesField.USES_NOTE),
+            ),
+        )
+        registrar.backfill(
+            speciesId = "user-1",
+            lookup = LookupFields(
+                scientificName = "Sambucus cerulea",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+                uses = setOf(PlantUse.MEDICINAL),
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                medicinalRecordCount = 61,
+            ),
+        )
+
+        val stored = repository.userSpecies("user-1")!!
+        assertTrue(SpeciesField.USES in stored.userEditedFields)
+        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), stored.fields.uses)
+        assertEquals("Berries only, cooked. Caution: not raw.", stored.fields.usesNote)
+        // Duke's columns are the source's, not the user's, so they track the newest lookup.
+        assertEquals(61, stored.fields.medicinalRecordCount)
         assertFalse(stored.detailsPending)
     }
 

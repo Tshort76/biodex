@@ -6,6 +6,7 @@ import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.detailsPendingFor
 import dev.tlong.biodex.domain.nextUserDexNumber
+import dev.tlong.biodex.domain.normalized
 import dev.tlong.biodex.domain.previewFields
 import java.util.UUID
 
@@ -46,12 +47,16 @@ class AddSpeciesRegistrar(
         photoUri: String?,
         userEditedFields: List<String> = emptyList(),
     ): CreateResult {
+        // 11.1's write-path invariants — kingdom paired with class, uses plant-only, no note
+        // without a use, no Duke's credit without Duke's data — are applied here and not only
+        // on the card, so nothing that reaches the store can violate them.
+        val normalized = fields.normalized()
         val record = UserSpeciesRecord(
             id = newSpeciesId(),
             regionId = regionId,
             dexNumber = nextUserDexNumber(store.maxUserDexNumber(regionId)),
-            detailsPending = detailsPendingFor(fields),
-            fields = fields,
+            detailsPending = detailsPendingFor(normalized),
+            fields = normalized,
             userEditedFields = userEditedFields,
         )
         store.upsertUserSpecies(record, ecosystemIds)

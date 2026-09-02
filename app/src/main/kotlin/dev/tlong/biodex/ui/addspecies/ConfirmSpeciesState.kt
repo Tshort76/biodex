@@ -1,13 +1,17 @@
 package dev.tlong.biodex.ui.addspecies
 
+import dev.tlong.biodex.data.catalogue.DukeRecord
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
+import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
+import dev.tlong.biodex.domain.UsesNote
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.detailsPendingFor
 import dev.tlong.biodex.domain.displayDexNumber
@@ -50,6 +54,10 @@ sealed interface ConfirmSpeciesUiState {
         val editedFields: Set<String>,
         val habitatSource: String?,
         val callAttribution: String?,
+        /** Duke's row for the selected plant, shown read-only beside the medicinal toggle. */
+        val duke: DukeRecord?,
+        /** True once a plant candidate has actually been looked up in the bundled index. */
+        val dukeConsulted: Boolean,
         /** True when the lookup could not be made at all — offered as "save for later" (M20). */
         val lookupFailed: Boolean,
         /** True when the lookup ran and GBIF knows no such animal. Not an error. */
@@ -72,9 +80,18 @@ sealed interface ConfirmSpeciesUiState {
             get() = alternatives.size.takeIf { it > 0 }
                 ?.let { "Not this one? $it other match${if (it == 1) "" else "es"} ›" }
 
-        // Slice 12 gives the card a kingdom; until then every user-added species is an
-        // animal, and a U-number does not read the kingdom anyway.
-        val dexLabel: String get() = displayDexNumber(dexNumber, SpeciesSource.USER, Kingdom.ANIMAL)
+        val dexLabel: String get() = displayDexNumber(dexNumber, SpeciesSource.USER, kingdom)
+
+        val kingdom: Kingdom get() = fields.kingdom
+        val isPlant: Boolean get() = kingdom == Kingdom.PLANT
+
+        /** The picker offers this kingdom's classes only — never "tree" for a sparrow (11.2). */
+        val offeredClasses: List<TaxClass> get() = TaxClass.of(kingdom)
+
+        /** "Arbutus menziesii · plant · tree" — the kingdom beside the class in the match row. */
+        val identityLine: String
+            get() = listOfNotNull(fields.scientificName, kingdom.wireName, fields.taxClass.wireName)
+                .joinToString(" · ")
 
         val imageFound: Boolean get() = fields.imageUrl != null
         val habitatFound: Boolean get() = !fields.habitatText.isNullOrBlank()
@@ -84,9 +101,53 @@ sealed interface ConfirmSpeciesUiState {
          * The call row is rendered in every state and says the honest thing (M18). Today that
          * is always "no call found": there is no Xeno-canto API key, so the client answers
          * NotFound without asking (ARCHITECTURE.md 5.4).
+         *
+         * Null for a plant, which has no call row **in any state** (M24): the uses editor
+         * stands in its place, and nothing was ever asked of Xeno-canto to report on.
          */
-        val callRowLabel: String
-            get() = if (callFound) "✓ Call found" else "No call found — normal for most animals"
+        val callRowLabel: String?
+            get() = when {
+                isPlant -> null
+                callFound -> "✓ Call found"
+                else -> "No call found — normal for most animals"
+            }
+
+        // -------------------------------------------------------------------
+        // The uses editor (M27). Everything here is the user's to set; the app
+        // defaults the medicinal toggle and pre-fills a caution, and asserts
+        // nothing else — least of all that anything is edible (D14, M30).
+        // -------------------------------------------------------------------
+
+        val uses: Set<PlantUse> get() = fields.uses
+
+        fun hasUse(use: PlantUse): Boolean = use in fields.uses
+
+        /** Duke's read-only line beside the toggle. "No Duke's record" is an ordinary state. */
+        val dukeLabel: String
+            get() {
+                val record = duke ?: return if (dukeConsulted) {
+                    "No Duke's record for this species"
+                } else {
+                    "Duke's index not consulted"
+                }
+                val activities = record.activities.take(DUKE_ACTIVITY_LIMIT)
+                val suffix = if (activities.isEmpty()) "" else ": " + activities.joinToString(", ")
+                return "Duke's records ${record.recordCount} traditional uses$suffix"
+            }
+
+        /**
+         * A poison record is worth saying out loud even when the caution sentence cannot be
+         * saved. `usesNote` is null whenever `uses` is empty (11.1), so an untagged plant drops
+         * the pre-filled caution on save — and this line is what stops that being silent.
+         */
+        val poisonRecorded: Boolean get() = duke?.poison == true
+
+        val cautionWillBeDropped: Boolean get() = poisonRecorded && fields.uses.isEmpty()
+
+        /** S09's split, so the card emphasises the same words the detail screen will. */
+        val noteBody: String get() = UsesNote.cautionSplit(fields.usesNote).first
+
+        val noteCaution: String? get() = UsesNote.cautionSplit(fields.usesNote).second
 
         val habitatLabel: String
             get() = when {
@@ -152,6 +213,8 @@ fun confirmCardState(
         editedFields = locked,
         habitatSource = details?.habitatSource,
         callAttribution = details?.fields?.callAttribution,
+        duke = details?.duke,
+        dukeConsulted = details?.dukeConsulted == true,
         lookupFailed = outcome is LookupOutcome.Failed,
         noMatch = outcome is LookupOutcome.NoMatch,
         ecosystems = ecosystems,
@@ -165,3 +228,6 @@ fun confirmCardState(
 
 /** Fallback when nothing has been allocated yet; the first user species is U01. */
 const val FIRST_USER_DEX_NUMBER = USER_DEX_NUMBER_BASE + 1
+
+/** As many Duke's activities as the card's one-line read-only row can carry (11.4 shows five). */
+const val DUKE_ACTIVITY_LIMIT = 5

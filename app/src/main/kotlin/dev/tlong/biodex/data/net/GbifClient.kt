@@ -1,5 +1,6 @@
 package dev.tlong.biodex.data.net
 
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.TaxClass
 import java.net.URLEncoder
 import kotlinx.serialization.json.Json
@@ -20,6 +21,12 @@ import kotlinx.serialization.json.jsonPrimitive
  * M08. So the client is two-step: try `match` (which still wins when the user types a scientific
  * name, and carries GBIF's own confidence and alternatives), and on NONE fall back to
  * `species/search` over the backbone dataset with `qField=VERNACULAR`.
+ *
+ * **Slice 12 adds the second kingdom.** The vernacular search is scoped to one higher taxon or
+ * it returns fungi and bacteria, so it is run against Animalia and then, unless the animal pass
+ * produced an exact vernacular hit, against Plantae as well. Both of slice 12's phone names
+ * need it: "Trailing Blackberry" and "Pacific Rhododendron" both return **zero** results under
+ * Animalia (verified live 2026-09-02), and neither resolves through `species/match` either.
  */
 class GbifClient(private val fetcher: JsonFetcher) {
 
@@ -34,18 +41,40 @@ class GbifClient(private val fetcher: JsonFetcher) {
         }
         if (matched != null) return LookupResult.Found(matched)
 
-        return when (val response = fetcher.get(vernacularSearchUrl(query))) {
-            is FetchResult.Body -> {
-                val candidates = parseGbifVernacularSearch(response.text, query)
-                if (candidates.isEmpty()) {
-                    LookupResult.NotFound
-                } else {
-                    LookupResult.Found(GbifMatch(candidates.first(), candidates.drop(1)))
-                }
-            }
+        val animals = when (val response = fetcher.get(vernacularSearchUrl(query))) {
+            is FetchResult.Body -> parseGbifVernacularSearch(response.text, query)
+            FetchResult.NotFound -> emptyList()
+            // Only the first search decides whether the app could ask at all. A failure on the
+            // second one degrades to "no candidates from that kingdom" (5.2's rule for every
+            // source), which is why the plant pass below never returns Failed.
+            is FetchResult.Failed -> return LookupResult.Failed(response.reason)
+        }
+        if (animals.any { it.matchKind == MatchKind.VERNACULAR_EXACT }) {
+            return LookupResult.Found(GbifMatch(animals.first(), animals.drop(1)))
+        }
 
-            FetchResult.NotFound -> LookupResult.NotFound
-            is FetchResult.Failed -> LookupResult.Failed(response.reason)
+        val plants = when (val response = fetcher.get(vernacularSearchUrl(query, PLANTAE_KEY))) {
+            is FetchResult.Body -> parseGbifVernacularSearch(response.text, query)
+            else -> emptyList()
+        }
+        val candidates = rankVernacularCandidates(animals + plants)
+        return if (candidates.isEmpty()) {
+            LookupResult.NotFound
+        } else {
+            LookupResult.Found(GbifMatch(candidates.first(), candidates.drop(1)))
+        }
+    }
+
+    /**
+     * GBIF's synonyms for one accepted usage, which is what the Duke's join needs (11.2, R15).
+     * A species with no usage key, or a request that fails, degrades to an empty list: the
+     * accepted binomial is still tried, and a miss is an ordinary state.
+     */
+    suspend fun synonyms(usageKey: Long?): List<String> {
+        if (usageKey == null) return emptyList()
+        return when (val response = fetcher.get(synonymsUrl(usageKey))) {
+            is FetchResult.Body -> parseGbifSynonyms(response.text)
+            else -> emptyList()
         }
     }
 }
@@ -53,19 +82,28 @@ class GbifClient(private val fetcher: JsonFetcher) {
 /** GBIF's own backbone taxonomy — the dataset `species/match` resolves against. */
 private const val BACKBONE_DATASET = "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c"
 
-/** Animalia. Without it a vernacular search happily returns plants and fungi. */
+/** Animalia. Without it a vernacular search happily returns fungi and bacteria. */
 private const val ANIMALIA_KEY = 1
+
+/** Plantae, the second kingdom BioDex counts (D12). */
+internal const val PLANTAE_KEY = 6
 
 /** More than the card can show; the extras only widen the "other matches" list. */
 internal const val GBIF_CANDIDATE_LIMIT = 6
 
+/** GBIF returns plenty of trinomial synonyms; the Duke's key uses only the first two tokens. */
+private const val GBIF_SYNONYM_LIMIT = 50
+
 internal fun matchUrl(name: String): String =
     "https://api.gbif.org/v1/species/match?strict=false&verbose=true&name=" + name.urlEncoded()
 
-internal fun vernacularSearchUrl(name: String): String =
+internal fun vernacularSearchUrl(name: String, higherTaxonKey: Int = ANIMALIA_KEY): String =
     "https://api.gbif.org/v1/species/search?qField=VERNACULAR&rank=SPECIES&status=ACCEPTED" +
-        "&datasetKey=$BACKBONE_DATASET&highertaxonKey=$ANIMALIA_KEY" +
+        "&datasetKey=$BACKBONE_DATASET&highertaxonKey=$higherTaxonKey" +
         "&limit=$GBIF_CANDIDATE_LIMIT&q=" + name.urlEncoded()
+
+internal fun synonymsUrl(usageKey: Long): String =
+    "https://api.gbif.org/v1/species/$usageKey/synonyms?limit=$GBIF_SYNONYM_LIMIT"
 
 private fun String.urlEncoded(): String = URLEncoder.encode(this, "UTF-8")
 
@@ -80,6 +118,8 @@ data class SpeciesCandidate(
     val scientificName: String,
     /** GBIF's English vernacular, when it has one; the card shows it beside the science. */
     val commonName: String? = null,
+    /** GBIF's kingdom, which decides which extra fields the confirm card shows (M27). */
+    val kingdom: Kingdom = Kingdom.ANIMAL,
     val taxClass: TaxClass,
     val usageKey: Long? = null,
     val rank: String? = null,
@@ -87,6 +127,11 @@ data class SpeciesCandidate(
     val matchKind: MatchKind,
     /** GBIF marks fossil taxa; nothing the user photographed this weekend is one. */
     val extinct: Boolean = false,
+    /**
+     * The conifer/broadleaf silhouette choice, the pipeline's one use of GBIF's plant class
+     * (11.3 step 1). Null for everything that is not a tree.
+     */
+    val silhouetteResOverride: String? = null,
 ) {
     val confidenceLabel: String
         get() = when (matchKind) {
@@ -120,6 +165,49 @@ internal fun taxClassFor(gbifClass: String?, phylum: String?): TaxClass {
     if (gbifClass.isNullOrBlank() && phylum?.trim()?.lowercase() == "chordata") return TaxClass.FISH
     return TaxClass.OTHER_INVERTEBRATE
 }
+
+/**
+ * M27's growth-form default, ported from the pipeline's step 1 (11.3): conifers to tree, ferns
+ * to fern, everything else to herb.
+ *
+ * **Herb is the default on purpose, and R10 is why.** GBIF answers `Magnoliopsida` for an oak
+ * and for a dandelion alike, and often answers nothing at all, so no automated rule can tell a
+ * tree from a wildflower. Growth form is the user's pick on the card; this only decides which
+ * chip is highlighted when it opens. The conifer signal is the one that is real, and it is
+ * checked on both the class and the order because GBIF's plant classes are inconsistent.
+ */
+internal fun defaultPlantClass(gbifClass: String?, gbifOrder: String?): TaxClass {
+    val klass = gbifClass?.trim()?.lowercase()
+    val order = gbifOrder?.trim()?.lowercase()
+    return when {
+        klass in FERN_CLASSES -> TaxClass.FERN
+        klass in CONIFER_CLASSES || order in CONIFER_ORDERS -> TaxClass.TREE
+        else -> TaxClass.HERB
+    }
+}
+
+/** Conifer or broadleaf, for a tree; null for every other growth form. */
+internal fun plantSilhouetteFor(taxClass: TaxClass, gbifClass: String?, gbifOrder: String?): String? {
+    if (taxClass != TaxClass.TREE) return null
+    val conifer = gbifClass?.trim()?.lowercase() in CONIFER_CLASSES ||
+        gbifOrder?.trim()?.lowercase() in CONIFER_ORDERS
+    return if (conifer) "sil_tree_conifer" else "sil_tree_broadleaf"
+}
+
+/**
+ * GBIF spells its kingdoms `Animalia` and `Plantae`; BioDex stores `animal` and `plant`, so the
+ * two vocabularies are joined here rather than by widening `Kingdom.fromWireName`. Anything
+ * else — Fungi, Chromista — falls back to animal, the same stance that enum already takes, and
+ * cannot arrive from the vernacular search at all because it is scoped to these two.
+ */
+internal fun gbifKingdom(value: String?): Kingdom =
+    if (value?.trim()?.lowercase() == "plantae") Kingdom.PLANT else Kingdom.ANIMAL
+
+private val FERN_CLASSES =setOf("polypodiopsida", "pteridopsida", "filicopsida", "psilotopsida")
+
+private val CONIFER_CLASSES = setOf("pinopsida", "coniferopsida", "ginkgoopsida", "cycadopsida")
+
+private val CONIFER_ORDERS = setOf("pinales", "cupressales", "araucariales", "taxales")
 
 private val CLASS_MAP = mapOf(
     "aves" to TaxClass.BIRD,
@@ -157,9 +245,12 @@ private fun JsonObject.toCandidate(): SpeciesCandidate? {
     // `species` is the accepted binomial; `canonicalName` is what was matched, which for a
     // synonym or a subspecies is not the name the entry should carry.
     val name = string("species") ?: string("canonicalName") ?: return null
+    val (kingdom, taxClass, silhouette) = classify()
     return SpeciesCandidate(
         scientificName = name,
-        taxClass = taxClassFor(string("class"), string("phylum")),
+        kingdom = kingdom,
+        taxClass = taxClass,
+        silhouetteResOverride = silhouette,
         usageKey = long("speciesKey") ?: long("usageKey"),
         rank = string("rank"),
         confidence = int("confidence") ?: 0,
@@ -169,6 +260,20 @@ private fun JsonObject.toCandidate(): SpeciesCandidate? {
             else -> MatchKind.FUZZY
         },
     )
+}
+
+/**
+ * The kingdom is read **before** the class, because GBIF's plant classes mean nothing to the
+ * animal class map: routing *Arbutus menziesii* (`Magnoliopsida`) through it would file a
+ * madrone as an other-invertebrate, which is exactly the shape of the bug slice 2 hit with fish.
+ */
+private fun JsonObject.classify(): Triple<Kingdom, TaxClass, String?> {
+    val kingdom = gbifKingdom(string("kingdom"))
+    if (kingdom != Kingdom.PLANT) {
+        return Triple(Kingdom.ANIMAL, taxClassFor(string("class"), string("phylum")), null)
+    }
+    val taxClass = defaultPlantClass(string("class"), string("order"))
+    return Triple(kingdom, taxClass, plantSilhouetteFor(taxClass, string("class"), string("order")))
 }
 
 /**
@@ -187,25 +292,42 @@ internal fun parseGbifVernacularSearch(body: String, query: String): List<Specie
             val extinct = row.bool("extinct") == true
             val exact = !extinct &&
                 (vernaculars.any { it.lowercase() == wanted } || name.lowercase() == wanted)
+            val (kingdom, taxClass, silhouette) = row.classify()
             SpeciesCandidate(
                 extinct = extinct,
                 scientificName = name,
                 commonName = vernaculars.firstOrNull { it.lowercase() == wanted }
                     ?: vernaculars.firstOrNull(),
-                taxClass = taxClassFor(row.string("class"), row.string("phylum")),
+                kingdom = kingdom,
+                taxClass = taxClass,
+                silhouetteResOverride = silhouette,
                 usageKey = row.long("speciesKey") ?: row.long("key"),
                 rank = row.string("rank"),
                 confidence = if (exact) 100 else 0,
                 matchKind = if (exact) MatchKind.VERNACULAR_EXACT else MatchKind.VERNACULAR_OTHER,
             )
         }
+        .let(::rankVernacularCandidates)
+}
+
+/**
+ * Exact first, then GBIF's own order, then the fossils. "sparrow" is exactly the
+ * *Palaeostruthus eurius* of the GBIF backbone, an extinct bird nobody photographed; a living
+ * species the user might actually have seen belongs above it. Applied once per kingdom's
+ * results and again over the two kingdoms merged, so an exact plant beats an inexact animal.
+ */
+internal fun rankVernacularCandidates(candidates: List<SpeciesCandidate>): List<SpeciesCandidate> =
+    candidates
         .distinctBy { it.scientificName }
-        // Exact first, then GBIF's own order, then the fossils. "sparrow" is exactly the
-        // Palaeostruthus eurius of the GBIF backbone, an extinct bird nobody photographed;
-        // a living species the user might actually have seen belongs above it.
         .sortedWith(compareBy({ it.extinct }, { it.matchKind != MatchKind.VERNACULAR_EXACT }))
         .take(GBIF_CANDIDATE_LIMIT)
-}
+
+/** GBIF's synonyms payload: the canonical names of the usages it has folded into one accepted. */
+internal fun parseGbifSynonyms(body: String): List<String> =
+    (body.asJsonObject()?.get("results") as? JsonArray)
+        .orEmpty()
+        .mapNotNull { (it as? JsonObject)?.string("canonicalName") }
+        .distinct()
 
 private fun JsonObject.englishVernaculars(): List<String> =
     (this["vernacularNames"] as? JsonArray)

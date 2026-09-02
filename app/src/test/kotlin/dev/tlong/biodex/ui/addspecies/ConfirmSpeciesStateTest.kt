@@ -1,10 +1,13 @@
 package dev.tlong.biodex.ui.addspecies
 
+import dev.tlong.biodex.data.catalogue.DukeRecord
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.MatchKind
 import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
@@ -12,6 +15,7 @@ import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -92,7 +96,7 @@ class ConfirmSpeciesStateTest {
         val state = card()
 
         assertFalse(state.callFound)
-        assertTrue(state.callRowLabel.startsWith("No call found"))
+        assertTrue(state.callRowLabel!!.startsWith("No call found"))
         assertFalse(state.lookupFailed)
     }
 
@@ -148,8 +152,8 @@ class ConfirmSpeciesStateTest {
 
     @Test
     fun `alternatives are counted and offered`() {
-        val elk = SpeciesCandidate("Cervus elaphus", "Red Deer", TaxClass.MAMMAL, matchKind = MatchKind.HIGHER_RANK)
-        val other = SpeciesCandidate("Cervus canadensis", "Elk", TaxClass.MAMMAL, matchKind = MatchKind.VERNACULAR_OTHER)
+        val elk = SpeciesCandidate("Cervus elaphus", "Red Deer", taxClass = TaxClass.MAMMAL, matchKind = MatchKind.HIGHER_RANK)
+        val other = SpeciesCandidate("Cervus canadensis", "Elk", taxClass = TaxClass.MAMMAL, matchKind = MatchKind.VERNACULAR_OTHER)
 
         val state = card(outcome = LookupOutcome.Resolved(listOf(elk, other), 0, fullDetails()))
 
@@ -164,7 +168,7 @@ class ConfirmSpeciesStateTest {
 
     @Test
     fun `picking a different candidate shows that candidate`() {
-        val robin = SpeciesCandidate("Turdus migratorius", "American Robin", TaxClass.BIRD, matchKind = MatchKind.VERNACULAR_OTHER)
+        val robin = SpeciesCandidate("Turdus migratorius", "American Robin", taxClass = TaxClass.BIRD, matchKind = MatchKind.VERNACULAR_OTHER)
 
         val state = card(
             outcome = LookupOutcome.Resolved(listOf(thrush, robin), 0, fullDetails()),
@@ -278,6 +282,194 @@ class ConfirmSpeciesStateTest {
         assertEquals("Mine.", state.fields.habitatText)
         assertTrue(state.isEdited(SpeciesField.HABITAT_TEXT))
         assertFalse(state.isEdited(SpeciesField.DESCRIPTION))
+    }
+
+    // -----------------------------------------------------------------------
+    // The plant card (M19/M27): a growth-form pick and a uses editor where an
+    // animal's call row is.
+    // -----------------------------------------------------------------------
+
+    private val madrone = SpeciesCandidate(
+        scientificName = "Arbutus menziesii",
+        commonName = "Pacific Madrone",
+        kingdom = Kingdom.PLANT,
+        taxClass = TaxClass.TREE,
+        silhouetteResOverride = "sil_tree_broadleaf",
+        matchKind = MatchKind.EXACT,
+    )
+
+    private fun plantDetails(
+        uses: Set<PlantUse> = setOf(PlantUse.MEDICINAL),
+        usesNote: String? = null,
+        duke: DukeRecord? = DukeRecord(listOf("Astringent", "Diuretic", "Vulnerary"), 27, false),
+    ) = CandidateDetails(
+        fields = LookupFields(
+            scientificName = "Arbutus menziesii",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.TREE,
+            silhouetteResOverride = "sil_tree_broadleaf",
+            habitatText = "Dry, open slopes and bluffs near the coast.",
+            uses = uses,
+            usesNote = usesNote,
+            medicinalActivities = duke?.activities.orEmpty(),
+            medicinalRecordCount = duke?.recordCount ?: 0,
+            usesAttribution = duke?.let { "Dr. Duke's · USDA ARS · CC0" },
+        ),
+        duke = duke,
+        dukeConsulted = true,
+    )
+
+    private fun plantCard(
+        details: CandidateDetails = plantDetails(),
+        edits: ConfirmCardEdits = ConfirmCardEdits(),
+    ) = card(
+        outcome = LookupOutcome.Resolved(listOf(madrone), 0, details),
+        details = details,
+        edits = edits,
+    )
+
+    @Test
+    fun `a plant card shows the kingdom beside the class and offers only plant forms`() {
+        val state = plantCard()
+
+        assertTrue(state.isPlant)
+        assertEquals("Arbutus menziesii · plant · tree", state.identityLine)
+        assertEquals(TaxClass.of(Kingdom.PLANT), state.offeredClasses)
+        assertFalse("never offer 'bird' for a madrone", TaxClass.BIRD in state.offeredClasses)
+    }
+
+    @Test
+    fun `a plant card has no call row in any state`() {
+        // M24, and the reason the row is nullable rather than merely empty: nothing was asked
+        // of Xeno-canto, so there is no honest thing for a call row to say.
+        assertNull(plantCard().callRowLabel)
+        assertNull(
+            plantCard(
+                details = plantDetails().let {
+                    it.copy(fields = it.fields.copy(callUrl = "https://xeno-canto.org/1/download"))
+                },
+            ).callRowLabel,
+        )
+    }
+
+    @Test
+    fun `the medicinal toggle defaults on for a species over the threshold`() {
+        val state = plantCard()
+
+        assertTrue(state.hasUse(PlantUse.MEDICINAL))
+        // Edible is never defaulted on: the app does not assert edibility (D14, M30).
+        assertFalse(state.hasUse(PlantUse.EDIBLE))
+        assertEquals(
+            "Duke's records 27 traditional uses: Astringent, Diuretic, Vulnerary",
+            state.dukeLabel,
+        )
+    }
+
+    @Test
+    fun `a species under the threshold opens with the toggle off`() {
+        val grape = plantCard(
+            details = plantDetails(
+                uses = emptySet(),
+                duke = DukeRecord(listOf("Astringent", "Laxative"), 4, false),
+            ),
+        )
+
+        assertFalse(grape.hasUse(PlantUse.MEDICINAL))
+        assertTrue("the record is still shown, read-only", grape.dukeLabel.contains("4"))
+    }
+
+    @Test
+    fun `no Duke's record says so plainly, and tags nothing`() {
+        val state = plantCard(details = plantDetails(uses = emptySet(), duke = null))
+
+        assertEquals("No Duke's record for this species", state.dukeLabel)
+        assertTrue(state.uses.isEmpty())
+        assertNull(state.fields.usesAttribution)
+    }
+
+    @Test
+    fun `a poison record pre-fills the caution and the card renders it as a caution`() {
+        val state = plantCard(
+            details = plantDetails(
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                duke = DukeRecord(listOf("Diaphoretic", "Diuretic", "Laxative"), 60, true),
+            ),
+        )
+
+        assertTrue(state.poisonRecorded)
+        assertEquals(
+            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+            state.noteCaution,
+        )
+        assertEquals("", state.noteBody)
+        assertFalse(state.cautionWillBeDropped)
+    }
+
+    @Test
+    fun `an untagged poisonous plant is warned that its caution will not be saved`() {
+        val state = plantCard(
+            details = plantDetails(
+                uses = emptySet(),
+                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+                duke = DukeRecord(listOf("Diuretic"), 6, true),
+            ),
+        )
+
+        // 11.1: usesNote is null when uses is empty, so the pre-filled caution goes with it.
+        assertNull(state.fields.usesNote)
+        assertTrue(state.cautionWillBeDropped)
+    }
+
+    @Test
+    fun `toggling a use on the card claims it, and the note comes with it`() {
+        val state = plantCard(
+            edits = ConfirmCardEdits(
+                values = SpeciesFields(
+                    commonName = "Pacific Madrone",
+                    kingdom = Kingdom.PLANT,
+                    taxClass = TaxClass.TREE,
+                    uses = setOf(PlantUse.EDIBLE),
+                    usesNote = "Berries in autumn — mealy but edible.",
+                ),
+                editedFields = setOf(SpeciesField.USES, SpeciesField.USES_NOTE),
+            ),
+        )
+
+        assertEquals(setOf(PlantUse.EDIBLE), state.uses)
+        assertEquals("Berries in autumn — mealy but edible.", state.fields.usesNote)
+        assertTrue(state.isEdited(SpeciesField.USES))
+    }
+
+    @Test
+    fun `a note typed with no use tag cannot be saved, so the card does not offer the field`() {
+        val state = plantCard(
+            details = plantDetails(uses = emptySet(), duke = null),
+            edits = ConfirmCardEdits(
+                values = SpeciesFields(
+                    commonName = "Pacific Madrone",
+                    kingdom = Kingdom.PLANT,
+                    taxClass = TaxClass.TREE,
+                    usesNote = "Berries in autumn.",
+                ),
+                editedFields = setOf(SpeciesField.USES_NOTE),
+            ),
+        )
+
+        // 11.1 wins over the typing, so the screen hides the editor while this is true rather
+        // than showing a field that swallows every keystroke.
+        assertTrue(state.uses.isEmpty())
+        assertNull(state.fields.usesNote)
+    }
+
+    @Test
+    fun `an animal card offers no uses editor and keeps its call row`() {
+        val state = card()
+
+        assertFalse(state.isPlant)
+        assertTrue(state.uses.isEmpty())
+        assertEquals("Duke's index not consulted", state.dukeLabel)
+        assertFalse(state.poisonRecorded)
+        assertNotNull(state.callRowLabel)
     }
 
     @Test

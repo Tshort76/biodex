@@ -7,6 +7,7 @@ import dev.tlong.biodex.data.backup.BackupGateway
 import dev.tlong.biodex.data.backup.BackupService
 import dev.tlong.biodex.data.catalogue.AndroidAssetReader
 import dev.tlong.biodex.data.catalogue.CatalogueImporter
+import dev.tlong.biodex.data.catalogue.DukeIndex
 import dev.tlong.biodex.data.catalogue.ImportOutcome
 import dev.tlong.biodex.data.catalogue.RoomCatalogueStore
 import dev.tlong.biodex.data.db.AppDatabase
@@ -142,16 +143,26 @@ class AppContainer(val appContext: Context) {
     private val jsonFetcher: JsonFetcher by lazy { OkHttpJsonFetcher(httpClient) }
 
     /**
+     * The bundled Duke's index (11.2). It parses on first use and only a plant confirmation
+     * card ever asks, so a session that never adds a plant never pays for it — and it needs an
+     * `AssetReader`, which is the one thing in the lookup path that cannot be built without a
+     * `Context`. That is why 11.6's "no new wiring" note does not hold for slice 12.
+     */
+    private val dukeIndex: DukeIndex by lazy { DukeIndex(AndroidAssetReader(appContext)) }
+
+    /**
      * Xeno-canto gets its key from `BuildConfig`, which is the empty string until the user
      * creates one (5.4). The client then answers `NotFound` without a request, and the confirm
      * card shows "no call found" — the honest answer today, and the one that needs no code
-     * change when a key appears.
+     * change when a key appears. A plant never reaches it at all (M18): the Duke's index above
+     * takes that slot.
      */
     val speciesLookupRepository: SpeciesLookupRepository by lazy {
         SpeciesLookupRepository(
             gbif = GbifClient(jsonFetcher),
             wikipedia = WikipediaClient(jsonFetcher),
             xenoCanto = XenoCantoClient(jsonFetcher, BuildConfig.XC_API_KEY),
+            duke = dukeIndex,
         )
     }
 

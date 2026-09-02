@@ -13,7 +13,11 @@ import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
 import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.Ecosystem
+import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
+import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.nextUserDexNumber
 import dev.tlong.biodex.media.NetworkMonitor
@@ -163,6 +167,51 @@ class ConfirmSpeciesViewModel(
             editedFields = edits.editedFields + field,
         )
         publish()
+    }
+
+    /**
+     * M27's mis-resolved-kingdom escape hatch. Switching resets the class to that kingdom's
+     * default (11.4) and locks the **kingdom** only: the class stays open so a later backfill
+     * that finally reads GBIF's plant class can still fill in a real growth form.
+     */
+    fun onToggleKingdom() {
+        val current = (_uiState.value as? ConfirmSpeciesUiState.Card)?.fields ?: return
+        val kingdom = if (current.kingdom == Kingdom.PLANT) Kingdom.ANIMAL else Kingdom.PLANT
+        onEditField(SpeciesField.KINGDOM) {
+            it.copy(
+                kingdom = kingdom,
+                taxClass = TaxClass.defaultFor(kingdom),
+                silhouetteResOverride = null,
+            )
+        }
+    }
+
+    /**
+     * The growth-form / class pick. It claims the **kingdom too**, because otherwise a backfill
+     * that re-read GBIF's kingdom would pair the hand-picked class away to the other kingdom's
+     * default — the class would be locked and still lost.
+     */
+    fun onSelectTaxClass(taxClass: TaxClass) {
+        onEditField(SpeciesField.TAX_CLASS) {
+            it.copy(
+                kingdom = taxClass.kingdom,
+                taxClass = taxClass,
+                silhouetteResOverride = if (taxClass == it.taxClass) it.silhouetteResOverride else null,
+            )
+        }
+        edits = edits.copy(editedFields = edits.editedFields + SpeciesField.KINGDOM)
+        publish()
+    }
+
+    /** Either use toggle. Both halves live in one field, so touching either locks both (M21). */
+    fun onToggleUse(use: PlantUse) {
+        onEditField(SpeciesField.USES) {
+            it.copy(uses = if (use in it.uses) it.uses - use else it.uses + use)
+        }
+    }
+
+    fun onEditUsesNote(text: String) {
+        onEditField(SpeciesField.USES_NOTE) { it.copy(usesNote = text.ifBlank { null }) }
     }
 
     fun onAccept() {
