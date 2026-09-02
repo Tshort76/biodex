@@ -5,6 +5,7 @@ import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesDetail
+import dev.tlong.biodex.domain.UsesNote
 import dev.tlong.biodex.media.CallPlayback
 import dev.tlong.biodex.media.CallRowState
 import dev.tlong.biodex.media.callRowState
@@ -53,14 +54,25 @@ data class EntryDetailUiState(
 
     /**
      * What fills the call row's slot instead (M24). Null for an animal, and null for a plant
-     * with no documented use — in which case habitat is followed straight by the photo strip
-     * and nothing is drawn, not an empty section.
+     * with **nothing to say** — no use tags and no caution — in which case habitat is followed
+     * straight by the photo strip and nothing is drawn, not an empty section.
+     *
+     * The test is "has this plant anything to say", not "has this plant a use tag". A caution
+     * outlives its tags: `keptUsesNote` keeps a `Caution:` sentence when the uses are empty and
+     * drops only the rest, so Western Wild Ginger carries a warning about a carcinogen with no
+     * tag on it at all. Gating on `uses.isNotEmpty()` swallowed exactly that warning — the one
+     * thing on this screen a person could be hurt by not seeing.
+     *
+     * The caution is detected with [UsesNote.cautionSplit], the same function the write paths
+     * use to decide what to keep, so the screen and the store cannot disagree about what counts
+     * as a caution.
      */
     val uses: UsesContent?
         get() {
             val species = detail ?: return null
             if (species.summary.kingdom != Kingdom.PLANT) return null
-            if (species.summary.uses.isEmpty()) return null
+            val (_, caution) = UsesNote.cautionSplit(species.usesNote)
+            if (species.summary.uses.isEmpty() && caution == null) return null
             return UsesContent(
                 uses = species.summary.uses,
                 usesNote = species.usesNote,

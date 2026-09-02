@@ -3,6 +3,7 @@ package dev.tlong.biodex.ui
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.TaxClass
+import dev.tlong.biodex.domain.UsesNote
 import dev.tlong.biodex.media.CallPlayback
 import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.common.dukesLine
@@ -78,7 +79,7 @@ class PlantUiTest {
     @Test
     fun `the kingdom chip splits the catalogue and the dimensions compose`() {
         val plants = filterSpecies(all, "", DexGridFilters(kingdom = Kingdom.PLANT))
-        assertEquals(6, plants.size)
+        assertEquals(8, plants.size)
         assertEquals(10, filterSpecies(all, "", DexGridFilters(kingdom = Kingdom.ANIMAL)).size)
 
         val caughtPlants = filterSpecies(
@@ -189,7 +190,8 @@ class PlantUiTest {
     }
 
     @Test
-    fun `a plant with no uses shows nothing in the slot`() {
+    fun `a plant with nothing to say shows nothing in the slot`() {
+        // No tags AND no caution. This is the only shape that renders nothing.
         listOf("douglas-fir", "western-sword-fern").forEach { id ->
             val state = detailState(id)
             assertNull("$id call row", state.callRow)
@@ -198,15 +200,51 @@ class PlantUiTest {
     }
 
     @Test
+    fun `a plant with no uses but a caution still shows the caution`() {
+        // The safety regression this test exists for: Western Wild Ginger carries a warning
+        // about a carcinogen and no use tag at all, because `keptUsesNote` keeps the caution
+        // when the uses go. Gating the section on `uses.isNotEmpty()` swallowed it.
+        val uses = checkNotNull(detailState("western-wild-ginger").uses) {
+            "a plant whose only content is a caution must still render the section"
+        }
+
+        assertTrue(uses.uses.isEmpty())
+        val (body, caution) = UsesNote.cautionSplit(uses.usesNote)
+        assertEquals("", body)
+        assertTrue(caution!!.contains("aristolochic acid"))
+        // Nothing sourced to show beside it, and the disclaimer stands alone.
+        assertNull(dukesLine(uses.medicinalRecordCount, uses.medicinalActivities))
+        assertEquals(USES_DISCLAIMER, usesDisclaimer(uses.usesAttribution))
+    }
+
+    @Test
+    fun `a caution reaches the screen for every plant whose note carries one`() {
+        // The invariant, not the two instances: no plant may have a caution in its data and
+        // no uses section on its screen.
+        TwoKingdomFixture.summaries().filter { it.kingdom == Kingdom.PLANT }.forEach { plant ->
+            val state = detailState(plant.id)
+            val hasCaution =
+                UsesNote.cautionSplit(TwoKingdomFixture.detail(plant.id).usesNote).second != null
+            if (hasCaution) {
+                assertNotNull(
+                    "${plant.id} has a caution in its data and must show it",
+                    state.uses,
+                )
+            }
+        }
+    }
+
+    @Test
     fun `a plant with uses carries the caution split apart from the note`() {
         val uses = detailState("blue-elderberry").uses!!
 
         assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), uses.uses)
-        val (body, caution) = dev.tlong.biodex.domain.UsesNote.cautionSplit(uses.usesNote)
+        val (body, caution) = UsesNote.cautionSplit(uses.usesNote)
         assertTrue(body.startsWith("Berries, late summer"))
         assertFalse("the caution must not stay in the body", body.contains("Caution:"))
         assertTrue(caution!!.startsWith("Caution: raw berries"))
-        assertEquals(60, uses.medicinalRecordCount)
+        // Duke's `Poison` rows are excluded from the count.
+        assertEquals(58, uses.medicinalRecordCount)
     }
 
     @Test
@@ -268,12 +306,12 @@ class PlantUiTest {
 
         assertEquals(10, state.overall.total)
         assertEquals(1, state.overall.caught)
-        assertEquals(6, state.plants.total)
+        assertEquals(8, state.plants.total)
         assertEquals(1, state.plants.caught)
 
         val rainforest = state.ecosystems.single { it.ecosystem.id == "coastal-rainforest" }
         assertEquals(3, rainforest.animals.total)
-        assertEquals(4, rainforest.plants.total)
+        assertEquals(6, rainforest.plants.total)
     }
 
     @Test
@@ -327,7 +365,7 @@ class PlantUiTest {
     @Test
     fun `the detail state counts the species' own kingdom`() {
         val plant = detailState("blue-elderberry")
-        assertEquals(6, plant.totalCount)
+        assertEquals(8, plant.totalCount)
         assertEquals(1, plant.caughtCount)
 
         val animal = detailState("steller-jay")

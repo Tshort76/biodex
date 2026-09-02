@@ -36,8 +36,14 @@ import dev.tlong.biodex.ui.theme.DexTheme
  *     glance that this sentence came from a database and the one above it did not;
  *  4. the **disclaimer** (M30), which is on every uses section without exception.
  *
- * A plant with no uses renders **nothing** — the caller does not draw this at all, and there
- * is no empty section. That is D15, and it is why [UsesContent] carries no "empty" state.
+ * A plant with **nothing to say** — no tags and no caution — renders nothing at all: the
+ * caller does not draw this, and there is no empty section. That is D15, and it is why
+ * [UsesContent] carries no "empty" state.
+ *
+ * A caution can arrive with no tags beside it. `keptUsesNote` keeps a `Caution:` sentence when
+ * a plant's uses are empty and drops the rest of the note, which is how Western Wild Ginger
+ * warns about aristolochic acid while carrying neither Edible nor Medicinal. In that shape the
+ * section is the caution and the disclaimer, with no tag row and no note body above it.
  */
 data class UsesContent(
     val uses: Set<PlantUse>,
@@ -92,11 +98,13 @@ fun UsesSection(content: UsesContent, modifier: Modifier = Modifier) {
                 .background(colors.codeBg)
                 .padding(horizontal = 10.dp, vertical = 8.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // Ordered by the enum, not by the set, so two plants never disagree about
-                // which tag comes first.
-                PlantUse.entries.filter { it in content.uses }.forEach { use ->
-                    UseTag(use)
+            // Ordered by the enum, not by the set, so two plants never disagree about which
+            // tag comes first — and skipped entirely when there are none, because a plant can
+            // reach this section on a caution alone.
+            val tags = PlantUse.entries.filter { it in content.uses }
+            if (tags.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    tags.forEach { use -> UseTag(use) }
                 }
             }
 

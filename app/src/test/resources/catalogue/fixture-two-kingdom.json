@@ -108,7 +108,7 @@
       "uses": ["edible", "medicinal"],
       "usesNote": "Berries, late summer to early autumn — cook or dry before eating; flowers for cordial and tea. Caution: raw berries, leaves, stems and bark are toxic; red-berried elders are not this species.",
       "medicinalActivities": ["Diaphoretic", "Diuretic", "Laxative", "Emetic", "Febrifuge"],
-      "medicinalRecordCount": 60,
+      "medicinalRecordCount": 58,
       "usesAttribution": "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
     },
     {
@@ -130,6 +130,27 @@
       "silhouetteRes": "sil_herb",
       "uses": ["edible"],
       "usesNote": "Whole plant, late winter to spring — a salad green while it is still tender."
+    },
+    {
+      "id": "western-wild-ginger", "dexNumber": 64, "commonName": "Western Wild Ginger",
+      "scientificName": "Asarum caudatum", "kingdom": "plant", "taxClass": "herb",
+      "ecosystemIds": ["coastal-rainforest"],
+      "habitatText": "Deep shade on the forest floor, in damp humus.",
+      "silhouetteRes": "sil_herb",
+      "uses": [],
+      "usesNote": "Caution: wild gingers contain aristolochic acid, which damages the kidneys and causes cancer. Despite a long history as a flavouring and a remedy, this plant is not eaten. It is not culinary ginger."
+    },
+    {
+      "id": "bracken", "dexNumber": 80, "commonName": "Bracken",
+      "scientificName": "Pteridium aquilinum", "kingdom": "plant", "taxClass": "fern",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "habitatText": "Clearings, burns and roadsides, often in dense stands.",
+      "silhouetteRes": "sil_fern",
+      "uses": ["medicinal"],
+      "usesNote": "Caution: fiddleheads are documented as eaten but are carcinogenic; this app does not treat them as food.",
+      "medicinalActivities": ["Vermifuge", "Astringent", "Diuretic"],
+      "medicinalRecordCount": 22,
+      "usesAttribution": "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
     },
     {
       "id": "western-sword-fern", "dexNumber": 78, "commonName": "Western Sword Fern",
