@@ -26,7 +26,7 @@ Offline, the entry is created immediately from the name and photo alone and fill
 
 **Your photos can break.** If you delete a photo from your gallery, the entry stays caught and shows its thumbnail with an offer to re-link. A photo that lives only in Google Photos' cloud and hasn't downloaded may not resolve until you're online. Turning on *Keep a local copy* in Settings makes future registrations immune to this, at the cost of storing the photo twice; it is off by default because linking rather than copying is the point.
 
-**Backups matter more than usual here**, precisely because photos are referenced. See below.
+**Backups matter more than usual here**, precisely because photos are referenced. `Settings → Export collection…` writes one ZIP — the catalogue, every entry, every thumbnail, and a full-size copy of each photo whose reference still resolves — and hands it to the share sheet. Import merges rather than replaces: it adds what is missing, skips catches it already has, and deletes nothing.
 
 ---
 
@@ -45,7 +45,41 @@ sdk.dir=/opt/homebrew/share/android-commandlinetools
 ./gradlew installDebug      # build and install onto a connected phone
 ```
 
-Debug is the only build type; there is no release configuration or signing story, because this is sideloaded onto one phone.
+### Building a release APK
+
+The debug APK is fine on your own phone but a poor thing to hand to anyone else: it is marked debuggable, and it is signed with your machine's throwaway `~/.android/debug.keystore`, so nobody can ever install an update built anywhere else. A release build fixes both.
+
+You need a signing key. Make one once, **outside the repository**, and keep it somewhere you back up:
+
+```bash
+keytool -genkeypair -v -keystore ~/.android/biodex-release.jks -alias biodex \
+  -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Then create `keystore.properties` at the repo root (git-ignored, like `local.properties`):
+
+```properties
+storeFile=/Users/you/.android/biodex-release.jks
+storePassword=…
+keyAlias=biodex
+keyPassword=…
+```
+
+```bash
+./gradlew assembleRelease   # APK at app/build/outputs/apk/release/app-release.apk
+```
+
+Without `keystore.properties` the build still works and produces an unsigned APK, so a fresh clone is never blocked on a key you don't have.
+
+> **That keystore is the app's identity for good.** Android will only accept an update signed by the same key. Lose it and everyone with the app installed has to uninstall it — losing their collection — before they can install anything you build afterwards. It lives outside git on purpose, which means git is not backing it up for you.
+
+Code shrinking (R8) is deliberately switched off for release. Every library here ships its own keep rules so it would most likely work, but the way it fails is silent — a stripped serializer breaks the *add your own species* fetch or a backup import at run time, with nothing wrong at build time. `app/proguard-rules.pro` carries the rules; turning it on is a change to make with a phone in hand and those two paths exercised.
+
+### Installing it without building it
+
+Sideloading an APK does **not** require developer options or USB debugging — that is only needed for `adb`. Copy the APK to the phone, tap it, and allow installs from whichever app you opened it with when Android asks. A debug and a release APK cannot coexist or replace each other, so uninstall one before installing the other.
+
+### Working on the app over USB
 
 **To enable USB debugging:** on the phone, Settings → About phone → tap *Build number* seven times, then Settings → System → Developer options → **USB debugging**. Plug in with a data-capable cable and accept the "Allow USB debugging?" prompt. `adb devices` should read `device`, not `unauthorized`. Turning on **Stay awake** in the same menu saves a lot of unlocking.
 
@@ -59,24 +93,6 @@ adb exec-out screencap -p > shot.png
 ```
 
 > `connectedDebugAndroidTest` **uninstalls the app when it finishes.** If BioDex disappears from your phone after a test run, that is why — reinstall with `./gradlew installDebug`.
-
----
-
-## Backups
-
-`Settings → Export collection…` writes one ZIP and hands it to the share sheet:
-
-```
-manifest.json          species, entries, captures, and a report on every photo
-thumbnails/<id>.jpg    every thumbnail the app owns
-photos/<id>.jpg        a full-size copy of every photo whose reference resolved
-```
-
-**A photo whose gallery reference is already broken cannot be exported.** The bytes are gone from the device and no archive can invent them. The export reports the two cases separately: a *revoked* reference (you deleted the photo) will never export, while a *cloud-only or offline* one usually will if you try again with a connection. The thumbnail and every detail of the catch are in the archive either way, so the entry restores — only the full-size photograph is lost.
-
-The manifest is written last, from the files that actually landed, so it can never name a photo the archive does not hold.
-
-**Import merges, it never replaces.** It adds what is missing, skips capture ids it already has (so importing twice is a no-op), keeps the earlier catch date, and deletes nothing. Restored photos become local copies; no URI grant is recreated, because a grant from another phone means nothing here.
 
 ---
 
@@ -104,19 +120,3 @@ Two rules the build enforces rather than trusting:
 - **A synonym is only accepted if it keeps the accepted name's specific epithet.** Without this, GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one — which would have shipped confident, fluent, completely wrong data.
 
 Edible tags are curatorial judgement and are not derived from any source; the catalogue says so in each entry's provenance.
-
----
-
-## Design documents
-
-`DESIGN.md` is the product design — the domain model, the numbered requirements, and every product decision with its rationale and what was rejected. `ARCHITECTURE.md` is the technical design, including the slice map the build followed and a running deviation log recording every place the implementation departed from the plan and why. Both are current.
-
----
-
-## State
-
-340 JVM unit tests and 43 instrumented tests pass. The app runs on a Pixel 7 Pro (Android 17), where the full loop has been walked by hand: the catalogue imports, images load from Wikimedia, the picker attaches a gallery photo, registration unlocks a species, plant cautions render, and the user-added flow resolves live against GBIF and Wikipedia.
-
-What that has **not** covered: a persisted URI grant surviving a reboot; a cloud-only Google Photos item that has never been downloaded; export producing a ZIP another app opens, and import reading one back; and the *Keep a local copy* path writing a file. Those want a real day of use rather than a test.
-
-Bird-call playback was designed, built, and then removed once the app covered plants as well as animals — a call is meaningless for a fern. `ARCHITECTURE.md` section 12.1 records what went and why.

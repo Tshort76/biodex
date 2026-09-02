@@ -1,3 +1,13 @@
+import java.util.Properties
+
+// Release signing is optional: a fresh clone with no keystore.properties still builds
+// and tests everything, it just produces an unsigned release APK. Real signing details
+// live outside the repository (see README, "Building a release APK").
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,9 +30,31 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (keystorePropsFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
+        }
+        release {
+            // R8 is deliberately off. Room, Compose, OkHttp, Coil and kotlinx-serialization
+            // all ship consumer rules, so it would probably work — but the way it fails is
+            // silent: a stripped serializer breaks the "add your own species" fetch or a
+            // backup import at run time with nothing wrong at build time. Turning it on is a
+            // change to make with a phone in hand and those two paths exercised, not blind.
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

@@ -17,3 +17,8 @@ local.properties
 
 # Catalogue pipeline
 tools/catalogue/cache/
+
+# Release signing (never committed — see README)
+keystore.properties
+*.jks
+*.keystore
