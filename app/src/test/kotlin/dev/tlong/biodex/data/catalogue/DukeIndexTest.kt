@@ -8,22 +8,37 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The bundled Duke's index (ARCHITECTURE.md 11.2). Everything here runs against
- * `test/resources/catalogue/duke_fixture.json`, a twelve-taxon **verified subset** of the
- * shipped asset — every count copied row for row, so a test that passes here describes the data
- * the phone actually has rather than a plausible invention. Devil's club and Oregon grape's
- * *Berberis* name are absent on purpose; both absences are the point of a test below.
+ * The bundled Duke's index (ARCHITECTURE.md 11.2), read from the **shipped asset** rather than
+ * from a copy of it (`RealDukeAsset` says why). Every species named below is real and every
+ * lookup runs against the file the phone carries, so these fail if a regeneration changes what
+ * the app would actually tell someone.
+ *
+ * Where a hard count would break on a legitimate recompaction the assertion is on the shape
+ * instead — "found only through a synonym", "poisonous and below the medicinal threshold" —
+ * because a build that fails for no reason gets ignored, and this is the dataset where being
+ * ignored is expensive.
  */
 class DukeIndexTest {
 
-    private fun index(name: String? = "duke_fixture.json") = DukeIndex(
-        assets = AssetReader { path ->
-            if (name == null) null else openResource("catalogue/$name").takeIf { path.isNotEmpty() }
-        },
-    )
+    private fun index() = RealDukeAsset.index()
 
     private fun openResource(path: String): InputStream =
         checkNotNull(javaClass.classLoader?.getResourceAsStream(path)) { "missing fixture $path" }
+
+    // -----------------------------------------------------------------------
+    // The corpus, in the shape 11.3 describes it.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `the shipped asset is the whole ethnobotanical table`() {
+        val taxa = RealDukeAsset.taxa()
+
+        assertTrue(index().available)
+        // 13,010 taxa in the source table. A floor rather than an equality: the pipeline may
+        // legitimately re-derive this, and only losing most of it is a bug.
+        assertTrue("only ${taxa.size} taxa", taxa.size > 10_000)
+        assertTrue(taxa.values.sumOf { it.recordCount } > 50_000)
+    }
 
     // -----------------------------------------------------------------------
     // The lookup, and the synonym pass that R15 exists for.
@@ -33,9 +48,10 @@ class DukeIndexTest {
     fun `the accepted binomial is tried first`() {
         val record = index().lookup("Achillea millefolium")!!
 
+        // Yarrow is the anchor: 105 records is the measured figure the design quotes, and it is
+        // worth knowing if it ever stops being true.
         assertEquals(105, record.recordCount)
-        assertEquals(8, record.activities.size)
-        assertEquals("Tonic", record.activities.first())
+        assertTrue(record.activities.size >= DukeIndex.MEDICINAL_ACTIVITY_THRESHOLD)
         assertFalse(record.poison)
     }
 
@@ -46,25 +62,25 @@ class DukeIndexTest {
         // Duke's files it under Mahonia. The accepted GBIF name alone finds nothing, and a
         // well-known medicinal plant coming back empty is the R15 failure mode.
         assertNull(duke.lookup("Berberis aquifolium"))
-
-        val record = duke.lookup("Berberis aquifolium", listOf("Mahonia aquifolium"))!!
-        assertEquals(3, record.recordCount)
+        assertTrue(duke.lookup("Berberis aquifolium", listOf("Mahonia aquifolium")) != null)
     }
 
     @Test
     fun `the first hit wins, in the order the names were given`() {
         val record = index().lookup(
-            accepted = "Sambucus cerulea",
-            synonyms = listOf("Arbutus menziesii", "Sambucus nigra"),
+            accepted = "Nothing recorded here",
+            synonyms = listOf("Achillea millefolium", "Urtica dioica"),
         )!!
 
-        assertEquals("the earlier synonym must win", 5, record.recordCount)
+        assertEquals("the earlier synonym must win", 105, record.recordCount)
     }
 
     @Test
     fun `no record is an ordinary state, not an error`() {
+        // About a fifth of the sampled species have nothing; devil's club and evergreen
+        // huckleberry are the two 11.3 names.
         assertNull(index().lookup("Oplopanax horridus"))
-        assertNull(index().lookup("Vaccinium ovatum", listOf("Vaccinium ovatum var. saporosum")))
+        assertNull(index().lookup("Vaccinium ovatum", listOf("Vaccinium ovatum saporosum")))
     }
 
     @Test
@@ -84,12 +100,22 @@ class DukeIndexTest {
     fun `three distinct activities is the medicinal threshold, on both sides of it`() {
         val duke = index()
 
-        // Above: yarrow, 8 activities. Exactly on it: Oregon grape, 3 — the boundary is load
-        // bearing and five of the shipped 80 sit on it. Below: sword fern 2, yerba santa 1.
+        // Above: yarrow and stinging nettle, both at the eight-activity cap. Below: western
+        // sword fern and yerba santa, which Duke's barely records. Asserted as the rule rather
+        // than as counts, so a recompaction that moves a number by one does not fail the build.
         assertTrue(DukeIndex.medicinalByRule(duke.lookup("Achillea millefolium")))
-        assertTrue(DukeIndex.medicinalByRule(duke.lookup("Mahonia aquifolium")))
+        assertTrue(DukeIndex.medicinalByRule(duke.lookup("Urtica dioica")))
         assertFalse(DukeIndex.medicinalByRule(duke.lookup("Polystichum munitum")))
         assertFalse(DukeIndex.medicinalByRule(duke.lookup("Eriodictyon californicum")))
+    }
+
+    @Test
+    fun `the threshold is doing real work, with species sitting on both sides of it`() {
+        val taxa = RealDukeAsset.taxa().values.filter { it.activities.isNotEmpty() }
+
+        // If everything with a record cleared the rule, the rule would not be a rule.
+        assertTrue(taxa.any { DukeIndex.medicinalByRule(it) })
+        assertTrue(taxa.any { !DukeIndex.medicinalByRule(it) })
     }
 
     @Test
@@ -104,15 +130,43 @@ class DukeIndexTest {
 
         assertTrue(elder.poison)
         assertFalse("Poison must never be one of the activity names", "Poison" in elder.activities)
+        assertTrue(RealDukeAsset.taxa().values.none { "Poison" in it.activities })
+    }
+
+    @Test
+    fun `a poisonous species below the medicinal threshold is a real and common shape`() {
+        val untaggedPoison = RealDukeAsset.taxa().values
+            .filter { it.poison && !DukeIndex.medicinalByRule(it) }
+
+        // Around 500 of the asset's taxa are poisonous and carry fewer than three activities.
+        // They get no medicinal tag, so their caution is the only thing the app will ever say
+        // about them — which is why a caution now outlives the tags it arrived without. A floor,
+        // because the exact number is the pipeline's to change and 500-ish is the point.
+        assertTrue("only ${untaggedPoison.size}", untaggedPoison.size > 100)
     }
 
     // -----------------------------------------------------------------------
-    // The asset may not be in the APK yet: slice 10 generates it concurrently.
+    // Why the synonym pass is filtered on the specific epithet (see GbifClient).
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `the redwood join the epithet filter exists to stop is real on both sides`() {
+        val duke = index()
+
+        // GBIF offers Chamaecyparis lawsoniana as a synonym of coast redwood. Duke's has no
+        // record for the redwood and does have one for the cedar, so an unfiltered synonym pass
+        // would not merely risk a wrong answer — it would produce one every time.
+        assertNull(duke.lookup("Sequoia sempervirens"))
+        assertTrue(duke.lookup("Chamaecyparis lawsoniana") != null)
+    }
+
+    // -----------------------------------------------------------------------
+    // The asset may be absent or unreadable, and neither may take the app down.
     // -----------------------------------------------------------------------
 
     @Test
     fun `a missing asset is an empty index, never a crash`() {
-        val duke = index(name = null)
+        val duke = DukeIndex(assets = { null })
 
         assertFalse(duke.available)
         assertNull(duke.lookup("Achillea millefolium"))
@@ -129,21 +183,12 @@ class DukeIndexTest {
     @Test
     fun `both asset shapes parse, so whichever the pipeline emits works`() {
         // The shipped asset carries inline activity strings under `taxa`; 11.3 also describes a
-        // deduplicated string table. Both parse, so neither shape can break the app.
-        val inline = index("duke_fixture_inline.json")
+        // deduplicated string table. This one fixture stays hand-written because it tests the
+        // parser's tolerance rather than the data — it is a shape the pipeline does not
+        // currently emit, which is exactly why no real file can stand in for it.
+        val inline = DukeIndex(assets = { openResource("catalogue/duke_fixture_inline.json") })
 
         assertEquals(3, inline.lookup("Achillea millefolium")!!.activities.size)
         assertEquals(listOf("Astringent", "Laxative"), inline.lookup("Mahonia aquifolium")!!.activities)
-    }
-
-    @Test
-    fun `a poisonous species below the medicinal threshold is a real and common shape`() {
-        // 516 of the asset's 13,010 taxa are poisonous and carry fewer than three activities.
-        // They get no medicinal tag, so their caution is the only thing the app ever says about
-        // them — which is why a caution now outlives the tags it arrived without.
-        val record = index().lookup("Cercocarpus montanus")!!
-
-        assertTrue(record.poison)
-        assertFalse(DukeIndex.medicinalByRule(record))
     }
 }
