@@ -1,17 +1,27 @@
 # Catalogue pipeline
 
-Builds the bundled Pacific catalogue asset the app ships with:
+Builds the bundled Pacific USA catalogue asset the app ships with — 120 animals
+and 80 plants:
 
 ```
-tools/catalogue/curated_species.json   (hand-authored input, 120 species)
+tools/catalogue/region.json            (header + the seven ecosystems)
+tools/catalogue/curated_animals.json   (hand-authored input, 120 animals)
+tools/catalogue/curated_plants.json    (hand-authored input, 80 plants)
         │
-        ├─ GBIF        accepted scientific name, rank, class, match confidence
+        ├─ GBIF        accepted scientific name, kingdom, rank, class, synonyms
         ├─ Wikipedia   habitat prose, description lede, canonical image, page link
         ├─ Commons     image license + author, for the attribution line
-        └─ Xeno-canto  a call recording (needs an API key — see below)
+        ├─ Xeno-canto  a call recording — ANIMALS ONLY (needs an API key, below)
+        └─ Duke's      medicinal tag, activities, record count, poison flag —
+                       PLANTS ONLY (one bulk CC0 download, no per-species calls)
         ▼
-app/src/main/assets/catalogue/pacific.json   (generated, committed to git)
+app/src/main/assets/catalogue/pacific.json         (generated, committed to git)
+app/src/main/assets/catalogue/duke_ethnobot.json   (generated, committed to git)
 ```
+
+The input is split three ways so the plant curator and an animal edit never
+touch the same file. `region.json` owns `catalogueVersion`, `regionId`,
+`regionName` and the ecosystems; the two species files own nothing else.
 
 The app never runs this. It runs on the build machine, its output is committed,
 and builds never touch the network.
@@ -23,15 +33,25 @@ cd tools/catalogue
 python3 build_catalogue.py                 # writes ../../app/src/main/assets/catalogue/pacific.json
 python3 build_catalogue.py --out /tmp/x.json
 python3 build_catalogue.py --refresh       # ignore the cache, re-fetch everything
-python3 build_catalogue.py --only 5        # smoke run over the first five species
+python3 build_catalogue.py --only 5        # smoke run over the first five of each kingdom
+python3 build_catalogue.py --plants /tmp/edited.json --out /tmp/x.json
 ```
+
+`--region`, `--animals` and `--plants` each point the script at a different
+input file. They exist so a validation rule can be exercised against a modified
+copy without touching the real inputs — the poison-caution rule below is tested
+that way.
+
+`duke_ethnobot.json` is written beside `--out`, so a run into `/tmp` leaves the
+committed asset alone.
 
 Standard library only — no venv, no `pip install`. (ARCHITECTURE.md 7 mentions
 `requests`; this machine has no `requests`, so the script uses `urllib`. Nothing
 to set up.)
 
-A cold run takes roughly 10–15 minutes: it sleeps between requests to be polite
-to Wikipedia (1 s), GBIF (0.5 s) and Xeno-canto (4 s).
+A cold run takes roughly 25–30 minutes: it sleeps between requests to be polite
+to Wikipedia (1 s), GBIF (0.5 s) and Xeno-canto (4 s). Duke's is one 5.8 MB
+download for the whole run, cached under `cache/duke/`.
 
 **Every HTTP response is cached** under `cache/<sha1-of-url>.json`, so a second
 run makes zero requests and finishes in seconds. `cache/` is disposable — delete
@@ -64,10 +84,10 @@ play. Expect roughly half the catalogue to end up with a call even once the key
 exists: Xeno-canto is strong for birds, thin for frogs and insects, and absent
 for mammals and everything marine.
 
-## The curated input
+## The curated animal input
 
-`curated_species.json` is the only hand-authored data, and it is where editorial
-judgment lives. It carries the seven Pacific ecosystems and the 120 species, each
+`curated_animals.json` is one of the three hand-authored files, and it is where
+editorial judgment about the animals lives. It carries the 120 species, each
 with a dex number, a common name, a scientific name and one or more ecosystem
 tags.
 
@@ -130,10 +150,12 @@ resolves to the wrong article entirely. Two live cases:
 Whenever the report flags a `SYNONYM` status, check which article the asset's
 `provenance.wikipediaTitle` actually names before accepting the entry.
 
-## What the script does per species
+## What the script does per animal
 
 1. **GBIF** `species/match?name=<scientific>&strict=false` → accepted name,
-   rank, class, confidence. The class maps to the app's `taxClass` enum
+   kingdom, rank, class, confidence. A match whose kingdom is not `Animalia`
+   **fails the build**: an animal entry that resolves to a plant is a curator
+   typo that must not ship. The class maps to the app's `taxClass` enum
    (Aves→bird, Mammalia→mammal, Reptilia/Squamata/Testudines→reptile,
    Amphibia→amphibian, Insecta→insect, Actinopterygii/Chondrichthyes/
    Elasmobranchii→fish, everything else→other_invertebrate). GBIF's backbone
@@ -162,15 +184,181 @@ Whenever the report flags a `SYNONYM` status, check which article the asset's
 5. Assemble the record with `silhouetteRes = sil_<taxClass>` and a `provenance`
    map naming the source of every fetched field.
 
-Before writing, the script validates: exactly 120 species, dex numbers exactly
-1–120 with no duplicates, unique ids, every `ecosystemId` declared, and
-`commonName` / `scientificName` / `taxClass` / `silhouetteRes` present on every
-record. It exits non-zero if validation fails or a species failed entirely.
+## Plants
+
+The 80 plants live in `curated_plants.json` and go through the same GBIF,
+Wikipedia and Commons steps, with Xeno-canto replaced by Dr. Duke's.
+
+### The entry shape
+
+```json
+{ "dexNumber": 47, "commonName": "Blue Elderberry", "scientificName": "Sambucus cerulea",
+  "plantClass": "shrub",
+  "ecosystemIds": ["riparian-wetland", "oak-chaparral", "urban-suburban"],
+  "edible": true,
+  "dukeName": "Sambucus nigra",
+  "usesNote": "Berries, late summer to early autumn — cook or dry before eating; flowers for cordial and tea. Caution: raw berries, leaves, stems and bark are toxic; red-berried elders are not this species." }
+```
+
+- `plantClass` is required and is one of `tree` / `shrub` / `herb` / `fern`. It
+  is **growth form, not taxonomy** (DESIGN.md D13) and it is editorial judgment,
+  never fetched — which is exactly why GBIF's inconsistent plant classes cannot
+  mis-class a plant.
+- `edible` is optional, defaults to `false`, and is **the curator's only use
+  tag**.
+- **`medicinal` is not an input field.** It is derived from Duke's, below. A
+  curator who disagrees with the derivation pins it with
+  `"overrides": { "medicinal": true }`, and the asset's `provenance.uses`
+  records the pin.
+- `dukeName` optionally pins the Duke's join for a species Duke's files under an
+  older name.
+- `usesNote` is at most 240 characters. It is **required** when `edible` is true
+  (name the part and the season) and whenever Duke's records the species as a
+  poison (then it must contain a sentence beginning `Caution:`). It is
+  **forbidden** when the species ends up with no use tag at all, because the app
+  has nowhere to render it.
+- `wikipediaTitle` and `overrides` work exactly as they do for animals.
+
+**Edible is curated; medicinal is sourced.** Duke's holds essentially no food
+records — 15 `Food` and 14 `Fruit` rows in the entire 82,873-row file — so the
+fruit-bearing and edible plants stay editorial judgment. The medicinal tag, the
+activity names, the record count and the poison check all come from Duke's.
+
+### The Duke's join
+
+Dr. Duke's Phytochemical and Ethnobotanical Databases (USDA ARS), **CC0**. The
+script takes one bulk download rather than per-species queries.
+
+The data.gov and Ag Data Commons landing pages **return 403 to a plain fetch**,
+so the script resolves the download through the figshare API:
+
+```
+https://api.figshare.com/v2/articles/24660351/files
+   → Duke-Source-CSV.zip (5.8 MB) at https://ndownloader.figshare.com/files/43363335
+```
+
+The zip is cached under `cache/duke/`, so a re-run makes no request for it.
+Inside, `ETHNOBOT.csv` holds 82,873 records over 13,010 taxa with `GENUS`,
+`SPECIES` and `ACTIVITY` columns.
+
+Per plant, the lookup tries, in order:
+
+1. the GBIF-accepted binomial,
+2. each synonym GBIF returns for the match (`species/{key}/synonyms`, one extra
+   cached request per plant),
+3. the curator's `dukeName` pin.
+
+The first hit wins and `provenance.duke` records which name matched —
+`duke:accepted`, `duke:synonym:Mahonia aquifolium`, `duke:pinned:Sambucus nigra`
+or `duke:none`. **The synonym pass is not optional**: Oregon grape has 4 records
+as *Mahonia aquifolium* and none as *Berberis aquifolium*, which is the accepted
+name GBIF returns.
+
+From a hit: `medicinalRecordCount` is the number of records excluding `Poison`;
+`medicinalActivities` is the distinct non-`Poison` activities ordered by record
+count, capped at eight and title-cased; the **medicinal tag is set when there
+are three or more distinct non-`Poison` activities**; and a `Poison` record
+anywhere for the taxon raises the poison flag.
+
+**No hit is an ordinary state.** About a fifth of the list has nothing —
+evergreen huckleberry and devil's club among them — and the report lists them
+under "no Duke's record" without counting them as failures. The check on that
+list is judgment: a famous medicinal plant appearing there is a join miss, not a
+true absence, and wants a `dukeName` pin.
+
+### `duke_ethnobot.json`
+
+The same table, reduced and committed beside `pacific.json` so the app can look
+a user-added plant up offline:
+
+```json
+{ "format": "biodex-duke-1", "license": "CC0",
+  "taxa": { "achillea millefolium": { "a": ["Astringent", "…"], "n": 105, "p": false } } }
+```
+
+Keys are lower-cased `genus species`. `a` is the eight most-cited non-`Poison`
+activities, `n` the non-`Poison` record count, `p` the poison flag. Activity
+names are stored inline rather than through a shared string table: the file
+lands near 1.1 MB either way, and an inline map is something a small test
+fixture can be cut out of by hand. `LICENSE-duke.txt` beside it records the
+source and the CC0 dedication.
+
+### `cache/plant_uses_review.txt`
+
+A curator aid, written on every run and **never** read back into the asset. Any
+Wikipedia section whose title contains "Uses", "Culinary", "Edib", "Medicin" or
+"Ethnobot" has its stripped prose (first 600 characters) written there, so the
+hand-written `usesNote` can be checked against the article. The asset's
+`provenance.uses.edible` is always `curated`.
+
+### Xeno-canto
+
+Skipped for plants **without making a request**. `callUrl` and
+`callAttribution` are null, and the report does not count a plant as a missing
+call.
+
+## What the script validates
+
+Before writing, and exiting non-zero on any failure:
+
+- exactly 200 species: 120 animals and 80 plants;
+- animal dex numbers exactly 1–120, plant dex numbers exactly 1–80, no
+  duplicates in either, unique ids across both;
+- every `ecosystemId` declared, and `commonName` / `scientificName` / `taxClass`
+  / `silhouetteRes` / `kingdom` present on every record;
+- the GBIF kingdom matches the declared kingdom (this one fails during the
+  fetch, not at the end);
+- `uses` ⊆ {`edible`, `medicinal`}; `usesNote` present when `edible`, absent
+  when there is no use tag, at most 240 characters;
+- `medicinal` set ⇔ three or more `medicinalActivities`, unless the curator
+  pinned it;
+- `medicinalActivities` empty ⇒ `usesAttribution` null;
+- every animal carries `uses: []` and empty Duke's fields;
+- `silhouetteRes` consistent with the class and the kingdom;
+- `duke_ethnobot.json` parses and contains every name a plant joined on;
+- **and the poison rule: a plant Duke's records as poisonous, which carries a
+  use tag, must have a sentence beginning `Caution:` in its note.** This is what
+  makes the cautioned set a decision of the source rather than of whoever wrote
+  the notes.
+
+To see the poison rule bite, delete the `Caution:` sentence from a species the
+report lists under "DUKE'S — POISON RECORDED" and run against the copy:
+
+```bash
+cp curated_plants.json /tmp/broken.json   # then edit /tmp/broken.json
+python3 build_catalogue.py --plants /tmp/broken.json --out /tmp/x.json
+# VALIDATION FAILED: … its usesNote has no 'Caution:' sentence   (exit 1)
+```
+
+**One gap worth knowing.** A species Duke's flags as a poison but which ends up
+with *no* use tag — no edible tag from the curator, fewer than three Duke's
+activities — cannot carry a caution: the app forbids a `usesNote` without a use
+tag, and a plant with no uses renders nothing in that slot. The build does not
+fail on those; it lists them under "DUKE'S POISON BUT NO USE TAG" so the curator
+sees them. Pinning `overrides.medicinal` to force a tag would be dishonest about
+the source, so it is not the answer.
+
+## Safety, and what is actually hand-written
+
+The edible tag and the note are the only text in the plant list with no source
+behind it, and they are what a person might read before eating something. They
+are kept to a part and a season, they never say a plant is safe, and every
+species with a toxic part or a dangerous lookalike carries a `Caution:` sentence
+whether or not Duke's flags it — the elderberry's raw fruit, the death-camas
+lookalike beside camas and nodding onion, water hemlock in the same stream as
+watercress, iris beside cattail. See DESIGN.md D14/M30 and ARCHITECTURE.md R11.
+
+If you are not confident about a species' edibility or its lookalikes, **drop
+the tag or swap the species**. A missing tag costs nothing.
 
 ## Changing the catalogue later
 
-Editing `curated_species.json` and re-running rewrites `pacific.json`. The app
-only re-imports when `catalogueVersion` changes, so **bump `catalogueVersion` in
-`curated_species.json`** when the new asset should reach an existing install.
-The importer never touches the user's entries, captures or user-added species,
-and never deletes a caught species (ARCHITECTURE.md 3.3).
+Editing an input file and re-running rewrites `pacific.json`. The app only
+re-imports when `catalogueVersion` changes, so **bump `catalogueVersion` in
+`region.json`** when the new asset should reach an existing install. The
+importer never touches the user's entries, captures or user-added species, and
+never deletes a caught species (ARCHITECTURE.md 3.3).
+
+The asset numbers each kingdom from 1 — animals 1–120, plants 1–80 — and the
+app's importer applies the stored per-kingdom base (animals 1–120, plants
+2001–2080), so the curator never types 2047.

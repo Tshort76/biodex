@@ -1,0 +1,447 @@
+{
+  "_notes": [
+    "The 80 Pacific USA plants (ARCHITECTURE.md 11.3), in dex order by growth form:",
+    "  1-40   trees",
+    "  41-58  shrubs",
+    "  59-77  herbs",
+    "  78-80  ferns",
+    "plantClass is one of tree / shrub / herb / fern and is editorial judgment (growth",
+    "form, not taxonomy — DESIGN.md D13). Ecosystem tags are judgment too, never fetched.",
+    "",
+    "'edible' is the curator's ONLY use tag. The 'medicinal' tag is derived at build time",
+    "from Dr. Duke's ethnobotanical records and is not an input field; a genuine",
+    "disagreement is pinned with overrides.medicinal.",
+    "",
+    "'usesNote' is required when edible is true (name the part and the season) and",
+    "whenever Duke's records the species as a poison (then it must contain a sentence",
+    "beginning 'Caution:'). It is <= 240 characters, and is forbidden when the species",
+    "ends up with no use tag at all.",
+    "",
+    "'dukeName' pins the Duke's join for a species Duke's files under an older name.",
+    "'wikipediaTitle' pins the article; 'overrides' pins any output field.",
+    "",
+    "SAFETY: these notes are the only unsourced text in the catalogue. They name a part",
+    "and a season and nothing more, they never say a plant is safe, and every species",
+    "with a toxic part or a dangerous lookalike carries a 'Caution:' sentence whether or",
+    "not Duke's flags it. See DESIGN.md D14/M30 and ARCHITECTURE.md R11."
+  ],
+
+  "species": [
+    { "dexNumber": 1, "commonName": "Douglas-fir", "scientificName": "Pseudotsuga menziesii",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "alpine", "urban-suburban"] },
+
+    { "dexNumber": 2, "commonName": "Coast Redwood", "scientificName": "Sequoia sempervirens",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "urban-suburban"] },
+
+    { "dexNumber": 3, "commonName": "Giant Sequoia", "scientificName": "Sequoiadendron giganteum",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine"] },
+
+    { "dexNumber": 4, "commonName": "Ponderosa Pine", "scientificName": "Pinus ponderosa",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "alpine", "high-desert"],
+      "usesNote": "Caution: the needles are recorded as poisonous and are a known cause of abortion in grazing cattle. Nothing from this tree is a food, and the traditional uses below are records, not recommendations." },
+
+    { "dexNumber": 5, "commonName": "Sugar Pine", "scientificName": "Pinus lambertiana",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "oak-chaparral"] },
+
+    { "dexNumber": 6, "commonName": "Jeffrey Pine", "scientificName": "Pinus jeffreyi",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "high-desert"] },
+
+    { "dexNumber": 7, "commonName": "Lodgepole Pine", "scientificName": "Pinus contorta",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "coastal-rainforest", "rocky-shore-kelp"] },
+
+    { "dexNumber": 8, "commonName": "Whitebark Pine", "scientificName": "Pinus albicaulis",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine"] },
+
+    { "dexNumber": 9, "commonName": "Great Basin Bristlecone Pine", "scientificName": "Pinus longaeva",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "high-desert"] },
+
+    { "dexNumber": 10, "commonName": "Single-leaf Pinyon", "scientificName": "Pinus monophylla",
+      "plantClass": "tree",
+      "ecosystemIds": ["high-desert"],
+      "edible": true,
+      "usesNote": "Pine nuts from the cones, early autumn — the ripe cones are heated or dried until they open, and the shelled seeds are eaten raw or roasted." },
+
+    { "dexNumber": 11, "commonName": "Western Juniper", "scientificName": "Juniperus occidentalis",
+      "plantClass": "tree",
+      "ecosystemIds": ["high-desert", "alpine"] },
+
+    { "dexNumber": 12, "commonName": "Incense-cedar", "scientificName": "Calocedrus decurrens",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "alpine"] },
+
+    { "dexNumber": 13, "commonName": "Western Redcedar", "scientificName": "Thuja plicata",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+
+    { "dexNumber": 14, "commonName": "Sitka Spruce", "scientificName": "Picea sitchensis",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "rocky-shore-kelp"],
+      "edible": true,
+      "usesNote": "Bright new needle tips, spring — a few picked young for tea or syrup. Caution: yew looks similar to an untrained eye and is deadly; take tips only from a tree whose needles are stiff, sharp and four-sided." },
+
+    { "dexNumber": 15, "commonName": "Western Hemlock", "scientificName": "Tsuga heterophylla",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest"] },
+
+    { "dexNumber": 16, "commonName": "Grand Fir", "scientificName": "Abies grandis",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "alpine"] },
+
+    { "dexNumber": 17, "commonName": "California Red Fir", "scientificName": "Abies magnifica",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine"] },
+
+    { "dexNumber": 18, "commonName": "Noble Fir", "scientificName": "Abies procera",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "coastal-rainforest"] },
+
+    { "dexNumber": 19, "commonName": "Western Larch", "scientificName": "Larix occidentalis",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine"] },
+
+    { "dexNumber": 20, "commonName": "Pacific Yew", "scientificName": "Taxus brevifolia",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+
+    { "dexNumber": 21, "commonName": "Monterey Cypress", "scientificName": "Hesperocyparis macrocarpa",
+      "plantClass": "tree",
+      "ecosystemIds": ["rocky-shore-kelp", "urban-suburban"] },
+
+    { "dexNumber": 22, "commonName": "Coast Live Oak", "scientificName": "Quercus agrifolia",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Acorns, autumn — shelled, ground and leached in many changes of water until no bitterness is left, then cooked. Caution: raw acorns are heavy with tannin and are not eaten." },
+
+    { "dexNumber": 23, "commonName": "Valley Oak", "scientificName": "Quercus lobata",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "riparian-wetland"],
+      "edible": true,
+      "usesNote": "Acorns, autumn — the sweetest of the local oaks, but still shelled, ground and leached in many changes of water before cooking. Caution: raw acorns are not eaten." },
+
+    { "dexNumber": 24, "commonName": "Blue Oak", "scientificName": "Quercus douglasii",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral"] },
+
+    { "dexNumber": 25, "commonName": "California Black Oak", "scientificName": "Quercus kelloggii",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "alpine"],
+      "edible": true,
+      "usesNote": "Acorns, autumn — shelled, ground and leached in many changes of water until no bitterness is left, then cooked. Caution: raw acorns are heavy with tannin and are not eaten." },
+
+    { "dexNumber": 26, "commonName": "Oregon White Oak", "scientificName": "Quercus garryana",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "urban-suburban"] },
+
+    { "dexNumber": 27, "commonName": "Tanoak", "scientificName": "Notholithocarpus densiflorus",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"] },
+
+    { "dexNumber": 28, "commonName": "Pacific Madrone", "scientificName": "Arbutus menziesii",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "edible": true,
+      "usesNote": "Small red berries, autumn — dry and mealy raw, and usually dried or cooked before eating." },
+
+    { "dexNumber": 29, "commonName": "Bigleaf Maple", "scientificName": "Acer macrophyllum",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Sap, late winter — tapped and boiled down to syrup; the hanging flower clusters are also eaten cooked in early spring." },
+
+    { "dexNumber": 30, "commonName": "Vine Maple", "scientificName": "Acer circinatum",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+
+    { "dexNumber": 31, "commonName": "Red Alder", "scientificName": "Alnus rubra",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"] },
+
+    { "dexNumber": 32, "commonName": "Black Cottonwood", "scientificName": "Populus trichocarpa",
+      "plantClass": "tree",
+      "ecosystemIds": ["riparian-wetland", "urban-suburban"] },
+
+    { "dexNumber": 33, "commonName": "Quaking Aspen", "scientificName": "Populus tremuloides",
+      "plantClass": "tree",
+      "ecosystemIds": ["alpine", "riparian-wetland", "high-desert"] },
+
+    { "dexNumber": 34, "commonName": "Pacific Willow", "scientificName": "Salix lasiandra",
+      "plantClass": "tree",
+      "ecosystemIds": ["riparian-wetland"],
+      "overrides": {
+        "scientificName": "Salix lucida subsp. lasiandra",
+        "habitatText": "Streambanks, sloughs, wet meadows and lake margins from Alaska south through the Pacific states and east to the Rockies, at low to middle elevations. GBIF lumps it into Salix lucida, whose article covers the same complex." } },
+
+    { "dexNumber": 35, "commonName": "California Bay Laurel", "scientificName": "Umbellularia californica",
+      "plantClass": "tree",
+      "ecosystemIds": ["oak-chaparral", "riparian-wetland", "coastal-rainforest"],
+      "edible": true,
+      "usesNote": "Leaves, any season — far stronger than kitchen bay; one small leaf does the work of several. Caution: the fresh crushed leaves give some people a severe headache, and the raw leaf is too strong to eat whole." },
+
+    { "dexNumber": 36, "commonName": "Pacific Dogwood", "scientificName": "Cornus nuttallii",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"] },
+
+    { "dexNumber": 37, "commonName": "Joshua Tree", "scientificName": "Yucca brevifolia",
+      "plantClass": "tree",
+      "ecosystemIds": ["high-desert"] },
+
+    { "dexNumber": 38, "commonName": "Pacific Crabapple", "scientificName": "Malus fusca",
+      "plantClass": "tree",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "edible": true,
+      "dukeName": "Pyrus fusca",
+      "usesNote": "Small tart apples, late summer into autumn — eaten once softened on the tree or by frost, or cooked; the seeds are discarded as with any apple." },
+
+    { "dexNumber": 39, "commonName": "Curl-leaf Mountain Mahogany", "scientificName": "Cercocarpus ledifolius",
+      "plantClass": "tree",
+      "ecosystemIds": ["high-desert", "alpine"] },
+
+    { "dexNumber": 40, "commonName": "California Sycamore", "scientificName": "Platanus racemosa",
+      "plantClass": "tree",
+      "ecosystemIds": ["riparian-wetland", "urban-suburban"],
+      "overrides": {
+        "habitatText": "Streamsides, canyon bottoms and floodplains through the coast ranges, the Central Valley and the Sierra foothills of California and into northern Baja California, wherever its roots can reach year-round groundwater. Widely planted in the same range as a street and park tree." } },
+
+    { "dexNumber": 41, "commonName": "Salal", "scientificName": "Gaultheria shallon",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "rocky-shore-kelp"],
+      "edible": true,
+      "usesNote": "Dark blue-black berries, late summer — eaten fresh, dried into cakes or cooked down into jam." },
+
+    { "dexNumber": 42, "commonName": "Evergreen Huckleberry", "scientificName": "Vaccinium ovatum",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "rocky-shore-kelp"],
+      "edible": true,
+      "usesNote": "Small black berries, late summer into autumn — sweetest after the first frosts; eaten fresh or cooked." },
+
+    { "dexNumber": 43, "commonName": "Red Huckleberry", "scientificName": "Vaccinium parvifolium",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest"],
+      "edible": true,
+      "usesNote": "Translucent red berries, summer — sharply tart, eaten fresh or cooked into jelly." },
+
+    { "dexNumber": 44, "commonName": "Salmonberry", "scientificName": "Rubus spectabilis",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "edible": true,
+      "usesNote": "Amber to red raspberry-like fruit, late spring into early summer — eaten fresh; the peeled young shoots are also eaten in spring." },
+
+    { "dexNumber": 45, "commonName": "Thimbleberry", "scientificName": "Rubus parviflorus",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland", "alpine"],
+      "edible": true,
+      "usesNote": "Soft red fruit, mid to late summer — eaten fresh off the plant; it is far too fragile to carry home." },
+
+    { "dexNumber": 46, "commonName": "Himalayan Blackberry", "scientificName": "Rubus armeniacus",
+      "plantClass": "shrub",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland", "oak-chaparral"],
+      "edible": true,
+      "overrides": {
+        "habitatText": "Roadsides, fence lines, riverbanks, forest edges and waste ground throughout the lowland Pacific states, where it forms dense impenetrable thickets. Introduced from the Caucasus and thoroughly naturalised west of the Cascades." },
+      "usesNote": "Blackberries, late summer into autumn — eaten fresh or cooked. Introduced and invasive here, so picking it does the thicket no harm." },
+
+    { "dexNumber": 47, "commonName": "Blue Elderberry", "scientificName": "Sambucus cerulea",
+      "plantClass": "shrub",
+      "ecosystemIds": ["riparian-wetland", "oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "dukeName": "Sambucus nigra",
+      "wikipediaTitle": "Sambucus cerulea",
+      "usesNote": "Berries, late summer to early autumn — cooked or dried before eating; flowers for cordial and tea. Caution: raw berries, leaves, stems and bark are toxic, and red-berried elders are not this species." },
+
+    { "dexNumber": 48, "commonName": "Oregon Grape", "scientificName": "Berberis aquifolium",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Blue-purple berries, late summer — very tart and full of seeds, so they are cooked with sugar into jelly rather than eaten raw. Caution: the yellow root and bark are bitter with berberine and are not a food." },
+
+    { "dexNumber": 49, "commonName": "Common Manzanita", "scientificName": "Arctostaphylos manzanita",
+      "plantClass": "shrub",
+      "ecosystemIds": ["oak-chaparral"],
+      "edible": true,
+      "overrides": {
+        "habitatText": "Chaparral and dry foothill woodland on rocky, well-drained slopes, through the inner North Coast Ranges of California and the western slope of the Sierra Nevada, mostly below about 1,200 metres." },
+      "usesNote": "Berries, late summer — dry and mealy; traditionally crushed and steeped in cold water for a cider-like drink rather than eaten whole." },
+
+    { "dexNumber": 50, "commonName": "Toyon", "scientificName": "Heteromeles arbutifolia",
+      "plantClass": "shrub",
+      "ecosystemIds": ["oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Red berries, late autumn into winter — always cooked or dried first. Caution: the raw fruit and the leaves hold cyanide-releasing compounds and are not eaten raw." },
+
+    { "dexNumber": 51, "commonName": "Western Serviceberry", "scientificName": "Amelanchier alnifolia",
+      "plantClass": "shrub",
+      "ecosystemIds": ["alpine", "riparian-wetland", "oak-chaparral"],
+      "edible": true,
+      "usesNote": "Purple berries, midsummer — sweet and mild, eaten fresh, dried or cooked." },
+
+    { "dexNumber": 52, "commonName": "Nootka Rose", "scientificName": "Rosa nutkana",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Hips, autumn into winter — the outer flesh is eaten or steeped for tea, and the petals in early summer. Caution: the seeds and their irritant hairs inside the hip are scraped out and discarded." },
+
+    { "dexNumber": 53, "commonName": "Red-flowering Currant", "scientificName": "Ribes sanguineum",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Blue-black berries under a white bloom, midsummer — edible but dry and insipid, and usually cooked rather than eaten fresh." },
+
+    { "dexNumber": 54, "commonName": "Big Sagebrush", "scientificName": "Artemisia tridentata",
+      "plantClass": "shrub",
+      "ecosystemIds": ["high-desert"] },
+
+    { "dexNumber": 55, "commonName": "Yerba Santa", "scientificName": "Eriodictyon californicum",
+      "plantClass": "shrub",
+      "ecosystemIds": ["oak-chaparral"] },
+
+    { "dexNumber": 56, "commonName": "Chokecherry", "scientificName": "Prunus virginiana",
+      "plantClass": "shrub",
+      "ecosystemIds": ["riparian-wetland", "high-desert", "oak-chaparral"],
+      "edible": true,
+      "usesNote": "Dark red to black cherries, late summer — cooked and strained for jelly or syrup. Caution: the pits, leaves and twigs hold cyanide-releasing compounds and are never crushed or eaten." },
+
+    { "dexNumber": 57, "commonName": "Cascara", "scientificName": "Frangula purshiana",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "dukeName": "Rhamnus purshiana",
+      "usesNote": "Caution: fresh cascara bark is a violent purgative and was traditionally aged a year or more before any use at all. Nothing from this shrub is a food." },
+
+    { "dexNumber": 58, "commonName": "Devil's Club", "scientificName": "Oplopanax horridus",
+      "plantClass": "shrub",
+      "ecosystemIds": ["coastal-rainforest", "riparian-wetland"],
+      "dukeName": "Oplopanax horridum",
+      "usesNote": "Caution: recorded as poisonous, and every stem and leaf is armoured with brittle spines that break off in the skin. The traditional uses below are a record of practice, not a recommendation." },
+
+    { "dexNumber": 59, "commonName": "Miner's Lettuce", "scientificName": "Claytonia perfoliata",
+      "plantClass": "herb",
+      "ecosystemIds": ["oak-chaparral", "coastal-rainforest", "urban-suburban"],
+      "edible": true,
+      "usesNote": "The whole leafy rosette, late winter into spring — eaten raw as salad or briefly cooked; it turns bitter once the plant flowers and the weather warms." },
+
+    { "dexNumber": 60, "commonName": "Stinging Nettle", "scientificName": "Urtica dioica",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland", "coastal-rainforest", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Young leaves and tops, early spring before flowering — cooking or drying destroys the sting. Caution: the fresh plant stings on contact, and older flowering plants are not eaten." },
+
+    { "dexNumber": 61, "commonName": "Common Yarrow", "scientificName": "Achillea millefolium",
+      "plantClass": "herb",
+      "ecosystemIds": ["oak-chaparral", "alpine", "high-desert", "urban-suburban"] },
+
+    { "dexNumber": 62, "commonName": "Common Camas", "scientificName": "Camassia quamash",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland", "oak-chaparral"],
+      "edible": true,
+      "usesNote": "Bulbs, dug after the flowers fade in summer — slow-baked for many hours; raw they are indigestible. Caution: deadly death camas shares these meadows, so dig only bulbs marked while the blue flowers were open." },
+
+    { "dexNumber": 63, "commonName": "Fireweed", "scientificName": "Chamaenerion angustifolium",
+      "plantClass": "herb",
+      "ecosystemIds": ["alpine", "coastal-rainforest", "riparian-wetland"],
+      "edible": true,
+      "dukeName": "Epilobium angustifolium",
+      "usesNote": "Young shoots, spring — cooked like asparagus before the leaves open; the leaves and flowers are dried for tea later in the summer." },
+
+    { "dexNumber": 64, "commonName": "Western Wild Ginger", "scientificName": "Asarum caudatum",
+      "plantClass": "herb",
+      "ecosystemIds": ["coastal-rainforest"] },
+
+    { "dexNumber": 65, "commonName": "Self-heal", "scientificName": "Prunella vulgaris",
+      "plantClass": "herb",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland", "coastal-rainforest"] },
+
+    { "dexNumber": 66, "commonName": "Common Mullein", "scientificName": "Verbascum thapsus",
+      "plantClass": "herb",
+      "ecosystemIds": ["high-desert", "urban-suburban", "oak-chaparral"] },
+
+    { "dexNumber": 67, "commonName": "Beach Strawberry", "scientificName": "Fragaria chiloensis",
+      "plantClass": "herb",
+      "ecosystemIds": ["rocky-shore-kelp", "coastal-rainforest"],
+      "edible": true,
+      "usesNote": "Small red berries, summer — eaten fresh; far smaller and more strongly flavoured than a garden strawberry." },
+
+    { "dexNumber": 68, "commonName": "Broadleaf Cattail", "scientificName": "Typha latifolia",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland"],
+      "edible": true,
+      "usesNote": "Young shoot hearts in spring and green flower spikes in early summer — peeled and cooked. Caution: before the brown spike shows, cattail is easily confused with iris, whose leaves and rhizomes are poisonous." },
+
+    { "dexNumber": 69, "commonName": "Wapato", "scientificName": "Sagittaria latifolia",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland"],
+      "edible": true,
+      "usesNote": "Starchy tubers, autumn into early spring — dug from the mud and always cooked, never raw. Caution: gather only where you saw the arrowhead leaves and three white petals, and never from polluted water." },
+
+    { "dexNumber": 70, "commonName": "Yerba Buena", "scientificName": "Clinopodium douglasii",
+      "plantClass": "herb",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "edible": true,
+      "wikipediaTitle": "Clinopodium douglasii",
+      "dukeName": "Satureja douglasii",
+      "overrides": { "scientificName": "Clinopodium douglasii" },
+      "usesNote": "Leaves, any season — a trailing woodland mint, steeped fresh or dried for tea rather than eaten as a food." },
+
+    { "dexNumber": 71, "commonName": "California Poppy", "scientificName": "Eschscholzia californica",
+      "plantClass": "herb",
+      "ecosystemIds": ["oak-chaparral", "urban-suburban", "high-desert"] },
+
+    { "dexNumber": 72, "commonName": "Nodding Onion", "scientificName": "Allium cernuum",
+      "plantClass": "herb",
+      "ecosystemIds": ["alpine", "oak-chaparral", "riparian-wetland"],
+      "edible": true,
+      "usesNote": "Bulbs and leaves, spring into summer — used like a mild onion. Caution: deadly death camas grows alongside and looks similar out of flower; if the crushed plant does not smell of onion, it is not this plant." },
+
+    { "dexNumber": 73, "commonName": "Common Chickweed", "scientificName": "Stellaria media",
+      "plantClass": "herb",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland"],
+      "edible": true,
+      "usesNote": "Leafy stems, autumn through spring — eaten raw or lightly cooked. Caution: poisonous scarlet pimpernel grows in the same ground; chickweed has one line of fine hairs running up one side of the stem." },
+
+    { "dexNumber": 74, "commonName": "Dandelion", "scientificName": "Taraxacum officinale",
+      "plantClass": "herb",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland", "alpine"],
+      "edible": true,
+      "usesNote": "Leaves in early spring before the plant blooms, the flower heads in spring, the root roasted in autumn. Caution: not picked from lawns or verges that may have been sprayed." },
+
+    { "dexNumber": 75, "commonName": "Broadleaf Plantain", "scientificName": "Plantago major",
+      "plantClass": "herb",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland"] },
+
+    { "dexNumber": 76, "commonName": "Watercress", "scientificName": "Nasturtium officinale",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland"],
+      "edible": true,
+      "overrides": {
+        "habitatText": "Cool, clear, slow-moving fresh water — spring heads, creek margins, seeps and ditches — where it roots in gravel and forms floating mats. Native to Eurasia and thoroughly naturalised across the Pacific states." },
+      "usesNote": "Leafy stems, the cool months — cooked rather than raw when wild. Caution: deadly water hemlock grows in the same streams, and cress from water below livestock can carry liver fluke." },
+
+    { "dexNumber": 77, "commonName": "California Mugwort", "scientificName": "Artemisia douglasiana",
+      "plantClass": "herb",
+      "ecosystemIds": ["riparian-wetland", "oak-chaparral"] },
+
+    { "dexNumber": 78, "commonName": "Western Sword Fern", "scientificName": "Polystichum munitum",
+      "plantClass": "fern",
+      "ecosystemIds": ["coastal-rainforest"] },
+
+    { "dexNumber": 79, "commonName": "Licorice Fern", "scientificName": "Polypodium glycyrrhiza",
+      "plantClass": "fern",
+      "ecosystemIds": ["coastal-rainforest"],
+      "edible": true,
+      "usesNote": "Rhizome, autumn through spring — a small piece chewed for its sweet liquorice taste and spat out; it is a flavouring, not a food." },
+
+    { "dexNumber": 80, "commonName": "Bracken", "scientificName": "Pteridium aquilinum",
+      "plantClass": "fern",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
+      "edible": true,
+      "usesNote": "Fiddleheads, spring — eaten cooked in several cuisines. Caution: bracken contains ptaquiloside, a carcinogen that cooking only reduces, and this catalogue does not recommend eating it." }
+  ]
+}

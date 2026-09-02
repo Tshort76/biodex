@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Build the bundled Pacific catalogue asset from the curated species list.
+"""Build the bundled Pacific USA catalogue asset from the curated species lists.
 
-Reads `curated_species.json` (the hand-authored 120 species + ecosystem tags),
-enriches each entry from GBIF, Wikipedia/Wikimedia Commons and Xeno-canto, and
-writes `app/src/main/assets/catalogue/pacific.json` in the shape ARCHITECTURE.md
-section 3.2 specifies.
+Reads three hand-authored inputs — `region.json` (header + the seven ecosystems),
+`curated_animals.json` (120 animals) and `curated_plants.json` (80 plants) —
+enriches each entry from GBIF, Wikipedia/Wikimedia Commons, Xeno-canto (animals
+only) and Dr. Duke's ethnobotanical database (plants only), and writes
+`app/src/main/assets/catalogue/pacific.json` in the shape ARCHITECTURE.md
+sections 3.2 and 11.1 specify, plus `duke_ethnobot.json` beside it.
 
 Usage:
     python3 build_catalogue.py                       # default --out path
     python3 build_catalogue.py --out /some/where.json
     python3 build_catalogue.py --refresh             # ignore the cache
+    python3 build_catalogue.py --plants /tmp/x.json  # swap an input file
     XC_API_KEY=... python3 build_catalogue.py        # also fetch calls
 
 Standard library only (no `requests` on this machine).  Every HTTP response is
@@ -24,8 +27,11 @@ import json
 import os
 import re
 import sys
+import csv
+import io
 import time
 import unicodedata
+import zipfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -34,9 +40,26 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CACHE_DIR = HERE / "cache"
-DEFAULT_OUT = HERE / ".." / ".." / "app" / "src" / "main" / "assets" / "catalogue" / "pacific.json"
+DUKE_CACHE_DIR = CACHE_DIR / "duke"
+ASSET_DIR = HERE / ".." / ".." / "app" / "src" / "main" / "assets" / "catalogue"
+DEFAULT_OUT = ASSET_DIR / "pacific.json"
 
-USER_AGENT = "AnimalDex/1.0 (personal Android app; tlong@unified.health)"
+USER_AGENT = "BioDex/1.0 (personal Android app; tlong@unified.health)"
+
+# Dr. Duke's Phytochemical and Ethnobotanical Databases (USDA ARS), CC0.
+# The data.gov and Ag Data Commons landing pages 403 a plain fetch; the figshare
+# API resolves the real download URL, so that is the route the script takes.
+DUKE_ARTICLE_API = "https://api.figshare.com/v2/articles/24660351/files"
+DUKE_ZIP_NAME = "Duke-Source-CSV.zip"
+DUKE_ETHNOBOT_CSV = "ETHNOBOT.csv"
+DUKE_ATTRIBUTION = "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
+
+# 11.2: the one rule the pipeline and the app's DukeIndex both implement.
+MEDICINAL_ACTIVITY_THRESHOLD = 3
+MEDICINAL_ACTIVITY_CAP = 8
+
+PLANT_CLASSES = ("tree", "shrub", "herb", "fern")
+USES_NOTE_MAX_CHARS = 240
 
 # Politeness delays, per ARCHITECTURE.md 7.2.
 DELAY_GBIF = 0.5
@@ -98,8 +121,13 @@ def fetch_json(url: str, *, refresh: bool = False, delay: float = 0.0):
         with urllib.request.urlopen(req, timeout=30) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
+        # A 404 is a real answer ("no such page") and is worth caching. Every other
+        # HTTP status is a transient server condition — a 429 or a 503 cached as
+        # "no match" would silently poison every later run, including the GBIF
+        # kingdom check, so it is treated like a network hiccup and not written.
         if exc.code != 404:
             print(f"    ! HTTP {exc.code} for {_scrub(url)}", file=sys.stderr)
+            return None, False
     except Exception as exc:  # network hiccup, bad JSON, timeout
         print(f"    ! {type(exc).__name__} for {_scrub(url)}: {exc}", file=sys.stderr)
         # Do not cache a transient failure — let the next run retry it.
@@ -109,6 +137,25 @@ def fetch_json(url: str, *, refresh: bool = False, delay: float = 0.0):
     with path.open("w", encoding="utf-8") as fh:
         json.dump({"url": _scrub(url), "payload": payload}, fh)
     return payload, False
+
+
+def fetch_bytes(url: str, dest: Path, *, refresh: bool = False) -> bytes:
+    """GET `url` as bytes into `dest`, reusing the file on a re-run.
+
+    Used for the one large binary the pipeline needs (Duke's 5.8 MB zip), which
+    the sha1-keyed JSON cache is the wrong shape for.
+    """
+    global HTTP_REQUESTS, CACHE_HITS
+    if dest.exists() and not refresh:
+        CACHE_HITS += 1
+        return dest.read_bytes()
+    HTTP_REQUESTS += 1
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=180) as resp:
+        data = resp.read()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return data
 
 
 # --------------------------------------------------------------------------
@@ -138,6 +185,47 @@ def tax_class_for(gbif_class: str | None, phylum: str | None = None) -> str:
     if (phylum or "").strip().lower() == "chordata":
         return "fish"
     return "other_invertebrate"
+
+
+def gbif_synonyms(usage_key, refresh: bool):
+    """The accepted taxon's synonyms, as `Genus species` binomials.
+
+    R15: Duke's keys on genus and species strings from its own era, so an
+    accepted name GBIF has since moved (Oregon grape *Berberis* / *Mahonia*)
+    misses on the first try. This is one extra cached request per plant.
+    """
+    if not usage_key:
+        return []
+    url = f"https://api.gbif.org/v1/species/{usage_key}/synonyms?limit=100"
+    payload = fetch_json(url, refresh=refresh, delay=DELAY_GBIF)[0] or {}
+    names = []
+    for result in payload.get("results", []):
+        # `species` is the binomial with any infraspecific epithet dropped, which
+        # is the level Duke's files things at; canonicalName is the fallback.
+        name = result.get("species") or result.get("canonicalName")
+        if not name:
+            continue
+        parts = name.split()
+        if len(parts) >= 2:
+            binomial = f"{parts[0]} {parts[1]}"
+            if binomial not in names:
+                names.append(binomial)
+    return names
+
+
+def plant_silhouette(plant_class: str, gbif_class, gbif_order) -> str:
+    """The one automated decision that leans on GBIF's plant taxonomy (R10).
+
+    GBIF is inconsistent about conifers — sometimes class Pinopsida, sometimes
+    only order Pinales — so both are checked and broadleaf is the fallback.
+    """
+    if plant_class != "tree":
+        return f"sil_{plant_class}"
+    if (gbif_class or "").strip().lower() == "pinopsida":
+        return "sil_tree_conifer"
+    if (gbif_order or "").strip().lower() == "pinales":
+        return "sil_tree_conifer"
+    return "sil_tree_broadleaf"
 
 
 # --------------------------------------------------------------------------
@@ -413,6 +501,135 @@ def xeno_canto_best(scientific_name: str, api_key: str, refresh: bool):
 
 
 # --------------------------------------------------------------------------
+# Dr. Duke's ethnobotanical database (CC0)
+# --------------------------------------------------------------------------
+
+def duke_binomial(name: str) -> str:
+    """Normalise a name to the `genus species` key the Duke's index uses.
+
+    Lower-cased and whitespace-collapsed, per R15; anything stranger than that
+    is handled by the curator's `dukeName` pin rather than by more heuristics.
+    """
+    parts = re.sub(r"\s+", " ", (name or "").strip()).split(" ")
+    if len(parts) < 2:
+        return ""
+    return f"{parts[0].lower()} {parts[1].lower()}"
+
+
+def download_duke(refresh: bool) -> bytes:
+    """Fetch Duke-Source-CSV.zip, resolving the URL through the figshare API."""
+    zip_path = DUKE_CACHE_DIR / DUKE_ZIP_NAME
+    if zip_path.exists() and not refresh:
+        return fetch_bytes("", zip_path, refresh=False)
+    listing = fetch_json(DUKE_ARTICLE_API, refresh=refresh, delay=DELAY_GBIF)[0] or []
+    download_url = None
+    for item in listing:
+        if item.get("name") == DUKE_ZIP_NAME:
+            download_url = item.get("download_url")
+            break
+    if not download_url:
+        raise SystemExit(
+            f"figshare article listing did not name {DUKE_ZIP_NAME}; "
+            f"check {DUKE_ARTICLE_API} by hand"
+        )
+    return fetch_bytes(download_url, zip_path, refresh=refresh)
+
+
+def build_duke_index(refresh: bool):
+    """`{"genus species": {"a": [activities], "n": count, "p": poison}}`.
+
+    `n` and `a` both EXCLUDE `Poison` records — `n` is `medicinalRecordCount`
+    and `a` is `medicinalActivities`, so the bundled asset and the pipeline's
+    own numbers are the same numbers. `p` is the poison flag the caution rule
+    and the confirm card read.
+    """
+    data = download_duke(refresh)
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        raw = archive.read(DUKE_ETHNOBOT_CSV)
+    text = raw.decode("utf-8-sig", errors="replace")
+    rows = csv.DictReader(io.StringIO(text))
+
+    activities = defaultdict(list)
+    poison = set()
+    total_rows = 0
+    for row in rows:
+        total_rows += 1
+        key = duke_binomial(f"{row.get('GENUS', '')} {row.get('SPECIES', '')}")
+        if not key:
+            continue
+        activity = re.sub(r"\s+", " ", (row.get("ACTIVITY") or "").strip())
+        if not activity:
+            continue
+        if activity.lower() == "poison":
+            poison.add(key)
+            continue
+        activities[key].append(activity)
+
+    index = {}
+    for key in set(activities) | poison:
+        counts = Counter(activities.get(key, []))
+        index[key] = {
+            "a": [name.title() for name, _ in counts.most_common(MEDICINAL_ACTIVITY_CAP)],
+            "n": sum(counts.values()),
+            "p": key in poison,
+            # Not written to the asset — the medicinal rule counts distinct
+            # activities, and the report shows both numbers.
+            "_distinct": len(counts),
+        }
+    return index, total_rows
+
+
+def duke_lookup(index, accepted: str, synonyms, pinned):
+    """First hit wins: accepted name, then each GBIF synonym, then the pin.
+
+    Returns `(record, provenance)` where provenance is one of `duke:accepted`,
+    `duke:synonym:<Name>`, `duke:pinned:<Name>` or `duke:none`.
+    """
+    key = duke_binomial(accepted)
+    if key in index:
+        return index[key], "duke:accepted"
+    for synonym in synonyms:
+        key = duke_binomial(synonym)
+        if key in index:
+            return index[key], f"duke:synonym:{synonym}"
+    if pinned:
+        key = duke_binomial(pinned)
+        if key in index:
+            return index[key], f"duke:pinned:{pinned}"
+    return None, "duke:none"
+
+
+def write_duke_asset(index, path: Path):
+    """The bundled lookup table the app's DukeIndex reads (11.3).
+
+    Shape, frozen here because slice 12 parses it:
+
+        {"format": "biodex-duke-1", "source": ..., "license": "CC0",
+         "taxa": {"genus species": {"a": ["Astringent", ...], "n": 105, "p": true}}}
+
+    Activity names are stored inline rather than through a string table: the
+    whole file lands near 1.1 MB either way, and an inline map is what a
+    twelve-taxon test fixture can be cut out of by hand.
+    """
+    taxa = {}
+    for key, record in sorted(index.items()):
+        taxa[key] = {"a": record["a"], "n": record["n"], "p": record["p"]}
+    document = {
+        "format": "biodex-duke-1",
+        "source": "Dr. Duke's Phytochemical and Ethnobotanical Databases, USDA ARS",
+        "license": "CC0",
+        "attribution": DUKE_ATTRIBUTION,
+        "note": "n and a exclude Poison records; p is true when any Poison record exists.",
+        "taxa": taxa,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(document, fh, ensure_ascii=False, separators=(",", ":"))
+        fh.write("\n")
+    return path.stat().st_size
+
+
+# --------------------------------------------------------------------------
 # Assembly
 # --------------------------------------------------------------------------
 
@@ -423,42 +640,34 @@ def slugify(name: str) -> str:
     return text.strip("-")
 
 
-def build_species(entry, ecosystem_ids, api_key, refresh, report):
-    common = entry["commonName"]
-    curated_sci = entry["scientificName"]
-    slug = slugify(common)
-    prov = {}
-    warnings = []
+USES_SECTION_WORDS = ("uses", "culinary", "edib", "medicin", "ethnobot")
 
-    # --- GBIF -------------------------------------------------------------
-    match = gbif_match(curated_sci, refresh) or {}
-    accepted = match.get("species") or match.get("canonicalName") or curated_sci
-    match_type = match.get("matchType", "NONE")
-    confidence = match.get("confidence", 0)
-    rank = match.get("rank")
-    gbif_class = match.get("class")
 
-    if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
-        warnings.append(
-            f"GBIF {match_type}/{confidence}%/{match.get('status')} "
-            f"curated='{curated_sci}' accepted='{accepted}'"
-        )
-    if rank and rank != "SPECIES":
-        warnings.append(f"GBIF rank is {rank}, not SPECIES")
+def collect_uses_review(title, sections, refresh, common, uses_review):
+    """Append any uses-ish section's prose to the curator's review file.
 
-    gbif_phylum = match.get("phylum")
-    tax_class = tax_class_for(gbif_class, gbif_phylum)
-    prov["scientificName"] = "gbif"
-    if gbif_class:
-        prov["taxClass"] = f"gbif:class:{gbif_class}"
-    elif gbif_phylum:
-        prov["taxClass"] = f"gbif:phylum:{gbif_phylum}:no-class"
-    else:
-        prov["taxClass"] = "gbif:unmatched"
-    if not gbif_class and not gbif_phylum:
-        warnings.append("GBIF returned neither class nor phylum; taxClass is a guess")
+    This is a *check* on the hand-written `usesNote`, never a source for it —
+    the asset's `provenance.uses` is always "curated" for the edible half
+    (11.3 step 3). Nothing here is copied into the catalogue.
+    """
+    for section in sections:
+        line = (section.get("line") or "").strip()
+        if not any(word in line.lower() for word in USES_SECTION_WORDS):
+            continue
+        wikitext = wiki_section_wikitext(title, str(section.get("index")), refresh)
+        prose = strip_wikitext(wikitext or "")
+        if not prose:
+            continue
+        uses_review.append(f"### {common} — {title} § {line}\n{prose[:600]}\n")
 
-    # --- Wikipedia --------------------------------------------------------
+
+def fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, uses_review=None):
+    """The Wikipedia/Commons half of a record, shared by both kingdoms.
+
+    `uses_review` is the plant path's curator aid: when a list is passed, any
+    section whose title looks like a uses section is stripped and appended for
+    review. Nothing it collects ever reaches the asset (11.3 step 3).
+    """
     habitat_text = None
     description = None
     image_url = None
@@ -527,6 +736,70 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
         if image_attr:
             prov["imageAttribution"] = "wikimedia:imageinfo:extmetadata"
 
+    if uses_review is not None and summary and wiki_title:
+        collect_uses_review(wiki_title, sections, refresh, common, uses_review)
+
+    return {
+        "habitatText": habitat_text,
+        "description": description,
+        "imageUrl": image_url,
+        "infoUrl": info_url,
+        "imageAttribution": image_attr,
+    }
+
+
+def build_species(entry, ecosystem_ids, api_key, refresh, report):
+    common = entry["commonName"]
+    curated_sci = entry["scientificName"]
+    slug = slugify(common)
+    prov = {}
+    warnings = []
+
+    # --- GBIF -------------------------------------------------------------
+    match = gbif_match(curated_sci, refresh) or {}
+    accepted = match.get("species") or match.get("canonicalName") or curated_sci
+    match_type = match.get("matchType", "NONE")
+    confidence = match.get("confidence", 0)
+    rank = match.get("rank")
+    gbif_class = match.get("class")
+
+    if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
+        warnings.append(
+            f"GBIF {match_type}/{confidence}%/{match.get('status')} "
+            f"curated='{curated_sci}' accepted='{accepted}'"
+        )
+    if rank and rank != "SPECIES":
+        warnings.append(f"GBIF rank is {rank}, not SPECIES")
+
+    gbif_kingdom = match.get("kingdom")
+    if (gbif_kingdom or "").strip().lower() != "animalia":
+        # 11.3: a kingdom contradiction is a curator typo that must not ship.
+        raise SystemExit(
+            f"{common}: declared an animal but GBIF matched '{accepted}' in "
+            f"kingdom {gbif_kingdom or 'NONE'}"
+        )
+    prov["kingdom"] = f"gbif:kingdom:{gbif_kingdom}"
+
+    gbif_phylum = match.get("phylum")
+    tax_class = tax_class_for(gbif_class, gbif_phylum)
+    prov["scientificName"] = "gbif"
+    if gbif_class:
+        prov["taxClass"] = f"gbif:class:{gbif_class}"
+    elif gbif_phylum:
+        prov["taxClass"] = f"gbif:phylum:{gbif_phylum}:no-class"
+    else:
+        prov["taxClass"] = "gbif:unmatched"
+    if not gbif_class and not gbif_phylum:
+        warnings.append("GBIF returned neither class nor phylum; taxClass is a guess")
+
+    # --- Wikipedia --------------------------------------------------------
+    wiki = fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings)
+    habitat_text = wiki["habitatText"]
+    description = wiki["description"]
+    image_url = wiki["imageUrl"]
+    info_url = wiki["infoUrl"]
+    image_attr = wiki["imageAttribution"]
+
     # --- Xeno-canto -------------------------------------------------------
     call_url = None
     call_attr = None
@@ -560,6 +833,15 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
         "imageAttribution": image_attr,
         "callAttribution": call_attr,
         "silhouetteRes": f"sil_{tax_class}",
+        # The uses block is plant-only (DESIGN.md D14): whether an animal is
+        # edible is a hunting-and-fishing regulation question, not a field-guide
+        # fact, and the app stays out of it.
+        "kingdom": "animal",
+        "uses": [],
+        "usesNote": None,
+        "medicinalActivities": [],
+        "medicinalRecordCount": 0,
+        "usesAttribution": None,
         "provenance": prov,
     }
 
@@ -578,63 +860,305 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
     return record
 
 
-def validate(catalogue, ecosystem_ids):
+
+CAUTION_RE = re.compile(r"(?:^|(?<=[.!?])\s)Caution:", re.I)
+
+
+def has_caution(note) -> bool:
+    """True when the note carries a sentence beginning `Caution:`.
+
+    Matched at a sentence start so the same rule the app's `UsesNote.cautionSplit`
+    uses to render the emphasis is the rule the build enforces (11.2).
+    """
+    return bool(note) and bool(CAUTION_RE.search(note))
+
+
+def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
+    common = entry["commonName"]
+    curated_sci = entry["scientificName"]
+    plant_class = entry.get("plantClass")
+    slug = slugify(common)
+    prov = {}
+    warnings = []
+
+    if plant_class not in PLANT_CLASSES:
+        raise SystemExit(f"{common}: plantClass must be one of {PLANT_CLASSES}, got {plant_class!r}")
+
+    # --- GBIF -------------------------------------------------------------
+    match = gbif_match(curated_sci, refresh) or {}
+    accepted = match.get("species") or match.get("canonicalName") or curated_sci
+    match_type = match.get("matchType", "NONE")
+    confidence = match.get("confidence", 0)
+    rank = match.get("rank")
+    gbif_class = match.get("class")
+    gbif_order = match.get("order")
+    gbif_kingdom = match.get("kingdom")
+    usage_key = match.get("usageKey") or match.get("speciesKey")
+
+    if (gbif_kingdom or "").strip().lower() != "plantae":
+        raise SystemExit(
+            f"{common}: declared a plant but GBIF matched '{accepted}' in "
+            f"kingdom {gbif_kingdom or 'NONE'}"
+        )
+    prov["kingdom"] = f"gbif:kingdom:{gbif_kingdom}"
+    prov["scientificName"] = "gbif"
+    prov["taxClass"] = "curated"  # growth form is editorial judgment (D13)
+
+    if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
+        warnings.append(
+            f"GBIF {match_type}/{confidence}%/{match.get('status')} "
+            f"curated='{curated_sci}' accepted='{accepted}'"
+        )
+    if rank and rank != "SPECIES":
+        warnings.append(f"GBIF rank is {rank}, not SPECIES")
+    if plant_class == "fern" and (gbif_class or "").strip().lower() != "polypodiopsida":
+        warnings.append(f"plantClass is fern but GBIF class is {gbif_class or 'NONE'}")
+
+    silhouette = plant_silhouette(plant_class, gbif_class, gbif_order)
+    prov["silhouetteRes"] = f"gbif:class:{gbif_class}/order:{gbif_order}"
+
+    # --- Duke's -----------------------------------------------------------
+    synonyms = gbif_synonyms(usage_key, refresh)
+    record, duke_prov = duke_lookup(duke_index, accepted, synonyms, entry.get("dukeName"))
+    prov["duke"] = duke_prov
+
+    activities = record["a"] if record else []
+    record_count = record["n"] if record else 0
+    distinct = record["_distinct"] if record else 0
+    poison = bool(record and record["p"])
+
+    medicinal = distinct >= MEDICINAL_ACTIVITY_THRESHOLD
+    override_medicinal = (entry.get("overrides") or {}).get("medicinal")
+    if override_medicinal is not None:
+        medicinal = bool(override_medicinal)
+        medicinal_prov = "override"
+    else:
+        medicinal_prov = duke_prov
+
+    if not record:
+        report["duke_no_record"].append(f"{common} ({accepted})")
+    elif duke_prov.startswith("duke:synonym") or duke_prov.startswith("duke:pinned"):
+        report["duke_indirect"].append(f"{common} ({accepted}) matched via {duke_prov}")
+    if poison:
+        report["duke_poison"].append(f"{common} ({accepted})")
+
+    edible = bool(entry.get("edible"))
+    uses = (["edible"] if edible else []) + (["medicinal"] if medicinal else [])
+    # The two tags have different provenance and the asset says which is which
+    # (D14): edible is the curator's, medicinal is Duke's or an explicit pin.
+    prov["uses"] = {"edible": "curated", "medicinal": medicinal_prov}
+
+    uses_note = entry.get("usesNote")
+
+    # --- Wikipedia (and the curator's uses-review aid) ----------------------
+    wiki = fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, uses_review)
+
+    record_out = {
+        "id": slug,
+        "dexNumber": entry["dexNumber"],
+        "commonName": common,
+        "scientificName": accepted,
+        "taxClass": plant_class,
+        "kingdom": "plant",
+        "ecosystemIds": entry["ecosystemIds"],
+        "habitatText": wiki["habitatText"],
+        "description": wiki["description"],
+        "imageUrl": wiki["imageUrl"],
+        # 11.3 step 4: Xeno-canto is skipped for plants without a request.
+        "callUrl": None,
+        "infoUrl": wiki["infoUrl"],
+        "imageAttribution": wiki["imageAttribution"],
+        "callAttribution": None,
+        "silhouetteRes": silhouette,
+        "uses": uses,
+        "usesNote": uses_note if uses else None,
+        # These three come straight from the Duke's hit, tag or no tag: they are
+        # what the source recorded, and the `medicinal` tag is a rule applied on
+        # top of them rather than a filter over them.
+        "medicinalActivities": activities,
+        "medicinalRecordCount": record_count,
+        "usesAttribution": DUKE_ATTRIBUTION if activities else None,
+        "provenance": prov,
+        # Pipeline-internal, stripped before the asset is written.
+        "_poison": poison,
+        "_dukeMatchedName": (
+            accepted if duke_prov == "duke:accepted"
+            else duke_prov.split(":", 2)[2] if record else None
+        ),
+        "_dukeDistinct": distinct,
+        "_dukeRecordCount": record_count,
+        "_curatedNote": uses_note,
+    }
+
+    for field, value in (entry.get("overrides") or {}).items():
+        if field == "medicinal":
+            continue  # already folded into the uses tag above
+        record_out[field] = value
+        prov[field] = "override"
+
+    for warn in warnings:
+        report["gbif_warnings"].append(f"P{entry['dexNumber']:03d} {common}: {warn}")
+
+    unknown_eco = [e for e in entry["ecosystemIds"] if e not in ecosystem_ids]
+    if unknown_eco:
+        raise SystemExit(f"{common}: undeclared ecosystemIds {unknown_eco}")
+
+    return record_out
+
+
+ANIMAL_CLASSES = {"bird", "mammal", "reptile", "amphibian", "fish", "insect", "other_invertebrate"}
+PLANT_SILHOUETTES = {
+    "shrub": {"sil_shrub"},
+    "herb": {"sil_herb"},
+    "fern": {"sil_fern"},
+    "tree": {"sil_tree_conifer", "sil_tree_broadleaf"},
+}
+
+
+def validate(catalogue, ecosystem_ids, internals):
+    """Everything section 11.3 says must hold before the asset is written.
+
+    `internals` maps a species id to the pipeline-only facts the asset does not
+    carry — chiefly whether Duke's records the species as a poison, which is
+    what makes the caution set a decision of the source rather than of whoever
+    wrote the notes.
+    """
     species = catalogue["species"]
     problems = []
-    if len(species) != 120:
-        problems.append(f"expected 120 species, got {len(species)}")
-    numbers = [s["dexNumber"] for s in species]
-    if sorted(numbers) != list(range(1, 121)):
-        problems.append("dexNumbers are not exactly 1..120 with no duplicates")
-    ids = [s["id"] for s in species]
-    dupes = [i for i, n in Counter(ids).items() if n > 1]
+
+    animals = [s for s in species if s["kingdom"] == "animal"]
+    plants = [s for s in species if s["kingdom"] == "plant"]
+    if len(species) != 200:
+        problems.append(f"expected 200 species, got {len(species)}")
+    if len(animals) != 120:
+        problems.append(f"expected 120 animals, got {len(animals)}")
+    if len(plants) != 80:
+        problems.append(f"expected 80 plants, got {len(plants)}")
+    if sorted(s["dexNumber"] for s in animals) != list(range(1, 121)):
+        problems.append("animal dexNumbers are not exactly 1..120 with no duplicates")
+    if sorted(s["dexNumber"] for s in plants) != list(range(1, 81)):
+        problems.append("plant dexNumbers are not exactly 1..80 with no duplicates")
+
+    dupes = [i for i, n in Counter(s["id"] for s in species).items() if n > 1]
     if dupes:
         problems.append(f"duplicate species ids: {dupes}")
-    valid_classes = {"bird", "mammal", "reptile", "amphibian", "fish", "insect", "other_invertebrate"}
+
     for s in species:
-        for field in ("id", "commonName", "scientificName", "taxClass", "silhouetteRes"):
+        sid = s["id"]
+        for field in ("id", "commonName", "scientificName", "taxClass", "silhouetteRes", "kingdom"):
             if not s.get(field):
-                problems.append(f"{s['id']}: missing {field}")
-        if s["taxClass"] not in valid_classes:
-            problems.append(f"{s['id']}: bad taxClass {s['taxClass']}")
-        if s["silhouetteRes"] != f"sil_{s['taxClass']}":
-            problems.append(f"{s['id']}: silhouetteRes does not match taxClass")
+                problems.append(f"{sid}: missing {field}")
         if not s["ecosystemIds"]:
-            problems.append(f"{s['id']}: no ecosystemIds")
+            problems.append(f"{sid}: no ecosystemIds")
         for eco in s["ecosystemIds"]:
             if eco not in ecosystem_ids:
-                problems.append(f"{s['id']}: undeclared ecosystem {eco}")
+                problems.append(f"{sid}: undeclared ecosystem {eco}")
+        if set(s["uses"]) - {"edible", "medicinal"}:
+            problems.append(f"{sid}: uses outside {{edible, medicinal}}: {s['uses']}")
+        if not s["uses"] and s["usesNote"]:
+            problems.append(f"{sid}: usesNote present but no use tag")
+        if not s["medicinalActivities"] and s["usesAttribution"]:
+            problems.append(f"{sid}: usesAttribution set with no Duke's activities")
+
+        if s["kingdom"] == "animal":
+            if s["taxClass"] not in ANIMAL_CLASSES:
+                problems.append(f"{sid}: bad animal taxClass {s['taxClass']}")
+            elif s["silhouetteRes"] != f"sil_{s['taxClass']}":
+                problems.append(f"{sid}: silhouetteRes does not match taxClass")
+            if s["uses"] or s["usesNote"] or s["medicinalActivities"] \
+                    or s["medicinalRecordCount"] or s["usesAttribution"]:
+                problems.append(f"{sid}: an animal carries a uses/Duke's field")
+        elif s["kingdom"] == "plant":
+            if s["taxClass"] not in PLANT_CLASSES:
+                problems.append(f"{sid}: bad plant taxClass {s['taxClass']}")
+            elif s["silhouetteRes"] not in PLANT_SILHOUETTES[s["taxClass"]]:
+                problems.append(
+                    f"{sid}: silhouetteRes {s['silhouetteRes']} does not match "
+                    f"plant class {s['taxClass']}"
+                )
+            internal = internals.get(sid, {})
+            edible = "edible" in s["uses"]
+            medicinal = "medicinal" in s["uses"]
+            if edible and not s["usesNote"]:
+                problems.append(f"{sid}: edible but no usesNote naming the part and the season")
+            if s["usesNote"] and len(s["usesNote"]) > USES_NOTE_MAX_CHARS:
+                problems.append(
+                    f"{sid}: usesNote is {len(s['usesNote'])} characters, over {USES_NOTE_MAX_CHARS}"
+                )
+            if s["provenance"].get("uses", {}).get("medicinal") != "override":
+                if medicinal != (len(s["medicinalActivities"]) >= MEDICINAL_ACTIVITY_THRESHOLD):
+                    problems.append(
+                        f"{sid}: medicinal={medicinal} disagrees with "
+                        f"{len(s['medicinalActivities'])} Duke's activities"
+                    )
+            # The poison rule (11.3). A Duke's `Poison` record makes a `Caution:`
+            # sentence mandatory, so the cautioned set is decided by the source.
+            if internal.get("poison") and s["uses"] and not has_caution(s["usesNote"]):
+                problems.append(
+                    f"{sid}: Duke's records a Poison for this species and it carries a "
+                    f"use tag, but its usesNote has no 'Caution:' sentence"
+                )
+        else:
+            problems.append(f"{sid}: unknown kingdom {s['kingdom']}")
+
     return problems
 
 
-def write_report(catalogue, report, path, had_key):
+def validate_duke_asset(path, species, internals):
+    """The bundled Duke's table parses and holds every plant that had a hit."""
+    problems = []
+    try:
+        with path.open(encoding="utf-8") as fh:
+            document = json.load(fh)
+    except Exception as exc:
+        return [f"{path.name}: does not parse ({type(exc).__name__}: {exc})"]
+    taxa = document.get("taxa") or {}
+    if not taxa:
+        problems.append(f"{path.name}: no taxa")
+    for s in species:
+        if s["kingdom"] != "plant":
+            continue
+        internal = internals.get(s["id"], {})
+        matched = internal.get("dukeMatchedName")
+        if matched and duke_binomial(matched) not in taxa:
+            problems.append(f"{path.name}: missing {matched}, which {s['id']} joined on")
+    return problems
+
+
+def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_bytes):
     species = catalogue["species"]
+    animals = [s for s in species if s["kingdom"] == "animal"]
+    plants = [s for s in species if s["kingdom"] == "plant"]
     lines = []
     add = lines.append
-    add("Animal Dex — catalogue build report")
+    add("BioDex — catalogue build report")
     add(f"generated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     add(f"HTTP requests made: {HTTP_REQUESTS}   cache hits: {CACHE_HITS}")
     add("")
 
-    total = len(species)
-    with_habitat = sum(1 for s in species if s["habitatText"])
-    with_image = sum(1 for s in species if s["imageUrl"])
-    with_image_attr = sum(1 for s in species if s["imageAttribution"])
-    with_call = sum(1 for s in species if s["callUrl"])
-    with_desc = sum(1 for s in species if s["description"])
-    with_info = sum(1 for s in species if s["infoUrl"])
+    def coverage(title, group, *, calls):
+        total = len(group)
+        if not total:
+            return
+        add(title)
+        add(f"  species              {total}")
+        add(f"  habitatText          {sum(1 for s in group if s['habitatText'])}/{total}")
+        add(f"  description          {sum(1 for s in group if s['description'])}/{total}")
+        add(f"  imageUrl             {sum(1 for s in group if s['imageUrl'])}/{total}")
+        add(f"  imageAttribution     {sum(1 for s in group if s['imageAttribution'])}/{total}")
+        add(f"  infoUrl              {sum(1 for s in group if s['infoUrl'])}/{total}")
+        if calls:
+            add(f"  callUrl              {sum(1 for s in group if s['callUrl'])}/{total}")
+        else:
+            add("  callUrl              n/a — Xeno-canto is skipped for plants")
+        add("")
 
-    add("COVERAGE")
-    add(f"  species              {total}")
-    add(f"  habitatText          {with_habitat}/{total}  (lede fallback: {len(report['lede_fallback'])})")
-    add(f"  description          {with_desc}/{total}")
-    add(f"  imageUrl             {with_image}/{total}")
-    add(f"  imageAttribution     {with_image_attr}/{total}")
-    add(f"  infoUrl              {with_info}/{total}")
-    add(f"  callUrl              {with_call}/{total}")
+    add(f"COVERAGE  (lede fallback across both kingdoms: {len(report['lede_fallback'])})")
     add("")
+    coverage("ANIMALS", animals, calls=True)
+    coverage("PLANTS", plants, calls=False)
 
-    add("CALLS")
+    add("CALLS (animals only)")
     if had_key:
         add(f"  missing because no Xeno-canto recording exists: {len(report['no_call_none_found'])}")
         add("  missing because XC_API_KEY was absent:           0")
@@ -645,16 +1169,35 @@ def write_report(catalogue, report, path, had_key):
     add("")
 
     add("CLASS DISTRIBUTION")
-    for cls, n in sorted(Counter(s["taxClass"] for s in species).items(), key=lambda kv: -kv[1]):
-        add(f"  {cls:20s} {n}")
+    for kingdom, group in (("animal", animals), ("plant", plants)):
+        add(f"  {kingdom}")
+        for cls, n in sorted(Counter(s["taxClass"] for s in group).items(), key=lambda kv: -kv[1]):
+            add(f"    {cls:20s} {n}")
+    add("")
+
+    add("USES (plants only)")
+    edible = [s for s in plants if "edible" in s["uses"]]
+    medicinal = [s for s in plants if "medicinal" in s["uses"]]
+    both = [s for s in plants if len(s["uses"]) == 2]
+    add(f"  edible                {len(edible)}/{len(plants)}   (curated)")
+    add(f"  medicinal             {len(medicinal)}/{len(plants)}   "
+        f"(derived: >= {MEDICINAL_ACTIVITY_THRESHOLD} distinct non-Poison Duke's activities)")
+    add(f"  both                  {len(both)}")
+    add(f"  no use tag            {sum(1 for s in plants if not s['uses'])}")
+    add(f"  carrying a Caution:   {sum(1 for s in plants if has_caution(s['usesNote']))}")
+    add("")
+    add(f"DUKE'S SOURCE  ETHNOBOT.csv rows parsed: {duke_rows}; "
+        f"duke_ethnobot.json: {duke_bytes / 1e6:.2f} MB")
     add("")
 
     add("ECOSYSTEM DISTRIBUTION (a species counts in each of its ecosystems)")
-    eco_counts = Counter()
-    for s in species:
-        eco_counts.update(s["ecosystemIds"])
+    animal_eco, plant_eco = Counter(), Counter()
+    for s in animals:
+        animal_eco.update(s["ecosystemIds"])
+    for s in plants:
+        plant_eco.update(s["ecosystemIds"])
     for eco in catalogue["ecosystems"]:
-        add(f"  {eco['name']:28s} {eco_counts[eco['id']]}")
+        add(f"  {eco['name']:30s} {animal_eco[eco['id']]:3d} animals  {plant_eco[eco['id']]:3d} plants")
     add("")
 
     def block(title, items):
@@ -664,6 +1207,33 @@ def write_report(catalogue, report, path, had_key):
         add("")
 
     block("GBIF MATCHES NEEDING CURATOR REVIEW", report["gbif_warnings"])
+    block(
+        "DUKE'S — DERIVED MEDICINAL SET",
+        [
+            f"{s['commonName']} ({s['scientificName']}): {internals[s['id']]['distinct']} activities, "
+            f"{s['medicinalRecordCount']} records — {', '.join(s['medicinalActivities'][:4])}"
+            for s in medicinal
+        ],
+    )
+    block("DUKE'S — MATCHED THROUGH A SYNONYM OR A PIN", report["duke_indirect"])
+    block("DUKE'S — NO RECORD (an ordinary outcome, not a failure)", report["duke_no_record"])
+    block("DUKE'S — POISON RECORDED (each must carry a Caution: sentence)", report["duke_poison"])
+    block(
+        "DUKE'S POISON BUT NO USE TAG — the caution has nowhere to render",
+        [
+            f"{s['commonName']} ({s['scientificName']})"
+            for s in plants
+            if internals[s["id"]]["poison"] and not s["uses"]
+        ],
+    )
+    block(
+        "PLANTS BELOW THE MEDICINAL THRESHOLD BUT WITH A DUKE'S RECORD",
+        [
+            f"{s['commonName']}: {internals[s['id']]['distinct']} activities"
+            for s in plants
+            if "medicinal" not in s["uses"] and internals[s["id"]]["recordCount"]
+        ],
+    )
     block("HABITAT TEXT FELL BACK TO THE SUMMARY LEDE", report["lede_fallback"])
     block("NO WIKIPEDIA PAGE FOUND", report["no_wikipedia"])
     block("NO IMAGE URL", [s["commonName"] for s in species if not s["imageUrl"]])
@@ -680,19 +1250,28 @@ def write_report(catalogue, report, path, had_key):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="path of the generated pacific.json")
-    ap.add_argument("--input", default=str(HERE / "curated_species.json"))
+    ap.add_argument("--region", default=str(HERE / "region.json"))
+    ap.add_argument("--animals", default=str(HERE / "curated_animals.json"))
+    ap.add_argument("--plants", default=str(HERE / "curated_plants.json"))
+    ap.add_argument("--duke-out", default=None, help="path of the generated duke_ethnobot.json")
     ap.add_argument("--refresh", action="store_true", help="ignore the cache and re-fetch everything")
-    ap.add_argument("--only", type=int, default=0, help="build only the first N species (for a smoke run)")
+    ap.add_argument("--only", type=int, default=0, help="build only the first N of each kingdom")
     args = ap.parse_args()
 
-    with open(args.input, encoding="utf-8") as fh:
-        curated = json.load(fh)
+    with open(args.region, encoding="utf-8") as fh:
+        region = json.load(fh)
+    with open(args.animals, encoding="utf-8") as fh:
+        animals_input = json.load(fh)
+    with open(args.plants, encoding="utf-8") as fh:
+        plants_input = json.load(fh)
 
-    ecosystems = curated["ecosystems"]
+    ecosystems = region["ecosystems"]
     ecosystem_ids = {e["id"] for e in ecosystems}
-    entries = curated["species"]
+    animal_entries = animals_input["species"]
+    plant_entries = plants_input["species"]
     if args.only:
-        entries = entries[: args.only]
+        animal_entries = animal_entries[: args.only]
+        plant_entries = plant_entries[: args.only]
 
     api_key = os.environ.get("XC_API_KEY", "").strip()
     if not api_key:
@@ -702,8 +1281,8 @@ def main():
     built = []
     failures = []
 
-    for i, entry in enumerate(entries, 1):
-        print(f"[{i:3d}/{len(entries)}] {entry['commonName']}", flush=True)
+    for i, entry in enumerate(animal_entries, 1):
+        print(f"[animal {i:3d}/{len(animal_entries)}] {entry['commonName']}", flush=True)
         try:
             built.append(build_species(entry, ecosystem_ids, api_key, args.refresh, report))
         except SystemExit:
@@ -712,17 +1291,62 @@ def main():
             failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
             print(f"    !! FAILED: {exc}", file=sys.stderr)
 
-    built.sort(key=lambda s: s["dexNumber"])
+    print("\nbuilding the Duke's ethnobotanical index…", flush=True)
+    duke_index, duke_rows = build_duke_index(args.refresh)
+    print(f"  {len(duke_index)} taxa from {duke_rows} ETHNOBOT rows", flush=True)
+
+    uses_review = []
+    for i, entry in enumerate(plant_entries, 1):
+        print(f"[plant  {i:3d}/{len(plant_entries)}] {entry['commonName']}", flush=True)
+        try:
+            built.append(
+                build_plant(entry, ecosystem_ids, duke_index, args.refresh, report, uses_review)
+            )
+        except SystemExit:
+            raise
+        except Exception as exc:
+            failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
+            print(f"    !! FAILED: {exc}", file=sys.stderr)
+
+    # Kingdom then dex number: the asset reads animals 1..120, then plants 1..80,
+    # and the importer applies the per-kingdom base (11.1).
+    built.sort(key=lambda s: (0 if s["kingdom"] == "animal" else 1, s["dexNumber"]))
+
+    # Lift the pipeline-only facts out of the records before anything is written.
+    internals = {}
+    for record in built:
+        internals[record["id"]] = {
+            "poison": record.pop("_poison", False),
+            "distinct": record.pop("_dukeDistinct", 0),
+            "recordCount": record.pop("_dukeRecordCount", 0),
+            "dukeMatchedName": record.pop("_dukeMatchedName", None),
+        }
+        record.pop("_curatedNote", None)
+
     catalogue = {
-        "catalogueVersion": curated.get("catalogueVersion", 1),
-        "regionId": curated["regionId"],
-        "regionName": curated["regionName"],
+        "catalogueVersion": region.get("catalogueVersion", 1),
+        "regionId": region["regionId"],
+        "regionName": region["regionName"],
         "ecosystems": ecosystems,
         "species": built,
     }
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    report_text = write_report(catalogue, report, CACHE_DIR / "report.txt", bool(api_key))
+    review_path = CACHE_DIR / "plant_uses_review.txt"
+    review_path.write_text(
+        "Wikipedia uses/culinary/edibility/medicinal section text, for CHECKING the\n"
+        "hand-written usesNote in curated_plants.json. Never copied into the asset.\n\n"
+        + "\n".join(uses_review),
+        encoding="utf-8",
+    )
+
+    out = Path(args.out).resolve()
+    duke_out = Path(args.duke_out) if args.duke_out else out.parent / "duke_ethnobot.json"
+    duke_bytes = write_duke_asset(duke_index, duke_out)
+
+    report_text = write_report(
+        catalogue, report, CACHE_DIR / "report.txt", bool(api_key), internals, duke_rows, duke_bytes
+    )
     print("\n" + report_text)
 
     if failures:
@@ -732,20 +1356,22 @@ def main():
         return 1
 
     if not args.only:
-        problems = validate(catalogue, ecosystem_ids)
+        problems = validate(catalogue, ecosystem_ids, internals)
+        problems += validate_duke_asset(duke_out, built, internals)
         if problems:
             print("VALIDATION FAILED:", file=sys.stderr)
             for p in problems:
                 print(f"  - {p}", file=sys.stderr)
             return 1
 
-    out = Path(args.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8") as fh:
         json.dump(catalogue, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     print(f"\nwrote {out} ({len(built)} species)")
+    print(f"wrote {duke_out} ({duke_bytes / 1e6:.2f} MB)")
     print(f"report: {CACHE_DIR / 'report.txt'}")
+    print(f"uses review: {review_path}")
     return 0
 
 

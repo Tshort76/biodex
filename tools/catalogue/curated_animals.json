@@ -1,17 +1,4 @@
 {
-  "catalogueVersion": 1,
-  "regionId": "pacific",
-  "regionName": "Pacific",
-  "ecosystems": [
-    { "id": "coastal-rainforest", "name": "Coastal Rainforest",      "sortOrder": 1 },
-    { "id": "rocky-shore-kelp",   "name": "Rocky Shoreline & Kelp",  "sortOrder": 2 },
-    { "id": "oak-chaparral",      "name": "Oak Woodland & Chaparral","sortOrder": 3 },
-    { "id": "riparian-wetland",   "name": "Riparian & Wetland",      "sortOrder": 4 },
-    { "id": "high-desert",        "name": "High Desert & Sagebrush", "sortOrder": 5 },
-    { "id": "alpine",             "name": "Sierra/Cascade Alpine",   "sortOrder": 6 },
-    { "id": "urban-suburban",     "name": "Urban & Suburban",        "sortOrder": 7 }
-  ],
-
   "_notes": [
     "Dex numbering is grouped in field-guide order by class:",
     "  1-52   birds",
