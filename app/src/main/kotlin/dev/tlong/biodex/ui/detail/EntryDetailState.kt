@@ -6,15 +6,12 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.UsesNote
-import dev.tlong.biodex.media.CallPlayback
-import dev.tlong.biodex.media.CallRowState
-import dev.tlong.biodex.media.callRowState
 import dev.tlong.biodex.ui.common.UsesContent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
 /**
- * Frame 2's state (M03/M04/M05). Like the grid, the composition is a pure function over cold
+ * Frame 2's state (M03/M04). Like the grid, the composition is a pure function over cold
  * flows so the JVM suite can check it without a device (ARCHITECTURE.md 6.2).
  */
 data class EntryDetailUiState(
@@ -26,9 +23,7 @@ data class EntryDetailUiState(
     /** The counter the unlock reveal shows; also what the header would read after a catch. */
     val caughtCount: Int = 0,
     val totalCount: Int = 0,
-    /** App-wide playback, filtered down to this row by `callRowState` (M06). */
-    val playback: CallPlayback = CallPlayback.Idle,
-    /** 5.3's network probe. Distinguishes "not cached yet" from "failed" in both media slots. */
+    /** 5.3's network probe. Distinguishes "not cached yet" from "failed" in the image slot. */
     val online: Boolean = true,
     val loading: Boolean = true,
 ) {
@@ -37,23 +32,7 @@ data class EntryDetailUiState(
     val favoriteCaptureId: String? get() = captures.firstOrNull()?.id
 
     /**
-     * The call row's whole state, decided in one pure place rather than in the composable —
-     * and **null for a plant in every playback state** (M24, D15). A plant has no call slot
-     * at all, so "disabled" is the wrong answer here: the row does not exist.
-     */
-    val callRow: CallRowState?
-        get() {
-            if (detail?.summary?.kingdom == Kingdom.PLANT) return null
-            return callRowState(
-                callUrl = detail?.callUrl,
-                callAttribution = detail?.callAttribution,
-                playback = playback,
-                online = online,
-            )
-        }
-
-    /**
-     * What fills the call row's slot instead (M24). Null for an animal, and null for a plant
+     * The plant-only uses section (M24). Null for an animal, and null for a plant
      * with **nothing to say** — no use tags and no caution — in which case habitat is followed
      * straight by the photo strip and nothing is drawn, not an empty section.
      *
@@ -88,11 +67,8 @@ fun entryDetailUiState(
     ecosystems: Flow<List<Ecosystem>>,
     captures: Flow<List<Capture>>,
     progress: Flow<DexProgress>,
-    playback: Flow<CallPlayback>,
     online: Flow<Boolean>,
 ): Flow<EntryDetailUiState> {
-    // The typed `combine` overloads stop at five sources, and this screen now has six.
-    // Composing two of them keeps the arity honest without an untyped array version.
     val fromRepository = combine(detail, ecosystems, captures, progress) { species, ecos, caps, prog ->
         EntryDetailUiState(
             detail = species,
@@ -109,9 +85,7 @@ fun entryDetailUiState(
             loading = false,
         )
     }
-    return combine(fromRepository, playback, online) { base, play, net ->
-        base.copy(playback = play, online = net)
-    }
+    return combine(fromRepository, online) { base, net -> base.copy(online = net) }
 }
 
 /** Unknown ids are dropped rather than rendered raw; sort order is the catalogue's. */

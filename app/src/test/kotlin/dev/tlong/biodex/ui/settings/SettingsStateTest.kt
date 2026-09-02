@@ -87,8 +87,8 @@ class SettingsStateTest {
 
     @Test
     fun `cache sizes are reported per cache`() {
-        val line = cacheLine(CacheSizes(imageBytes = 12L * 1024 * 1024, audioBytes = 0, httpBytes = 2048))
-        assertEquals("Images 12.0 MB · Call audio 0 B · Lookups 2.0 KB", line)
+        val line = cacheLine(CacheSizes(imageBytes = 12L * 1024 * 1024, httpBytes = 2048))
+        assertEquals("Images 12.0 MB · Lookups 2.0 KB", line)
     }
 
     @Test

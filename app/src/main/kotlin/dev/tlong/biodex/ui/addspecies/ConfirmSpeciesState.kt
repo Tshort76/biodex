@@ -21,8 +21,8 @@ import dev.tlong.biodex.domain.previewFields
  * Frame 6 of `mockup.html` — "Add Your Own Species — confirm" — as one pure function
  * (ARCHITECTURE.md 6.2, and the pattern slices 4–6 used). Everything the card decides is
  * decided here: which candidate is shown, how honestly its confidence is described, which
- * fields the lookup filled, which the user has claimed, whether a call was found, and what the
- * accept button will actually write.
+ * fields the lookup filled, which the user has claimed, and what the accept button will
+ * actually write.
  */
 
 /** What the user has changed on the card, before anything is saved (M19). */
@@ -53,7 +53,6 @@ sealed interface ConfirmSpeciesUiState {
         val fields: SpeciesFields,
         val editedFields: Set<String>,
         val habitatSource: String?,
-        val callAttribution: String?,
         /** Duke's row for the selected plant, shown read-only beside the medicinal toggle. */
         val duke: DukeRecord?,
         /** True once a plant candidate has actually been looked up in the bundled index. */
@@ -95,22 +94,6 @@ sealed interface ConfirmSpeciesUiState {
 
         val imageFound: Boolean get() = fields.imageUrl != null
         val habitatFound: Boolean get() = !fields.habitatText.isNullOrBlank()
-        val callFound: Boolean get() = fields.callUrl != null
-
-        /**
-         * The call row is rendered in every state and says the honest thing (M18). Today that
-         * is always "no call found": there is no Xeno-canto API key, so the client answers
-         * NotFound without asking (ARCHITECTURE.md 5.4).
-         *
-         * Null for a plant, which has no call row **in any state** (M24): the uses editor
-         * stands in its place, and nothing was ever asked of Xeno-canto to report on.
-         */
-        val callRowLabel: String?
-            get() = when {
-                isPlant -> null
-                callFound -> "✓ Call found"
-                else -> "No call found — normal for most animals"
-            }
 
         // -------------------------------------------------------------------
         // The uses editor (M27). Everything here is the user's to set; the app
@@ -213,7 +196,6 @@ fun confirmCardState(
         ),
         editedFields = locked,
         habitatSource = details?.habitatSource,
-        callAttribution = details?.fields?.callAttribution,
         duke = details?.duke,
         dukeConsulted = details?.dukeConsulted == true,
         lookupFailed = outcome is LookupOutcome.Failed,

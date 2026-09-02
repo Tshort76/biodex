@@ -54,7 +54,7 @@ import dev.tlong.biodex.ui.theme.DexTheme
 
 /**
  * Frame 6 of `mockup.html`: the GBIF best-match card with its alternatives link, the found
- * image and its credit, the found habitat text with an edit affordance, the call-found row,
+ * image and its credit, the found habitat text with an edit affordance,
  * the manual ecosystem multi-select, and the accept button naming the U-number the species is
  * about to take.
  */
@@ -283,18 +283,6 @@ private fun CardBody(
 
     if (state.isPlant) {
         UsesEditor(state = state, onToggleUse = onToggleUse, onEditUsesNote = onEditUsesNote)
-    } else {
-        SectionHeader("Call")
-        Text(
-            text = listOfNotNull(state.callRowLabel, state.callAttribution).joinToString(" · "),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (state.callFound) colors.ok else colors.faint,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.codeBg)
-                .padding(10.dp),
-        )
     }
 
     SectionHeader("Ecosystems · your pick")
@@ -554,7 +542,7 @@ private fun KindSection(
 }
 
 /**
- * The uses editor (M27) — a plant's half of the card, standing where an animal's call row is.
+ * The uses editor (M27) — a plant's half of the card; an animal's card has nothing here.
  *
  * The medicinal toggle is defaulted from the bundled Duke's index and the caution sentence is
  * pre-filled from a `Poison` record, but **edible is never defaulted on**: Duke's holds almost
@@ -759,7 +747,6 @@ private fun previewCard() = ConfirmSpeciesUiState.Card(
     ),
     editedFields = emptySet(),
     habitatSource = "wikipedia:section:Distribution and habitat",
-    callAttribution = null,
     duke = null,
     dukeConsulted = false,
     lookupFailed = false,

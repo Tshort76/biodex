@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.SpeciesSummary
-import dev.tlong.biodex.media.CallRowState
 import dev.tlong.biodex.ui.theme.DexTheme
 
 // ---------------------------------------------------------------------------
@@ -214,94 +213,6 @@ fun SpeciesCell(
                 color = if (species.caught) colors.fg else colors.muted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-/**
- * `.player` — the call row (M04/M06). Every state it can show is decided by
- * [dev.tlong.biodex.media.callRowState]; this composable only paints one.
- *
- * The row renders in **every** state, including the disabled "No call available" one — which
- * is every species in the shipped catalogue, since no Xeno-canto key exists yet (5.4). It is
- * deliberately not hidden: the row the user sees today is the row that comes alive when calls
- * arrive, with no layout change.
- */
-@Composable
-fun CallPlayerRow(
-    state: CallRowState,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DexTheme.colors
-    val buttonColor = when {
-        !state.enabled -> colors.rule
-        state.failed -> colors.stop
-        else -> colors.accent
-    }
-    val waveColor = when {
-        !state.enabled -> colors.faint
-        state.failed -> colors.stop
-        state.playing -> colors.accent
-        else -> colors.accent.copy(alpha = 0.7f)
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (state.failed) colors.stopSoft else colors.codeBg)
-            .then(if (state.enabled) Modifier.clickable(onClick = onToggle) else Modifier)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .clip(CircleShape)
-                .background(buttonColor),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = when {
-                    state.loading -> "…"
-                    state.playing -> "■"
-                    state.failed -> "↻"
-                    else -> "▶"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = if (state.enabled) colors.card else colors.faint,
-            )
-        }
-        StaticWaveform(color = waveColor, modifier = Modifier.weight(1f))
-        Text(
-            text = state.label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 13.sp),
-            color = if (state.failed) colors.stop else colors.faint,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1.1f),
-        )
-    }
-}
-
-/** `.wave` — decoration, not data: a fixed bar pattern copied from the mockup. */
-@Composable
-private fun StaticWaveform(color: Color, modifier: Modifier = Modifier) {
-    val heights = listOf(30, 65, 95, 70, 40, 85, 55, 90, 35, 60, 25, 75, 45, 20)
-    Row(
-        modifier = modifier.height(22.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        heights.forEach { pct ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height((22 * pct / 100).dp)
-                    .clip(RoundedCornerShape(1.dp))
-                    .background(color.copy(alpha = 0.55f)),
             )
         }
     }

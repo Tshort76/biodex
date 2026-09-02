@@ -223,7 +223,7 @@ fun SettingsScreen(
                     color = colors.fg,
                 )
                 Text(
-                    text = "Reference images and call audio are downloaded once and kept so " +
+                    text = "Reference images are downloaded once and kept so " +
                         "entries work offline. Clearing them frees space and changes nothing " +
                         "about your collection — your own photos, thumbnails and entries are " +
                         "never touched.",
@@ -247,8 +247,7 @@ fun SettingsScreen(
                 Text(
                     text = "BioDex 1.0 — Pacific USA BioDex, a personal life list of the " +
                         "region's animals and plants. Species text and images come from " +
-                        "Wikipedia and Wikimedia Commons, names from GBIF, and calls from " +
-                        "Xeno-canto.",
+                        "Wikipedia and Wikimedia Commons, and names from GBIF.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )

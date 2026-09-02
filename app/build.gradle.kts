@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,13 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
-
-// The Xeno-canto API key lives in git-ignored local.properties (xc.api.key=...).
-// Absent is a supported state: the app then treats Xeno-canto as permanently NotFound.
-val xcApiKey: String = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}.getProperty("xc.api.key", "")
 
 android {
     namespace = "dev.tlong.biodex"
@@ -27,8 +18,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField("String", "XC_API_KEY", "\"$xcApiKey\"")
     }
 
     buildTypes {
@@ -100,10 +89,6 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
-
-    implementation(libs.media3.exoplayer)
-    implementation(libs.media3.datasource.okhttp)
-    implementation(libs.media3.database)
 
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)

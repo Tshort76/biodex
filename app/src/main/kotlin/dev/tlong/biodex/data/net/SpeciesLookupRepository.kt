@@ -10,22 +10,20 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 /**
- * ARCHITECTURE.md 5.2's composition: GBIF first because it supplies the scientific name the
- * other two are keyed by, then Wikipedia and Xeno-canto in parallel.
+ * ARCHITECTURE.md 5.2's composition: GBIF first because it supplies the scientific name
+ * Wikipedia is keyed by, then Wikipedia.
  *
  * Failure of any one source degrades to that field being empty and editable on the card
  * (M19); failure of GBIF leaves the flow with no identity at all, which is the "save with
  * details pending" path (M20).
  *
- * **A plant takes a different second source (M18, 11.4).** Xeno-canto is not asked at all — not
- * skipped late, not asked and ignored — and the bundled Duke's index is consulted in its place.
- * That lookup is offline and in-process, which is what lets M20's offline path keep working
- * unchanged: the Duke's fields arrive with everything else on the backfill.
+ * **A plant takes a second source of its own (M18, 11.4):** the bundled Duke's index. That
+ * lookup is offline and in-process, which is what lets M20's offline path keep working
+ * unchanged — the Duke's fields arrive with everything else on the backfill.
  */
 class SpeciesLookupRepository(
     private val gbif: GbifClient,
     private val wikipedia: WikipediaClient,
-    private val xenoCanto: XenoCantoClient,
     private val duke: DukeIndex? = null,
 ) {
 
@@ -44,8 +42,8 @@ class SpeciesLookupRepository(
 
     /**
      * The "not this one? other matches" path (M19). Picking a different candidate re-runs the
-     * two keyed sources, because the habitat text and the picture belong to the species, not
-     * to the typed name.
+     * keyed sources, because the habitat text and the picture belong to the species, not to
+     * the typed name.
      */
     suspend fun detailsFor(candidate: SpeciesCandidate, typedName: String): CandidateDetails =
         coroutineScope {
@@ -53,15 +51,13 @@ class SpeciesLookupRepository(
             val article = async {
                 wikipedia.facts(candidate.scientificName, candidate.commonName ?: typedName)
             }
-            // A plant never queries Xeno-canto (M18). Its synonyms are fetched instead, because
-            // the Duke's join misses without them: Oregon grape has four records under
-            // *Mahonia aquifolium* and none under *Berberis aquifolium* (R15).
-            val call = async { if (plant) LookupResult.NotFound else xenoCanto.bestCall(candidate.scientificName) }
+            // A plant's synonyms are fetched because the Duke's join misses without them:
+            // Oregon grape has four records under *Mahonia aquifolium* and none under
+            // *Berberis aquifolium* (R15).
             val synonyms = async {
                 if (plant) gbif.synonyms(candidate.usageKey, candidate.scientificName) else emptyList()
             }
             val facts = article.await()
-            val recording = call.await()
             val dukeRecord = if (plant) {
                 duke?.lookup(candidate.scientificName, synonyms.await())
             } else {
@@ -77,8 +73,6 @@ class SpeciesLookupRepository(
                     description = facts.valueOrNull()?.description,
                     imageUrl = facts.valueOrNull()?.imageUrl,
                     imageAttribution = facts.valueOrNull()?.imageAttribution,
-                    callUrl = recording.valueOrNull()?.url,
-                    callAttribution = recording.valueOrNull()?.attribution,
                     infoUrl = facts.valueOrNull()?.infoUrl,
                     uses = if (plant) derivedUses(dukeRecord) else null,
                     usesNote = if (dukeRecord?.poison == true) POISON_CAUTION else null,
@@ -88,7 +82,6 @@ class SpeciesLookupRepository(
                 ),
                 habitatSource = facts.valueOrNull()?.habitatSource,
                 articleFailed = facts is LookupResult.Failed,
-                callFailed = recording is LookupResult.Failed,
                 duke = dukeRecord,
                 dukeConsulted = plant,
             )
@@ -116,14 +109,11 @@ data class CandidateDetails(
     val habitatSource: String? = null,
     /** True only when Wikipedia could not be *asked*; "no article" is an ordinary null field. */
     val articleFailed: Boolean = false,
-    val callFailed: Boolean = false,
     /** Duke's row for a plant, shown read-only beside the medicinal toggle (M27). */
     val duke: DukeRecord? = null,
     /** True when this candidate is a plant, so "no Duke's record" can be said honestly. */
     val dukeConsulted: Boolean = false,
-) {
-    val callFound: Boolean get() = fields.callUrl != null
-}
+)
 
 sealed interface LookupOutcome {
     /** GBIF resolved the name. [candidates] is best-first; the rest are M19's "other matches". */

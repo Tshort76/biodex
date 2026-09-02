@@ -14,8 +14,6 @@ Create `local.properties` at the repo root (it is git-ignored, so it is not in a
 
 ```properties
 sdk.dir=/opt/homebrew/share/android-commandlinetools
-# Optional. Without it the app treats Xeno-canto as "no call found" (ARCHITECTURE.md 5.4).
-xc.api.key=<your Xeno-canto API key>
 ```
 
 ## Build
@@ -64,9 +62,9 @@ adb exec-out screencap -p > shot.png # screenshot, for visual checks without And
 All eight slices are built. The app is one screen deep in most places, and the loop is:
 
 - **Dex grid** — 120 curated Pacific species in dex order, uncaught ones drawn as a class silhouette. Live search over common and scientific names, and one chip row composing three filters (caught state, class, ecosystem). The header carries the region and the `47 / 120` progress pill; the gear opens Settings.
-- **Entry detail** — for a caught species: your own photos, the Wikimedia reference image with its credit, habitat text, ecosystems, the call player, and the outbound link. An uncaught species stays withheld: silhouette, name, number, and a Register button.
+- **Entry detail** — for a caught species: your own photos, the Wikimedia reference image with its credit, habitat text, ecosystems, and the outbound link. An uncaught species stays withheld: silhouette, name, number, and a Register button.
 - **Register** — pick a species, attach a gallery photo, and the species unlocks with a brief reveal. The photo is *referenced*, not copied: the app persists a URI grant and keeps its own 640 px thumbnail, so the collection still renders if the gallery photo later disappears. A broken reference shows the thumbnail plus a re-link offer, and never un-catches the species.
-- **Add your own species** — a name outside the catalogue is resolved through GBIF (scientific name and class), Wikipedia (habitat text and image) and Xeno-canto (a call), and shown as a confirmation card you can edit before anything is written. Offline, the entry is created immediately from the name and photo alone and backfilled the next time you open it online. User-added species get U-numbers and sit outside the completion fraction.
+- **Add your own species** — a name outside the catalogue is resolved through GBIF (scientific name and class) and Wikipedia (habitat text and image), and shown as a confirmation card you can edit before anything is written. Offline, the entry is created immediately from the name and photo alone and backfilled the next time you open it online. User-added species get U-numbers and sit outside the completion fraction.
 - **Stats** — overall progress, seven ecosystem meters, class bars, and a recently-caught strip. A species in several ecosystems counts in each, so the ecosystem totals sum past 120 on purpose.
 - **Settings** — the "keep a local copy" switch, cache sizes and a clear button, the photo-permission count, export/import, and the licenses screen.
 
@@ -93,12 +91,10 @@ The 120-species asset at `app/src/main/assets/catalogue/pacific.json` is generat
 ```bash
 cd tools/catalogue
 python3 -m venv .venv && .venv/bin/pip install requests
-XC_API_KEY=<key> .venv/bin/python build_catalogue.py --out ../../app/src/main/assets/catalogue/pacific.json
+.venv/bin/python build_catalogue.py --out ../../app/src/main/assets/catalogue/pacific.json
 ```
 
 Responses are cached under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses the cache. The run report lands in `cache/report.txt`. See `tools/catalogue/README.md` for the details.
-
-**What the Xeno-canto key would add.** Xeno-canto's API has required a per-account key since October 2025 (free, from your XC account page). No key is configured today, so **every species in the shipped catalogue has `callUrl: null`** and every call row reads "No call available". Adding `xc.api.key` to `local.properties` and re-running the pipeline fills in call URLs and their attribution for the species Xeno-canto covers — strong for birds, patchy for frogs and insects, absent for most mammals and everything marine. The player, its cache and the attribution line are already built and would come alive with no code change.
 
 ## What has never been verified on a device
 
@@ -108,8 +104,7 @@ This is the honest part. **No phone has ever been connected to this project.** E
 - **Nothing in this app has ever rendered.** No screen has been seen on a device or an emulator, so layout, spacing, colour in real light, the reveal's feel and the dark-theme palette are all unobserved.
 - **No instrumented test has ever run.** The `app/src/androidTest/` suite (Room schema and DAO round-trips, cascade behaviour, the importer against the real 120-species asset, the photo gateway) compiles and has never executed. `./gradlew connectedDebugAndroidTest` is the first thing to run with a phone attached.
 - **The whole photo layer is unexercised against real Android.** Nobody has run the system photo picker, watched a persistable URI grant survive a reboot, seen a revoked grant produce the re-link state, or confirmed that a cloud-only Google Photos item behaves as the code assumes. The exception-to-state mapping in `PhotoRef.kt` is an assertion about what Android throws, not an observation.
-- **No network call has ever been made from the app.** The three API clients are tested against real payloads captured with `curl` and checked in as fixtures; the app itself has never talked to GBIF, Wikipedia or Wikimedia, so the User-Agent has not been proven acceptable to Wikimedia in practice.
-- **No call has ever played**, because no call URL exists (see the Xeno-canto key above).
+- **No network call has ever been made from the app.** The two API clients are tested against real payloads captured with `curl` and checked in as fixtures; the app itself has never talked to GBIF, Wikipedia or Wikimedia, so the User-Agent has not been proven acceptable to Wikimedia in practice.
 - **Export has never produced a file another app opened**, and import has never read one. The ZIP writing, manifest and merge run end to end in the JVM suite against an in-memory fake filesystem, which proves the rules and not the FileProvider, the share sheet, or the document picker.
 - **The S03 local-copy path has never written a file**, and clearing the caches has never been observed to leave thumbnails and entries intact.
 

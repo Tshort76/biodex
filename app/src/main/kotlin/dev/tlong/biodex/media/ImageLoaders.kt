@@ -9,6 +9,10 @@ import java.io.File
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toOkioPath
 
+/** ARCHITECTURE.md 5.3: `cacheDir/coil_images`, 250 MB. */
+const val IMAGE_CACHE_DIR = "coil_images"
+const val IMAGE_CACHE_BYTES = 250L * 1024 * 1024
+
 /**
  * The app's one Coil `ImageLoader` (ARCHITECTURE.md 5.3). Two things here are load-bearing:
  *

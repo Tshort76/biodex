@@ -22,10 +22,8 @@
       "habitatText": "Shallow fresh and salt water everywhere from tidal flats to suburban ponds.",
       "description": "A tall, slate-grey wading bird that hunts by standing motionless.",
       "imageUrl": "https://upload.wikimedia.org/fixture/great-blue-heron.jpg",
-      "callUrl": "https://xeno-canto.org/fixture/100001/download",
       "infoUrl": "https://en.wikipedia.org/wiki/Great_blue_heron",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · A. Fixture",
-      "callAttribution": "Xeno-canto XC100001 · CC BY-NC 4.0 · R. Fixture",
       "silhouetteRes": "sil_bird",
       "provenance": { "scientificName": "gbif", "habitatText": "wikipedia:section:Habitat" }
     },
@@ -39,10 +37,8 @@
       "habitatText": "Low-elevation woodlands, streamside groves and suburban parks.",
       "description": "A small eared owl of oak and riparian woodland.",
       "imageUrl": "https://upload.wikimedia.org/fixture/western-screech-owl.jpg",
-      "callUrl": "https://xeno-canto.org/fixture/100002/download",
       "infoUrl": "https://en.wikipedia.org/wiki/Western_screech_owl",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · B. Fixture",
-      "callAttribution": "Xeno-canto XC100002 · CC BY-NC-SA 4.0 · S. Fixture",
       "silhouetteRes": "sil_bird",
       "provenance": { "scientificName": "gbif", "habitatText": "wikipedia:section:Habitat" }
     },
@@ -56,10 +52,8 @@
       "habitatText": "Conifer forest from the coast to the subalpine, and any campground within it.",
       "description": "A crested, deep-blue jay with a black hood.",
       "imageUrl": "https://upload.wikimedia.org/fixture/steller-jay.jpg",
-      "callUrl": "https://xeno-canto.org/fixture/100003/download",
       "infoUrl": "https://en.wikipedia.org/wiki/Steller%27s_jay",
       "imageAttribution": "Wikimedia Commons · CC BY 4.0 · C. Fixture",
-      "callAttribution": "Xeno-canto XC100003 · CC BY-NC 4.0 · T. Fixture",
       "silhouetteRes": "sil_bird",
       "provenance": { "scientificName": "gbif" }
     },
@@ -73,12 +67,10 @@
       "habitatText": "Everywhere: sagebrush flats, oak woodland, and the storm drains of any city.",
       "description": "A slight, adaptable wild canid.",
       "imageUrl": "https://upload.wikimedia.org/fixture/coyote.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Coyote",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · D. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_mammal",
-      "provenance": { "scientificName": "gbif", "callUrl": "none" }
+      "provenance": { "scientificName": "gbif" }
     },
     {
       "id": "sea-otter",
@@ -90,10 +82,8 @@
       "habitatText": "Kelp forests and sheltered rocky coastline.",
       "description": "A marine mustelid that rafts in kelp and cracks urchins on its chest.",
       "imageUrl": "https://upload.wikimedia.org/fixture/sea-otter.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Sea_otter",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · E. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_mammal",
       "provenance": { "scientificName": "gbif" }
     },
@@ -107,10 +97,8 @@
       "habitatText": "Sunny rocks, fence rails and woodpiles below the snow line.",
       "description": "The blue-bellied lizard of Pacific fence posts.",
       "imageUrl": "https://upload.wikimedia.org/fixture/western-fence-lizard.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Western_fence_lizard",
       "imageAttribution": "Wikimedia Commons · CC BY 2.0 · F. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_reptile",
       "provenance": { "scientificName": "gbif" }
     },
@@ -124,10 +112,8 @@
       "habitatText": "Seasonal ponds, ditches and damp gardens.",
       "description": "The small frog whose chorus is the sound of a Pacific spring.",
       "imageUrl": "https://upload.wikimedia.org/fixture/pacific-chorus-frog.jpg",
-      "callUrl": "https://xeno-canto.org/fixture/100007/download",
       "infoUrl": "https://en.wikipedia.org/wiki/Pacific_tree_frog",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · G. Fixture",
-      "callAttribution": "Xeno-canto XC100007 · CC BY-NC 4.0 · U. Fixture",
       "silhouetteRes": "sil_amphibian",
       "provenance": { "scientificName": "gbif", "habitatText": "wikipedia:lede" }
     },
@@ -141,10 +127,8 @@
       "habitatText": "The damp litter of coastal conifer forest.",
       "description": "A large yellow terrestrial slug of the Pacific rainforest floor.",
       "imageUrl": "https://upload.wikimedia.org/fixture/banana-slug.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Ariolimax_columbianus",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · H. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_other_invertebrate",
       "provenance": { "scientificName": "gbif" }
     },
@@ -158,10 +142,8 @@
       "habitatText": "Oak woodland, where its caterpillars feed on live oak.",
       "description": "A dark butterfly with a bold orange wingtip patch.",
       "imageUrl": "https://upload.wikimedia.org/fixture/california-sister.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Adelpha_californica",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · I. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_insect",
       "provenance": { "scientificName": "gbif" }
     },
@@ -175,10 +157,8 @@
       "habitatText": "Coastal streams for spawning; the near-shore Pacific the rest of its life.",
       "description": "A silver salmon that reddens as it runs upriver to spawn.",
       "imageUrl": "https://upload.wikimedia.org/fixture/coho-salmon.jpg",
-      "callUrl": null,
       "infoUrl": "https://en.wikipedia.org/wiki/Coho_salmon",
       "imageAttribution": "Wikimedia Commons · Public domain · J. Fixture",
-      "callAttribution": null,
       "silhouetteRes": "sil_fish",
       "provenance": { "scientificName": "gbif" }
     }

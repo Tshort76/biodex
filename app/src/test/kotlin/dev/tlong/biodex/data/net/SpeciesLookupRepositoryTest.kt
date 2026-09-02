@@ -12,15 +12,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The composition of ARCHITECTURE.md 5.2: GBIF first because it supplies the name the other
- * two are keyed by, then Wikipedia and Xeno-canto, each free to find nothing on its own.
+ * The composition of ARCHITECTURE.md 5.2: GBIF first because it supplies the name Wikipedia
+ * is keyed by, then Wikipedia, free to find nothing on its own.
  */
 class SpeciesLookupRepositoryTest {
 
-    private fun repository(fetcher: JsonFetcher, xcKey: String = "") = SpeciesLookupRepository(
+    private fun repository(fetcher: JsonFetcher) = SpeciesLookupRepository(
         gbif = GbifClient(fetcher),
         wikipedia = WikipediaClient(fetcher),
-        xenoCanto = XenoCantoClient(fetcher, xcKey),
         duke = Fixtures.dukeIndex(),
     )
 
@@ -48,9 +47,6 @@ class SpeciesLookupRepositoryTest {
             "Wikimedia Commons · CC BY-SA 4.0 · Rhododendrites",
             resolved.details.fields.imageAttribution,
         )
-        // No key: no call, and that is not a failure (M18, 5.4).
-        assertNull(resolved.details.fields.callUrl)
-        assertFalse(resolved.details.callFailed)
     }
 
     @Test
@@ -99,7 +95,7 @@ class SpeciesLookupRepositoryTest {
     }
 
     // -----------------------------------------------------------------------
-    // Plants (M18, 11.4): a different second source, and never Xeno-canto.
+    // Plants (M18, 11.4): the bundled Duke's index as a second source.
     // -----------------------------------------------------------------------
 
     private fun plantStubs(scientificName: String, usageKey: Long) = mapOf(
@@ -118,31 +114,6 @@ class SpeciesLookupRepositoryTest {
         usageKey = usageKey,
         matchKind = MatchKind.EXACT,
     )
-
-    @Test
-    fun `a plant makes no Xeno-canto request, even with a key present`() = runBlocking {
-        val fetcher = FakeFetcher(plantStubs("Achillea millefolium", 1L))
-
-        val details = repository(fetcher, xcKey = "a-real-key")
-            .detailsFor(plant("Achillea millefolium"), "Yarrow")
-
-        // M18: plants never query Xeno-canto. Not asked and ignored — not asked at all.
-        assertTrue(fetcher.requested.none { it.contains("xeno-canto") })
-        assertNull(details.fields.callUrl)
-        assertFalse("nothing failed; nothing was asked", details.callFailed)
-    }
-
-    @Test
-    fun `an animal still queries Xeno-canto when a key exists`() = runBlocking {
-        val fetcher = FakeFetcher(
-            fullStubs + (recordingsUrl("Ixoreus naevius", "a-real-key") to
-                FetchResult.Body(Fixtures.read("xc_recordings.json"))),
-        )
-
-        repository(fetcher, xcKey = "a-real-key").lookup("Varied Thrush")
-
-        assertTrue(fetcher.requested.any { it.contains("xeno-canto") })
-    }
 
     @Test
     fun `the medicinal toggle defaults on above the threshold and off below it`() = runBlocking {
@@ -244,7 +215,6 @@ class SpeciesLookupRepositoryTest {
         val repository = SpeciesLookupRepository(
             gbif = GbifClient(FakeFetcher(emptyMap())),
             wikipedia = WikipediaClient(FakeFetcher(plantStubs("Achillea millefolium", 1L))),
-            xenoCanto = XenoCantoClient(FakeFetcher(emptyMap()), ""),
             duke = null,
         )
 

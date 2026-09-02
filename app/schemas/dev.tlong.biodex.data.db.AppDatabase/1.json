@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "594ab7c85bd75d2916121b6d57141719",
+    "identityHash": "b4a57457cd67cf9510d3ee460fe5bbf3",
     "entities": [
       {
         "tableName": "species",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `regionId` TEXT NOT NULL, `dexNumber` INTEGER NOT NULL, `source` TEXT NOT NULL, `detailsPending` INTEGER NOT NULL, `commonName` TEXT NOT NULL, `scientificName` TEXT, `taxClass` TEXT NOT NULL, `kingdom` TEXT NOT NULL, `habitatText` TEXT, `description` TEXT, `imageUrl` TEXT, `callUrl` TEXT, `infoUrl` TEXT, `imageAttribution` TEXT, `callAttribution` TEXT, `silhouetteRes` TEXT NOT NULL, `userEditedFields` TEXT NOT NULL, `uses` TEXT NOT NULL, `usesNote` TEXT, `medicinalActivities` TEXT NOT NULL, `medicinalRecordCount` INTEGER NOT NULL, `usesAttribution` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `regionId` TEXT NOT NULL, `dexNumber` INTEGER NOT NULL, `source` TEXT NOT NULL, `detailsPending` INTEGER NOT NULL, `commonName` TEXT NOT NULL, `scientificName` TEXT, `taxClass` TEXT NOT NULL, `kingdom` TEXT NOT NULL, `habitatText` TEXT, `description` TEXT, `imageUrl` TEXT, `infoUrl` TEXT, `imageAttribution` TEXT, `silhouetteRes` TEXT NOT NULL, `userEditedFields` TEXT NOT NULL, `uses` TEXT NOT NULL, `usesNote` TEXT, `medicinalActivities` TEXT NOT NULL, `medicinalRecordCount` INTEGER NOT NULL, `usesAttribution` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -77,11 +77,6 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "callUrl",
-            "columnName": "callUrl",
-            "affinity": "TEXT"
-          },
-          {
             "fieldPath": "infoUrl",
             "columnName": "infoUrl",
             "affinity": "TEXT"
@@ -89,11 +84,6 @@
           {
             "fieldPath": "imageAttribution",
             "columnName": "imageAttribution",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "callAttribution",
-            "columnName": "callAttribution",
             "affinity": "TEXT"
           },
           {
@@ -466,7 +456,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '594ab7c85bd75d2916121b6d57141719')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b4a57457cd67cf9510d3ee460fe5bbf3')"
     ]
   }
 }

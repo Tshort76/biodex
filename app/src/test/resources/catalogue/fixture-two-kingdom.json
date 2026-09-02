@@ -17,8 +17,6 @@
       "scientificName": "Ardea herodias", "kingdom": "animal", "taxClass": "bird",
       "ecosystemIds": ["riparian-wetland", "rocky-shore-kelp"],
       "habitatText": "Shallow fresh and salt water from tidal flats to suburban ponds.",
-      "callUrl": "https://xeno-canto.org/fixture/100001/download",
-      "callAttribution": "Xeno-canto XC100001 · CC BY-NC 4.0 · R. Fixture",
       "silhouetteRes": "sil_bird"
     },
     {
@@ -26,8 +24,6 @@
       "scientificName": "Megascops kennicottii", "kingdom": "animal", "taxClass": "bird",
       "ecosystemIds": ["oak-chaparral", "riparian-wetland", "urban-suburban"],
       "habitatText": "Low-elevation woodlands, streamside groves and suburban parks.",
-      "callUrl": "https://xeno-canto.org/fixture/100002/download",
-      "callAttribution": "Xeno-canto XC100002 · CC BY-NC 4.0 · S. Fixture",
       "silhouetteRes": "sil_bird"
     },
     {

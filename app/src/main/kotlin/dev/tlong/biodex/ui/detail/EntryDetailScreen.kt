@@ -52,7 +52,6 @@ import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.AttributionLine
-import dev.tlong.biodex.ui.common.CallPlayerRow
 import dev.tlong.biodex.ui.common.CaughtChip
 import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.ScientificName
@@ -70,9 +69,8 @@ import java.util.Locale
 import kotlinx.coroutines.delay
 
 /**
- * Frame 2 of `mockup.html`: the read-only entry detail (M03/M05, and M04 minus the two
- * pieces later slices own — the streamed reference image and call playback are slice 6's,
- * the photo strip is slice 5's).
+ * Frame 2 of `mockup.html`: the read-only entry detail (M03, and M04 minus the pieces later
+ * slices own — the streamed reference image is slice 6's, the photo strip is slice 5's).
  */
 @Composable
 fun EntryDetailRoute(
@@ -119,7 +117,6 @@ fun EntryDetailRoute(
             onBack = onBack,
             onRegister = onRegister,
             onOpenPhoto = onOpenPhoto,
-            onToggleCall = viewModel::toggleCall,
         )
         val detail = state.detail
         if (revealPending && detail != null) {
@@ -173,7 +170,6 @@ fun EntryDetailScreen(
     onBack: () -> Unit,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
-    onToggleCall: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -212,7 +208,6 @@ fun EntryDetailScreen(
                     filesDir = filesDir,
                     onRegister = onRegister,
                     onOpenPhoto = onOpenPhoto,
-                    onToggleCall = onToggleCall,
                 )
             }
         }
@@ -226,7 +221,6 @@ private fun DetailBody(
     filesDir: String,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
-    onToggleCall: (String) -> Unit,
 ) {
     val colors = DexTheme.colors
     val uriHandler = LocalUriHandler.current
@@ -318,17 +312,8 @@ private fun DetailBody(
         },
     )
 
-    // The kingdom-switched slot (M24, D15). An animal keeps the call row in every state,
-    // including the disabled one — 6.5's reasoning is unchanged for animals. A plant has no
-    // call slot at all: its uses take the place, and a plant with no documented use gets
-    // nothing here, so Habitat is followed straight by the photo strip.
-    state.callRow?.let { callRow ->
-        SectionHeader("Call")
-        CallPlayerRow(
-            state = callRow,
-            onToggle = { detail.callUrl?.let(onToggleCall) },
-        )
-    }
+    // A plant's uses stand between Habitat and the photo strip (M24, D15); an animal, and a
+    // plant with nothing documented, gets nothing here and goes straight to the photo strip.
     state.uses?.let { UsesSection(content = it, modifier = Modifier.padding(top = 2.dp)) }
 
     if (captures.isNotEmpty()) {
@@ -373,8 +358,8 @@ private fun DetailBody(
     }
     AttributionLine(
         text = "Your photos stay in your gallery and are linked by reference — the app keeps " +
-            "only a small thumbnail. Reference image and audio stream from their sources and " +
-            "are cached after first view.",
+            "only a small thumbnail. The reference image streams from its source and is " +
+            "cached after first view.",
         modifier = Modifier.padding(top = 6.dp, bottom = 24.dp),
     )
 }
@@ -548,7 +533,7 @@ internal fun formatCaughtDate(caughtAt: Long?): String =
 // Previews (see the note in DexGridScreen.kt).
 // ---------------------------------------------------------------------------
 
-private fun previewDetail(caught: Boolean, callUrl: String? = null) = SpeciesDetail(
+private fun previewDetail(caught: Boolean) = SpeciesDetail(
     summary = SpeciesSummary(
         id = "western-screech-owl",
         regionId = "pacific",
@@ -569,10 +554,8 @@ private fun previewDetail(caught: Boolean, callUrl: String? = null) = SpeciesDet
         "day in tree cavities. Listen for a soft bouncing-ball trill at dusk.",
     description = null,
     imageUrl = "https://upload.wikimedia.org/example.jpg",
-    callUrl = callUrl,
     infoUrl = "https://en.wikipedia.org/wiki/Western_screech_owl",
     imageAttribution = "Wikimedia · CC BY-SA",
-    callAttribution = "Xeno-canto XC123456 · CC BY-NC 4.0 · R. Smith",
     userEditedFields = emptyList(),
 )
 
@@ -582,12 +565,7 @@ private fun EntryDetailCaughtPreview() {
     BioDexTheme {
         EntryDetailScreen(
             state = EntryDetailUiState(
-                // The catalogue ships no calls today (5.4); the preview carries one so the
-                // enabled row has a shape somebody can look at.
-                detail = previewDetail(
-                    caught = true,
-                    callUrl = "https://xeno-canto.org/123456/download",
-                ),
+                detail = previewDetail(caught = true),
                 ecosystemNames = listOf("Oak Woodland & Chaparral", "Riparian & Wetland"),
                 captures = listOf(
                     Capture(

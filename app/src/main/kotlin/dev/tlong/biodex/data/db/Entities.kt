@@ -44,10 +44,8 @@ data class SpeciesEntity(
     val habitatText: String? = null,
     val description: String? = null,
     val imageUrl: String? = null,
-    val callUrl: String? = null,
     val infoUrl: String? = null,
     val imageAttribution: String? = null,
-    val callAttribution: String? = null,
     /** Drawable resource name, e.g. `sil_bird`; resolved with `getIdentifier` once. */
     val silhouetteRes: String,
     /** M21: field names the user hand-edited; always empty for curated species in v1. */

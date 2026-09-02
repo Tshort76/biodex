@@ -54,10 +54,8 @@ class PhotoViewerStateTest {
         habitatText = null,
         description = null,
         imageUrl = null,
-        callUrl = null,
         infoUrl = null,
         imageAttribution = null,
-        callAttribution = null,
         userEditedFields = emptyList(),
     )
 

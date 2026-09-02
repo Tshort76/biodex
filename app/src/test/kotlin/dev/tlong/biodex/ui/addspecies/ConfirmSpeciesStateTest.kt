@@ -91,34 +91,6 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `no call found is the ordinary state, not an error`() {
-        // Today this is every species: there is no Xeno-canto key (ARCHITECTURE.md 5.4).
-        val state = card()
-
-        assertFalse(state.callFound)
-        assertTrue(state.callRowLabel!!.startsWith("No call found"))
-        assertFalse(state.lookupFailed)
-    }
-
-    @Test
-    fun `a found call names its source`() {
-        val state = card(
-            details = fullDetails().let {
-                it.copy(
-                    fields = it.fields.copy(
-                        callUrl = "https://xeno-canto.org/222222/download",
-                        callAttribution = "Xeno-canto XC222222 · CC BY-NC · A. Recordist",
-                    ),
-                )
-            },
-        )
-
-        assertTrue(state.callFound)
-        assertEquals("✓ Call found", state.callRowLabel)
-        assertEquals("Xeno-canto XC222222 · CC BY-NC · A. Recordist", state.callAttribution)
-    }
-
-    @Test
     fun `no image found leaves the silhouette standing in`() {
         val state = card(details = fullDetails().let { it.copy(fields = it.fields.copy(imageUrl = null)) })
 
@@ -339,20 +311,6 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `a plant card has no call row in any state`() {
-        // M24, and the reason the row is nullable rather than merely empty: nothing was asked
-        // of Xeno-canto, so there is no honest thing for a call row to say.
-        assertNull(plantCard().callRowLabel)
-        assertNull(
-            plantCard(
-                details = plantDetails().let {
-                    it.copy(fields = it.fields.copy(callUrl = "https://xeno-canto.org/1/download"))
-                },
-            ).callRowLabel,
-        )
-    }
-
-    @Test
     fun `the medicinal toggle defaults on for a species over the threshold`() {
         val state = plantCard()
 
@@ -470,14 +428,13 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `an animal card offers no uses editor and keeps its call row`() {
+    fun `an animal card offers no uses editor`() {
         val state = card()
 
         assertFalse(state.isPlant)
         assertTrue(state.uses.isEmpty())
         assertEquals("Duke's index not consulted", state.dukeLabel)
         assertFalse(state.poisonRecorded)
-        assertNotNull(state.callRowLabel)
     }
 
     @Test

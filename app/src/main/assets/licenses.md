@@ -26,20 +26,6 @@ Taxonomy through the GBIF API. GBIF's backbone is published under CC BY 4.0.
 - GBIF: https://www.gbif.org
 - API terms: https://www.gbif.org/terms
 
-## Calls — Xeno-canto
-
-Call recordings come from Xeno-canto. Each recording carries its own Creative Commons
-licence (commonly CC BY-NC-SA or CC BY-NC) and its own recordist credit, which the app shows
-beside the player.
-
-No recordings ship with this build: the Xeno-canto API has required a per-account key since
-October 2025 and none is configured, so every entry currently reads "No call available".
-Adding a key to `local.properties` and re-running the catalogue pipeline fills the calls in;
-this section is declared now because the code that fetches them is already here.
-
-- Xeno-canto: https://xeno-canto.org
-- Terms: https://xeno-canto.org/about/terms
-
 ## Plant uses — Dr. Duke's Phytochemical and Ethnobotanical Databases
 
 A plant's medicinal tag, its recorded activities and its record count come from Dr. Duke's
@@ -67,13 +53,12 @@ artwork.
 ## Third-party libraries
 
 All of these are open source. Everything from AndroidX (Jetpack Compose, Navigation,
-Lifecycle, Activity, Room, Media3, ExifInterface) is licensed under the Apache License 2.0,
+Lifecycle, Activity, Room, ExifInterface) is licensed under the Apache License 2.0,
 as are the Kotlin libraries and the rest of the list.
 
 - Jetpack Compose (UI, Foundation, Material 3) — Apache 2.0
 - AndroidX Activity Compose, Navigation Compose, Lifecycle — Apache 2.0
 - AndroidX Room — Apache 2.0
-- AndroidX Media3 (ExoPlayer, OkHttp data source, database) — Apache 2.0
 - AndroidX ExifInterface — Apache 2.0
 - Kotlin standard library and coroutines, JetBrains — Apache 2.0
 - kotlinx.serialization, JetBrains — Apache 2.0

@@ -52,10 +52,8 @@ data class BackupSpecies(
     val habitatText: String? = null,
     val description: String? = null,
     val imageUrl: String? = null,
-    val callUrl: String? = null,
     val infoUrl: String? = null,
     val imageAttribution: String? = null,
-    val callAttribution: String? = null,
     val userEditedFields: List<String> = emptyList(),
     val ecosystemIds: List<String> = emptyList(),
     // The uses block (11.1). Every field defaults, so a v3 archive — written before plants

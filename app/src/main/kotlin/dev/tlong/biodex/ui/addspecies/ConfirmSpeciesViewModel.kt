@@ -133,7 +133,7 @@ class ConfirmSpeciesViewModel(
         publish()
         viewModelScope.launch {
             // The habitat text and the picture belong to the species, not to the typed name,
-            // so a different candidate means a fresh Wikipedia and Xeno-canto pass.
+            // so a different candidate means a fresh Wikipedia pass.
             details = lookups.detailsFor(candidate, draft?.typedName.orEmpty())
             publish()
         }

@@ -6,7 +6,6 @@ import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
-import dev.tlong.biodex.media.CallPlayback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -26,7 +25,6 @@ class EntryDetailStateTest {
 
     private fun detail(
         ecosystemIds: List<String>,
-        callUrl: String? = null,
         caught: Boolean = false,
     ) = SpeciesDetail(
         summary = SpeciesSummary(
@@ -48,10 +46,8 @@ class EntryDetailStateTest {
         habitatText = "Low-elevation woodlands.",
         description = null,
         imageUrl = null,
-        callUrl = callUrl,
         infoUrl = null,
         imageAttribution = null,
-        callAttribution = null,
         userEditedFields = emptyList(),
     )
 
@@ -60,7 +56,6 @@ class EntryDetailStateTest {
         captures: List<dev.tlong.biodex.domain.Capture> = emptyList(),
         progress: dev.tlong.biodex.domain.DexProgress =
             dev.tlong.biodex.domain.DexProgress.Empty,
-        playback: CallPlayback = CallPlayback.Idle,
         online: Boolean = true,
     ) = runBlocking {
         entryDetailUiState(
@@ -68,7 +63,6 @@ class EntryDetailStateTest {
             ecosystems = MutableStateFlow(ecosystems),
             captures = MutableStateFlow(captures),
             progress = MutableStateFlow(progress),
-            playback = MutableStateFlow(playback),
             online = MutableStateFlow(online),
         ).first()
     }
@@ -151,27 +145,6 @@ class EntryDetailStateTest {
         val s = state(null)
         assertNull(s.detail)
         assertTrue(s.missing)
-    }
-
-    @Test
-    fun `the call row is derived state - a null callUrl is disabled whatever is playing`() {
-        val s = state(
-            detail(listOf("oak-chaparral")),
-            playback = CallPlayback.Playing("https://xeno-canto.org/1/download"),
-        )
-        assertFalse(s.callRow!!.enabled)
-        assertFalse(s.callRow!!.playing)
-    }
-
-    @Test
-    fun `a species whose call is the one playing reads as playing`() {
-        val url = "https://xeno-canto.org/1/download"
-        val s = state(
-            detail(listOf("oak-chaparral"), callUrl = url),
-            playback = CallPlayback.Playing(url),
-        )
-        assertTrue(s.callRow!!.enabled)
-        assertTrue(s.callRow!!.playing)
     }
 
     @Test

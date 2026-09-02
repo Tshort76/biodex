@@ -43,10 +43,8 @@ data class CatalogueSpecies(
     val habitatText: String? = null,
     val description: String? = null,
     val imageUrl: String? = null,
-    val callUrl: String? = null,
     val infoUrl: String? = null,
     val imageAttribution: String? = null,
-    val callAttribution: String? = null,
     val silhouetteRes: String? = null,
     // The uses block (11.1). Every field defaults, so the v1 asset — which has none of
     // them — imports unchanged, and a later pipeline can add one more without a code change

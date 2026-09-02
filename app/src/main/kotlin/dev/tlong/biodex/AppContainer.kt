@@ -16,7 +16,6 @@ import dev.tlong.biodex.data.net.JsonFetcher
 import dev.tlong.biodex.data.net.OkHttpJsonFetcher
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.net.WikipediaClient
-import dev.tlong.biodex.data.net.XenoCantoClient
 import dev.tlong.biodex.data.photo.AndroidPhotoGateway
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
@@ -25,12 +24,8 @@ import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
 import dev.tlong.biodex.media.AndroidNetworkMonitor
 import dev.tlong.biodex.media.CacheManager
-import dev.tlong.biodex.media.CallPlayer
-import dev.tlong.biodex.media.ExoCallPlayer
 import dev.tlong.biodex.media.NetworkMonitor
-import dev.tlong.biodex.media.buildAudioCache
 import dev.tlong.biodex.media.buildImageLoader
-import dev.tlong.biodex.media.callDataSourceFactory
 import dev.tlong.biodex.ui.addspecies.AddSpeciesDraftHolder
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -97,9 +92,8 @@ class AppContainer(val appContext: Context) {
     }
 
     /**
-     * Media bytes bypass the 20 MB HTTP cache: images have Coil's 250 MB disk cache and audio
-     * has `SimpleCache`, so letting them also write here would evict slice 7's API responses
-     * for nothing.
+     * Media bytes bypass the 20 MB HTTP cache: images have Coil's own 250 MB disk cache, so
+     * letting them also write here would evict slice 7's API responses for nothing.
      */
     private val mediaHttpClient: OkHttpClient by lazy {
         httpClient.newBuilder().cache(null).build()
@@ -110,29 +104,9 @@ class AppContainer(val appContext: Context) {
 
     val networkMonitor: NetworkMonitor by lazy { AndroidNetworkMonitor(appContext) }
 
-    /** One per process and per directory — a second one over the same folder throws. */
-    private val audioCache by lazy { buildAudioCache(appContext) }
-
-    /**
-     * Settings' cache management (5.3). It is handed the *existing* `SimpleCache`, because
-     * opening a second one over `media_audio` throws — the reason this lives here and not
-     * inside the Settings ViewModel.
-     */
+    /** Settings' cache management (5.3). */
     val cacheManager: CacheManager by lazy {
-        CacheManager(
-            context = appContext,
-            imageLoader = { imageLoader },
-            audioCache = { audioCache },
-        )
-    }
-
-    /**
-     * One call plays at a time, app-wide (M06). Nothing exercises this today: every `callUrl`
-     * in the shipped catalogue is null for want of a Xeno-canto key (5.4), and the row stays
-     * in its disabled state until the pipeline fills them in.
-     */
-    val callPlayer: CallPlayer by lazy {
-        ExoCallPlayer(appContext, callDataSourceFactory(audioCache, mediaHttpClient))
+        CacheManager(context = appContext, imageLoader = { imageLoader })
     }
 
     // -----------------------------------------------------------------------
@@ -150,18 +124,10 @@ class AppContainer(val appContext: Context) {
      */
     private val dukeIndex: DukeIndex by lazy { DukeIndex(AndroidAssetReader(appContext)) }
 
-    /**
-     * Xeno-canto gets its key from `BuildConfig`, which is the empty string until the user
-     * creates one (5.4). The client then answers `NotFound` without a request, and the confirm
-     * card shows "no call found" — the honest answer today, and the one that needs no code
-     * change when a key appears. A plant never reaches it at all (M18): the Duke's index above
-     * takes that slot.
-     */
     val speciesLookupRepository: SpeciesLookupRepository by lazy {
         SpeciesLookupRepository(
             gbif = GbifClient(jsonFetcher),
             wikipedia = WikipediaClient(jsonFetcher),
-            xenoCanto = XenoCantoClient(jsonFetcher, BuildConfig.XC_API_KEY),
             duke = dukeIndex,
         )
     }
@@ -209,7 +175,7 @@ class AppContainer(val appContext: Context) {
     }
 }
 
-/** 5.2: enough to identify the app to Wikimedia, GBIF and Xeno-canto. */
+/** 5.2: enough to identify the app to Wikimedia and GBIF. */
 private const val USER_AGENT = "BioDex/1.0 (personal Android app; tlong@unified.health)"
 
 /** 5.2: the API-lookup response cache. Media never writes here — see `mediaHttpClient`. */

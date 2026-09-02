@@ -269,7 +269,6 @@ class AddSpeciesRegistrarTest {
         assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), fields.uses)
         assertTrue(fields.usesNote!!.contains("Caution:"))
         assertEquals(60, fields.medicinalRecordCount)
-        assertNull("a plant has no call in any state (M24)", fields.callUrl)
     }
 
     @Test

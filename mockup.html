@@ -1,4 +1,4 @@
-<title>Animal Dex</title>
+<title>BioDex</title>
 <style>
 /* ---- House palette (artifact-style) ---- */
 :root {
@@ -88,10 +88,13 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
                   text-transform: uppercase; color: var(--warn);
                   background: var(--warn-soft); border-radius: 999px;
                   padding: .1rem .5rem; }
-.appbar .prog { margin-left: auto; font-size: .78rem; font-weight: 700;
+.appbar .prog { margin-left: auto; font-size: .74rem; font-weight: 700;
                 color: var(--accent); background: var(--accent-soft);
-                padding: .1rem .5rem; border-radius: 999px;
-                font-variant-numeric: tabular-nums; }
+                padding: .1rem .45rem; border-radius: 999px;
+                font-variant-numeric: tabular-nums; white-space: nowrap; }
+.appbar .prog.plant { margin-left: 0; color: var(--ok); display: inline-flex;
+                      align-items: center; gap: .2rem; }
+.appbar .prog.plant svg { width: .8em; height: .8em; fill: currentColor; }
 .back { color: var(--muted); font-size: 1rem; text-decoration: none; }
 
 .searchbar { flex: none; background: var(--code-bg); border-radius: 10px;
@@ -135,7 +138,7 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
 .nav div.on { color: var(--accent); }
 .nav .ic { display: block; font-size: 1rem; line-height: 1.1; }
 .fab { position: relative; }
-.fab span { position: absolute; right: 14px; bottom: 64px;
+.fab > span { position: absolute; right: 14px; bottom: 64px;
             width: 52px; height: 52px; border-radius: 50%;
             background: var(--accent); color: var(--card);
             display: flex; align-items: center; justify-content: center;
@@ -166,17 +169,6 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
 .sechd { font-size: .66rem; letter-spacing: .1em; text-transform: uppercase;
          font-weight: 700; color: var(--faint); margin: .5rem 0 .15rem; }
 .htext { font-size: .8rem; color: var(--fg); margin: 0; }
-.player { display: flex; align-items: center; gap: .55rem;
-          background: var(--code-bg); border-radius: 10px;
-          padding: .45rem .6rem; margin-top: .15rem; }
-.player .btn { width: 30px; height: 30px; border-radius: 50%; flex: none;
-               background: var(--accent); color: var(--card);
-               display: flex; align-items: center; justify-content: center;
-               font-size: .8rem; }
-.wave { flex: 1; display: flex; align-items: center; gap: 2px; height: 22px; }
-.wave i { flex: 1; background: var(--accent); opacity: .55; border-radius: 1px; }
-.player .src { font-size: .6rem; color: var(--faint); text-align: right;
-               line-height: 1.25; }
 .strip { display: flex; gap: .4rem; margin-top: .15rem; }
 .strip .ph { flex: 1; height: 62px; border-radius: 8px; overflow: hidden;
              background: linear-gradient(150deg, var(--photo-a), var(--photo-b));
@@ -195,6 +187,54 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
            font-weight: 600; color: var(--accent); }
 .attr { font-size: .58rem; color: var(--faint); margin-top: .45rem;
         line-height: 1.4; }
+
+/* Plant detail: the uses section, between habitat and the photo strip */
+.uses { background: var(--code-bg); border-radius: 10px; padding: .45rem .6rem;
+        margin-top: .15rem; }
+.uses .tags { display: flex; gap: .35rem; margin-bottom: .3rem; }
+.uses .tag { font-size: .64rem; font-weight: 700; border-radius: 999px;
+             padding: .06rem .5rem; color: var(--card); }
+.uses .tag.ed { background: var(--ok); }
+.uses .tag.med { background: var(--accent); }
+.uses .note { font-size: .78rem; margin: 0; }
+.uses .caution { display: flex; gap: .35rem; align-items: flex-start;
+                 font-size: .74rem; color: var(--stop); background: var(--stop-soft);
+                 border-radius: 8px; padding: .3rem .5rem; margin-top: .35rem;
+                 line-height: 1.35; }
+.uses .caution b { flex: none; }
+.uses .src2 { font-size: .64rem; color: var(--muted); margin: .35rem 0 0;
+              line-height: 1.35; border-top: 1px solid var(--rule); padding-top: .3rem; }
+.disclaim { font-size: .58rem; color: var(--faint); margin: .3rem 0 0;
+            line-height: 1.4; font-style: italic; }
+.pnum { color: var(--ok); }
+
+/* Register: pinned top, pinned bottom dock, list scrolling between */
+.results.scroll { flex: 1; overflow: hidden; position: relative; }
+.results.scroll::after { content: ""; position: absolute; left: 0; right: 0;
+                         bottom: 0; height: 22px;
+                         background: linear-gradient(transparent, var(--card)); }
+.dock { flex: none; border-top: 1px solid var(--rule); margin: .4rem -.8rem 0;
+        padding: .45rem .8rem 0; background: var(--card); }
+.dock .cta { margin-top: .45rem; margin-bottom: .45rem; }
+.dock .cta.ghost { margin-bottom: .6rem; }
+.scrollhint { font-size: .58rem; color: var(--faint); text-align: center;
+              margin: .1rem 0 0; }
+
+/* Stats: two kingdoms */
+.big.two { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; text-align: left; }
+.big.two .n { font-size: 1.7rem; }
+.big.two .k { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase;
+              font-weight: 700; color: var(--faint); }
+.big.two .plant .n { color: var(--ok); }
+.big.two .plant .meter i { background: var(--ok); }
+.brow.eco.two { grid-template-columns: 6.4em 1fr 5.6em; }
+.brow.eco.two .bv { white-space: nowrap; font-size: .62rem; }
+.brow.eco.two .bar { display: flex; flex-direction: column; gap: 2px; height: auto; background: none; }
+.brow.eco.two .bar i { height: 4px; border-radius: 999px; }
+.brow.eco.two .bar span { display: block; height: 4px; border-radius: 999px; background: var(--code-bg); overflow: hidden; }
+.brow.eco.two .bar span.p i { background: var(--ok); }
+.brow.plant .bar i { background: var(--ok); }
+.subhd { font-size: .6rem; font-weight: 700; color: var(--muted); margin: .25rem 0 .1rem; }
 
 /* Register screen */
 .results { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
@@ -314,11 +354,6 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
                     font-size: .58rem; color: rgba(0,0,0,.55);
                     background: rgba(255,255,255,.55); border-radius: 4px;
                     padding: 0 .3rem; }
-.callrow { display: flex; align-items: center; gap: .5rem;
-           background: var(--code-bg); border-radius: 10px;
-           padding: .38rem .6rem; font-size: .72rem; color: var(--muted);
-           margin-top: .15rem; }
-.callrow b { color: var(--ok); }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
 .edit { font-size: .62rem; font-weight: 600; color: var(--faint); }
 
@@ -366,40 +401,64 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
     <symbol id="a-slug" viewBox="0 0 100 100">
       <path d="M18 70 C14 60 22 50 34 48 C40 38 52 32 64 34 L69 22 L73 35 L82 26 L81 40 C88 46 90 55 84 62 C76 71 60 76 44 76 L18 76 Z"/>
     </symbol>
+    <!-- Plant silhouettes (v4): conifer, broadleaf, shrub, herb, fern, plus the leaf glyph -->
+    <symbol id="p-conifer" viewBox="0 0 100 100">
+      <path d="M50 6 L64 30 L57 30 L70 50 L62 50 L78 72 L55 72 L55 92 L45 92 L45 72 L22 72 L38 50 L30 50 L43 30 L36 30 Z"/>
+    </symbol>
+    <symbol id="p-broadleaf" viewBox="0 0 100 100">
+      <path d="M50 8 C68 8 84 22 84 40 C84 50 79 58 71 63 C76 70 72 80 62 80 L55 80 L55 92 L45 92 L45 80 L38 80 C28 80 24 70 29 63 C21 58 16 50 16 40 C16 22 32 8 50 8 Z"/>
+    </symbol>
+    <symbol id="p-shrub" viewBox="0 0 100 100">
+      <path d="M50 22 C60 22 66 30 66 38 C76 36 86 44 84 56 C90 62 86 74 76 76 L58 78 L58 90 L42 90 L42 78 L24 76 C14 74 10 62 16 56 C14 44 24 36 34 38 C34 30 40 22 50 22 Z"/>
+    </symbol>
+    <symbol id="p-herb" viewBox="0 0 100 100">
+      <path d="M48 92 L48 58 C36 60 24 52 20 40 C32 38 44 44 48 52 L48 40 C40 36 34 26 36 14 C46 18 50 28 50 36 C52 26 60 18 72 16 C72 30 62 40 52 42 L52 54 C58 46 70 42 80 46 C76 58 64 64 52 60 L52 92 Z"/>
+    </symbol>
+    <symbol id="p-fern" viewBox="0 0 100 100">
+      <path d="M46 92 L46 70 L28 76 L30 64 L44 58 L44 48 L22 54 L26 42 L44 36 L44 28 L28 30 L34 18 L46 16 L50 6 L54 16 L66 18 L72 30 L56 28 L56 36 L74 42 L78 54 L56 48 L56 58 L70 64 L72 76 L54 70 L54 92 Z"/>
+    </symbol>
+    <symbol id="g-leaf" viewBox="0 0 100 100">
+      <path d="M86 14 C50 12 18 34 14 70 C12 80 16 88 20 90 C24 66 40 48 62 36 C42 52 30 70 26 90 C64 92 88 60 86 14 Z"/>
+    </symbol>
   </defs>
 </svg>
 
 <main>
-  <p class="eyebrow">Product design · mockups · v3</p>
-  <h1>Animal Dex</h1>
-  <p class="byline">Design board · v3 · 2026-09-01 · companion to DESIGN.md</p>
-  <p class="lede">A personal Pokédex for real animals, Pacific region. The catalogue
-  ships with the app, grouped by ecosystem; a species unlocks when you register a
-  photo of it from your gallery — the photo is linked, never copied, and there is
-  deliberately no in-app identification. Species you photograph that aren't in
-  the catalogue become your own entries, auto-populated from public sources.
-  Six frames below — static mockups, not a working app. Animal art is
-  placeholder SVG standing in for photos.</p>
+  <p class="eyebrow">Product design · mockups · v4</p>
+  <h1>BioDex</h1>
+  <p class="byline">Design board · v4 · 2026-09-02 · companion to DESIGN.md · the shipped regional dex is the Pacific USA BioDex</p>
+  <p class="lede">A personal Pokédex for real living things. One regional dex —
+  the Pacific USA BioDex — holds 120 animals and 80 plants, counted separately,
+  grouped by ecosystem. A species unlocks when you register a photo of it from
+  your gallery — the photo is linked, never copied, and there is deliberately no
+  in-app identification. Plants carry their uses (edible, medicinal, which part,
+  when), filterable from the chip row. Species you
+  photograph that aren't in the catalogue become your own entries, auto-populated
+  from public sources. Seven frames below — static mockups, not a working app.
+  Animal and plant art is placeholder SVG standing in for photos.</p>
 
   <div class="board">
 
     <!-- ============ 1. Dex Grid ============ -->
     <div class="shot">
       <h2>Dex Grid</h2>
-      <p class="cap">Home, headed by the region. Caught species show your photo;
-      uncaught are silhouettes. Ecosystem chips filter; user-added species trail
-      the catalogue below the fold.</p>
+      <p class="cap">Home: the product name, the region pill, one meter per
+      kingdom. Animals then plants in one grid; kingdom, use, class and ecosystem
+      chips all compose. User-added species trail below the fold.</p>
       <div class="phone">
         <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
         <div class="screen fab">
-          <div class="appbar"><span class="t">Animal Dex</span>
-            <span class="region">Pacific</span>
-            <span class="prog">47 / 120</span></div>
+          <div class="appbar"><span class="t">BioDex</span>
+            <span class="region">Pacific USA</span>
+            <span class="prog">47/120</span>
+            <span class="prog plant"><svg><use href="#g-leaf"/></svg>3/80</span></div>
           <div class="searchbar">🔍&nbsp; Search species…</div>
           <div class="chips">
             <span class="chip on">All</span><span class="chip">Uncaught</span>
-            <span class="chip">Birds</span><span class="chip">Coastal Rainforest</span>
-            <span class="chip">Oak &amp; Chaparral</span><span class="chip">High Desert</span>
+            <span class="chip">Animals</span><span class="chip">Plants</span>
+            <span class="chip">Edible</span><span class="chip">Medicinal</span>
+            <span class="chip">Birds</span><span class="chip">Trees</span>
+            <span class="chip">Coastal Rainforest</span>
           </div>
           <div class="grid">
             <div class="cell caught"><div class="art sky"><svg><use href="#a-heron"/></svg></div>
@@ -418,14 +477,14 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
               <div class="lbl"><span class="num">#049</span><span class="nm">Coyote</span></div></div>
             <div class="cell uncaught"><div class="art"><svg><use href="#a-sealion"/></svg></div>
               <div class="lbl"><span class="num">#052</span><span class="nm">CA Sea Lion</span></div></div>
-            <div class="cell uncaught"><div class="art"><svg><use href="#a-lizard"/></svg></div>
-              <div class="lbl"><span class="num">#066</span><span class="nm">W. Fence Lizard</span></div></div>
-            <div class="cell uncaught"><div class="art"><svg><use href="#a-frog"/></svg></div>
-              <div class="lbl"><span class="num">#077</span><span class="nm">Pacific Tree Frog</span></div></div>
-            <div class="cell uncaught"><div class="art"><svg><use href="#a-slug"/></svg></div>
-              <div class="lbl"><span class="num">#088</span><span class="nm">Banana Slug</span></div></div>
             <div class="cell caught"><div class="art"><svg><use href="#a-butterfly"/></svg></div>
               <div class="lbl"><span class="num">#101</span><span class="nm">Monarch Butterfly</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#p-conifer"/></svg></div>
+              <div class="lbl"><span class="num pnum">P001</span><span class="nm">Douglas-fir</span></div></div>
+            <div class="cell caught"><div class="art"><svg><use href="#p-broadleaf"/></svg></div>
+              <div class="lbl"><span class="num pnum">P028</span><span class="nm">Pacific Madrone</span></div></div>
+            <div class="cell uncaught"><div class="art"><svg><use href="#p-shrub"/></svg></div>
+              <div class="lbl"><span class="num pnum">P047</span><span class="nm">Blue Elderberry</span></div></div>
           </div>
           <span title="Register">＋</span>
           <div class="nav">
@@ -440,8 +499,9 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
     <!-- ============ 2. Entry Detail ============ -->
     <div class="shot">
       <h2>Entry Detail — caught</h2>
-      <p class="cap">Reference image, ecosystems, habitat, streamed call with
-      attribution, your gallery-linked photo strip, and the outbound link.</p>
+      <p class="cap">Reference image, ecosystems, habitat, your gallery-linked
+      photo strip, and the outbound link. An animal has nothing between the
+      habitat text and the photo strip.</p>
       <div class="phone">
         <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
         <div class="screen">
@@ -457,12 +517,6 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
           <p class="htext">Low-elevation woodlands, streamside groves and suburban
           parks; roosts by day in tree cavities. Listen for a soft bouncing-ball
           trill at dusk.</p>
-          <div class="sechd">Call</div>
-          <div class="player">
-            <span class="btn">▶</span>
-            <span class="wave"><i style="height:30%"></i><i style="height:65%"></i><i style="height:95%"></i><i style="height:70%"></i><i style="height:40%"></i><i style="height:85%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:25%"></i><i style="height:75%"></i><i style="height:45%"></i><i style="height:20%"></i></span>
-            <span class="src">0:12 · streamed<br>Xeno-canto · CC BY-NC</span>
-          </div>
           <div class="sechd">My photos (2) · linked from gallery</div>
           <div class="strip">
             <div class="ph dusk"><em>Aug 30 2026</em></div>
@@ -480,46 +534,65 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
     <!-- ============ 3. Register a Species ============ -->
     <div class="shot">
       <h2>Register a Species</h2>
-      <p class="cap">Species-first, no identification: search the catalogue by
-      name (offline), attach a gallery photo, register. Names not found become
-      user-added species.</p>
+      <p class="cap">Search pinned at the top, the photo and the actions docked at
+      the bottom, only the list scrolls between — arriving from a detail screen
+      the pre-selected species is scrolled into view and already selected (the
+      phone bug, fixed). Names not found become user-added species.</p>
       <div class="phone">
         <div class="status"><span>9:41</span><span>Offline ▂ 62%</span></div>
         <div class="screen">
           <div class="appbar"><span class="back">←</span>
             <span class="t" style="font-size:1.05rem">Register a Species</span></div>
-          <div class="searchbar">🔍&nbsp; <b>western</b>▏</div>
-          <div class="results">
+          <div class="searchbar">🔍&nbsp; Search by name</div>
+          <div class="results scroll">
+            <div class="s">
+              <span class="thumb"><svg><use href="#a-quad"/></svg></span>
+              <span><span class="nm">Black-tailed Deer</span><br>
+                <span class="sci2">Odocoileus hemionus</span></span>
+              <span class="state">uncaught</span>
+            </div>
+            <div class="s">
+              <span class="thumb"><svg><use href="#a-fox"/></svg></span>
+              <span><span class="nm">Coyote</span><br>
+                <span class="sci2">Canis latrans</span></span>
+              <span class="state">uncaught</span>
+            </div>
             <div class="s pick">
-              <span class="thumb"><svg><use href="#a-owl"/></svg></span>
-              <span><span class="nm">Western Screech-Owl</span><br>
-                <span class="sci2">Megascops kennicottii</span></span>
+              <span class="thumb"><svg><use href="#p-shrub"/></svg></span>
+              <span><span class="nm">Blue Elderberry</span><br>
+                <span class="sci2">Sambucus cerulea · P047</span></span>
               <span class="state">✓ selected</span>
             </div>
             <div class="s">
-              <span class="thumb"><svg><use href="#a-lizard"/></svg></span>
-              <span><span class="nm">Western Fence Lizard</span><br>
-                <span class="sci2">Sceloporus occidentalis</span></span>
+              <span class="thumb"><svg><use href="#p-shrub"/></svg></span>
+              <span><span class="nm">Oregon Grape</span><br>
+                <span class="sci2">Berberis aquifolium · P048</span></span>
               <span class="state">uncaught</span>
             </div>
             <div class="s">
-              <span class="thumb"><svg><use href="#a-bird"/></svg></span>
-              <span><span class="nm">Western Tanager</span><br>
-                <span class="sci2">Piranga ludoviciana</span></span>
+              <span class="thumb"><svg><use href="#p-shrub"/></svg></span>
+              <span><span class="nm">Common Manzanita</span><br>
+                <span class="sci2">Arctostaphylos manzanita · P049</span></span>
+              <span class="state">caught</span>
+            </div>
+            <div class="s">
+              <span class="thumb"><svg><use href="#p-herb"/></svg></span>
+              <span><span class="nm">Miner's Lettuce</span><br>
+                <span class="sci2">Claytonia perfoliata · P059</span></span>
               <span class="state">uncaught</span>
             </div>
           </div>
-          <div class="sechd">Photo · from your gallery</div>
-          <div class="attach">
-            <div class="pic"><svg><use href="#a-owl"/></svg></div>
-            <div class="pmeta"><b>IMG_20260830_1942.jpg</b>
-              <span>Google Photos · Aug 30, 2026</span>
-              <span class="chg">Change photo</span></div>
+          <p class="scrollhint">200 species · scrolls · search and buttons stay put</p>
+          <div class="dock">
+            <div class="attach">
+              <div class="pic"><svg><use href="#p-shrub"/></svg></div>
+              <div class="pmeta"><b>IMG_20260901_1610.jpg</b>
+                <span>Google Photos · Sep 1, 2026</span>
+                <span class="chg">Change photo · Lens ↗</span></div>
+            </div>
+            <div class="cta">Register — Blue Elderberry</div>
+            <div class="cta ghost">Not in the list? Add your own species ＋</div>
           </div>
-          <div class="lens">Not sure what it is? Open photo in Google Lens ↗</div>
-          <div class="meta"><span>📍 Shevlin Park, Bend</span><span>🕘 Aug 30, 2026 · 19:42</span></div>
-          <div class="cta">Register — Western Screech-Owl</div>
-          <div class="cta ghost">Not in the list? Add your own species ＋</div>
         </div>
       </div>
     </div>
@@ -548,47 +621,52 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
     <!-- ============ 5. Stats ============ -->
     <div class="shot">
       <h2>Collection Stats</h2>
-      <p class="cap">Progress overall, by ecosystem (a species can count in
-      several), and by class — the map of what is left to find.</p>
+      <p class="cap">One meter per kingdom; each ecosystem row carries an animal
+      bar and a plant bar; class bars grouped under Animals and Plants — the map
+      of what is left to find, in every season.</p>
       <div class="phone">
         <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
         <div class="screen">
           <div class="appbar"><span class="t">Stats</span>
-            <span class="region">Pacific</span></div>
-          <div class="big">
-            <div class="n">47<small> / 120</small></div>
-            <div class="pct">39% caught · +3 of your own · last new catch Aug 30, 2026</div>
-            <div class="meter"><i style="width:39%"></i></div>
+            <span class="region">Pacific USA</span></div>
+          <div class="big two">
+            <div><div class="k">Animals</div><div class="n">47<small> / 120</small></div>
+              <div class="meter"><i style="width:39%"></i></div></div>
+            <div class="plant"><div class="k">Plants</div><div class="n">3<small> / 80</small></div>
+              <div class="meter"><i style="width:4%"></i></div></div>
           </div>
-          <div class="sechd">By ecosystem</div>
+          <div class="pct" style="font-size:.7rem;color:var(--muted);margin:-.1rem 0 .2rem">+3 of your own · last new catch Sep 1, 2026</div>
+          <div class="sechd">By ecosystem · animals / plants</div>
           <div class="bars">
-            <div class="brow eco"><span class="bl">Coastal Rainforest</span><span class="bar"><i style="width:50%"></i></span><span class="bv">12/24</span></div>
-            <div class="brow eco"><span class="bl">Oak &amp; Chaparral</span><span class="bar"><i style="width:50%"></i></span><span class="bv">13/26</span></div>
-            <div class="brow eco"><span class="bl">Riparian &amp; Wetland</span><span class="bar"><i style="width:50%"></i></span><span class="bv">11/22</span></div>
-            <div class="brow eco"><span class="bl">Urban &amp; Suburban</span><span class="bar"><i style="width:61%"></i></span><span class="bv">11/18</span></div>
-            <div class="brow eco"><span class="bl">Shoreline &amp; Kelp</span><span class="bar"><i style="width:21%"></i></span><span class="bv">3/14</span></div>
-            <div class="brow eco"><span class="bl">High Desert</span><span class="bar"><i style="width:11%"></i></span><span class="bv">2/19</span></div>
-            <div class="brow eco"><span class="bl">Sierra Alpine</span><span class="bar"><i style="width:0%"></i></span><span class="bv">0/11</span></div>
+            <div class="brow eco two"><span class="bl">Coastal Rainforest</span><span class="bar"><span><i style="width:50%"></i></span><span class="p"><i style="width:13%"></i></span></span><span class="bv">12/24 · 2/15</span></div>
+            <div class="brow eco two"><span class="bl">Oak &amp; Chaparral</span><span class="bar"><span><i style="width:50%"></i></span><span class="p"><i style="width:6%"></i></span></span><span class="bv">13/26 · 1/18</span></div>
+            <div class="brow eco two"><span class="bl">Riparian &amp; Wetland</span><span class="bar"><span><i style="width:50%"></i></span><span class="p"><i style="width:0%"></i></span></span><span class="bv">11/22 · 0/14</span></div>
+            <div class="brow eco two"><span class="bl">Urban &amp; Suburban</span><span class="bar"><span><i style="width:61%"></i></span><span class="p"><i style="width:8%"></i></span></span><span class="bv">11/18 · 1/12</span></div>
+            <div class="brow eco two"><span class="bl">Shore, Dunes &amp; Kelp</span><span class="bar"><span><i style="width:21%"></i></span><span class="p"><i style="width:0%"></i></span></span><span class="bv">3/14 · 0/4</span></div>
+            <div class="brow eco two"><span class="bl">High Desert</span><span class="bar"><span><i style="width:11%"></i></span><span class="p"><i style="width:0%"></i></span></span><span class="bv">2/19 · 0/9</span></div>
+            <div class="brow eco two"><span class="bl">Sierra &amp; Cascades</span><span class="bar"><span><i style="width:0%"></i></span><span class="p"><i style="width:0%"></i></span></span><span class="bv">0/11 · 0/22</span></div>
           </div>
           <div class="sechd">By class</div>
           <div class="bars">
+            <div class="subhd">Animals</div>
             <div class="brow"><span class="bl">Birds</span><span class="bar"><i style="width:54%"></i></span><span class="bv">28/52</span></div>
             <div class="brow"><span class="bl">Mammals</span><span class="bar"><i style="width:40%"></i></span><span class="bv">8/20</span></div>
-            <div class="brow"><span class="bl">Invertebrates</span><span class="bar"><i style="width:27%"></i></span><span class="bv">6/22</span></div>
-            <div class="brow"><span class="bl">Reptiles</span><span class="bar"><i style="width:22%"></i></span><span class="bv">2/9</span></div>
-            <div class="brow"><span class="bl">Amphibians</span><span class="bar"><i style="width:14%"></i></span><span class="bv">1/7</span></div>
-            <div class="brow"><span class="bl">Fish</span><span class="bar"><i style="width:20%"></i></span><span class="bv">2/10</span></div>
+            <div class="brow"><span class="bl">Reptiles · Amphibians · Fish · Inverts</span><span class="bar"><i style="width:23%"></i></span><span class="bv">11/48</span></div>
+            <div class="subhd">Plants</div>
+            <div class="brow plant"><span class="bl">Trees</span><span class="bar"><i style="width:5%"></i></span><span class="bv">2/40</span></div>
+            <div class="brow plant"><span class="bl">Shrubs</span><span class="bar"><i style="width:6%"></i></span><span class="bv">1/18</span></div>
+            <div class="brow plant"><span class="bl">Herbs · Ferns</span><span class="bar"><i style="width:0%"></i></span><span class="bv">0/22</span></div>
           </div>
           <div class="sechd">Recently caught</div>
           <div class="recent">
+            <div class="ph"><div class="art"><svg><use href="#p-broadleaf"/></svg></div>
+              <div class="lbl"><b>Madrone</b><span>Sep 1</span></div></div>
             <div class="ph"><div class="art dusk"><svg><use href="#a-owl"/></svg></div>
               <div class="lbl"><b>Screech-Owl</b><span>Aug 30</span></div></div>
             <div class="ph"><div class="art"><svg><use href="#a-butterfly"/></svg></div>
               <div class="lbl"><b>Monarch</b><span>Aug 23</span></div></div>
             <div class="ph"><div class="art sky"><svg><use href="#a-heron"/></svg></div>
               <div class="lbl"><b>G. B. Heron</b><span>Aug 09</span></div></div>
-            <div class="ph"><div class="art"><svg><use href="#a-squirrel"/></svg></div>
-              <div class="lbl"><b>D. Squirrel</b><span>Jul 28</span></div></div>
           </div>
           <div class="nav" style="margin-top:auto">
             <div><span class="ic">▦</span>Dex</div>
@@ -602,9 +680,9 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
     <!-- ============ 6. Add Your Own Species — confirm ============ -->
     <div class="shot">
       <h2>Add Your Own Species — confirm</h2>
-      <p class="cap">A name not in the catalogue: GBIF resolves it, Wikipedia
-      supplies text and image, Xeno-canto the call. Ecosystems stay a manual
-      pick; nothing is saved until you accept.</p>
+      <p class="cap">A name not in the catalogue: GBIF resolves it (and its
+      kingdom) and Wikipedia supplies text and image. A plant additionally gets
+      a growth-form pick and the uses editor. Ecosystems stay a manual pick; nothing is saved until you accept.</p>
       <div class="phone">
         <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
         <div class="screen">
@@ -627,8 +705,6 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
           <p class="htext">Breeds in dense, moist coniferous forest along the
           Pacific coast; in winter moves into lowland woods, parks and
           gardens.</p>
-          <div class="sechd">Call</div>
-          <div class="callrow"><b>✓ Call found</b> · Xeno-canto · CC BY-NC</div>
           <div class="sechd">Ecosystems · your pick</div>
           <div class="chips wrap">
             <span class="chip on">Coastal Rainforest ✓</span>
@@ -638,6 +714,51 @@ h1 { font-size: 2.1rem; margin: .5rem 0 .3rem; }
           </div>
           <div class="cta">Add to my dex — U04 Varied Thrush</div>
           <div class="cta ghost">Edit all details by hand</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 7. Plant Entry Detail ============ -->
+    <div class="shot">
+      <h2>Plant Entry Detail — caught</h2>
+      <p class="cap">The same detail screen for a plant, which adds one section
+      between habitat and the photo strip: the uses — tags, the caution first,
+      the curated part-and-season note, then the sourced medicinal line from
+      Duke's (USDA, CC0) in the attribution register, and the disclaimer.
+      No uses: nothing here.</p>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>LTE ▂▄▆ 87%</span></div>
+        <div class="screen">
+          <div class="appbar"><span class="back">← Dex</span></div>
+          <div class="hero" style="height:118px;background:linear-gradient(165deg, var(--photo-a), var(--photo-b))"><svg style="width:90px;height:90px"><use href="#p-shrub"/></svg>
+            <span class="credit">Reference photo · Wikimedia · CC BY-SA</span></div>
+          <div class="dhead"><span class="nm">Blue Elderberry</span>
+            <span class="num pnum">P047</span></div>
+          <div class="sci">Sambucus cerulea · shrub</div>
+          <div class="ecoline">Riparian &amp; Wetland · Oak &amp; Chaparral · Urban</div>
+          <span class="caughtchip">✓ Caught · Sep 1, 2026</span>
+          <div class="sechd">Habitat</div>
+          <p class="htext">Streambanks, canyon bottoms and open slopes;
+          common along roadsides and field edges.</p>
+          <div class="sechd">Uses</div>
+          <div class="uses">
+            <div class="tags"><span class="tag ed">Edible</span><span class="tag med">Medicinal</span></div>
+            <div class="caution" style="margin:0 0 .35rem"><b>⚠ Caution:</b><span>raw berries, leaves, stems
+            and bark are toxic; red-berried elders are not this species.</span></div>
+            <p class="note">Berries, late summer to early autumn — cook or dry
+            before eating; flowers for cordial and tea.</p>
+            <p class="src2">Duke's records 60 traditional uses: diaphoretic,
+            diuretic, laxative, emetic, febrifuge…</p>
+          </div>
+          <p class="disclaim">Documented uses of the species — not identification,
+          not safety advice. Never eat or use a plant on the strength of this app.
+          Medicinal: Dr. Duke's Databases · USDA ARS · CC0.</p>
+          <div class="sechd">My photos (1) · linked from gallery</div>
+          <div class="strip">
+            <div class="ph"><em>Sep 1 2026</em></div>
+            <div class="ph add">＋</div>
+          </div>
+          <div class="linkrow"><span>Learn more · Wikipedia</span><span>↗</span></div>
         </div>
       </div>
     </div>

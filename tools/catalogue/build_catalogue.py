@@ -3,8 +3,8 @@
 
 Reads three hand-authored inputs — `region.json` (header + the seven ecosystems),
 `curated_animals.json` (120 animals) and `curated_plants.json` (80 plants) —
-enriches each entry from GBIF, Wikipedia/Wikimedia Commons, Xeno-canto (animals
-only) and Dr. Duke's ethnobotanical database (plants only), and writes
+enriches each entry from GBIF, Wikipedia/Wikimedia Commons and Dr. Duke's
+ethnobotanical database (plants only), and writes
 `app/src/main/assets/catalogue/pacific.json` in the shape ARCHITECTURE.md
 sections 3.2 and 11.1 specify, plus `duke_ethnobot.json` beside it.
 
@@ -13,7 +13,6 @@ Usage:
     python3 build_catalogue.py --out /some/where.json
     python3 build_catalogue.py --refresh             # ignore the cache
     python3 build_catalogue.py --plants /tmp/x.json  # swap an input file
-    XC_API_KEY=... python3 build_catalogue.py        # also fetch calls
 
 Standard library only (no `requests` on this machine).  Every HTTP response is
 cached under `cache/`, so a re-run makes zero requests.
@@ -64,7 +63,6 @@ USES_NOTE_MAX_CHARS = 240
 # Politeness delays, per ARCHITECTURE.md 7.2.
 DELAY_GBIF = 0.5
 DELAY_WIKI = 1.0
-DELAY_XC = 4.0
 
 # GBIF class -> the app's taxClass enum (ARCHITECTURE.md 7.2).
 CLASS_MAP = {
@@ -92,7 +90,7 @@ CACHE_HITS = 0
 # --------------------------------------------------------------------------
 
 def _scrub(url: str) -> str:
-    """Strip the Xeno-canto key so it never reaches a log or the report."""
+    """Strip any `key=` query parameter so it never reaches a log or the report."""
     return re.sub(r"([?&]key=)[^&]*", r"\1<redacted>", url)
 
 
@@ -501,23 +499,6 @@ def strip_html(value: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# Xeno-canto v3
-# --------------------------------------------------------------------------
-
-def xeno_canto_best(scientific_name: str, api_key: str, refresh: bool):
-    query = urllib.parse.quote(f'sp:"{scientific_name}"')
-    url = f"https://xeno-canto.org/api/3/recordings?query={query}&key={urllib.parse.quote(api_key)}"
-    payload, _ = fetch_json(url, refresh=refresh, delay=DELAY_XC)
-    if not payload:
-        return None
-    recordings = payload.get("recordings") or []
-    if not recordings:
-        return None
-    ranked = sorted(recordings, key=lambda r: {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4}.get(r.get("q", "E"), 5))
-    return ranked[0]
-
-
-# --------------------------------------------------------------------------
 # Dr. Duke's ethnobotanical database (CC0)
 # --------------------------------------------------------------------------
 
@@ -765,7 +746,7 @@ def fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, us
     }
 
 
-def build_species(entry, ecosystem_ids, api_key, refresh, report):
+def build_species(entry, ecosystem_ids, refresh, report):
     common = entry["commonName"]
     curated_sci = entry["scientificName"]
     slug = slugify(common)
@@ -817,24 +798,6 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
     info_url = wiki["infoUrl"]
     image_attr = wiki["imageAttribution"]
 
-    # --- Xeno-canto -------------------------------------------------------
-    call_url = None
-    call_attr = None
-    if api_key:
-        rec = xeno_canto_best(accepted, api_key, refresh)
-        if rec:
-            call_url = rec.get("file") or rec.get("url")
-            xc_id = rec.get("id")
-            call_attr = (
-                f"Xeno-canto XC{xc_id} · {rec.get('lic') or 'see Xeno-canto'} · {rec.get('rec') or 'unknown'}"
-            )
-            prov["callUrl"] = "xeno-canto:v3"
-            prov["callAttribution"] = "xeno-canto:v3"
-        else:
-            report["no_call_none_found"].append(common)
-    else:
-        report["no_call_key_absent"].append(common)
-
     record = {
         "id": slug,
         "dexNumber": entry["dexNumber"],
@@ -845,10 +808,8 @@ def build_species(entry, ecosystem_ids, api_key, refresh, report):
         "habitatText": habitat_text,
         "description": description,
         "imageUrl": image_url,
-        "callUrl": call_url,
         "infoUrl": info_url,
         "imageAttribution": image_attr,
-        "callAttribution": call_attr,
         "silhouetteRes": f"sil_{tax_class}",
         # The uses block is plant-only (DESIGN.md D14): whether an animal is
         # edible is a hunting-and-fishing regulation question, not a field-guide
@@ -1018,11 +979,8 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
         "habitatText": wiki["habitatText"],
         "description": wiki["description"],
         "imageUrl": wiki["imageUrl"],
-        # 11.3 step 4: Xeno-canto is skipped for plants without a request.
-        "callUrl": None,
         "infoUrl": wiki["infoUrl"],
         "imageAttribution": wiki["imageAttribution"],
-        "callAttribution": None,
         "silhouetteRes": silhouette,
         "uses": uses,
         "usesNote": kept_uses_note(uses_note, uses),
@@ -1190,7 +1148,7 @@ def validate_duke_asset(path, species, internals):
     return problems
 
 
-def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_bytes):
+def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
     species = catalogue["species"]
     animals = [s for s in species if s["kingdom"] == "animal"]
     plants = [s for s in species if s["kingdom"] == "plant"]
@@ -1201,7 +1159,7 @@ def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_by
     add(f"HTTP requests made: {HTTP_REQUESTS}   cache hits: {CACHE_HITS}")
     add("")
 
-    def coverage(title, group, *, calls):
+    def coverage(title, group):
         total = len(group)
         if not total:
             return
@@ -1212,26 +1170,12 @@ def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_by
         add(f"  imageUrl             {sum(1 for s in group if s['imageUrl'])}/{total}")
         add(f"  imageAttribution     {sum(1 for s in group if s['imageAttribution'])}/{total}")
         add(f"  infoUrl              {sum(1 for s in group if s['infoUrl'])}/{total}")
-        if calls:
-            add(f"  callUrl              {sum(1 for s in group if s['callUrl'])}/{total}")
-        else:
-            add("  callUrl              n/a — Xeno-canto is skipped for plants")
         add("")
 
     add(f"COVERAGE  (lede fallback across both kingdoms: {len(report['lede_fallback'])})")
     add("")
-    coverage("ANIMALS", animals, calls=True)
-    coverage("PLANTS", plants, calls=False)
-
-    add("CALLS (animals only)")
-    if had_key:
-        add(f"  missing because no Xeno-canto recording exists: {len(report['no_call_none_found'])}")
-        add("  missing because XC_API_KEY was absent:           0")
-    else:
-        add("  XC_API_KEY was NOT set — Xeno-canto was skipped entirely.")
-        add(f"  missing because XC_API_KEY was absent:           {len(report['no_call_key_absent'])}")
-        add("  missing because no Xeno-canto recording exists:  0 (not checked)")
-    add("")
+    coverage("ANIMALS", animals)
+    coverage("PLANTS", plants)
 
     add("CLASS DISTRIBUTION")
     for kingdom, group in (("animal", animals), ("plant", plants)):
@@ -1304,8 +1248,6 @@ def write_report(catalogue, report, path, had_key, internals, duke_rows, duke_by
     block("NO IMAGE URL", [s["commonName"] for s in species if not s["imageUrl"]])
     block("NO IMAGE ATTRIBUTION", [s["commonName"] for s in species if not s["imageAttribution"]])
     block("NO HABITAT TEXT AT ALL", [s["commonName"] for s in species if not s["habitatText"]])
-    if had_key:
-        block("NO XENO-CANTO RECORDING", report["no_call_none_found"])
 
     text = "\n".join(lines)
     path.write_text(text, encoding="utf-8")
@@ -1338,10 +1280,6 @@ def main():
         animal_entries = animal_entries[: args.only]
         plant_entries = plant_entries[: args.only]
 
-    api_key = os.environ.get("XC_API_KEY", "").strip()
-    if not api_key:
-        print("XC_API_KEY is not set — skipping Xeno-canto; every callUrl will be null.")
-
     report = defaultdict(list)
     built = []
     failures = []
@@ -1349,7 +1287,7 @@ def main():
     for i, entry in enumerate(animal_entries, 1):
         print(f"[animal {i:3d}/{len(animal_entries)}] {entry['commonName']}", flush=True)
         try:
-            built.append(build_species(entry, ecosystem_ids, api_key, args.refresh, report))
+            built.append(build_species(entry, ecosystem_ids, args.refresh, report))
         except SystemExit:
             raise
         except Exception as exc:
@@ -1410,7 +1348,7 @@ def main():
     duke_bytes = write_duke_asset(duke_index, duke_out)
 
     report_text = write_report(
-        catalogue, report, CACHE_DIR / "report.txt", bool(api_key), internals, duke_rows, duke_bytes
+        catalogue, report, CACHE_DIR / "report.txt", internals, duke_rows, duke_bytes
     )
     print("\n" + report_text)
 

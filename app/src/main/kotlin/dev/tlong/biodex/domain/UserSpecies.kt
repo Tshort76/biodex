@@ -17,7 +17,6 @@ object SpeciesField {
     const val HABITAT_TEXT = "habitatText"
     const val DESCRIPTION = "description"
     const val IMAGE_URL = "imageUrl"
-    const val CALL_URL = "callUrl"
     const val INFO_URL = "infoUrl"
     const val KINGDOM = "kingdom"
     const val USES = "uses"
@@ -32,7 +31,6 @@ object SpeciesField {
         HABITAT_TEXT,
         DESCRIPTION,
         IMAGE_URL,
-        CALL_URL,
         INFO_URL,
         USES,
         USES_NOTE,
@@ -49,8 +47,6 @@ data class SpeciesFields(
     val description: String? = null,
     val imageUrl: String? = null,
     val imageAttribution: String? = null,
-    val callUrl: String? = null,
-    val callAttribution: String? = null,
     val infoUrl: String? = null,
     /** Plant-only (D14); empty for every animal and for a plant with no recorded use. */
     val uses: Set<PlantUse> = emptySet(),
@@ -147,8 +143,6 @@ data class LookupFields(
     val description: String? = null,
     val imageUrl: String? = null,
     val imageAttribution: String? = null,
-    val callUrl: String? = null,
-    val callAttribution: String? = null,
     val infoUrl: String? = null,
     /**
      * The medicinal half only: `{MEDICINAL}` when the bundled Duke's index clears the
@@ -222,8 +216,6 @@ fun mergeLookup(
         description = take(SpeciesField.DESCRIPTION, lookup.description, existing.description),
         imageUrl = take(SpeciesField.IMAGE_URL, lookup.imageUrl, existing.imageUrl),
         imageAttribution = take(SpeciesField.IMAGE_URL, lookup.imageAttribution, existing.imageAttribution),
-        callUrl = take(SpeciesField.CALL_URL, lookup.callUrl, existing.callUrl),
-        callAttribution = take(SpeciesField.CALL_URL, lookup.callAttribution, existing.callAttribution),
         infoUrl = take(SpeciesField.INFO_URL, lookup.infoUrl, existing.infoUrl),
         uses = take(SpeciesField.USES, lookup.uses, existing.uses),
         usesNote = take(SpeciesField.USES_NOTE, lookup.usesNote, existing.usesNote),
@@ -266,11 +258,6 @@ fun applyFieldEdits(
                 imageAttribution = values.imageAttribution,
             )
 
-            SpeciesField.CALL_URL -> out.copy(
-                callUrl = values.callUrl,
-                callAttribution = values.callAttribution,
-            )
-
             SpeciesField.INFO_URL -> out.copy(infoUrl = values.infoUrl)
             SpeciesField.USES -> out.copy(uses = values.uses)
             SpeciesField.USES_NOTE -> out.copy(usesNote = values.usesNote)
@@ -302,8 +289,7 @@ fun previewFields(
  * card" is decidable.
  *
  * Pending means "a lookup is still owed", and the only thing that discharges the debt is an
- * identity: a scientific name, which is what GBIF resolves and what Wikipedia and Xeno-canto
- * are keyed by. Accepting a card that still has no scientific name — offline, or a name no
+ * identity: a scientific name, which is what GBIF resolves and what Wikipedia is keyed by. Accepting a card that still has no scientific name — offline, or a name no
  * source recognises — leaves the row pending, so the next online open tries again. That retry
  * is precisely the re-backfill [mergeLookup] has to survive.
  */

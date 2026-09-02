@@ -11,7 +11,6 @@ tools/catalogue/curated_plants.json    (hand-authored input, 80 plants)
         ├─ GBIF        accepted scientific name, kingdom, rank, class, synonyms
         ├─ Wikipedia   habitat prose, description lede, canonical image, page link
         ├─ Commons     image license + author, for the attribution line
-        ├─ Xeno-canto  a call recording — ANIMALS ONLY (needs an API key, below)
         └─ Duke's      medicinal tag, activities, record count, poison flag —
                        PLANTS ONLY (one bulk CC0 download, no per-species calls)
         ▼
@@ -50,7 +49,7 @@ Standard library only — no venv, no `pip install`. (ARCHITECTURE.md 7 mentions
 to set up.)
 
 A cold run takes roughly 25–30 minutes: it sleeps between requests to be polite
-to Wikipedia (1 s), GBIF (0.5 s) and Xeno-canto (4 s). Duke's is one 5.8 MB
+to Wikipedia (1 s) and GBIF (0.5 s). Duke's is one 5.8 MB
 download for the whole run, cached under `cache/duke/`.
 
 **Every HTTP response is cached** under `cache/<sha1-of-url>.json`, so a second
@@ -61,28 +60,6 @@ report from the last run.
 > `cache/` is git-ignored by `tools/catalogue/.gitignore`, which lives in this
 > directory rather than in the repository root — this slice does not own the
 > root `.gitignore`.
-
-## The Xeno-canto API key
-
-Since October 2025, Xeno-canto's v3 API requires a per-account key (free; rate
-limit about 1,000 requests/hour). To get one: create an account at
-<https://xeno-canto.org>, then copy the key from your account page.
-
-```bash
-export XC_API_KEY=...
-python3 build_catalogue.py --refresh
-```
-
-**Without the key the script runs normally.** It skips Xeno-canto entirely,
-writes `callUrl: null` and `callAttribution: null` for every species, and the
-report says how many calls are missing because the key was absent (as opposed to
-because no recording exists). A missing key is a normal condition, not an error.
-
-Until someone creates the key and re-runs this with `--refresh`, no species in
-the shipped asset has a call, so the detail screen's call control has nothing to
-play. Expect roughly half the catalogue to end up with a call even once the key
-exists: Xeno-canto is strong for birds, thin for frogs and insects, and absent
-for mammals and everything marine.
 
 ## The curated animal input
 
@@ -125,8 +102,7 @@ are applied last, after everything is fetched, and are recorded in the asset's
 { "dexNumber": 114, "commonName": "Banana Slug", "scientificName": "Ariolimax columbianus",
   "ecosystemIds": ["coastal-rainforest"],
   "overrides": {
-    "habitatText": "Damp redwood and Douglas-fir forest floor, on leaf litter and rotting wood…",
-    "callUrl": null
+    "habitatText": "Damp redwood and Douglas-fir forest floor, on leaf litter and rotting wood…"
   } }
 ```
 
@@ -178,16 +154,13 @@ Whenever the report flags a `SYNONYM` status, check which article the asset's
 3. **Commons** `prop=imageinfo&iiprop=extmetadata` on the image file → the
    license short name and the author, formatted as
    `Wikimedia Commons · CC BY-SA 4.0 · <author>`.
-4. **Xeno-canto** v3, queried by the accepted scientific name, best quality
-   recording first → `callUrl` and
-   `Xeno-canto XC123456 · CC BY-NC-SA 4.0 · <recordist>`.
-5. Assemble the record with `silhouetteRes = sil_<taxClass>` and a `provenance`
+4. Assemble the record with `silhouetteRes = sil_<taxClass>` and a `provenance`
    map naming the source of every fetched field.
 
 ## Plants
 
 The 80 plants live in `curated_plants.json` and go through the same GBIF,
-Wikipedia and Commons steps, with Xeno-canto replaced by Dr. Duke's.
+Wikipedia and Commons steps, plus Dr. Duke's.
 
 ### The entry shape
 
@@ -296,12 +269,6 @@ Wikipedia section whose title contains "Uses", "Culinary", "Edib", "Medicin" or
 "Ethnobot" has its stripped prose (first 600 characters) written there, so the
 hand-written `usesNote` can be checked against the article. The asset's
 `provenance.uses.edible` is always `curated`.
-
-### Xeno-canto
-
-Skipped for plants **without making a request**. `callUrl` and
-`callAttribution` are null, and the report does not count a plant as a missing
-call.
 
 ## What the script validates
 

@@ -9,7 +9,6 @@ import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.repo.DexRepository
-import dev.tlong.biodex.media.CallPlayer
 import dev.tlong.biodex.media.NetworkMonitor
 import dev.tlong.biodex.ui.addspecies.AddSpeciesDraftHolder
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +21,6 @@ import kotlinx.coroutines.launch
 
 class EntryDetailViewModel(
     repository: DexRepository,
-    private val callPlayer: CallPlayer,
     private val networkMonitor: NetworkMonitor,
     private val lookups: SpeciesLookupRepository,
     private val drafts: AddSpeciesDraftHolder,
@@ -34,7 +32,6 @@ class EntryDetailViewModel(
         ecosystems = repository.ecosystems(),
         captures = repository.captures(speciesId),
         progress = repository.dexProgress(),
-        playback = callPlayer.playback,
         online = networkMonitor.online,
     ).stateIn(
         scope = viewModelScope,
@@ -75,24 +72,12 @@ class EntryDetailViewModel(
         )
     }
 
-    /** M06: one tap plays, the next stops. The row decides which by reading `callRow`. */
-    fun toggleCall(url: String) = callPlayer.toggle(url)
-
-    /**
-     * Leaving the screen silences the call. `stop`, never `release`: the player belongs to the
-     * container and outlives every screen that uses it.
-     */
-    override fun onCleared() {
-        callPlayer.stop()
-    }
-
     companion object {
         fun factory(container: AppContainer, speciesId: String): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
                     EntryDetailViewModel(
                         repository = container.dexRepository,
-                        callPlayer = container.callPlayer,
                         networkMonitor = container.networkMonitor,
                         lookups = container.speciesLookupRepository,
                         drafts = container.addSpeciesDrafts,

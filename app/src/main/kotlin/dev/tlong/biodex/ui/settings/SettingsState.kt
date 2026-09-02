@@ -19,7 +19,7 @@ import dev.tlong.biodex.media.formatBytes
 
 data class SettingsUiState(
     val keepLocalCopy: Boolean = false,
-    val cacheSizes: CacheSizes = CacheSizes(0, 0, 0),
+    val cacheSizes: CacheSizes = CacheSizes(0, 0),
     val grantCount: Int = 0,
     val grantPressure: GrantPressure = GrantPressure.FINE,
     val busy: SettingsBusy? = null,
@@ -100,7 +100,6 @@ fun importSummary(report: ImportReport): String {
 
 fun cacheLine(sizes: CacheSizes): String =
     "Images ${formatBytes(sizes.imageBytes)} · " +
-        "Call audio ${formatBytes(sizes.audioBytes)} · " +
         "Lookups ${formatBytes(sizes.httpBytes)}"
 
 /** 4.4's informational count, plus the warning when it starts to matter. */

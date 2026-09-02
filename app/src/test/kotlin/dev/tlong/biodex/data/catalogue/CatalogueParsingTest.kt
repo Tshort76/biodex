@@ -53,17 +53,7 @@ class CatalogueParsingTest {
         )
         assertTrue(owl.habitatText!!.isNotBlank())
         assertTrue(owl.imageAttribution!!.contains("CC BY-SA"))
-        assertTrue(owl.callAttribution!!.startsWith("Xeno-canto"))
         assertEquals("sil_bird", owl.silhouetteRes)
-    }
-
-    @Test
-    fun `a species with no call parses as a normal record, not an error`() {
-        // M18/R4: roughly half the catalogue has no Xeno-canto recording.
-        val otter = fixture().species.single { it.id == "sea-otter" }
-
-        assertNull(otter.callUrl)
-        assertNull(otter.callAttribution)
     }
 
     @Test

@@ -79,7 +79,7 @@ class SettingsViewModel(
                 it.copy(
                     busy = null,
                     cacheSizes = sizes,
-                    message = "Cleared ${formatBytes(reclaimed)} of cached images and audio. " +
+                    message = "Cleared ${formatBytes(reclaimed)} of cached images. " +
                         "Your photos, thumbnails and entries are untouched.",
                     messageIsWarning = false,
                 )

@@ -4,7 +4,6 @@ import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UsesNote
-import dev.tlong.biodex.media.CallPlayback
 import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.common.dukesLine
 import dev.tlong.biodex.ui.common.usesDisclaimer
@@ -147,7 +146,6 @@ class PlantUiTest {
 
     private fun detailState(
         id: String,
-        playback: CallPlayback = CallPlayback.Idle,
         online: Boolean = true,
     ) = runBlocking {
         entryDetailUiState(
@@ -155,47 +153,21 @@ class PlantUiTest {
             ecosystems = MutableStateFlow(TwoKingdomFixture.ecosystems),
             captures = MutableStateFlow(emptyList()),
             progress = MutableStateFlow(TwoKingdomFixture.progress(all)),
-            playback = MutableStateFlow(playback),
             online = MutableStateFlow(online),
         ).first()
     }
 
     @Test
-    fun `a plant produces no call row in any playback state`() {
-        val states = listOf(
-            CallPlayback.Idle,
-            CallPlayback.Loading("https://example.test/call.mp3"),
-            CallPlayback.Playing("https://example.test/call.mp3"),
-            CallPlayback.Failed("https://example.test/call.mp3"),
-        )
-        listOf("douglas-fir", "blue-elderberry", "common-yarrow").forEach { id ->
-            states.forEach { playback ->
-                assertNull("$id / $playback", detailState(id, playback).callRow)
-                assertNull("$id / $playback offline", detailState(id, playback, online = false).callRow)
-            }
-        }
-    }
-
-    @Test
-    fun `an animal keeps its call row exactly as before`() {
-        val owl = detailState("western-screech-owl")
-        assertNotNull(owl.callRow)
-        assertTrue(owl.callRow!!.enabled)
-        assertNull(owl.uses)
-
-        // The catalogue's animals without a call still render the disabled row, not nothing.
-        val jay = detailState("steller-jay")
-        assertNotNull(jay.callRow)
-        assertFalse(jay.callRow!!.enabled)
+    fun `an animal shows no uses section`() {
+        assertNull(detailState("western-screech-owl").uses)
+        assertNull(detailState("steller-jay").uses)
     }
 
     @Test
     fun `a plant with nothing to say shows nothing in the slot`() {
         // No tags AND no caution. This is the only shape that renders nothing.
         listOf("douglas-fir", "western-sword-fern").forEach { id ->
-            val state = detailState(id)
-            assertNull("$id call row", state.callRow)
-            assertNull("$id uses section", state.uses)
+            assertNull("$id uses section", detailState(id).uses)
         }
     }
 

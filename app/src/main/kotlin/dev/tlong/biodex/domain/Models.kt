@@ -226,10 +226,8 @@ data class SpeciesDetail(
     val habitatText: String?,
     val description: String?,
     val imageUrl: String?,
-    val callUrl: String?,
     val infoUrl: String?,
     val imageAttribution: String?,
-    val callAttribution: String?,
     /** The curated part-and-season note, with any `Caution:` sentence. Null when no uses. */
     val usesNote: String? = null,
     /**

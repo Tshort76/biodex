@@ -9,7 +9,7 @@
     "  99-113 insects",
     "  114-120 other invertebrates",
     "Ecosystem tags are editorial judgment, never fetched. Multi-tagging is expected.",
-    "An optional per-species 'overrides' object pins any output field (habitatText, description, imageUrl, callUrl, infoUrl, imageAttribution, callAttribution)."
+    "An optional per-species 'overrides' object pins any output field (habitatText, description, imageUrl, infoUrl, imageAttribution)."
   ],
 
   "species": [
