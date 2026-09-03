@@ -174,13 +174,6 @@ fun dexGridUiState(
         )
     }
 
-/** The kingdom chips of M23, in the mockup's plural. */
-fun kingdomChipLabel(kingdom: Kingdom): String = when (kingdom) {
-    Kingdom.ANIMAL -> "Animals"
-    Kingdom.PLANT -> "Plants"
-    Kingdom.FUNGUS -> "Fungi"
-}
-
 /**
  * The use chips of M23. Adjectives, because they describe the plant rather than count it.
  *

@@ -1,6 +1,7 @@
 package dev.tlong.biodex.ui.grid
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -28,9 +31,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +49,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Meter
-import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -74,7 +80,6 @@ fun DexGridRoute(
         state = state,
         onQueryChange = viewModel::onQueryChange,
         onCaughtFilter = viewModel::onCaughtFilter,
-        onKingdomFilter = viewModel::onKingdomFilter,
         onUseFilter = viewModel::onUseFilter,
         onClassFilter = viewModel::onClassFilter,
         onEcosystemFilter = viewModel::onEcosystemFilter,
@@ -91,7 +96,6 @@ fun DexGridScreen(
     state: DexGridUiState,
     onQueryChange: (String) -> Unit,
     onCaughtFilter: (CaughtFilter) -> Unit,
-    onKingdomFilter: (Kingdom) -> Unit,
     onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
@@ -129,10 +133,9 @@ fun DexGridScreen(
                 onOpenSettings = onOpenSettings,
             )
             SearchField(query = state.query, onQueryChange = onQueryChange)
-            FilterChipRow(
+            FilterRow(
                 state = state,
                 onCaughtFilter = onCaughtFilter,
-                onKingdomFilter = onKingdomFilter,
                 onUseFilter = onUseFilter,
                 onClassFilter = onClassFilter,
                 onEcosystemFilter = onEcosystemFilter,
@@ -269,79 +272,128 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 /**
- * `.chips` — one horizontally scrolling row holding all five filter dimensions in the
- * mockup's order: All, caught state, kingdoms, uses, classes, then ecosystems. They compose
- * (M14/M23): picking `Plants` and `Edible` narrows to plants with an edible use, and every
- * dimension ANDs with the search query.
- *
- * The class chips are the selected kingdom's (M23) — which is also the fix for the row
- * offering Trees / Shrubs / Herbs / Ferns against a catalogue that had no plants in it.
+ * The filter row: the caught/uncaught toggle inline, then one labelled dropdown per remaining
+ * dimension — Class, Ecosystem, Uses. Kingdom dropped out of the row entirely (the user's
+ * call: "I don't want Kingdom, Class is enough" — a class already implies its kingdom, so a
+ * separate control over it was one tap too many). Each dropdown carries its own selection, so
+ * there is no shared "All" chip; picking a value inside one is how it composes with the rest,
+ * and re-picking the same value inside it is how that one dimension clears.
  */
 @Composable
-private fun FilterChipRow(
+private fun FilterRow(
     state: DexGridUiState,
     onCaughtFilter: (CaughtFilter) -> Unit,
-    onKingdomFilter: (Kingdom) -> Unit,
     onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
     onClearFilters: () -> Unit,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
-        DexFilterChip(
-            label = "All",
-            selected = state.filters.isEmpty,
-            onClick = onClearFilters,
-        )
-        DexFilterChip(
-            label = "Caught",
-            selected = state.filters.caught == CaughtFilter.CAUGHT,
-            onClick = { onCaughtFilter(CaughtFilter.CAUGHT) },
-        )
-        DexFilterChip(
-            label = "Uncaught",
-            selected = state.filters.caught == CaughtFilter.UNCAUGHT,
-            onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
-        )
-        if (state.showKingdomChips) {
-            // Enum order, filtered by what the region holds — never `Kingdom.entries` raw,
-            // or an empty kingdom gets a chip whose only result is an empty grid.
-            Kingdom.entries.filter { it in state.availableKingdoms }.forEach { kingdom ->
-                DexFilterChip(
-                    label = kingdomChipLabel(kingdom),
-                    selected = state.filters.kingdom == kingdom,
-                    onClick = { onKingdomFilter(kingdom) },
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(top = 8.dp),
+        ) {
+            DexFilterChip(
+                label = "All",
+                selected = state.filters.isEmpty,
+                onClick = onClearFilters,
+            )
+            DexFilterChip(
+                label = "Caught",
+                selected = state.filters.caught == CaughtFilter.CAUGHT,
+                onClick = { onCaughtFilter(CaughtFilter.CAUGHT) },
+            )
+            DexFilterChip(
+                label = "Uncaught",
+                selected = state.filters.caught == CaughtFilter.UNCAUGHT,
+                onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
+            val classOptions = classChips(state.filters, state.availableClasses)
+            FilterDropdown(
+                label = "Class",
+                selectedLabel = state.filters.taxClass?.chipLabel(),
+                options = classOptions.map { it.chipLabel() to it },
+                onSelect = onClassFilter,
+            )
+            if (state.ecosystems.isNotEmpty()) {
+                FilterDropdown(
+                    label = "Ecosystem",
+                    selectedLabel = state.ecosystems
+                        .find { it.id == state.filters.ecosystemId }
+                        ?.name,
+                    options = state.ecosystems.map { it.name to it.id },
+                    onSelect = onEcosystemFilter,
+                )
+            }
+            if (state.showUseChips) {
+                FilterDropdown(
+                    label = "Uses",
+                    selectedLabel = state.filters.use?.let(::useChipLabel),
+                    options = PlantUse.entries.map { useChipLabel(it) to it },
+                    onSelect = onUseFilter,
                 )
             }
         }
-        if (state.showUseChips) {
-            PlantUse.entries.forEach { use ->
-                DexFilterChip(
-                    label = useChipLabel(use),
-                    selected = state.filters.use == use,
-                    onClick = { onUseFilter(use) },
+    }
+}
+
+/**
+ * One filter dimension as a dropdown button: the label and current selection (or just the
+ * label, when nothing is picked) on the button, an accent border when a value is active, and
+ * a menu of every available option below it. Picking the value already selected clears it —
+ * the same "tap again to clear" rule the old chips used, since a dropdown has no separate
+ * "All" affordance of its own.
+ */
+@Composable
+private fun <T> FilterDropdown(
+    label: String,
+    selectedLabel: String?,
+    options: List<Pair<String, T>>,
+    onSelect: (T) -> Unit,
+) {
+    val colors = DexTheme.colors
+    var expanded by remember { mutableStateOf(false) }
+    val active = selectedLabel != null
+    Box {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (active) colors.accentSoft else Color.Transparent)
+                .border(1.dp, if (active) colors.accent else colors.rule, RoundedCornerShape(8.dp))
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = selectedLabel ?: label,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = if (active) colors.accent else colors.muted,
+                maxLines = 1,
+            )
+            Text(text = "▾", style = MaterialTheme.typography.labelSmall, color = colors.faint)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (optionLabel, value) ->
+                DropdownMenuItem(
+                    text = { Text(optionLabel) },
+                    onClick = {
+                        expanded = false
+                        onSelect(value)
+                    },
                 )
             }
-        }
-        classChips(state.filters, state.availableClasses).forEach { taxClass ->
-            DexFilterChip(
-                label = taxClass.chipLabel(),
-                selected = state.filters.taxClass == taxClass,
-                onClick = { onClassFilter(taxClass) },
-            )
-        }
-        state.ecosystems.forEach { ecosystem ->
-            DexFilterChip(
-                label = ecosystem.name,
-                selected = state.filters.ecosystemId == ecosystem.id,
-                onClick = { onEcosystemFilter(ecosystem.id) },
-            )
         }
     }
 }
@@ -443,7 +495,6 @@ private fun DexGridPreview() {
             ),
             onQueryChange = {},
             onCaughtFilter = {},
-            onKingdomFilter = {},
             onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},
@@ -474,7 +525,6 @@ private fun DexGridSearchPreview() {
             ),
             onQueryChange = {},
             onCaughtFilter = {},
-            onKingdomFilter = {},
             onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},

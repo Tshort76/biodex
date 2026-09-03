@@ -7,7 +7,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.repo.DexRepository
-import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,11 +43,6 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
 
     fun onCaughtFilter(value: CaughtFilter) = filters.update {
         it.copy(caught = if (it.caught == value) CaughtFilter.ALL else value)
-    }
-
-    /** M23. Selecting a kingdom does not clear a class: the two only ever AND (11.4). */
-    fun onKingdomFilter(value: Kingdom) = filters.update {
-        it.copy(kingdom = if (it.kingdom == value) null else value)
     }
 
     fun onUseFilter(value: PlantUse) = filters.update {
