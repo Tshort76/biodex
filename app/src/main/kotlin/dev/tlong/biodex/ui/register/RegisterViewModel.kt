@@ -250,22 +250,17 @@ class RegisterViewModel(
     /**
      * The one place a photo leaves this screen for the add-your-own card.
      *
-     * **A camera shot is promoted into the gallery first**, and that is not optional. The
-     * confirmation card hands its photo to `AddSpeciesRegistrar`, which registers a capture
-     * against whatever URI it is given; a cache URI would be registered and then deleted by
-     * the next cold start's sweep, leaving a capture whose photo the app itself destroyed and
-     * a re-link offer for it. Promoting here means the capture references a real gallery item.
+     * **A camera shot is handed over still sitting in the cache, and its source travels with
+     * it.** Promoting here is tempting — a cache URI registered as a capture would be deleted
+     * by the next cold start's sweep, leaving a capture whose photo the app itself destroyed —
+     * but the kingdom is not known until the card resolves the name, and M41 says a plant's
+     * photo is never promoted at all. So the card does both: it promotes before it registers,
+     * or it drops the photo, and it sweeps the cache either way. The draft holder is in
+     * memory, so a draft and its cache file die together on process death; nothing dangles.
      */
     private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?) {
         val picked = photo.value ?: return
-        val uri = if (picked.source == PhotoSourceKind.CAMERA_CACHE) {
-            withContext(Dispatchers.IO) {
-                photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
-            } ?: picked.uri
-        } else {
-            picked.uri
-        }
-        events.send(RegisterEvent.AddOwnSpecies(typedName, uri, prefetched))
+        events.send(RegisterEvent.AddOwnSpecies(typedName, picked.uri, picked.source, prefetched))
     }
 
     fun onRegister() {

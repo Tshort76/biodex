@@ -1,6 +1,7 @@
 package dev.tlong.biodex.ui.addspecies
 
 import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.photo.PhotoSourceKind
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,6 +19,12 @@ data class AddSpeciesDraft(
     val typedName: String,
     /** Null for a backfill: the species already exists and already has its photo. */
     val photoUri: String? = null,
+    /**
+     * Where [photoUri] came from. It travels because a camera shot is still sitting in the
+     * app's cache at this point: whether it is promoted into the gallery or swept away is a
+     * decision only the confirm card can make, since only it knows the kingdom (M41).
+     */
+    val photoSource: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
     /** Set when this draft is M20's backfill of an existing details-pending species. */
     val backfillSpeciesId: String? = null,
     /** A lookup the detail screen already ran, so the card does not repeat it. */
@@ -33,10 +40,13 @@ class AddSpeciesDraftHolder(private val newId: () -> String = { UUID.randomUUID(
     fun put(
         typedName: String,
         photoUri: String? = null,
+        photoSource: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
         backfillSpeciesId: String? = null,
         prefetched: LookupOutcome? = null,
     ): String {
-        val draft = AddSpeciesDraft(newId(), typedName, photoUri, backfillSpeciesId, prefetched)
+        val draft = AddSpeciesDraft(
+            newId(), typedName, photoUri, photoSource, backfillSpeciesId, prefetched,
+        )
         drafts[draft.id] = draft
         return draft.id
     }

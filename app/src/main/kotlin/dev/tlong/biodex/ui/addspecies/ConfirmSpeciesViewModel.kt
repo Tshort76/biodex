@@ -9,6 +9,9 @@ import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
+import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
+import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
 import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
@@ -21,6 +24,7 @@ import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.nextUserDexNumber
 import dev.tlong.biodex.media.NetworkMonitor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +32,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The confirm card's state holder (M18–M21).
@@ -45,6 +50,7 @@ class ConfirmSpeciesViewModel(
     private val registrar: AddSpeciesRegistrar,
     private val repository: DexRepository,
     private val networkMonitor: NetworkMonitor,
+    private val photos: PhotoGateway,
     private val draftId: String,
 ) : ViewModel() {
 
@@ -104,16 +110,25 @@ class ConfirmSpeciesViewModel(
         publish()
     }
 
-    /** M20's offline path: one write, no card, no waiting. */
+    /**
+     * M20's offline path: one write, no card, no waiting.
+     *
+     * Offline there is no lookup and so no kingdom, which means M41 cannot fire here: the
+     * photo is kept. If the later backfill resolves the species as a plant, that entry keeps a
+     * photograph the online path would not have given it — a known corner, not worth a
+     * deletion path that runs long after the user has forgotten the photo.
+     */
     private suspend fun createOfflinePending(draft: AddSpeciesDraft) {
+        val fields = SpeciesFields(commonName = draft.typedName)
         when (
             val result = registrar.create(
-                fields = SpeciesFields(commonName = draft.typedName),
+                fields = fields,
                 ecosystemIds = emptyList(),
-                photoUri = draft.photoUri,
+                photoUri = photoForCapture(draft, fields.kingdom),
             )
         ) {
             is AddSpeciesRegistrar.CreateResult.Created -> {
+                sweepCacheFor(draft)
                 drafts.remove(draftId)
                 events.send(Event.Created(result.speciesId))
             }
@@ -238,11 +253,12 @@ class ConfirmSpeciesViewModel(
                 val result = registrar.create(
                     fields = card.fields,
                     ecosystemIds = card.selectedEcosystemIds.toList(),
-                    photoUri = draft.photoUri,
+                    photoUri = photoForCapture(draft, card.fields.kingdom),
                     userEditedFields = edits.editedFields.toList(),
                 )
             ) {
                 is AddSpeciesRegistrar.CreateResult.Created -> {
+                    sweepCacheFor(draft)
                     drafts.remove(draftId)
                     events.send(Event.Created(result.speciesId))
                 }
@@ -254,6 +270,29 @@ class ConfirmSpeciesViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * D26, moved here from the Register screen because this is the first place that knows the
+     * kingdom. A camera shot is still sitting in the app's cache: a kingdom that keeps its
+     * photo gets it promoted into the gallery now, so the capture references a real gallery
+     * item rather than a file the next cold start sweeps away.
+     *
+     * Dropping a plant's photo is *not* done here — the registrar does it, so the rule holds
+     * for every caller. All this decides is whether the file needs a home first.
+     */
+    private suspend fun photoForCapture(draft: AddSpeciesDraft, kingdom: Kingdom): String? {
+        val uri = draft.photoUri ?: return null
+        if (!shouldPromoteToGallery(draft.photoSource, kingdom)) return uri
+        return withContext(Dispatchers.IO) {
+            photos.promoteToGallery(uri, "BioDex.jpg")
+        } ?: uri
+    }
+
+    /** A camera shot's cache file goes whether it was promoted, attached or dropped. */
+    private suspend fun sweepCacheFor(draft: AddSpeciesDraft) {
+        if (!shouldDeleteCacheFile(draft.photoSource)) return
+        withContext(Dispatchers.IO) { photos.sweepCameraCache() }
     }
 
     fun onDismiss() {
@@ -286,6 +325,7 @@ class ConfirmSpeciesViewModel(
                         registrar = container.addSpeciesRegistrar,
                         repository = container.dexRepository,
                         networkMonitor = container.networkMonitor,
+                        photos = container.photoGateway,
                         draftId = draftId,
                     )
                 }

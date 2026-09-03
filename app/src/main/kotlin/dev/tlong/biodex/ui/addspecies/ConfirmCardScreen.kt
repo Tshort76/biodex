@@ -331,6 +331,14 @@ private fun CardBody(
         )
     }
 
+    state.photoNotKeptWarning?.let { message ->
+        Text(
+            text = message,
+            style = MaterialTheme.typography.labelSmall,
+            color = colors.faint,
+        )
+    }
+
     if (state.willBeDetailsPending && !state.isBackfill) {
         Text(
             text = "Saved without a match, this entry stays “details pending” and the app " +

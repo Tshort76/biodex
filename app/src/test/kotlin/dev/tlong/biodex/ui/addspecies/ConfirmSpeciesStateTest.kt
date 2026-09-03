@@ -444,4 +444,34 @@ class ConfirmSpeciesStateTest {
         assertEquals("Varied Thrush", state.fields.commonName)
         assertTrue(state.candidates.isEmpty())
     }
+    // -----------------------------------------------------------------------
+    // M41: the photo a plant will not keep.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a plant card warns that the photo is not kept`() {
+        val plant = card(edits = ConfirmCardEdits(values = SpeciesFields(
+            commonName = "Salal",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.SHRUB,
+        ), editedFields = setOf(SpeciesField.KINGDOM)))
+
+        assertNotNull(plant.photoNotKeptWarning)
+    }
+
+    @Test
+    fun `an animal card does not, and neither does a plant with no photo`() {
+        assertNull(card().photoNotKeptWarning)
+
+        val noPhoto = card(
+            draft = draft.copy(photoUri = null),
+            edits = ConfirmCardEdits(values = SpeciesFields(
+                commonName = "Salal",
+                kingdom = Kingdom.PLANT,
+                taxClass = TaxClass.SHRUB,
+            ), editedFields = setOf(SpeciesField.KINGDOM)),
+        )
+        assertNull(noPhoto.photoNotKeptWarning)
+    }
+
 }

@@ -96,6 +96,49 @@ class AddSpeciesRegistrarTest {
     }
 
     @Test
+    fun `a plant the user adds keeps no photograph, but is still caught (M41)`() = runBlocking {
+        val nettle = SpeciesFields(
+            commonName = "Stinging Nettle",
+            scientificName = "Urtica dioica",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.HERB,
+        )
+
+        val result = registrar.create(nettle, emptyList(), "content://photo/1")
+
+        val created = result as AddSpeciesRegistrar.CreateResult.Created
+        val capture = captureStore.captures.values.single()
+        assertEquals(created.speciesId, capture.speciesId)
+        assertTrue("a user-added species is caught by definition", captureStore.entries.isNotEmpty())
+        assertNull("M41: a plant's photo is not carried into the capture", capture.photoUri)
+        assertNull(capture.thumbPath)
+    }
+
+    @Test
+    fun `an animal the user adds still keeps its photograph`() = runBlocking {
+        val result = registrar.create(thrush, emptyList(), "content://photo/1")
+
+        val capture = captureStore.captures.values.single()
+        assertEquals("content://photo/1", capture.photoUri)
+        assertTrue(result is AddSpeciesRegistrar.CreateResult.Created)
+    }
+
+    @Test
+    fun `an unreadable photo cannot fail a plant, because no photo is read`() = runBlocking {
+        gateway.thumbnailWorks = false
+        val nettle = SpeciesFields(
+            commonName = "Stinging Nettle",
+            kingdom = Kingdom.PLANT,
+            taxClass = TaxClass.HERB,
+        )
+
+        val result = registrar.create(nettle, emptyList(), "content://photo/1")
+
+        assertTrue(result is AddSpeciesRegistrar.CreateResult.Created)
+        assertEquals(1, store.species.size)
+    }
+
+    @Test
     fun `an unreadable photo leaves nothing behind — not even the species row`() = runBlocking {
         gateway.thumbnailWorks = false
 

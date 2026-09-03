@@ -44,6 +44,7 @@ sealed interface RegisterEvent {
     data class AddOwnSpecies(
         val typedName: String,
         val photoUri: String,
+        val photoSource: PhotoSourceKind,
         val prefetched: LookupOutcome? = null,
     ) : RegisterEvent
 }

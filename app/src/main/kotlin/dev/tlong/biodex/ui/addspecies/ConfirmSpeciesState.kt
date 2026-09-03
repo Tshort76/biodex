@@ -66,6 +66,8 @@ sealed interface ConfirmSpeciesUiState {
         val dexNumber: Int,
         val handEditing: Boolean,
         val saving: Boolean,
+        /** Whether a photo came with the draft — the only thing [photoNotKeptWarning] needs. */
+        val hasPhoto: Boolean = false,
         val error: String? = null,
     ) : ConfirmSpeciesUiState {
 
@@ -83,6 +85,20 @@ sealed interface ConfirmSpeciesUiState {
 
         val kingdom: Kingdom get() = fields.kingdom
         val isPlant: Boolean get() = kingdom == Kingdom.PLANT
+
+        /**
+         * The Register screen's warning of the same name, on the other door into a plant
+         * entry (M41). This card is the first place the kingdom is known at all — the user
+         * typed a name, not a species — so it is also the first moment the app can say the
+         * photo will not be kept. Saying it after the save would be no use to anyone.
+         */
+        val photoNotKeptWarning: String?
+            get() = if (hasPhoto && isPlant) {
+                "This photo is not kept for a plant — the tile shows the species' own " +
+                    "picture. Nothing is saved to your gallery."
+            } else {
+                null
+            }
 
         /** The picker offers this kingdom's classes only — never "tree" for a sparrow (11.2). */
         val offeredClasses: List<TaxClass> get() = TaxClass.of(kingdom)
@@ -205,6 +221,7 @@ fun confirmCardState(
         dexNumber = existing?.dexNumber ?: nextDexNumber,
         handEditing = edits.handEditing,
         saving = saving,
+        hasPhoto = draft.photoUri != null,
         error = error,
     )
 }

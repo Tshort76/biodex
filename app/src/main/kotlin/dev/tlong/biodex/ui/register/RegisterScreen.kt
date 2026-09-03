@@ -79,6 +79,7 @@ fun RegisterRoute(
     onAddOwnSpecies: (
         typedName: String,
         photoUri: String,
+        photoSource: PhotoSourceKind,
         prefetched: LookupOutcome?,
     ) -> Unit,
 ) {
@@ -133,7 +134,12 @@ fun RegisterRoute(
             when (event) {
                 is RegisterEvent.Registered -> onRegistered(event.speciesId, event.isFirst)
                 is RegisterEvent.AddOwnSpecies ->
-                    onAddOwnSpecies(event.typedName, event.photoUri, event.prefetched)
+                    onAddOwnSpecies(
+                        event.typedName,
+                        event.photoUri,
+                        event.photoSource,
+                        event.prefetched,
+                    )
 
                 RegisterEvent.PhotoUnreadable -> Unit
             }
