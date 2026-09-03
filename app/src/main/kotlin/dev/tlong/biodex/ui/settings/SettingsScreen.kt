@@ -28,15 +28,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.graphics.SolidColor
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.photo.GrantPressure
@@ -324,35 +329,60 @@ fun SettingsScreen(
 }
 
 /**
- * The key field. It shows the key in full rather than masking it: this is a rate-limit token
- * for a public plant API on the owner's own phone, and a masked field the user cannot check
- * against the one they were emailed turns a typo into a mystery.
+ * The key field, masked by default with a reveal toggle.
+ *
+ * An earlier version showed the key in full, on the reasoning that a masked field the user
+ * cannot check against the one they were emailed turns a typo into a mystery. That reasoning
+ * is sound and is why the toggle exists rather than a permanently masked field — but it is
+ * not a reason to leave a credential legible by default on a screen the user might hand
+ * across, screenshot, or screen-share. Masked is the safe default; Show is one tap away.
  */
 @Composable
 private fun KeyField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     val colors = DexTheme.colors
-    Box(
+    // Not `rememberSaveable`: a revealed key must not survive into saved instance state,
+    // and the field re-masking after a rotation is the right way to fail.
+    var revealed by remember { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(colors.codeBg)
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        if (value.isEmpty()) {
-            Text(
-                text = placeholder,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.faint,
+        Box(modifier = Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+                cursorBrush = SolidColor(colors.accent),
+                visualTransformation = if (revealed) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
-            cursorBrush = SolidColor(colors.accent),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (value.isNotEmpty()) {
+            Text(
+                text = if (revealed) "Hide" else "Show",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.accent,
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clickable { revealed = !revealed },
+            )
+        }
     }
 }
 

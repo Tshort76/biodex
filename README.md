@@ -1,10 +1,10 @@
 # BioDex
 
-A personal Android app that turns a real-world life list into a Pokédex. It ships with a curated catalogue for one region — the **Pacific USA BioDex**, everything west of the Rocky Mountains — holding 120 animals and 80 plants. Every species starts as a silhouette and unlocks when you photograph it yourself.
+A personal Android app that turns a real-world life list into a Pokédex. It ships with a curated catalogue for one region — the **Pacific USA BioDex**, everything west of the Rocky Mountains — holding 120 animals, 80 plants and 30 fungi. Every species starts as a silhouette and unlocks when you photograph it yourself.
 
-Your photos stay in your gallery. The app stores a reference and a small thumbnail, never a copy.
+Your photos stay in your gallery. For an animal or a fungus the app stores a reference and a small thumbnail, never a copy; a plant keeps no photograph at all, and its entry shows the catalogue's own reference picture instead.
 
-There is deliberately **no species identification** in the app. If you don't know what you're looking at, use Google Lens and then type the name in.
+**Identification is opt-in, and only for plants.** Nothing is uploaded unless you press *Identify* on a photo you attached. When you do, a reduced copy of that one photo — re-encoded, so its EXIF and its GPS coordinates are gone — goes to the Pl@ntNet API, which sends back candidate species you choose from. The app never picks one for you and never claims the thing in your photo *is* a species. Animals and fungi have no identification at all: if you don't know what you're looking at, use Google Lens and type the name in.
 
 ---
 
@@ -22,7 +22,9 @@ Offline, the entry is created immediately from the name and photo alone and fill
 
 **Plants have a uses section** where an animal has nothing. It reads in a deliberate order — any **caution** first, then the curated note about which part and which season, then a muted line recording what Duke's holds. Those are three different kinds of claim and the layout ranks them by how much they should be trusted.
 
-> **The uses data is documentation, not advice.** Medicinal information is what a public dataset records, edible tags are one person's curation, and neither is an identification. 27 of the 80 plants carry a caution; every plant with a toxicity record in Duke's is *required* to carry one, enforced when the catalogue is built. Never eat or use a plant on the strength of this app.
+> **The uses data is documentation, not advice.** Medicinal information is what a public dataset records, the *Food source* tag is one person's curation, and neither is an identification. 27 of the 80 plants carry a caution, and every plant with a toxicity record in Duke's is *required* to carry one, enforced when the catalogue is built. Never eat or use a plant on the strength of this app.
+>
+> **Fungi carry no uses at all** — no food-source tag, no medicinal line, and no identification either. Duke's is an ethnobotany database and covers no fungi, so nothing decides which mushrooms need a warning the way it does for plants: every one of the 30 fungal cautions is hand-written and unchecked. That is also why the app will never suggest what a mushroom is.
 
 **Your photos can break.** If you delete a photo from your gallery, the entry stays caught and shows its thumbnail with an offer to re-link. A photo that lives only in Google Photos' cloud and hasn't downloaded may not resolve until you're online. Turning on *Keep a local copy* in Settings makes future registrations immune to this, at the cost of storing the photo twice; it is off by default because linking rather than copying is the point.
 

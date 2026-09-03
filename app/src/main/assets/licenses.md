@@ -1,7 +1,27 @@
 # Licenses and attribution
 
 BioDex is a personal, non-commercial app. Everything below is what it uses and under
-what terms. Photographs you register are yours; they never leave the device.
+what terms.
+
+Photographs you register are yours. They stay on the device, with one exception you control:
+pressing **Identify** on an attached photo sends a reduced copy of that single photo to the
+Pl@ntNet API so it can suggest what the plant is. The copy is re-encoded before it is sent,
+which strips the EXIF metadata and with it the location the camera recorded. Nothing else is
+uploaded — not your other photos, not where or when you caught anything, not your collection.
+No photo leaves the device unless you press that button, and the button exists only for plants.
+
+## Identification suggestions — Pl@ntNet
+
+When you press Identify, the photo goes to the Pl@ntNet API (Pl@ntNet, a consortium including
+Cirad, INRAE, Inria and IRD) and the candidate species it returns are Pl@ntNet's suggestions,
+shown with the confidence score it reports. They are suggestions about a photograph, not an
+identification by this app, and you choose which — if any — is right.
+
+Every suggested name is checked against the GBIF backbone before it is shown, so a name that
+does not resolve to a real species is dropped rather than displayed.
+
+- Pl@ntNet: https://plantnet.org
+- API and terms: https://my.plantnet.org/terms_of_use
 
 ## Species text and images — Wikipedia and Wikimedia Commons
 

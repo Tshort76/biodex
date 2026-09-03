@@ -214,6 +214,19 @@ fun RegisterScreen(
         scrolledToPreselection = true
     }
 
+    // The candidate panel is item 0 of the same list the catalogue rows are in, and a
+    // LazyColumn keeps its scroll anchored to the item already at the top. So inserting the
+    // panel above that item pushes it *out of the viewport*: the request runs, the panel is
+    // composed, and the screen appears not to react at all. Found on the phone, and invisible
+    // to the JVM tests, which assert the state and never lay anything out.
+    //
+    // Keyed on the panel's presence rather than on the state itself, so re-ranking candidates
+    // does not yank a list the user has started scrolling through.
+    val panelShowing = state.identification !is IdentificationState.Idle
+    LaunchedEffect(panelShowing) {
+        if (panelShowing) listState.animateScrollToItem(0)
+    }
+
     Scaffold(
         containerColor = colors.bg,
         // The bars carry their own insets: Scaffold pads only its content slot, and on an
