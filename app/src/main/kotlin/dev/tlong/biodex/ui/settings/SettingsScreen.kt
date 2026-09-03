@@ -291,9 +291,15 @@ fun SettingsScreen(
             SectionHeader("About")
             SettingCard {
                 Text(
+                    // §7's redline. The old sentence said photographs never leave the device,
+                    // which stopped being true the moment Identify existed; saying so here,
+                    // where a user looks for what the app does, is the point of the redline.
                     text = "BioDex 1.0 — Pacific USA BioDex, a personal life list of the " +
-                        "region's animals and plants. Species text and images come from " +
-                        "Wikipedia and Wikimedia Commons, and names from GBIF.",
+                        "region's animals, plants and fungi. Species text and images come from " +
+                        "Wikipedia and Wikimedia Commons, and names from GBIF. Identification " +
+                        "suggestions, when you ask for them, come from Pl@ntNet; only the " +
+                        "photo you press Identify on is sent, reduced and without location " +
+                        "data.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )
