@@ -41,8 +41,12 @@ interface PhotoGateway {
     /** Deletes an app-owned file named by a path relative to `filesDir`. Never throws. */
     fun deleteOwnedFile(relativePath: String)
 
-    /** Probes the gallery reference. Full-size views only — the grid never calls this (M11). */
-    fun resolve(photoUri: String, localCopyPath: String?): PhotoRef
+    /**
+     * Probes the gallery reference. Full-size views only — the grid never calls this (M11).
+     * A null [photoUri] is a photoless capture and resolves to [PhotoRef.None] without any
+     * probe at all (M41).
+     */
+    fun resolve(photoUri: String?, localCopyPath: String?): PhotoRef
 
     /** Best-effort display name for the picked file, for the Register screen's photo row. */
     fun displayName(uri: String): String?

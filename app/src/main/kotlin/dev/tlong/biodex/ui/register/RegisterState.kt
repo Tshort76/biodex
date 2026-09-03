@@ -3,6 +3,7 @@ package dev.tlong.biodex.ui.register
 import dev.tlong.biodex.data.identify.DEFAULT_MONTHLY_IDENTIFICATION_CAP
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
+import dev.tlong.biodex.data.photo.keepsOwnPhoto
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.grid.matchesQuery
@@ -77,7 +78,32 @@ data class RegisterUiState(
     val identificationsUsed: Int = 0,
     val identificationCap: Int = DEFAULT_MONTHLY_IDENTIFICATION_CAP,
 ) {
-    val canRegister: Boolean get() = selected != null && photo != null && !registering
+    /**
+     * M41. A plant registers **with or without a photo**, on the typed path and the identified
+     * one alike. That follows from the photo not being kept: an app that insisted on something
+     * it then throws away would be asking for a photo for its own sake. Every other kingdom
+     * still needs one, because for them the photograph *is* the catch.
+     */
+    val canRegister: Boolean
+        get() = selected != null &&
+            !registering &&
+            (photo != null || !keepsOwnPhoto(selected.kingdom))
+
+    /**
+     * §5.2 rule 10. Shown under an attached photo whenever that photo is about to be
+     * discarded, *before* the user registers rather than after.
+     *
+     * It keys off the **selected species' kingdom**, not off anything the identification did.
+     * The path that would otherwise be missed is the plain one: attach a photo, type "salal",
+     * register — no identification, no chip, and the photo silently gone.
+     */
+    val photoNotKeptWarning: String?
+        get() = if (photo != null && selected != null && !keepsOwnPhoto(selected.kingdom)) {
+            "This photo is not kept for a plant — the tile shows the species' own picture. " +
+                "Nothing is saved to your gallery."
+        } else {
+            null
+        }
 
     // -----------------------------------------------------------------------
     // The Identify action (§5.1). Hidden and disabled are different answers to

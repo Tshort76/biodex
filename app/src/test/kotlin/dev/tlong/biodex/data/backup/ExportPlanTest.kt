@@ -27,7 +27,7 @@ class ExportPlanTest {
     @Test
     fun `a live gallery reference is exported at full size`() {
         val c = capture("a")
-        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri)), ::exists)
+        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri!!)), ::exists)
 
         assertEquals(PhotoDisposition.INCLUDED, items.single().disposition)
         assertEquals("photos/a.jpg", items.single().photoEntry)
@@ -72,7 +72,7 @@ class ExportPlanTest {
     @Test
     fun `the manifest never names a photo the archive does not hold`() {
         val c = capture("a")
-        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri)), ::exists)
+        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri!!)), ::exists)
 
         // The plan said INCLUDED; the write failed, so only the thumbnail landed.
         val manifest = buildManifest(
@@ -96,7 +96,7 @@ class ExportPlanTest {
     @Test
     fun `a report with nothing missing is complete`() {
         val c = capture("a")
-        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri)), ::exists)
+        val items = planExport(listOf(c), mapOf("a" to PhotoRef.Available(c.photoUri!!)), ::exists)
         val manifest = buildManifest(
             exportedAt = 5L,
             regionId = "pacific",

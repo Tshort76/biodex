@@ -80,7 +80,16 @@ fun exportSummary(fileName: String, report: PhotoReport): String {
     val head = "Saved $fileName — ${report.captures} " +
         (if (report.captures == 1) "photo record" else "photo records") +
         ", ${report.thumbnailsIncluded} thumbnails, " +
-        "${report.fullSizeIncluded} full-size photos."
+        "${report.fullSizeIncluded} full-size photos." +
+        // M41: said as a fact about the catches, never as a shortfall in the archive. A plant
+        // keeps no photograph, so an archive that holds none of them is complete.
+        if (report.neverHadPhoto > 0) {
+            " ${report.neverHadPhoto} " +
+                (if (report.neverHadPhoto == 1) "catch keeps" else "catches keep") +
+                " no photo of your own."
+        } else {
+            ""
+        }
     if (report.complete) {
         return "$head Every photo you still have is in the archive."
     }

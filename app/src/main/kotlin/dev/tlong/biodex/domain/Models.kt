@@ -235,6 +235,12 @@ data class SpeciesSummary(
     val caughtAt: Long?,
     /** Relative path under `filesDir` of the favorite (else first) capture's thumbnail. */
     val thumbPath: String?,
+    /**
+     * The species' own reference picture from Wikimedia Commons. The grid needs it for M41's
+     * caught-with-no-photo-of-your-own tile, where it stands in for the photograph the user
+     * did not keep; every other tile state ignores it.
+     */
+    val imageUrl: String? = null,
     val captureCount: Int,
 ) {
     val caught: Boolean get() = caughtAt != null

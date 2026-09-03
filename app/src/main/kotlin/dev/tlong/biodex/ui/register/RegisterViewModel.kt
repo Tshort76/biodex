@@ -16,6 +16,7 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.keepsOwnPhoto
 import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
 import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.DexRepository
@@ -239,8 +240,11 @@ class RegisterViewModel(
 
     fun onRegister() {
         val speciesId = selectedSpeciesId.value ?: return
-        val picked = photo.value ?: return
         val kingdom = uiState.value.selected?.kingdom ?: Kingdom.ANIMAL
+        // M41: a plant may register with no photo at all, so the null is a legitimate value
+        // here rather than a reason to bail.
+        val picked = photo.value
+        if (picked == null && keepsOwnPhoto(kingdom)) return
         if (registering.value) return
         registering.value = true
         viewModelScope.launch {
@@ -248,17 +252,20 @@ class RegisterViewModel(
             // its photo gets it promoted into the gallery now, so the user finds it where
             // every other photo of theirs is; a plant's is never promoted and is swept below,
             // which is what keeps it out of the gallery entirely (M41).
-            val registerUri = if (shouldPromoteToGallery(picked.source, kingdom)) {
-                withContext(Dispatchers.IO) {
+            val registerUri = when {
+                picked == null -> null
+                shouldPromoteToGallery(picked.source, kingdom) -> withContext(Dispatchers.IO) {
                     photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
                 } ?: picked.uri
-            } else {
-                picked.uri
+                // A plant's attached photo is simply not carried into the capture (M41). It
+                // was there to be identified with; the tile shows the species' own picture.
+                !keepsOwnPhoto(kingdom) -> null
+                else -> picked.uri
             }
 
             when (val result = registrar.register(speciesId, registerUri)) {
                 is CaptureRegistrar.RegisterResult.Registered -> {
-                    if (shouldDeleteCacheFile(picked.source)) {
+                    if (picked != null && shouldDeleteCacheFile(picked.source)) {
                         withContext(Dispatchers.IO) { photos.sweepCameraCache() }
                     }
                     events.send(RegisterEvent.Registered(result.speciesId, result.isFirst))

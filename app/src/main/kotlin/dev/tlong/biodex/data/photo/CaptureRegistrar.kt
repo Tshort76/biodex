@@ -40,10 +40,15 @@ class CaptureRegistrar(
      */
     suspend fun register(
         speciesId: String,
-        photoUri: String,
+        photoUri: String?,
         note: String? = null,
         locationLabel: String? = null,
     ): RegisterResult {
+        // M41. A photoless capture skips the grant, the EXIF read and the thumbnail entirely —
+        // there is nothing to take a grant on, nothing to read a date out of, and nothing to
+        // render. Its `takenAt` is the registration time, which is the honest answer.
+        if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel)
+
         val alreadyReferenced = store.captureCountForUri(photoUri) > 0
         // 4.1 step 1. A refusal is tolerated: the picker's own grant lasts long enough to
         // build the thumbnail, which is the durable artifact either way.
@@ -84,6 +89,36 @@ class CaptureRegistrar(
     }
 
     /**
+     * A capture with no photograph (M41). Everything else about a catch is still recorded —
+     * the species, the date, the place, the note — which is what makes "seen again, here, on
+     * this date" mean something for a plant that will never carry a picture of its own.
+     */
+    private suspend fun registerWithoutPhoto(
+        speciesId: String,
+        note: String?,
+        locationLabel: String?,
+    ): RegisterResult {
+        val captureId = newCaptureId()
+        val registeredAt = now()
+        val plan = planRegistration(
+            capture = Capture(
+                id = captureId,
+                speciesId = speciesId,
+                photoUri = null,
+                thumbPath = null,
+                localCopyPath = null,
+                takenAt = registeredAt,
+                locationLabel = locationLabel,
+                note = note,
+                createdAt = registeredAt,
+            ),
+            existingEntry = store.entryOnce(speciesId),
+        )
+        store.applyRegistration(plan)
+        return RegisterResult.Registered(speciesId, captureId, plan.isFirst)
+    }
+
+    /**
      * S07. Removes the reference, the thumbnail and any local copy, and — only when the last
      * capture goes — the entry. The gallery photo is never touched, and the grant is released
      * only when no other capture still needs it.
@@ -94,7 +129,9 @@ class CaptureRegistrar(
             capture = capture,
             speciesCaptures = store.capturesForSpecies(capture.speciesId),
             favoriteCaptureId = store.entryOnce(capture.speciesId)?.favoriteCaptureId,
-            uriReferenceCount = store.captureCountForUri(capture.photoUri),
+            // Never asked for a photoless capture: the count is keyed on a URI, and a null
+            // matches no row in SQL, so the answer would be a meaningless zero.
+            uriReferenceCount = capture.photoUri?.let { store.captureCountForUri(it) } ?: 0,
         )
         store.applyDeletion(plan)
         plan.filesToDelete.forEach(photos::deleteOwnedFile)
@@ -126,7 +163,7 @@ class CaptureRegistrar(
         val plan = planRelink(
             capture = capture,
             newPhotoUri = newPhotoUri,
-            uriReferenceCount = store.captureCountForUri(capture.photoUri),
+            uriReferenceCount = capture.photoUri?.let { store.captureCountForUri(it) } ?: 0,
         )
         store.updateCaptureReference(captureId, plan.newPhotoUri, thumbPath)
         plan.releaseUri?.let(photos::releaseGrant)

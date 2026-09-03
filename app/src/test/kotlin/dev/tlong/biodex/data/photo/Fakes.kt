@@ -104,8 +104,8 @@ class FakePhotoGateway(
         deletedFiles += relativePath
     }
 
-    override fun resolve(photoUri: String, localCopyPath: String?): PhotoRef =
-        resolveResult ?: PhotoRef.Available(photoUri)
+    override fun resolve(photoUri: String?, localCopyPath: String?): PhotoRef =
+        resolveResult ?: resolvePhotoRef(photoUri, localCopyPath) { null }
 
     override fun displayName(uri: String): String? = uri.substringAfterLast('/')
 

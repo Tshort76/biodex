@@ -56,11 +56,20 @@ fun planExport(
     refs: Map<String, PhotoRef>,
     ownedFileExists: (String) -> Boolean,
 ): List<ExportItem> = captures.map { capture ->
-    val thumbPath = capture.thumbPath.takeIf(ownedFileExists)
+    val thumbPath = capture.thumbPath?.takeIf(ownedFileExists)
         ?: thumbnailRelativePath(capture.id).takeIf(ownedFileExists)
     val source: PhotoSource?
     val disposition: PhotoDisposition
     when (val ref = refs[capture.id]) {
+        // M41. Not a loss and not a failure — there was never a photograph to include, so
+        // this must not be reported as one. Without this branch every photoless plant would
+        // make the archive describe itself as incomplete, and a user who checks their backup
+        // would be told, wrongly, that photos were left behind.
+        PhotoRef.None -> {
+            source = null
+            disposition = PhotoDisposition.NONE
+        }
+
         is PhotoRef.LocalCopy -> if (ownedFileExists(ref.relativePath)) {
             source = PhotoSource.Owned(ref.relativePath)
             disposition = PhotoDisposition.INCLUDED
@@ -122,6 +131,10 @@ fun buildManifest(
         val photoEntry = item.photoEntry?.takeIf { it in writtenEntries }
         val status = when {
             photoEntry != null -> PhotoDisposition.INCLUDED
+            // A capture that never had a photo stays NONE: the "we planned to write it and
+            // did not" downgrade below is about bytes that went away mid-copy, and there were
+            // never any bytes here.
+            item.disposition == PhotoDisposition.NONE -> PhotoDisposition.NONE
             item.disposition == PhotoDisposition.INCLUDED -> PhotoDisposition.MISSING_UNREADABLE
             else -> item.disposition
         }
@@ -159,4 +172,5 @@ fun photoReportOf(captures: List<BackupCapture>): PhotoReport = PhotoReport(
         it.photoStatus == PhotoDisposition.MISSING_UNREADABLE.name
     },
     thumbnailsIncluded = captures.count { it.thumbEntry != null },
+    neverHadPhoto = captures.count { it.photoStatus == PhotoDisposition.NONE.name },
 )

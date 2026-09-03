@@ -52,7 +52,11 @@ data class ImportPlan(
     val filesToRestore: Map<String, String>
         get() = buildMap {
             capturesToInsert.forEach { planned ->
-                planned.thumbEntry?.let { put(it, planned.capture.thumbPath) }
+                // A photoless capture has no thumbnail path, so it can name no thumbnail
+                // entry either; the pair is null together or set together (M41).
+                planned.thumbEntry?.let { entry ->
+                    planned.capture.thumbPath?.let { put(entry, it) }
+                }
                 planned.photoEntry?.let { entry ->
                     planned.capture.localCopyPath?.let { put(entry, it) }
                 }
@@ -126,8 +130,14 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
                     // Provenance only: the URI belonged to another device's gallery. No
                     // grant is taken for it, and resolution short-circuits to the local
                     // copy whenever the archive carried one.
+                    //
+                    // A null carries through as a null (M41). The comment above about a
+                    // reference resolving as `Revoked` on a new phone and offering a re-link
+                    // — "which is the truth about it" — is exactly what must *not* happen
+                    // here: for a photoless capture there is nothing to re-link, and the
+                    // truth about it is that there never was a photograph.
                     photoUri = archived.photoUri,
-                    thumbPath = thumbnailRelativePath(archived.id),
+                    thumbPath = archived.photoUri?.let { thumbnailRelativePath(archived.id) },
                     localCopyPath = archived.photoEntry?.let { localCopyRelativePath(archived.id) },
                     takenAt = archived.takenAt,
                     lat = archived.lat,

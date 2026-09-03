@@ -148,23 +148,32 @@ fun SpeciesCell(
     val colors = DexTheme.colors
     val filesDir = LocalContext.current.filesDir
     val thumbModel = remember(species.thumbPath) { ownedFileModel(filesDir, species.thumbPath) }
+    val tileState = tileStateFor(species)
+    val accented = tileWearsAccentChrome(tileState)
+    // §5.3.1. The image is whichever the state calls for; the *chrome* is decided before and
+    // independently of it, which is what makes the offline fallback keep saying "caught".
+    val imageModel = thumbModel ?: species.imageUrl.takeIf { accented }
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(colors.card)
-            .border(1.dp, colors.rule, RoundedCornerShape(10.dp))
+            .background(if (accented) colors.accentSoft else colors.card)
+            .border(
+                1.dp,
+                if (accented) colors.accent else colors.rule,
+                RoundedCornerShape(10.dp),
+            )
             .clickable(onClick = onClick),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(74.dp)
-                .background(colors.silBg),
+                .background(if (accented) colors.accentSoft else colors.silBg),
             contentAlignment = Alignment.Center,
         ) {
-            if (thumbModel != null) {
+            if (imageModel != null) {
                 AsyncImage(
-                    model = thumbModel,
+                    model = imageModel,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     error = painterResource(
@@ -198,7 +207,20 @@ fun SpeciesCell(
                 )
             }
         }
-        Column(modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)) {
+        Column(
+            modifier = Modifier
+                .background(if (accented) colors.accentSoft else colors.card)
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+        ) {
+            tileGlyph(tileState)?.let { glyph ->
+                Text(
+                    text = "$glyph $NO_OWN_PHOTO_MARK",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    color = colors.accent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Text(
                 text = species.displayNumber,
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),

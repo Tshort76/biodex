@@ -152,10 +152,17 @@ data class EntryEntity(
 data class CaptureEntity(
     @PrimaryKey val id: String,
     val speciesId: String,
-    /** The persisted gallery content URI, stored as `uri.toString()`. */
-    val photoUri: String,
+    /**
+     * The persisted gallery content URI, stored as `uri.toString()`.
+     *
+     * **Null for a photoless capture** (M41): a plant registered from that change onward keeps
+     * no photograph of the user's own, so there is no reference and no persistable grant. Both
+     * columns were `NOT NULL` in schema v1 and were relaxed by `MIGRATION_1_2`, which touched
+     * no row — an existing plant capture keeps its photo, its viewer and its re-link.
+     */
+    val photoUri: String? = null,
     /** Relative to `filesDir`, e.g. `thumbnails/<id>.jpg` — relative so a restore resolves. */
-    val thumbPath: String,
+    val thumbPath: String? = null,
     /** Relative to `filesDir`, set only when "keep a local copy" (S03) is on. */
     val localCopyPath: String? = null,
     /** Epoch millis: EXIF `DateTimeOriginal`, else registration time. */

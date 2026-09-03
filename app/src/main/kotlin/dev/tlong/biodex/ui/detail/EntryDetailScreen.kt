@@ -317,7 +317,15 @@ private fun DetailBody(
     state.uses?.let { UsesSection(content = it, modifier = Modifier.padding(top = 2.dp)) }
 
     if (captures.isNotEmpty()) {
-        SectionHeader("My photos (${captures.size}) · linked from gallery")
+        SectionHeader(
+            if (captures.all { it.thumbPath == null }) {
+                // M41: nothing here is linked from a gallery, so the old header would be a
+                // lie about where these catches came from.
+                "My catches (${captures.size}) · no photos kept"
+            } else {
+                "My photos (${captures.size}) · linked from gallery"
+            },
+        )
         PhotoStrip(
             captures = captures,
             filesDir = filesDir,
@@ -389,21 +397,44 @@ private fun PhotoStrip(
             .padding(top = 4.dp),
     ) {
         captures.forEach { capture ->
+            // M41. A capture with no photograph is a date-and-place row and nothing more: no
+            // thumbnail, and **no tap target**, because the viewer it would open exists to
+            // show a photo and to offer a re-link, and neither means anything here. This is
+            // where that capture is kept out of the viewer — the route never learns about it.
+            val hasPhoto = capture.thumbPath != null
             Column(
                 modifier = Modifier
                     .width(92.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(colors.silBg)
-                    .clickable { onOpenPhoto(capture.id) },
+                    .background(if (hasPhoto) colors.silBg else colors.accentSoft)
+                    .then(
+                        if (hasPhoto) {
+                            Modifier.clickable { onOpenPhoto(capture.id) }
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
-                AsyncImage(
-                    model = ownedFileModel(dir, capture.thumbPath),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(72.dp),
-                )
+                if (hasPhoto) {
+                    AsyncImage(
+                        model = ownedFileModel(dir, capture.thumbPath),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp),
+                    )
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxWidth().height(72.dp),
+                    ) {
+                        Text(
+                            text = "🍃",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                }
                 Text(
                     text = formatCaughtDate(capture.takenAt),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),

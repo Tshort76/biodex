@@ -299,6 +299,15 @@ fun RegisterScreen(
                     )
                 }
 
+                // §5.2 rule 10: said before the user registers, not discovered afterwards.
+                state.photoNotKeptWarning?.let { text ->
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.muted,
+                    )
+                }
+
                 state.grantWarning?.let { warning ->
                     Text(
                         text = warning,

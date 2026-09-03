@@ -13,8 +13,17 @@ import kotlinx.serialization.Serializable
  * backup that lies is worse than no backup at all.
  */
 
-/** Bumped only when a reader would need to behave differently. */
-const val BACKUP_FORMAT_VERSION = 1
+/**
+ * Bumped only when a reader would need to behave differently.
+ *
+ * **v2** is M41's photoless capture: `BackupCapture.photoUri` became nullable and
+ * `photoStatus` gained `NONE`. An older build reading a v2 archive would fail on the null
+ * `photoUri`, and `BackupService` already refuses a manifest whose `formatVersion` is newer
+ * than its own — so the bump turns a parse error into a clear "this archive is newer than
+ * this app" message. Reading *older* archives is unaffected: every v1 capture has a URI and
+ * one of the three original statuses, and `NONE` is purely additive.
+ */
+const val BACKUP_FORMAT_VERSION = 2
 
 const val MANIFEST_ENTRY = "manifest.json"
 
@@ -77,8 +86,12 @@ data class BackupEntry(
 data class BackupCapture(
     val id: String,
     val speciesId: String,
-    /** The original device's content URI. Kept for provenance; an import never trusts it. */
-    val photoUri: String,
+    /**
+     * The original device's content URI. Kept for provenance; an import never trusts it.
+     * Null for a photoless capture (M41), where it is not a lost reference but the absence
+     * of one — an import must carry the null through rather than offering a re-link.
+     */
+    val photoUri: String? = null,
     val takenAt: Long,
     val createdAt: Long,
     /** Present exactly when the ZIP holds this file. */
@@ -102,6 +115,11 @@ data class PhotoReport(
     val missingOffline: Int = 0,
     val missingUnreadable: Int = 0,
     val thumbnailsIncluded: Int = 0,
+    /**
+     * M41. Counted so the archive describes itself accurately, and kept **out** of
+     * [missingTotal] because it is not a loss: these captures never had a photograph.
+     */
+    val neverHadPhoto: Int = 0,
 ) {
     val missingTotal: Int get() = missingRevoked + missingOffline + missingUnreadable
 
@@ -126,4 +144,12 @@ enum class PhotoDisposition {
     MISSING_REVOKED,
     MISSING_OFFLINE,
     MISSING_UNREADABLE,
+
+    /**
+     * **There never was one** (M41) — a plant registered from this release onward. The fourth
+     * value exists because the other three all mean *something went wrong*, and describing a
+     * photoless plant with any of them would make every export of a plant-heavy dex report
+     * itself as incomplete. It is counted separately and never as a loss.
+     */
+    NONE,
 }

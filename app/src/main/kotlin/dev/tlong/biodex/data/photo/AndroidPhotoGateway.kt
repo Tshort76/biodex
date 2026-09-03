@@ -115,7 +115,7 @@ class AndroidPhotoGateway(
             .onFailure { Log.i(TAG, "Could not delete $relativePath: ${it.message}") }
     }
 
-    override fun resolve(photoUri: String, localCopyPath: String?): PhotoRef =
+    override fun resolve(photoUri: String?, localCopyPath: String?): PhotoRef =
         resolvePhotoRef(photoUri, localCopyPath, ::probeFailure)
 
     /** Opened and immediately closed as a probe (4.2); Coil then loads the URI itself. */
