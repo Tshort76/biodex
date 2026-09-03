@@ -16,6 +16,7 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.keepsOwnPhoto
 import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
 import dev.tlong.biodex.data.photo.shouldPromoteToGallery
@@ -65,12 +66,20 @@ class RegisterViewModel(
     private val identification = MutableStateFlow<IdentificationState>(IdentificationState.Idle)
 
     /**
-     * The three things the Identify button's enabled-ness turns on, as one value so the state
-     * function stays a pure projection. The key and the count are re-read whenever the button
-     * could be pressed rather than captured once: pasting a key in Settings has to take effect
-     * without restarting the app (D24).
+     * The two things the Identify button's enabled-ness turns on that live in settings, taken
+     * from `AppSettings`' own flows rather than snapshotted.
+     *
+     * This is what makes D24 true rather than merely intended. The Register screen sits in the
+     * back stack while the user goes to Settings and pastes their key, so a value read once at
+     * construction would leave the button still saying "add a key in Settings" after they had
+     * — which is exactly the case the feature meets on its first day.
      */
-    private val identifyGates = MutableStateFlow(identifyGatesNow())
+    private val identifyGates = combine(
+        settings.plantNetKey,
+        settings.identificationsUsed,
+    ) { key, used ->
+        IdentifyGates(hasKey = key != null, used = used, cap = settings.identificationCapNow())
+    }
 
     val uiState: StateFlow<RegisterUiState> = combine(
         registerUiState(
@@ -120,7 +129,6 @@ class RegisterViewModel(
         // §5.2 rule 9: no result cache. A new photo's candidates are that photo's, so the
         // previous one's panel goes rather than lingering above an unrelated picture.
         identification.value = IdentificationState.Idle
-        identifyGates.value = identifyGatesNow()
         if (picked != null) refreshGrantPressure()
     }
 
@@ -156,13 +164,11 @@ class RegisterViewModel(
                     // M37 counts a *successful upload*: the service answered, so the quota
                     // this cap is protecting has actually been spent.
                     settings.recordIdentification()
-                    identifyGates.value = identifyGatesNow()
                     resolveAndShow(identifier.providerName, identifier.scoreKind, raw.value, kingdom)
                 }
 
                 LookupResult.NotFound -> {
                     settings.recordIdentification()
-                    identifyGates.value = identifyGatesNow()
                     identification.value =
                         IdentificationState.NoCandidates(identifier.providerName)
                 }
@@ -221,21 +227,45 @@ class RegisterViewModel(
      * case already uses for exactly this.
      */
     private fun openAddYourOwn(candidate: ResolvedCandidate) {
-        val picked = photo.value ?: return
+        if (photo.value == null) return
         viewModelScope.launch {
             val details = lookups.detailsFor(candidate.gbif.best, candidate.scientificName)
-            events.send(
-                RegisterEvent.AddOwnSpecies(
-                    typedName = candidate.scientificName,
-                    photoUri = picked.uri,
-                    prefetched = LookupOutcome.Resolved(
-                        candidates = candidate.gbif.candidates,
-                        selectedIndex = 0,
-                        details = details,
-                    ),
+            sendAddOwn(
+                typedName = candidate.scientificName,
+                prefetched = LookupOutcome.Resolved(
+                    candidates = candidate.gbif.candidates,
+                    selectedIndex = 0,
+                    details = details,
                 ),
             )
         }
+    }
+
+    /** M08's typed path, unchanged in behaviour and routed through the same hand-off. */
+    fun onAddOwnTyped() {
+        if (!uiState.value.canAddOwn) return
+        viewModelScope.launch { sendAddOwn(typedName = query.value.trim(), prefetched = null) }
+    }
+
+    /**
+     * The one place a photo leaves this screen for the add-your-own card.
+     *
+     * **A camera shot is promoted into the gallery first**, and that is not optional. The
+     * confirmation card hands its photo to `AddSpeciesRegistrar`, which registers a capture
+     * against whatever URI it is given; a cache URI would be registered and then deleted by
+     * the next cold start's sweep, leaving a capture whose photo the app itself destroyed and
+     * a re-link offer for it. Promoting here means the capture references a real gallery item.
+     */
+    private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?) {
+        val picked = photo.value ?: return
+        val uri = if (picked.source == PhotoSourceKind.CAMERA_CACHE) {
+            withContext(Dispatchers.IO) {
+                photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
+            } ?: picked.uri
+        } else {
+            picked.uri
+        }
+        events.send(RegisterEvent.AddOwnSpecies(typedName, uri, prefetched))
     }
 
     fun onRegister() {
@@ -301,12 +331,6 @@ class RegisterViewModel(
 
     private val identifyProviderName: String =
         identifiers[Kingdom.PLANT]?.providerName.orEmpty()
-
-    private fun identifyGatesNow() = IdentifyGates(
-        hasKey = settings.plantNetKeyNow() != null,
-        used = settings.identificationsUsedNow(),
-        cap = settings.identificationCapNow(),
-    )
 
     private data class IdentifyGates(val hasKey: Boolean, val used: Int, val cap: Int)
 

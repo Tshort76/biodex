@@ -65,8 +65,11 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Frame 3 of `mockup.html` (M07, M08, M10, S06). Species-first: search the catalogue offline,
- * attach one gallery photo through the system picker, register. There is no camera anywhere
- * in this app, by design (DESIGN.md §7).
+ * attach one photo — from the system picker or the in-app camera (M40) — and register.
+ *
+ * The camera and the Identify action are new; everything above them is unchanged. A photo is
+ * still one photo, still optional for the kingdoms that keep none (M41), and the typed-name
+ * path is byte-for-byte what it always was.
  */
 @Composable
 fun RegisterRoute(
@@ -159,7 +162,7 @@ fun RegisterRoute(
         onIdentify = viewModel::onIdentify,
         onPickCandidate = viewModel::onPickCandidate,
         onDismissCandidates = viewModel::onDismissIdentification,
-        onAddOwnSpecies = { name, uri -> onAddOwnSpecies(name, uri, null) },
+        onAddOwnSpecies = viewModel::onAddOwnTyped,
     )
 }
 
@@ -191,7 +194,7 @@ fun RegisterScreen(
     onIdentify: () -> Unit = {},
     onPickCandidate: (ResolvedCandidate) -> Unit = {},
     onDismissCandidates: () -> Unit = {},
-    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
+    onAddOwnSpecies: () -> Unit,
 ) {
     val colors = DexTheme.colors
     val listState = rememberLazyListState()
@@ -346,10 +349,7 @@ fun RegisterScreen(
                 GhostCta(
                     label = state.addOwnLabel,
                     enabled = state.canAddOwn,
-                    onClick = {
-                        val photo = state.photo ?: return@GhostCta
-                        onAddOwnSpecies(state.query.trim(), photo.uri)
-                    },
+                    onClick = onAddOwnSpecies,
                 )
             }
         },
@@ -684,7 +684,7 @@ private fun RegisterReadyPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = { _, _ -> },
+            onAddOwnSpecies = {},
         )
     }
 }
@@ -701,7 +701,7 @@ private fun RegisterNoResultsPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = { _, _ -> },
+            onAddOwnSpecies = {},
         )
     }
 }
