@@ -22,9 +22,10 @@ import kotlinx.coroutines.flow.combine
 
 data class StatsUiState(
     val regionLabel: String = "",
-    /** The animal meter. Slice 11 stacks it with [plants] as the screen's two headlines. */
+    /** The animal meter. It heads the screen beside [plants] and [fungi]. */
     val overall: Meter = Meter(0, 0, 0),
     val plants: Meter = Meter(0, 0, 0),
+    val fungi: Meter = Meter(0, 0, 0),
     val ecosystems: List<EcosystemProgress> = emptyList(),
     val classes: List<ClassRow> = emptyList(),
     val recent: List<RecentCatch> = emptyList(),
@@ -40,14 +41,28 @@ data class StatsUiState(
     val showPlantPill: Boolean get() = plants.total > 0
 
     /**
-     * The one switch between the shipped one-kingdom screen and M26's two-kingdom one. While
+     * The switch between the shipped one-kingdom screen and M26's two-kingdom one. While
      * a region has no plants in it — which is every install until slice 10's asset lands —
      * every plant element would read `0/0`, so the screen renders exactly as it shipped.
      */
     val showPlants: Boolean get() = plants.total > 0
 
-    /** D9's addendum across both kingdoms: "+3 of your own" stays one number (11.4). */
-    val userAdded: Int get() = overall.userAdded + plants.userAdded
+    /**
+     * The same rule again for the third kingdom, and it has to be its own flag rather than
+     * a count of non-empty meters: a region may carry plants and no fungi (every install
+     * on catalogue v2), and the two-up layout is still right there.
+     */
+    val showFungi: Boolean get() = fungi.total > 0
+
+    /**
+     * True once the region holds more than one life list. It is what the screen switches on
+     * where the question is "one fraction or several" rather than "which kingdom" — the
+     * headline card, the class grouping and the percent line.
+     */
+    val multipleKingdoms: Boolean get() = showPlants || showFungi
+
+    /** D9's addendum across every kingdom: "+3 of your own" stays one number (11.4). */
+    val userAdded: Int get() = overall.userAdded + plants.userAdded + fungi.userAdded
 
     /**
      * 11.4's "By class" groups. `perClass` carries only classes the catalogue actually has,
@@ -58,6 +73,9 @@ data class StatsUiState(
 
     val plantClasses: List<ClassRow>
         get() = classes.filter { it.taxClass.kingdom == Kingdom.PLANT }
+
+    val fungusClasses: List<ClassRow>
+        get() = classes.filter { it.taxClass.kingdom == Kingdom.FUNGUS }
 }
 
 data class ClassRow(val taxClass: TaxClass, val label: String, val meter: Meter)
@@ -96,6 +114,7 @@ fun buildStatsUiState(
         regionLabel = progress.regionName,
         overall = progress.animals,
         plants = progress.plants,
+        fungi = progress.fungi,
         ecosystems = progress.perEcosystem,
         classes = progress.perClass.map { (taxClass, meter) ->
             ClassRow(taxClass, classLabel(taxClass), meter)
