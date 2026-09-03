@@ -83,6 +83,7 @@ object DexProgressMath {
                 ecosystem = ecosystem,
                 animals = kingdomMeter(Kingdom.ANIMAL),
                 plants = kingdomMeter(Kingdom.PLANT),
+                fungi = kingdomMeter(Kingdom.FUNGUS),
             )
         }
 
@@ -93,6 +94,10 @@ object DexProgressMath {
             plants = meterFor(Kingdom.PLANT),
             perClass = perClass,
             perEcosystem = perEcosystem,
+            // Defaulted rather than required, so a caller that predates the third kingdom
+            // still compiles — which is exactly why this was missed: the Stats screen read
+            // a fungi meter that nothing ever filled, and rendered nothing, silently.
+            fungi = meterFor(Kingdom.FUNGUS),
         )
     }
 }

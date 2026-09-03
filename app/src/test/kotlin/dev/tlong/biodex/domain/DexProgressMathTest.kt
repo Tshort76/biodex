@@ -42,6 +42,39 @@ class DexProgressMathTest {
     }
 
     @Test
+    fun `every kingdom gets its own meter, including the fungi`() {
+        // Regression. DexProgress.fungi and EcosystemProgress.fungi were added with a
+        // Meter(0,0,0) default so that callers written before the third kingdom still
+        // compiled -- and compute() was one of those callers. Nothing failed: the Stats
+        // screen read a meter nobody filled and drew no fungi at all, which looks exactly
+        // like a catalogue with no fungi in it. A default that keeps a caller compiling is
+        // a default that hides a caller that should have been updated.
+        val progress = DexProgressMath.compute(
+            regionId = "pacific",
+            regionName = "Pacific USA",
+            species = listOf(
+                curated("heron", TaxClass.BIRD, caught = true),
+                curated("fir", TaxClass.TREE, caught = false),
+                curated("chanterelle", TaxClass.MUSHROOM, caught = true),
+                curated("conk", TaxClass.BRACKET, caught = false),
+            ),
+            memberships = listOf(
+                MembershipRow("chanterelle", "coastal-rainforest"),
+                MembershipRow("conk", "coastal-rainforest"),
+            ),
+            ecosystems = ecosystems,
+        )
+
+        assertEquals(Meter(caught = 1, total = 2, userAdded = 0), progress.fungi)
+        assertEquals(Meter(caught = 1, total = 1, userAdded = 0), progress.animals)
+        assertEquals(Meter(caught = 0, total = 1, userAdded = 0), progress.plants)
+        assertEquals(4, progress.totalSpecies)
+
+        val rainforest = progress.perEcosystem.single { it.ecosystem.id == "coastal-rainforest" }
+        assertEquals(Meter(caught = 1, total = 2, userAdded = 0), rainforest.fungi)
+    }
+
+    @Test
     fun `class meters keep user-added species out of the fraction`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
