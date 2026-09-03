@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.tlong.biodex.data.db.AppDatabase
+import dev.tlong.biodex.domain.FUNGUS_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EntryEntity
@@ -137,20 +138,31 @@ class CatalogueImporterRoomTest {
      * so this file is useful before that asset lands.
      */
     @Test
-    fun theRealBundledCatalogueImportsBothKingdoms() = runBlocking {
+    fun theRealBundledCatalogueImportsEveryKingdom() = runBlocking {
         assumeTrue("assets/$CATALOGUE_ASSET_PATH is not bundled yet", bundledCatalogueExists())
 
         val outcome = CatalogueImporter(AndroidAssetReader(appContext), RoomCatalogueStore(db)).import()
 
         assertTrue("import failed: $outcome", outcome is ImportOutcome.Imported)
         val species = db.speciesDao().speciesOnce("pacific")
-        assertEquals(200, species.size)
+        assertEquals(230, species.size)
         assertTrue(species.all { it.source == SpeciesSource.CURATED })
         val animals = species.filter { it.kingdom == Kingdom.ANIMAL }
         val plants = species.filter { it.kingdom == Kingdom.PLANT }
+        val fungi = species.filter { it.kingdom == Kingdom.FUNGUS }
         assertEquals(120, animals.size)
         assertEquals(80, plants.size)
+        assertEquals(30, fungi.size)
         assertEquals((1..120).toList(), animals.map { it.dexNumber }.sorted())
+        // Fungi are stored offset by FUNGUS_DEX_NUMBER_BASE and displayed as F001..F030.
+        assertEquals(
+            (1..30).map { FUNGUS_DEX_NUMBER_BASE + it },
+            fungi.map { it.dexNumber }.sorted(),
+        )
+        // The rule the pipeline enforces and nothing else can: no mushroom carries a use tag,
+        // and every one carries a caution, because Duke's covers no fungi to decide either.
+        assertTrue(fungi.all { it.uses.isEmpty() })
+        assertTrue(fungi.all { it.usesNote?.contains("Caution:") == true })
         assertEquals(7, db.ecosystemDao().ecosystemsOnce("pacific").size)
         assertTrue(db.ecosystemDao().membershipsOnce("pacific").isNotEmpty())
     }
