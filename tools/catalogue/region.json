@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 2,
+  "catalogueVersion": 3,
   "regionId": "pacific",
   "regionName": "Pacific USA",
   "ecosystems": [
@@ -13,10 +13,13 @@
   ],
 
   "_notes": [
-    "The region header and the seven ecosystems, shared by curated_animals.json and",
-    "curated_plants.json. catalogueVersion is bumped by hand when a regenerated asset",
-    "should reach an existing install (ARCHITECTURE.md 3.3).",
+    "The region header and the seven ecosystems, shared by curated_animals.json,",
+    "curated_plants.json and curated_fungi.json. catalogueVersion is bumped by hand",
+    "when a regenerated asset should reach an existing install (ARCHITECTURE.md 3.3).",
     "Version 2 adds the 80 plants and renames two ecosystems (DESIGN.md D16); the ids",
-    "are unchanged, so no species tag moves."
+    "are unchanged, so no species tag moves.",
+    "Version 3 adds the 30 fungi. No ecosystem changes: the seven were named with",
+    "animals and plants in mind and the fungi cluster in the two forest ones, which is",
+    "the expected shape rather than a reason to add an eighth."
   ]
 }

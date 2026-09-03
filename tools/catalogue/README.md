@@ -1,12 +1,13 @@
 # Catalogue pipeline
 
-Builds the bundled Pacific USA catalogue asset the app ships with — 120 animals
-and 80 plants:
+Builds the bundled Pacific USA catalogue asset the app ships with — 120 animals,
+80 plants and 30 fungi:
 
 ```
 tools/catalogue/region.json            (header + the seven ecosystems)
 tools/catalogue/curated_animals.json   (hand-authored input, 120 animals)
 tools/catalogue/curated_plants.json    (hand-authored input, 80 plants)
+tools/catalogue/curated_fungi.json     (hand-authored input, 30 fungi)
         │
         ├─ GBIF        accepted scientific name, kingdom, rank, class, synonyms
         ├─ Wikipedia   habitat prose, description lede, canonical image, page link
@@ -18,9 +19,10 @@ app/src/main/assets/catalogue/pacific.json         (generated, committed to git)
 app/src/main/assets/catalogue/duke_ethnobot.json   (generated, committed to git)
 ```
 
-The input is split three ways so the plant curator and an animal edit never
-touch the same file. `region.json` owns `catalogueVersion`, `regionId`,
-`regionName` and the ecosystems; the two species files own nothing else.
+The input is split four ways so the plant curator, the fungus curator and an
+animal edit never touch the same file. `region.json` owns `catalogueVersion`,
+`regionId`, `regionName` and the ecosystems; the three species files own nothing
+else.
 
 The app never runs this. It runs on the build machine, its output is committed,
 and builds never touch the network.
@@ -34,12 +36,13 @@ python3 build_catalogue.py --out /tmp/x.json
 python3 build_catalogue.py --refresh       # ignore the cache, re-fetch everything
 python3 build_catalogue.py --only 5        # smoke run over the first five of each kingdom
 python3 build_catalogue.py --plants /tmp/edited.json --out /tmp/x.json
+python3 build_catalogue.py --fungi /tmp/edited.json --out /tmp/x.json
 ```
 
-`--region`, `--animals` and `--plants` each point the script at a different
-input file. They exist so a validation rule can be exercised against a modified
-copy without touching the real inputs — the poison-caution rule below is tested
-that way.
+`--region`, `--animals`, `--plants` and `--fungi` each point the script at a
+different input file. They exist so a validation rule can be exercised against a
+modified copy without touching the real inputs — the poison-caution rule below
+is tested that way, and so is the fungal caution rule.
 
 `duke_ethnobot.json` is written beside `--out`, so a run into `/tmp` leaves the
 committed asset alone.
@@ -270,13 +273,92 @@ Wikipedia section whose title contains "Uses", "Culinary", "Edib", "Medicin" or
 hand-written `usesNote` can be checked against the article. The asset's
 `provenance.uses.edible` is always `curated`.
 
+## Fungi
+
+The 30 fungi live in `curated_fungi.json` and take the GBIF, Wikipedia and
+Commons steps unchanged — GBIF's backbone and Wikipedia both cover fungi well,
+and every one of the 30 matched EXACT at species rank on the first run.
+
+**What they do not take is Dr. Duke's.** It is an *ethnobotanical* database: it
+has no fungal taxa at all. So a fungus has no medicinal join, no
+`medicinalActivities`, no `medicinalRecordCount`, no `usesAttribution` — and,
+the part worth stating plainly, **no `Poison` record**. The rule that makes the
+plant cautions source-driven (a Duke's poison record forces a `Caution:`
+sentence or the build fails) cannot fire here at all. Every fungal caution is
+one person's sentence with nothing behind it, which is why this section is
+longer than the list is.
+
+### The entry shape
+
+```json
+{ "dexNumber": 9, "commonName": "Western Jack-o'-Lantern", "scientificName": "Omphalotus olivascens",
+  "fungusClass": "mushroom",
+  "ecosystemIds": ["oak-chaparral", "urban-suburban"],
+  "usesNote": "Caution: poisonous — not lethal, but it causes very severe cramps, vomiting and diarrhoea. It is the chanterelle's look-alike: true blade-like gills rather than ridges, growing straight on wood, and faintly bioluminescent." }
+```
+
+- `fungusClass` is required and is one of `mushroom` (cap and stem) / `bracket`
+  (shelf and conk) / `other_fungus` (cup, coral, puffball, jelly, morel). Like
+  the plant classes it is **growth form, not taxonomy** — a forager recognises a
+  shelf fungus on a trunk long before they can name its order.
+- `usesNote` is required on **every** fungus, is at most 240 characters, and
+  must be a sentence beginning `Caution:` and nothing else.
+- `wikipediaTitle` and `overrides` work as they do for the other kingdoms,
+  except that any override of a use field is refused.
+
+### Fungi carry no uses, and the build enforces it
+
+DESIGN-identification.md M35: a fungal entry has no uses section at all — no
+"Food source" line, no medicinal line — and its only use-adjacent text is the
+curator's caution. `build_fungus` writes `uses: []` unconditionally and then
+asserts it after the overrides have been applied, so there is no input, no
+override and no derivation that can put a tag on a mushroom. A row that tries —
+an `edible` flag, a `uses` list, a `dukeName`, an override of any of them —
+fails the build by name rather than having the claim quietly dropped.
+
+The same rule covers the *fetched* half. A mushroom article's lede routinely
+opens "… is an edible mushroom", so `drop_edibility_sentences` removes any
+sentence of the fetched `description` or `habitatText` that uses an edibility
+word before the asset is written, and the report lists every sentence it took
+out. Whole sentences go rather than being reworded: what survives is still
+Wikipedia's words, just fewer of them. Six sentences were dropped on the first
+full run (chanterelle, king bolete, honey mushroom, fairy ring, matsutake,
+lobster).
+
+### Every fungus carries a caution
+
+Because Duke's cannot decide the cautioned set here, the plant rule is inverted
+and made unconditional: **every fungus must carry a `Caution:` sentence**,
+harmless ones included. It costs a sentence on the turkey tail, and it buys the
+one thing that matters — the kingdom has no row where the *absence* of a warning
+could be read as reassurance.
+
+A caution says what the species does to a person and what it is mistaken for,
+written from the Wikipedia toxicity / similar-species / identification text the
+run collects into `cache/fungi_caution_review.txt`. It never says a mushroom is
+edible, safe, choice or good eating — not even the chanterelle. The app makes no
+edibility claim about a fungus, by design (M35), and the validator fails the
+build on those words appearing in a note, a description or a habitat text.
+
+### `cache/fungi_caution_review.txt`
+
+The fungal twin of `plant_uses_review.txt`, and the more important of the two:
+it is where a caution is written *from*, because nothing else sources one. Any
+Wikipedia section whose title contains "Toxic", "Poison", "Similar",
+"Look-alike", "Confus", "Identif", "Edib", "Safety" or "Uses" has its stripped
+prose written there. Nothing in it reaches the asset verbatim.
+
+The build report's **"FUNGI — EVERY CAUTION BELOW IS UNSOURCED"** block prints
+all 30 cautions in dex order. That block is the review list; it is read by a
+human or by nobody.
+
 ## What the script validates
 
 Before writing, and exiting non-zero on any failure:
 
-- exactly 200 species: 120 animals and 80 plants;
-- animal dex numbers exactly 1–120, plant dex numbers exactly 1–80, no
-  duplicates in either, unique ids across both;
+- exactly 230 species: 120 animals, 80 plants and 30 fungi;
+- animal dex numbers exactly 1–120, plant 1–80, fungus 1–30, no duplicates in
+  any of them, unique ids across all three;
 - every `ecosystemId` declared, and `commonName` / `scientificName` / `taxClass`
   / `silhouetteRes` / `kingdom` present on every record;
 - the GBIF kingdom matches the declared kingdom (this one fails during the
@@ -289,10 +371,14 @@ Before writing, and exiting non-zero on any failure:
 - every animal carries `uses: []` and empty Duke's fields;
 - `silhouetteRes` consistent with the class and the kingdom;
 - `duke_ethnobot.json` parses and contains every name a plant joined on;
-- **and the poison rule: every plant Duke's records as poisonous must have a
+- **the poison rule: every plant Duke's records as poisonous must have a
   sentence beginning `Caution:` in its note** — tagged or untagged, no
   exemption. This is what makes the cautioned set a decision of the source
   rather than of whoever wrote the notes.
+- **and, for fungi, the rules Duke's cannot supply**: every fungus carries
+  `uses: []` and empty Duke's fields; every fungus carries a `Caution:` sentence
+  and nothing else in its note; and no fungal note, description or habitat text
+  uses an edibility word.
 
 To see the poison rule bite, delete the `Caution:` sentence from a species the
 report lists under "DUKE'S — POISON RECORDED" and run against the copy:
@@ -340,6 +426,7 @@ re-imports when `catalogueVersion` changes, so **bump `catalogueVersion` in
 importer never touches the user's entries, captures or user-added species, and
 never deletes a caught species (ARCHITECTURE.md 3.3).
 
-The asset numbers each kingdom from 1 — animals 1–120, plants 1–80 — and the
-app's importer applies the stored per-kingdom base (animals 1–120, plants
-2001–2080), so the curator never types 2047.
+The asset numbers each kingdom from 1 — animals 1–120, plants 1–80, fungi 1–30 —
+and the app's importer applies the stored per-kingdom base (animals 1–120,
+plants 2001–2080, fungi 4001–4030), so the curator never types 2047. The display
+prefixes are `#047`, `P047` and `F007`.
