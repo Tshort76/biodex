@@ -151,8 +151,12 @@ class CaptureRegistrarRoomTest {
             thumbnailRelativePath(captureId)
         override fun writeLocalCopy(captureId: String, uri: String) = null
         override fun deleteOwnedFile(relativePath: String) = Unit
-        override fun resolve(photoUri: String, localCopyPath: String?) =
-            PhotoRef.Available(photoUri)
+        override fun resolve(photoUri: String?, localCopyPath: String?) =
+            resolvePhotoRef(photoUri, localCopyPath) { null }
         override fun displayName(uri: String) = null
+        override fun readForUpload(uri: String) = byteArrayOf(1)
+        override fun newCameraCaptureUri() = "content://files/capture/1.jpg"
+        override fun promoteToGallery(cacheUri: String, displayName: String) = cacheUri
+        override fun sweepCameraCache() = Unit
     }
 }

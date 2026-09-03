@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.TaxClass
+import dev.tlong.biodex.ui.common.NO_OWN_PHOTO_MARK
 import dev.tlong.biodex.ui.common.SilhouetteIcon
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
@@ -59,8 +60,18 @@ data class RevealContent(
     /** S10: the counter names the list it incremented, so "4 / 80" is never ambiguous. */
     val kingdom: Kingdom,
     val silhouetteRes: String,
-    /** The `file://` model for the new capture's thumbnail; null falls back to the silhouette. */
+    /**
+     * What the silhouette crossfades into. Normally the new capture's own thumbnail; for a
+     * photoless plant (M41) it is the species' reference image, and null falls back to the
+     * silhouette either way.
+     */
     val thumbnailModel: String?,
+    /**
+     * §5.3's leaf, shown when this catch keeps no photo of the user's own. It marks the reveal
+     * rather than the tile: the moment the silhouette becomes a picture is where the app can
+     * say once, clearly, that this picture is the species and not the user's shot of it.
+     */
+    val leafMark: Boolean = false,
     val caughtCount: Int,
     val totalCount: Int,
     val whereAndWhen: String?,
@@ -150,7 +161,24 @@ fun UnlockRevealOverlay(
                             .alpha(progress),
                     )
                 }
+                if (content.leafMark) {
+                    Text(
+                        text = "🍃",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .alpha(progress),
+                    )
+                }
             }
+        }
+        if (content.leafMark) {
+            Text(
+                text = NO_OWN_PHOTO_MARK,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.accent,
+                modifier = Modifier.padding(top = 10.dp).alpha(progress),
+            )
         }
 
         Text(

@@ -57,7 +57,9 @@ import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.ScientificName
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
+import dev.tlong.biodex.ui.common.TileState
 import dev.tlong.biodex.ui.common.UsesSection
+import dev.tlong.biodex.ui.common.tileStateFor
 import dev.tlong.biodex.ui.reveal.RevealContent
 import dev.tlong.biodex.ui.reveal.UnlockRevealOverlay
 import dev.tlong.biodex.ui.theme.BioDexTheme
@@ -128,10 +130,13 @@ fun EntryDetailRoute(
                     taxClass = detail.summary.taxClass,
                     kingdom = detail.summary.kingdom,
                     silhouetteRes = detail.summary.silhouetteRes,
+                    // M41: a photoless catch reveals into the species' own reference picture
+                    // rather than staying a silhouette, and says so with the leaf.
                     thumbnailModel = ownedFileModel(
                         container.appContext.filesDir,
                         state.captures.firstOrNull()?.thumbPath,
-                    ),
+                    ) ?: detail.summary.imageUrl,
+                    leafMark = tileStateFor(detail.summary) == TileState.CAUGHT_REFERENCE_IMAGE,
                     caughtCount = state.caughtCount,
                     totalCount = state.totalCount,
                     whereAndWhen = state.captures.firstOrNull()?.let {

@@ -367,10 +367,14 @@ class UserSpeciesRoomTest {
             override fun writeLocalCopy(captureId: String, uri: String): String? = null
             override fun deleteOwnedFile(relativePath: String) = Unit
             override fun resolve(
-                photoUri: String,
+                photoUri: String?,
                 localCopyPath: String?,
             ) = dev.tlong.biodex.data.photo.PhotoRef.Revoked
             override fun displayName(uri: String): String? = null
+            override fun readForUpload(uri: String): ByteArray? = null
+            override fun newCameraCaptureUri(): String? = null
+            override fun promoteToGallery(cacheUri: String, displayName: String): String? = null
+            override fun sweepCameraCache() = Unit
         },
     )
 }
