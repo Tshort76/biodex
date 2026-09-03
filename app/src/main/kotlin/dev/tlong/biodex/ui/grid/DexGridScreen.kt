@@ -322,6 +322,7 @@ private fun FilterRow(
             val classOptions = classChips(state.filters, state.availableClasses)
             FilterDropdown(
                 label = "Class",
+                clearLabel = "All classes",
                 selectedLabel = state.filters.taxClass?.chipLabel(),
                 options = classOptions.map { it.chipLabel() to it },
                 onSelect = onClassFilter,
@@ -329,6 +330,7 @@ private fun FilterRow(
             if (state.ecosystems.isNotEmpty()) {
                 FilterDropdown(
                     label = "Ecosystem",
+                    clearLabel = "All ecosystems",
                     selectedLabel = state.ecosystems
                         .find { it.id == state.filters.ecosystemId }
                         ?.name,
@@ -339,6 +341,7 @@ private fun FilterRow(
             if (state.showUseChips) {
                 FilterDropdown(
                     label = "Uses",
+                    clearLabel = "Any use",
                     selectedLabel = state.filters.use?.let(::useChipLabel),
                     options = PlantUse.entries.map { useChipLabel(it) to it },
                     onSelect = onUseFilter,
@@ -351,13 +354,19 @@ private fun FilterRow(
 /**
  * One filter dimension as a dropdown button: the label and current selection (or just the
  * label, when nothing is picked) on the button, an accent border when a value is active, and
- * a menu of every available option below it. Picking the value already selected clears it —
- * the same "tap again to clear" rule the old chips used, since a dropdown has no separate
- * "All" affordance of its own.
+ * a menu of every available option below it.
+ *
+ * Two things the menu owes the reader, both of which the first cut on the phone was missing.
+ * The selected option is drawn in the accent and carries a tick, because a menu where the
+ * active value looks like every other row tells you nothing about the state you are in. And
+ * [clearLabel] — "All classes" and its kin — is a real row at the top whenever something is
+ * selected: re-picking the active value also clears it, but that rule is invisible, and a
+ * filter you cannot see how to undo is a trap.
  */
 @Composable
 private fun <T> FilterDropdown(
     label: String,
+    clearLabel: String,
     selectedLabel: String?,
     options: List<Pair<String, T>>,
     onSelect: (T) -> Unit,
@@ -384,10 +393,38 @@ private fun <T> FilterDropdown(
             )
             Text(text = "▾", style = MaterialTheme.typography.labelSmall, color = colors.faint)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { (optionLabel, value) ->
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = colors.card,
+        ) {
+            if (active) {
                 DropdownMenuItem(
-                    text = { Text(optionLabel) },
+                    text = {
+                        Text(
+                            text = clearLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.muted,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        // Re-selecting the active value is what the ViewModel reads as "clear",
+                        // so the explicit row does exactly that rather than needing its own path.
+                        options.firstOrNull { it.first == selectedLabel }?.let { onSelect(it.second) }
+                    },
+                )
+            }
+            options.forEach { (optionLabel, value) ->
+                val isSelected = optionLabel == selectedLabel
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = if (isSelected) "✓  $optionLabel" else optionLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) colors.accent else colors.fg,
+                        )
+                    },
                     onClick = {
                         expanded = false
                         onSelect(value)
