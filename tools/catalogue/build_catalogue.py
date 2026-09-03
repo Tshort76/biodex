@@ -72,10 +72,19 @@ USES_NOTE_MAX_CHARS = 240
 
 # The one rule that has to hold over every word of fungal text the asset carries,
 # whether the curator wrote it or Wikipedia did: **the app never says a mushroom
-# is edible** (DESIGN-identification.md M35). `\b` leaves "inedible" alone, which
-# is a claim in the safe direction and stays.
+# is edible** (DESIGN-identification.md M35).
+#
+# Two pieces of the pattern are deliberate and easy to break by tidying:
+#  - `\b` before "edible" leaves "inedible" alone. That is a claim in the safe
+#    direction and it stays.
+#  - `eaten` is excluded only when it is not `eaten by`. "It is widely eaten"
+#    is an edibility claim; "may be eaten by caterpillars of the fungus moth"
+#    is ecology, and the turkey tail's habitat prose would lose its best
+#    sentence if the two were treated alike.
 EDIBILITY_RE = re.compile(
-    r"\b(edible|edibility|choice|delicious|tasty|palatable|good eating|safe to eat)\b",
+    r"\b(edible|edibility|choice|delicious|tasty|palatable|good eating|safe to eat"
+    r"|delicac(?:y|ies)|prized|culinary|for the table)\b"
+    r"|\beaten\b(?!\s+by\b)",
     re.I,
 )
 

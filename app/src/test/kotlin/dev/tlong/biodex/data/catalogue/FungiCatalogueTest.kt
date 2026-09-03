@@ -27,9 +27,16 @@ class FungiCatalogueTest {
 
     private val fungi = RealCatalogueAsset.speciesOf("fungus")
 
-    /** The pipeline's own guard, in the app's words. `\b` deliberately leaves "inedible". */
+    /**
+     * The pipeline's `EDIBILITY_RE`, in the app's words. Two parts of it are deliberate:
+     * `\b` before "edible" leaves "inedible" alone, a claim in the safe direction; and
+     * "eaten" counts only when it is not "eaten by", so "widely eaten" is a claim while
+     * "may be eaten by caterpillars of the fungus moth" is ecology and stays.
+     */
     private val edibility = Regex(
-        """\b(edible|edibility|choice|delicious|tasty|palatable|good eating|safe to eat)\b""",
+        """\b(edible|edibility|choice|delicious|tasty|palatable|good eating|safe to eat""" +
+            """|delicac(y|ies)|prized|culinary|for the table)\b""" +
+            """|\beaten\b(?!\s+by\b)""",
         RegexOption.IGNORE_CASE,
     )
 

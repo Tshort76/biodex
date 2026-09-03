@@ -8199,7 +8199,7 @@
         "oak-chaparral"
       ],
       "habitatText": "A. campestris is found in fields and grassy areas after rain from late summer onwards worldwide. It is often found on lawns in suburban areas, appearing in small groups, in fairy rings, or solitary. Owing to the demise of horse-drawn vehicles and the subsequent decrease in the number of horses on pasture, the old \"white outs\" of years gone by are becoming rare events.",
-      "description": "Agaricus campestris is a widely eaten gilled mushroom closely related to the cultivated A. bisporus. A. campestris is commonly known as the field mushroom or, in North America, meadow mushroom.",
+      "description": "A. campestris is commonly known as the field mushroom or, in North America, meadow mushroom.",
       "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Agaricus_campestris.jpg",
       "infoUrl": "https://en.wikipedia.org/wiki/Agaricus_campestris",
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · unknown",
@@ -8221,7 +8221,8 @@
         "imageUrl": "wikipedia:summary:originalimage",
         "infoUrl": "wikipedia:summary",
         "habitatText": "wikipedia:section:Habitat and distribution",
-        "imageAttribution": "wikimedia:imageinfo:extmetadata"
+        "imageAttribution": "wikimedia:imageinfo:extmetadata",
+        "edibilityScrub": "dropped 1 sentence(s)"
       }
     },
     {
