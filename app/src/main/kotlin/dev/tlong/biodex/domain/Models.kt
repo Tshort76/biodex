@@ -188,8 +188,15 @@ data class Ecosystem(
 data class Capture(
     val id: String,
     val speciesId: String,
-    val photoUri: String,
-    val thumbPath: String,
+    /**
+     * Null for a plant registered from M41 onward: its photograph existed to identify it and
+     * is not kept, so there is no gallery reference and no persistable grant. Plant captures
+     * made before that change keep theirs — the migration relaxed the column and touched no
+     * row.
+     */
+    val photoUri: String?,
+    /** Null exactly when [photoUri] is: the tile shows the species' reference image instead. */
+    val thumbPath: String?,
     val localCopyPath: String? = null,
     val takenAt: Long,
     val lat: Double? = null,
