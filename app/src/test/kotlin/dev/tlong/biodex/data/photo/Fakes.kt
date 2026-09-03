@@ -66,6 +66,7 @@ class FakePhotoGateway(
     var exif: ExifFacts = ExifFacts.None,
     var grantCount: Int = 3,
     var resolveResult: PhotoRef? = null,
+    var uploadBytes: ByteArray? = byteArrayOf(1, 2, 3),
 ) : PhotoGateway {
 
     val persisted = mutableListOf<String>()
@@ -107,4 +108,8 @@ class FakePhotoGateway(
         resolveResult ?: PhotoRef.Available(photoUri)
 
     override fun displayName(uri: String): String? = uri.substringAfterLast('/')
+
+    /** M36's re-encoded upload copy; null models a photo that would not decode. */
+    override fun readForUpload(uri: String): ByteArray? =
+        if (uploadBytes != null) uploadBytes else null
 }

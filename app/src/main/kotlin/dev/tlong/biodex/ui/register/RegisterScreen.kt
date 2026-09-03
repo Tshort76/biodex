@@ -51,6 +51,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
+import dev.tlong.biodex.data.identify.ResolvedCandidate
+import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -70,7 +72,11 @@ fun RegisterRoute(
     preselectedSpeciesId: String?,
     onBack: () -> Unit,
     onRegistered: (speciesId: String, justUnlocked: Boolean) -> Unit,
-    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
+    onAddOwnSpecies: (
+        typedName: String,
+        photoUri: String,
+        prefetched: LookupOutcome?,
+    ) -> Unit,
 ) {
     val context = LocalContext.current
     val container = context.appContainer
@@ -96,7 +102,13 @@ fun RegisterRoute(
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
-            if (event is RegisterEvent.Registered) onRegistered(event.speciesId, event.isFirst)
+            when (event) {
+                is RegisterEvent.Registered -> onRegistered(event.speciesId, event.isFirst)
+                is RegisterEvent.AddOwnSpecies ->
+                    onAddOwnSpecies(event.typedName, event.photoUri, event.prefetched)
+
+                RegisterEvent.PhotoUnreadable -> Unit
+            }
         }
     }
 
@@ -112,7 +124,10 @@ fun RegisterRoute(
         },
         onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
-        onAddOwnSpecies = onAddOwnSpecies,
+        onIdentify = viewModel::onIdentify,
+        onPickCandidate = viewModel::onPickCandidate,
+        onDismissCandidates = viewModel::onDismissIdentification,
+        onAddOwnSpecies = { name, uri -> onAddOwnSpecies(name, uri, null) },
     )
 }
 
@@ -140,6 +155,9 @@ fun RegisterScreen(
     onPickPhoto: () -> Unit,
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
+    onIdentify: () -> Unit = {},
+    onPickCandidate: (ResolvedCandidate) -> Unit = {},
+    onDismissCandidates: () -> Unit = {},
     onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
 ) {
     val colors = DexTheme.colors
@@ -218,6 +236,18 @@ fun RegisterScreen(
                 )
                 PhotoAttachRow(photo = state.photo, onPickPhoto = onPickPhoto)
 
+                // M31/M38. Hidden entirely for a kingdom with no provider; present but
+                // disabled with the reason inline when something the user can act on is in
+                // the way. S06's Lens share stays below it either way — it is still the right
+                // tool when the service has nothing (S12).
+                if (state.identifyVisible) {
+                    IdentifyButton(
+                        label = state.identifyLabel,
+                        disabledReason = state.identifyDisabledReason,
+                        onClick = onIdentify,
+                    )
+                }
+
                 state.photo?.let { picked ->
                     Text(
                         text = "Not sure what it is? Open photo in Google Lens ↗",
@@ -286,6 +316,15 @@ fun RegisterScreen(
                 .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            // §5.2 rule 1: the panel sits above the catalogue list, inside the scrolling
+            // region, so the pinned search, photo row and buttons of D18 are untouched.
+            candidatePanel(
+                identification = state.identification,
+                selectedSpeciesId = state.selected?.id,
+                onPickCandidate = onPickCandidate,
+                onDismiss = onDismissCandidates,
+            )
+
             if (state.noResults) {
                 item(key = "no-results") {
                     Text(

@@ -1,5 +1,8 @@
 package dev.tlong.biodex.ui.register
 
+import dev.tlong.biodex.data.identify.DEFAULT_MONTHLY_IDENTIFICATION_CAP
+import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.grid.matchesQuery
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +26,18 @@ sealed interface RegisterEvent {
     data class Registered(val speciesId: String, val isFirst: Boolean) : RegisterEvent
 
     data object PhotoUnreadable : RegisterEvent
+
+    /**
+     * M33's not-in-dex hand-off. It travels as an event rather than a direct call because the
+     * draft and the navigation belong to the route, and it carries [prefetched] so the
+     * existing confirmation card (M19) opens with the GBIF lookup already done rather than
+     * repeating it — there is one confirmation path in this app, not two.
+     */
+    data class AddOwnSpecies(
+        val typedName: String,
+        val photoUri: String,
+        val prefetched: LookupOutcome? = null,
+    ) : RegisterEvent
 }
 
 data class RegisterUiState(
@@ -41,8 +56,52 @@ data class RegisterUiState(
      * to it would be the list jumping for no reason.
      */
     val preselectedIndex: Int? = null,
+
+    // Identification (M31, M37, M38). Everything the button and the panel need, and nothing
+    // that is not pure: the registry, the settings and the network monitor are read into these
+    // fields by the ViewModel so the screen's whole behaviour stays JVM-testable.
+
+    val identification: IdentificationState = IdentificationState.Idle,
+    /** Kingdoms the registry has a provider for — `PLANT` alone in v3 (D19). */
+    val identifiableKingdoms: Set<Kingdom> = emptySet(),
+    val identifyProviderName: String = "",
+    val online: Boolean = true,
+    val hasIdentifyKey: Boolean = false,
+    val identificationsUsed: Int = 0,
+    val identificationCap: Int = DEFAULT_MONTHLY_IDENTIFICATION_CAP,
 ) {
     val canRegister: Boolean get() = selected != null && photo != null && !registering
+
+    // -----------------------------------------------------------------------
+    // The Identify action (§5.1). Hidden and disabled are different answers to
+    // different questions: hidden means "there is no provider for this", which
+    // can never change on this screen, and disabled-with-a-reason means "not
+    // right now, and here is what to do about it" (D19, M38).
+    // -----------------------------------------------------------------------
+
+    /**
+     * Hidden rather than disabled for an animal or a fungus, because a disabled button on a
+     * screen where it can never become enabled is just clutter (§3.3). It also waits for a
+     * photo: with nothing attached there is nothing to identify, and the photo row already
+     * says so.
+     */
+    val identifyVisible: Boolean
+        get() = photo != null &&
+            identifyContextKingdom(selected?.kingdom) in identifiableKingdoms
+
+    val identifyDisabledReason: String?
+        get() = identifyDisabledReason(
+            provider = identifyProviderName,
+            online = online,
+            hasKey = hasIdentifyKey,
+            identificationsUsed = identificationsUsed,
+            cap = identificationCap,
+            running = identification is IdentificationState.Running,
+        )
+
+    val canIdentify: Boolean get() = identifyVisible && identifyDisabledReason == null
+
+    val identifyLabel: String get() = "Identify with $identifyProviderName ↑"
 
     /**
      * M08's affordance. The name is not in the catalogue, so "Add your own species" is the
