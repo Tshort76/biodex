@@ -418,6 +418,26 @@ ptaquiloside is an established carcinogen, so the species stays in the dex with
 a caution and no edible tag. A tag whose own note tells the reader not to eat
 the plant should not exist.
 
+## Tests
+
+```bash
+cd tools/catalogue && python3 -m unittest test_build_catalogue -v
+```
+
+Thirteen tests over the fungi builder and the fungal half of `validate`,
+standard library only and no network — GBIF and Wikipedia are stubbed, because
+what is under test is the rule the pipeline applies to whatever they return.
+
+They cover only the fungi. The plant rules have Dr. Duke's behind them and are
+exercised by re-running the build; the fungal ones have nothing behind them, so
+`uses: []`, the mandatory caution and the edibility scrub are enforced by code
+alone — and code enforcing a safety rule should be the kind you can watch fail.
+
+The app-side twin is `FungiCatalogueTest`, which asserts the same rules against
+the **shipped `pacific.json`** rather than against the builder, and imports it
+through the real `CatalogueImporter`. Run it with
+`./gradlew testDebugUnitTest --tests '*FungiCatalogueTest*'`.
+
 ## Changing the catalogue later
 
 Editing an input file and re-running rewrites `pacific.json`. The app only
