@@ -46,6 +46,7 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.ui.common.SectionHeader
+import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.theme.DexTheme
 
 /**
@@ -310,10 +311,9 @@ fun SettingsScreen(
                 )
                 Box(modifier = Modifier.height(8.dp))
                 // M30: the same sentence the uses section carries, repeated where a user
-                // looks for what the app claims. It is the app's whole safety position.
+                // looks for what the app claims.
                 Text(
-                    text = "Documented uses of the species — not identification, not safety " +
-                        "advice. Never eat or use a plant on the strength of this app.",
+                    text = USES_DISCLAIMER,
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )

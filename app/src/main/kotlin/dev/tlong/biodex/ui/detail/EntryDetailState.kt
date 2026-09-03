@@ -49,7 +49,12 @@ data class EntryDetailUiState(
     val uses: UsesContent?
         get() {
             val species = detail ?: return null
-            if (species.summary.kingdom != Kingdom.PLANT) return null
+            // Plants and fungi both. This used to be plants only, which meant every fungal
+            // caution ever written was invisible: thirty of them, enforced by a build rule,
+            // reviewed by hand, and never once drawn on a screen. A fungus reaches here on a
+            // caution alone — it has no tags and no Duke's data by construction — so the
+            // section it gets is the one sentence and nothing else.
+            if (species.summary.kingdom == Kingdom.ANIMAL) return null
             val (_, caution) = UsesNote.cautionSplit(species.usesNote)
             if (species.summary.uses.isEmpty() && caution == null) return null
             return UsesContent(

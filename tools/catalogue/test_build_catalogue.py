@@ -138,10 +138,12 @@ class FungusValidationTest(unittest.TestCase):
     def problems_about(self, fragment, **overrides):
         return [p for p in self.asset(**overrides) if fragment in p]
 
-    def test_a_fungus_with_no_caution_is_a_problem(self):
-        # The plant rule fires only on a Duke's poison record. Nothing sources the fungal
-        # notes, so the rule is unconditional and every fungus needs a caution.
-        self.assertTrue(self.problems_about("must carry a 'Caution:' sentence", usesNote=None))
+    def test_a_fungus_may_carry_no_note_at_all(self):
+        # A fungus used to be *required* to carry a caution, harmless ones included, which
+        # put a warning on the turkey tail and the puffball. A note is written now only when
+        # the species itself is dangerous, so no note is an ordinary outcome — as it is for
+        # an animal. What a note may not be is anything other than a caution.
+        self.assertEqual([], self.problems_about("Caution", usesNote=None))
 
     def test_a_note_with_prose_outside_its_caution_is_a_problem(self):
         self.assertTrue(

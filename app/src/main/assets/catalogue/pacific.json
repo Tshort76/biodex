@@ -4297,7 +4297,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: the needles are recorded as poisonous and are a known cause of abortion in grazing cattle. Nothing from this tree is a food, and the traditional uses below are records, not recommendations.",
+      "usesNote": "Caution: the needles are poisonous to grazing cattle.",
       "medicinalActivities": [
         "Abortifacient",
         "Boil",
@@ -4557,7 +4557,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Pine nuts from the cones, early autumn — the ripe cones are heated or dried until they open, and the shelled seeds are eaten raw or roasted.",
+      "usesNote": "Pine nuts from the cones, early autumn — shelled, then eaten raw or roasted.",
       "medicinalActivities": [
         "Cancer"
       ],
@@ -4681,7 +4681,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: the foliage is rich in thujone and is toxic taken internally; the wood dust irritates skin and airways. This tree is not a food.",
+      "usesNote": "Caution: the foliage is toxic taken internally, and the wood dust irritates skin and airways.",
       "medicinalActivities": [
         "Ache(Back)",
         "Carbuncle",
@@ -4731,7 +4731,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Bright new needle tips, spring — a few picked young for tea or syrup. Caution: yew looks similar to an untrained eye and is deadly; take tips only from a tree whose needles are stiff, sharp and four-sided.",
+      "usesNote": "Bright new needle tips, spring — a few picked young for tea or syrup.",
       "medicinalActivities": [
         "Swelling"
       ],
@@ -4994,7 +4994,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: every part of this tree is deadly poisonous — needles, bark, wood, and the seed inside the red berry-like aril. Nothing from it is a food, and the recorded uses below are history, not a recommendation.",
+      "usesNote": "Caution: every part is deadly poisonous, down to the seed inside the red aril.",
       "medicinalActivities": [
         "Depilatory",
         "Emmenagogue",
@@ -5038,7 +5038,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · unknown",
       "silhouetteRes": "sil_tree_conifer",
       "uses": [],
-      "usesNote": "Caution: recorded as poisonous. The foliage and cones are not a food, and the sawdust and foliage oil irritate skin and airways.",
+      "usesNote": "Caution: recorded as poisonous, and the sawdust irritates skin and airways.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5080,7 +5080,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Acorns, autumn — shelled, ground and leached in many changes of water until no bitterness is left, then cooked. Caution: raw acorns are heavy with tannin and are not eaten.",
+      "usesNote": "Acorns, autumn — ground and leached in many changes of water, then cooked. Caution: never raw.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5122,7 +5122,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Acorns, autumn — the sweetest of the local oaks, but still shelled, ground and leached in many changes of water before cooking. Caution: raw acorns are not eaten.",
+      "usesNote": "Acorns, autumn — the sweetest of the local oaks, and still leached before cooking. Caution: never raw.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5203,7 +5203,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Acorns, autumn — shelled, ground and leached in many changes of water until no bitterness is left, then cooked. Caution: raw acorns are heavy with tannin and are not eaten.",
+      "usesNote": "Acorns, autumn — ground and leached until no bitterness is left, then cooked. Caution: never raw.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5326,7 +5326,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Small red berries, autumn — dry and mealy raw, and usually dried or cooked before eating.",
+      "usesNote": "Small red berries, autumn — dry and mealy raw, so usually dried or cooked.",
       "medicinalActivities": [
         "Burn",
         "Cold",
@@ -5375,7 +5375,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Sap, late winter — tapped and boiled down to syrup; the hanging flower clusters are also eaten cooked in early spring.",
+      "usesNote": "Sap, late winter — boiled down to syrup; the hanging flower clusters are eaten cooked.",
       "medicinalActivities": [
         "Hair-Oil"
       ],
@@ -5645,7 +5645,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Leaves, any season — far stronger than kitchen bay; one small leaf does the work of several. Caution: the fresh crushed leaves give some people a severe headache, and the raw leaf is too strong to eat whole.",
+      "usesNote": "Leaves, any season — far stronger than kitchen bay, and one small leaf does the work of several.",
       "medicinalActivities": [
         "Ache(Head)",
         "Repellant(Insect)",
@@ -5782,7 +5782,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Small tart apples, late summer into autumn — eaten once softened on the tree or by frost, or cooked; the seeds are discarded as with any apple.",
+      "usesNote": "Small tart apples, late summer — eaten once softened by frost, or cooked.",
       "medicinalActivities": [
         "Eczema",
         "Hemoptysis",
@@ -5911,7 +5911,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Dark blue-black berries, late summer — eaten fresh, dried into cakes or cooked down into jam.",
+      "usesNote": "Dark blue-black berries, late summer — eaten fresh, dried into cakes, or cooked into jam.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -5953,7 +5953,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Small black berries, late summer into autumn — sweetest after the first frosts; eaten fresh or cooked.",
+      "usesNote": "Small black berries, late summer — sweetest after the first frosts.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6037,7 +6037,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Amber to red raspberry-like fruit, late spring into early summer — eaten fresh; the peeled young shoots are also eaten in spring.",
+      "usesNote": "Amber to red raspberry-like fruit, late spring — eaten fresh, and the young shoots too.",
       "medicinalActivities": [
         "Burn",
         "Dyspepsia",
@@ -6087,7 +6087,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Soft red fruit, mid to late summer — eaten fresh off the plant; it is far too fragile to carry home.",
+      "usesNote": "Soft red fruit, midsummer — eaten on the spot; it is far too fragile to carry home.",
       "medicinalActivities": [
         "Ache(Stomach)",
         "Diarrhea",
@@ -6137,7 +6137,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Blackberries, late summer into autumn — eaten fresh or cooked. Introduced and invasive here, so picking it does the thicket no harm.",
+      "usesNote": "Blackberries, late summer — introduced and invasive here, so picking does the thicket no harm.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6181,7 +6181,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Berries, late summer to early autumn — cooked or dried before eating; flowers for cordial and tea. Caution: raw berries, leaves, stems and bark are toxic, and red-berried elders are not this species.",
+      "usesNote": "Berries, late summer — cooked or dried; flowers for cordial. Caution: raw berries are toxic.",
       "medicinalActivities": [
         "Sudorific",
         "Diaphoretic",
@@ -6234,7 +6234,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Blue-purple berries, late summer — very tart and full of seeds, so they are cooked with sugar into jelly rather than eaten raw. Caution: the yellow root and bark are bitter with berberine and are not a food.",
+      "usesNote": "Blue-purple berries, late summer — very tart and seedy, so cooked with sugar into jelly. Caution: the yellow root and bark are not a food.",
       "medicinalActivities": [
         "Tonic",
         "Bactericide",
@@ -6279,7 +6279,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Berries, late summer — dry and mealy; traditionally crushed and steeped in cold water for a cider-like drink rather than eaten whole.",
+      "usesNote": "Berries, late summer — crushed and steeped in cold water for a cider-like drink.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6321,7 +6321,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Red berries, late autumn into winter — always cooked or dried first. Caution: the raw fruit and the leaves hold cyanide-releasing compounds and are not eaten raw.",
+      "usesNote": "Red berries, late autumn — always cooked or dried. Caution: the raw fruit releases cyanide.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6409,7 +6409,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Hips, autumn into winter — the outer flesh is eaten or steeped for tea, and the petals in early summer. Caution: the seeds and their irritant hairs inside the hip are scraped out and discarded.",
+      "usesNote": "Hips, autumn — the outer flesh eaten or steeped for tea, and the petals in early summer.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6452,7 +6452,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Blue-black berries under a white bloom, midsummer — edible but dry and insipid, and usually cooked rather than eaten fresh.",
+      "usesNote": "Blue-black berries under a white bloom, midsummer — dry and insipid, so usually cooked.",
       "medicinalActivities": [
         "Charley-Horse"
       ],
@@ -6591,7 +6591,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Dark red to black cherries, late summer — cooked and strained for jelly or syrup. Caution: the pits, leaves and twigs hold cyanide-releasing compounds and are never crushed or eaten.",
+      "usesNote": "Dark cherries, late summer — cooked and strained for jelly. Caution: the pits release cyanide.",
       "medicinalActivities": [
         "Cold",
         "Vermifuge",
@@ -6642,7 +6642,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: fresh cascara bark is a violent purgative and was traditionally aged a year or more before any use at all. Nothing from this shrub is a food.",
+      "usesNote": "Caution: fresh cascara bark is a violent purgative, traditionally aged a year before any use.",
       "medicinalActivities": [
         "Laxative",
         "Tonic",
@@ -6691,7 +6691,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: recorded as poisonous, and every stem and leaf is armoured with brittle spines that break off in the skin. The traditional uses below are a record of practice, not a recommendation.",
+      "usesNote": "Caution: recorded as poisonous, and every stem and leaf is armoured with brittle spines.",
       "medicinalActivities": [
         "Anodyne",
         "Ache(Stomach)",
@@ -6743,7 +6743,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "The whole leafy rosette, late winter into spring — eaten raw as salad or briefly cooked; it turns bitter once the plant flowers and the weather warms.",
+      "usesNote": "The whole leafy rosette, late winter into spring — eaten raw, and bitter once it flowers.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6787,7 +6787,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Young leaves and tops, early spring before flowering — cooking or drying destroys the sting. Caution: the fresh plant stings on contact, and older flowering plants are not eaten.",
+      "usesNote": "Young tops, early spring — cooking destroys the sting. Caution: the fresh plant stings on contact.",
       "medicinalActivities": [
         "Rheumatism",
         "Depurative",
@@ -6891,7 +6891,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Bulbs, dug after the flowers fade in summer — slow-baked for many hours; raw they are indigestible. Caution: deadly death camas shares these meadows, so dig only bulbs marked while the blue flowers were open.",
+      "usesNote": "Bulbs, dug after the flowers fade — slow-baked for hours. Caution: deadly death camas shares these meadows.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -6935,7 +6935,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Young shoots, spring — cooked like asparagus before the leaves open; the leaves and flowers are dried for tea later in the summer.",
+      "usesNote": "Young shoots, spring — cooked like asparagus; the leaves are dried for tea later in summer.",
       "medicinalActivities": [
         "Tea",
         "Astringent",
@@ -6981,7 +6981,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY 2.5 · Walter Siegmund",
       "silhouetteRes": "sil_herb",
       "uses": [],
-      "usesNote": "Caution: wild gingers contain aristolochic acid, which damages the kidneys and causes cancer. Despite a long history as a flavouring and a remedy, this plant is not eaten. It is not culinary ginger.",
+      "usesNote": "Caution: contains aristolochic acid, which damages the kidneys. It is not culinary ginger.",
       "medicinalActivities": [
         "Tonic"
       ],
@@ -7129,7 +7129,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Small red berries, summer — eaten fresh; far smaller and more strongly flavoured than a garden strawberry.",
+      "usesNote": "Small red berries, summer — far smaller and more strongly flavoured than a garden strawberry.",
       "medicinalActivities": [
         "Ache(Stomach)"
       ],
@@ -7173,7 +7173,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Young shoot hearts in spring and green flower spikes in early summer — peeled and cooked. Caution: before the brown spike shows, cattail is easily confused with iris, whose leaves and rhizomes are poisonous.",
+      "usesNote": "Young shoot hearts in spring and green flower spikes in early summer — peeled and cooked. Caution: recorded as poisonous.",
       "medicinalActivities": [
         "Burn",
         "Diarrhea",
@@ -7223,7 +7223,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Starchy tubers, autumn into early spring — dug from the mud and always cooked, never raw. Caution: gather only where you saw the arrowhead leaves and three white petals, and never from polluted water.",
+      "usesNote": "Starchy tubers, autumn — dug out of the mud and always cooked, never raw.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7266,7 +7266,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Leaves, any season — a trailing woodland mint, steeped fresh or dried for tea rather than eaten as a food.",
+      "usesNote": "Leaves, any season — a trailing woodland mint, steeped fresh or dried for tea.",
       "medicinalActivities": [
         "Blood",
         "Deodorant",
@@ -7313,7 +7313,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: this poppy carries sedative alkaloids and Duke's itself lists it as cyanogenetic. It is not a food, and it is the California state flower — leave it where it grows.",
+      "usesNote": "Caution: it carries sedative alkaloids. It is also the state flower — leave it where it grows.",
       "medicinalActivities": [
         "Anodyne",
         "Soporific",
@@ -7362,7 +7362,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Bulbs and leaves, spring into summer — used like a mild onion. Caution: deadly death camas grows alongside and looks similar out of flower; if the crushed plant does not smell of onion, it is not this plant.",
+      "usesNote": "Bulbs and leaves, spring — used like a mild onion. Caution: if it does not smell of onion, it is not this.",
       "medicinalActivities": [
         "Cough",
         "Diaphoretic",
@@ -7413,7 +7413,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Leafy stems, autumn through spring — eaten raw or lightly cooked. Caution: poisonous scarlet pimpernel grows in the same ground; chickweed has one line of fine hairs running up one side of the stem.",
+      "usesNote": "Leafy stems, autumn through spring — eaten raw or lightly cooked. Caution: recorded as poisonous.",
       "medicinalActivities": [
         "Expectorant",
         "Piles",
@@ -7466,7 +7466,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Leaves in early spring before the plant blooms, the flower heads in spring, the root roasted in autumn. Caution: not picked from lawns or verges that may have been sprayed.",
+      "usesNote": "Leaves in early spring, the flower heads in spring, and the root roasted in autumn.",
       "medicinalActivities": [
         "Tonic",
         "Diuretic",
@@ -7568,7 +7568,7 @@
         "edible",
         "medicinal"
       ],
-      "usesNote": "Leafy stems, the cool months — cooked rather than raw when wild. Caution: deadly water hemlock grows in the same streams, and cress from water below livestock can carry liver fluke.",
+      "usesNote": "Leafy stems, the cool months — cooked rather than raw when it is wild.",
       "medicinalActivities": [
         "Scurvy",
         "Diuretic",
@@ -7700,7 +7700,7 @@
       "uses": [
         "edible"
       ],
-      "usesNote": "Rhizome, autumn through spring — a small piece chewed for its sweet liquorice taste and spat out; it is a flavouring, not a food.",
+      "usesNote": "Rhizome, autumn through spring — a small piece chewed for its liquorice taste, then spat out.",
       "medicinalActivities": [
         "Diarrhea"
       ],
@@ -7745,7 +7745,7 @@
       "uses": [
         "medicinal"
       ],
-      "usesNote": "Caution: bracken fiddleheads are eaten in several cuisines, but the plant contains ptaquiloside, an established carcinogen that cooking only reduces. This catalogue does not tag it edible.",
+      "usesNote": "Caution: it contains ptaquiloside, a carcinogen that cooking only reduces.",
       "medicinalActivities": [
         "Vermifuge",
         "Diarrhea",
@@ -7794,7 +7794,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user caphillkid at Mushroom Observer , a source for…",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the western jack-o'-lantern (Omphalotus olivascens) is its main look-alike here — true blade-like gills instead of blunt ridges, growing on wood, glowing faintly in the dark — and it causes severe cramps, vomiting and diarrhoea.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7832,7 +7832,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · ReddishClover",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the devil's bolete (Rubroboletus satanas) has a similar shape with a red stem that stains blue, and the very bitter Tylopilus felleus is a frequent confusion; both are told apart only by close examination of the stalk.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7871,7 +7871,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 nl · Onderwijsgek",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: poisonous. It contains ibotenic acid and muscimol; poisonings occur in children and in people who eat it for its psychoactive effects, and it has been confused with red-capped Amanita species elsewhere in the Americas.",
+      "usesNote": "Caution: poisonous — the red-and-white toadstool of every storybook.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7908,7 +7908,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user Ryane Snow (snowman) at Mushroom Observer , a…",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: deadly. It carries the amatoxins of the death cap, and of those poisoned by it 40% died. It fruits in spring under oaks and, before the cap opens, has been taken for a meadow mushroom or a puffball.",
+      "usesNote": "Caution: deadly. It carries the same amatoxins as the death cap.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7945,7 +7945,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Archenzo",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: deadly, and responsible for most fatal mushroom poisonings worldwide. Half a cap can kill an adult, symptoms begin only 6 to 12 hours later, and the toxins destroy the liver and the kidneys.",
+      "usesNote": "Caution: deadly. Half a cap can kill an adult, and the symptoms start half a day late.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -7982,7 +7982,7 @@
       "imageAttribution": "Wikimedia Commons · Public domain · George Chernilevsky",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: poisonous, more so than the fly agaric. It causes vomiting, diarrhoea and heavy sweating that can bring on severe dehydration, and unlike the blusher (Amanita rubescens) its damaged flesh never turns pink.",
+      "usesNote": "Caution: poisonous, and more so than the fly agaric.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8019,7 +8019,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · Bigredwine1",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: Chlorophyllum molybdites, which causes more poisonings than any other mushroom in America, is confused with it, as are the magpie inkcap and the common inkcap — the latter poisons anyone who has drunk alcohol.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8055,7 +8055,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · Alan Rockefeller",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: deadly. This small brown mushroom on rotting conifer wood carries the same amatoxins as the death cap, and has been mistaken for honey mushrooms, for Kuehneromyces mutabilis and for Psilocybe cyanescens.",
+      "usesNote": "Caution: deadly. A small brown mushroom with the death cap's amatoxins.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8092,7 +8092,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user Ron Pastorino (Ronpast) at Mushroom Observer ,…",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: poisonous — not lethal, but it causes very severe cramps, vomiting and diarrhoea. It is the chanterelle's look-alike: true blade-like gills rather than ridges, growing straight on wood, and faintly bioluminescent.",
+      "usesNote": "Caution: poisonous. It glows faintly in the dark.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8129,7 +8129,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · Alan Rockefeller",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: poisonous. Symptoms are delayed 5 to 10 hours and include vomiting, diarrhoea and impaired vision; one autopsied death showed liver failure. The similar Hypholoma capnoides lacks its greenish-yellow gills.",
+      "usesNote": "Caution: poisonous, and the symptoms arrive five to ten hours late.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8167,7 +8167,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Stu's Images",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the deadly Galerina marginata fruits on the same rotting wood and has been mistaken for it. Specimens growing on buckeye or hemlock cause stomach upset, and it disagrees with some people and not others.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8205,7 +8205,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · unknown",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: in grass its buttons are confused with the destroying angels (Amanita virosa and kin), which have killed people who took them for this species; an Amanita has a volva at the stem base and gills that stay white.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8242,7 +8242,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Velella",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: poisonous — about half of all Agaricus poisonings are this species, which brings on sweating, flushing and severe stomach cramps. Its stem base stains bright chrome yellow when cut and it smells of ink or phenol.",
+      "usesNote": "Caution: poisonous. Its base stains chrome yellow and it smells of ink.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8278,7 +8278,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY 4.0 · Alan Rockefeller",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the toxic Clitocybe dealbata and C. rivulosa share its lawn rings, and several other small brown mushrooms differ from it only under a microscope.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8316,7 +8316,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · James Lindsey",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the deadly Galerina marginata occurs in the same habitat and is one of the small brown mushrooms this is mistaken for; Lactarius species are told from them by a brittle stem that snaps rather than bends.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8353,7 +8353,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user Bill (boletebill) at Mushroom Observer , a sou…",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: serious poisonings have come from confusing it with the poisonous white Amanita smithiana, which grows in the same conifer duff; Russula brevipes and several other pale Tricholoma species also resemble it.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8390,7 +8390,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 2.0 · Miika Silfverberg from Vantaa, Finland",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: several small funnel-shaped relatives (Craterellus lutescens, C. odoratus) are separated from it by colour alone.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8427,7 +8427,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · The High Fin Sperm Whale",
       "silhouetteRes": "sil_mushroom",
       "uses": [],
-      "usesNote": "Caution: the acrid Russula cascadensis and R. vesicatoria look the same and are separated by taste and spore size, and Hygrophorus subalpinus is another look-alike. Acrid Russula species cause vomiting.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8465,7 +8465,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Jerzy Opioła",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: too tough to be food, and a row of look-alikes — false turkey tail (Stereum ostrea), Trametes hirsuta, Bjerkandera adusta and others — are told apart only by the underside, which here is finely pored.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8502,7 +8502,7 @@
       "imageAttribution": "Wikimedia Commons · Public domain · George Chernilevsky",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: a woody perennial bracket, indigestible raw and too tough to be food. Ganoderma brownii, G. oregonense and the red-belted conk all resemble it; its white pore surface bruises brown, which is what it is drawn on.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8539,7 +8539,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user Jason Hollinger (jason) at Mushroom Observer ,…",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: inedible — a hard woody bracket rather than soft flesh. Ganoderma lucidum, Laricifomes officinalis and Heterobasidion annosum are similar.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8576,7 +8576,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · This image was created by user Nathan Wilson (nathan) at Mushroom Observer ,…",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: nothing this catalogue fetched records how this species affects anyone who eats it, which is a silence and not a clearance. What the article does say is that it is a pathogen of fir, spruce and hemlock, whose wood it rots.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8614,7 +8614,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 de · Jörg Hempel",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: angel wings (Pleurocybella porrigens) shelves on the same conifer wood and was implicated in 17 deaths in Japan in 2004. Some Clitocybe species are poisonous and can resemble a pale oyster.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8650,7 +8650,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Strobilomyces",
       "silhouetteRes": "sil_bracket",
       "uses": [],
-      "usesNote": "Caution: implicated in outbreaks of fatal encephalopathy in Japan in 2004 — 59 people fell ill and 17 died, most of them with existing kidney or liver disease. It is thin, white and shelving on conifer wood, like an oyster.",
+      "usesNote": "Caution: poisonous — implicated in seventeen deaths in Japan in 2004.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8687,7 +8687,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · BlueCanoe",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: false morels (Gyromitra species) fruit in the same season and contain gyromitrin, recognised as potentially deadly. A true morel is hollow from cap to stem base and pitted; a false one is folded and brain-like.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8724,7 +8724,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · unknown",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: potentially deadly. Its gyromitrin content varies so widely that some people are severely poisoned or die while others eating the same dish show nothing at all, and it is taken for a true morel.",
+      "usesNote": "Caution: potentially deadly, and unpredictably so.",
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8761,7 +8761,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY 3.0 · Sharksbaja",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: it is a mould that has overgrown another mushroom, and once the orange crust covers the host that host can no longer be identified; white, pink and yellow moulds of the same kind can be toxic.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8799,7 +8799,7 @@
       "imageAttribution": "Wikimedia Commons · Public domain · J. Carmichael",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: Tremella aurantia is frequently confused with it — thicker lobes, a matte rather than greasy surface, and its host Stereum hirsutum on the same log. Yellow jelly fungi are hard to separate without the host.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8836,7 +8836,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · JerryFriedman",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: a young destroying angel cut in half is also plain white inside, which is the standard confusion with a puffball.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,
@@ -8873,7 +8873,7 @@
       "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · The High Fin Sperm Whale",
       "silhouetteRes": "sil_other_fungus",
       "uses": [],
-      "usesNote": "Caution: species of Otidea and Caloscypha, some poisonous and some of unknown effect, are confused with it, and the brittle cups are usually broken before they can be examined closely.",
+      "usesNote": null,
       "medicinalActivities": [],
       "medicinalRecordCount": 0,
       "usesAttribution": null,

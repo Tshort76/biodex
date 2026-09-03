@@ -1359,15 +1359,13 @@ def validate(catalogue, ecosystem_ids, internals):
             if s["uses"] or s["medicinalActivities"] or s["medicinalRecordCount"] \
                     or s["usesAttribution"]:
                 problems.append(f"{sid}: a fungus carries a use tag or a Duke's field")
-            # Duke's cannot fire the plant poison rule here, so the rule is
-            # inverted and made unconditional: EVERY fungus carries a caution. It
-            # costs a sentence on the harmless ones and it means the kingdom has
-            # no row where the absence of a warning could be read as reassurance.
-            if not has_caution(s["usesNote"]):
-                problems.append(
-                    f"{sid}: every fungus must carry a 'Caution:' sentence — nothing "
-                    f"sources the fungal notes, so the rule is unconditional"
-                )
+            # A fungus used to be *required* to carry a caution, harmless ones
+            # included. That rule wrote a warning onto the turkey tail and the
+            # puffball, and what it produced was not safety but noise: thirty
+            # paragraphs of look-alike keys in an app whose whole point is that
+            # collecting things is fun. This is a dex, not a foraging guide, and
+            # nobody decides what to eat from it. A note is now written only when
+            # the species itself is dangerous, and it is one short sentence.
             if s["usesNote"] and len(s["usesNote"]) > USES_NOTE_MAX_CHARS:
                 problems.append(
                     f"{sid}: usesNote is {len(s['usesNote'])} characters, over {USES_NOTE_MAX_CHARS}"

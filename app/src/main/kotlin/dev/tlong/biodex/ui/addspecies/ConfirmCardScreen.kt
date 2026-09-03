@@ -48,6 +48,7 @@ import dev.tlong.biodex.domain.defaultSilhouetteFor
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
+import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.register.PrimaryCta
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
@@ -634,8 +635,7 @@ private fun UsesEditor(
     }
 
     Text(
-        text = "Documented uses of the species — not identification, not safety advice. Never " +
-            "eat or use a plant on the strength of this app.",
+        text = USES_DISCLAIMER,
         style = MaterialTheme.typography.labelSmall,
         color = colors.faint,
     )

@@ -158,4 +158,32 @@ class EntryDetailStateTest {
         assertEquals("", formatCaughtDate(null))
         assertTrue(formatCaughtDate(1_756_512_000_000L).isNotEmpty())
     }
+    // -----------------------------------------------------------------------
+    // Whose caution reaches a screen.
+    // -----------------------------------------------------------------------
+
+    private fun withCaution(kingdom: Kingdom, taxClass: TaxClass) =
+        detail(listOf("coastal-rainforest")).let {
+            it.copy(
+                summary = it.summary.copy(kingdom = kingdom, taxClass = taxClass),
+                usesNote = "Caution: deadly. Half a cap can kill an adult.",
+            )
+        }
+
+    @Test
+    fun `a fungus caution reaches the screen`() {
+        // The regression this exists for: the uses slot was gated on PLANT, so every fungal
+        // caution ever written was invisible — thirty of them, enforced by a build rule that
+        // could not tell, and never once drawn. The kingdom that carries a warning is not the
+        // kingdom that carries uses, and this pins the difference.
+        val uses = state(withCaution(Kingdom.FUNGUS, TaxClass.MUSHROOM)).uses
+        assertTrue("a fungus with a caution must show it", uses != null)
+        assertTrue(uses!!.uses.isEmpty())
+    }
+
+    @Test
+    fun `an animal still shows no uses section, caution or not`() {
+        assertNull(state(withCaution(Kingdom.ANIMAL, TaxClass.BIRD)).uses)
+    }
+
 }

@@ -159,10 +159,11 @@ class CatalogueImporterRoomTest {
             (1..30).map { FUNGUS_DEX_NUMBER_BASE + it },
             fungi.map { it.dexNumber }.sorted(),
         )
-        // The rule the pipeline enforces and nothing else can: no mushroom carries a use tag,
-        // and every one carries a caution, because Duke's covers no fungi to decide either.
+        // The rule the pipeline enforces and nothing else can: no mushroom carries a use
+        // tag. A note is optional and, when present, is a caution and nothing else.
         assertTrue(fungi.all { it.uses.isEmpty() })
-        assertTrue(fungi.all { it.usesNote?.contains("Caution:") == true })
+        assertTrue(fungi.any { it.usesNote?.contains("Caution:") == true })
+        assertTrue(fungi.all { it.usesNote == null || it.usesNote!!.startsWith("Caution:") })
         assertEquals(7, db.ecosystemDao().ecosystemsOnce("pacific").size)
         assertTrue(db.ecosystemDao().membershipsOnce("pacific").isNotEmpty())
     }

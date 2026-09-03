@@ -54,12 +54,14 @@ data class UsesContent(
 )
 
 /**
- * M30, verbatim. The app's only claim is that a use is *documented for the species*; it never
- * says a part is safe and never says the photograph is that species (D2).
+ * M30. The app's only claim is that a use is *documented for the species*; it never says a
+ * part is safe and never says the photograph is that species (D2). One short line, carried
+ * by every screen that shows a use — the longer statement belongs in the README, not in
+ * front of someone playing a collecting game.
  */
 const val USES_DISCLAIMER =
-    "Documented uses of the species — not identification, not safety advice. Never eat or " +
-        "use a plant on the strength of this app."
+    "Documented uses of the species — not advice. Do your own research before eating or " +
+        "using anything."
 
 /**
  * The sourced half, as one line: "Duke's records 105 traditional uses: astringent, diuretic,
@@ -88,8 +90,11 @@ fun UsesSection(content: UsesContent, modifier: Modifier = Modifier) {
     val (body, caution) = UsesNote.cautionSplit(content.usesNote)
     val source = dukesLine(content.medicinalRecordCount, content.medicinalActivities)
 
+    // A section holding one warning and no uses is not a uses section. Every fungus lands
+    // here, and so does a plant like Western Wild Ginger.
+    val hasUses = content.uses.isNotEmpty() || source != null
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader("Uses")
+        SectionHeader(if (hasUses) "Uses" else "Caution")
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier
@@ -151,10 +156,16 @@ fun UsesSection(content: UsesContent, modifier: Modifier = Modifier) {
                 )
             }
         }
-        AttributionLine(
-            text = usesDisclaimer(content.usesAttribution),
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        // The disclaimer is about *documented uses*, so it appears only where there are
+        // some. A caution-only section — every fungus, and a plant like Western Wild Ginger
+        // — is one warning sentence, and following it with "documented uses of the species"
+        // when none are shown says nothing and dilutes the line above it.
+        if (hasUses) {
+            AttributionLine(
+                text = usesDisclaimer(content.usesAttribution),
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 

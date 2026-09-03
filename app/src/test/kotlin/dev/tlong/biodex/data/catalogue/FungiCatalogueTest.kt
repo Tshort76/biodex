@@ -57,11 +57,15 @@ class FungiCatalogueTest {
             assertEquals(emptyList<String>(), row.medicinalActivities)
             assertEquals(0, row.medicinalRecordCount)
             assertEquals(null, row.usesAttribution)
-            // A fungus has no use for the body of a note to describe, and the app would drop
-            // it on import (`keptUsesNote`), so the note must already be the caution alone.
-            val (body, caution) = UsesNote.cautionSplit(row.usesNote)
-            assertEquals("${row.id} has prose outside its caution", "", body)
-            assertNotNull("${row.id} has no Caution: sentence", caution)
+            // Most fungi carry no note at all now — the same as an animal. A note is
+            // written only when the species itself is dangerous, and when there is one it
+            // is the caution alone: a fungus has no use for the body of a note to describe,
+            // and the app would drop it on import (`keptUsesNote`).
+            if (row.usesNote != null) {
+                val (body, caution) = UsesNote.cautionSplit(row.usesNote)
+                assertEquals("${row.id} has prose outside its caution", "", body)
+                assertNotNull("${row.id} has no Caution: sentence", caution)
+            }
         }
     }
 
