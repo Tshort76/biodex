@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fungus silhouette (ARCHITECTURE.md 11.4, M25). Drawn here rather than copied from
+     mockup.html, which has no fungal symbols; same rules as the other twelve — one solid
+     fill on the 100x100 viewport, tinted at runtime over silBg.
+
+     The `other_fungus` class is the catch-all D12 gave the cups, corals, puffballs and
+     jellies, so its shape has to stand for all of them without being any one of them: a
+     rounded body on a short base, with the rim dished in so it reads as a cup from the side
+     and as a puffball at a glance. It is also the class fallback (`TaxClass.defaultFor`),
+     which is the other reason it stays generic. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16 40 C16 35 21 33 26 36 C35 41 65 41 74 36 C79 33 84 35 84 40 C84 65 70 84 50 84 C30 84 16 65 16 40 Z M44 82 L56 82 L56 92 L44 92 Z" />
+</vector>

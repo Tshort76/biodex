@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fungus silhouette (ARCHITECTURE.md 11.4, M25). Drawn here rather than copied from
+     mockup.html, which has no fungal symbols; same rules as the other twelve — one solid
+     fill on the 100x100 viewport, tinted at runtime over silBg.
+
+     A shelf fungus is recognised by *where* it grows, not by its own outline, so the shape
+     carries the trunk edge with it: a vertical bar on the left with two conks stepping out
+     of it. Without the trunk a bracket alone reads as a stone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12 8 L30 8 L30 92 L12 92 Z M30 32 C48 28 68 33 82 44 C70 52 48 55 30 50 Z M30 62 C44 59 60 62 71 70 C60 77 44 78 30 73 Z" />
+</vector>
