@@ -1,6 +1,6 @@
 # BioDex (formerly Animal Dex) — Technical Architecture (v1 + the BioDex expansion)
 
-Companion to `DESIGN.md` (product requirements, approved; v4 adds plants and the BioDex naming) and `mockup.html` (visual design, approved). Sections 1–10 are the v1 design plus the deviation log eight slices appended; section 11 designs the BioDex expansion on top of what was actually built. This document tells the implementing agents every cross-cutting decision so no slice has to invent one. Written 2026-09-01; every version number below was verified against release pages on that date.
+Companion to `DESIGN.md` (product requirements, approved; v4 adds plants and the BioDex naming) and `mockup.html` (visual design, approved). **For what is actually built today, read `STATUS.md` first** — this document's slice maps stop at slice 13 and a second wave of work landed after them (§11.8). Sections 1–10 are the v1 design plus the deviation log eight slices appended; section 11 designs the BioDex expansion on top of what was actually built. This document tells the implementing agents every cross-cutting decision so no slice has to invent one. Written 2026-09-01; every version number below was verified against release pages on that date.
 
 ---
 
@@ -792,7 +792,7 @@ That is 40 / 18 / 19 / 3 as growth forms, with about 35 edible tags; the `M` mar
 
 **App bar (M29, D11)** — `GridAppBar` renders the serif title "BioDex", `RegionPill(progress.regionName)` ("PACIFIC USA"), then two `ProgressPill`s: animals in `accent` on `accentSoft` as today, plants in `ok` on `accentSoft` with a small leaf glyph, both without inner spaces (`47/120`). The plant pill is omitted while `plants.total == 0`. The title is `maxLines = 1, overflow = Ellipsis` inside a `weight(1f, fill = false)` so it gives way before the pills do. The Stats header follows the same pattern with the two pills under the title. The Settings About text becomes "BioDex 1.0 — Pacific USA BioDex, a personal life list…", followed by M30's disclaimer sentence.
 
-**Chip row (M23)** — `DexGridFilters` gains `kingdom: Kingdom?` and `use: PlantUse?`; `matchesFilters` ANDs two more clauses (`use` matches iff `use in species.uses`, which is never true for an animal). The row order is `All · Uncaught · Animals · Plants · Edible · Medicinal · <classes> · <ecosystems>`, single-select within each dimension, tap-to-clear as today. The class chips rendered are `TaxClass.entries.filter { filters.kingdom == null || it.kingdom == filters.kingdom }`. No coupling rules between dimensions beyond AND — selecting "Trees" already implies plants, so the state does not need to set `kingdom`. `chipLabel()` gains `Trees / Shrubs / Herbs / Ferns` (an exhaustive `when` that slice 9 must extend or the build breaks; same for `classLabel()` in `StatsState.kt`).
+**Chip row (M23)** — *(Superseded 2026-09-03: the chip row described here shipped, and was then replaced by the caught chips over Class / Ecosystem / Uses dropdowns, with the kingdom control removed entirely. See `DESIGN.md` M23 and D28. The paragraph is left as written because it records what slice 11 built.)* `DexGridFilters` gains `kingdom: Kingdom?` and `use: PlantUse?`; `matchesFilters` ANDs two more clauses (`use` matches iff `use in species.uses`, which is never true for an animal). The row order is `All · Uncaught · Animals · Plants · Edible · Medicinal · <classes> · <ecosystems>`, single-select within each dimension, tap-to-clear as today. The class chips rendered are `TaxClass.entries.filter { filters.kingdom == null || it.kingdom == filters.kingdom }`. No coupling rules between dimensions beyond AND — selecting "Trees" already implies plants, so the state does not need to set `kingdom`. `chipLabel()` gains `Trees / Shrubs / Herbs / Ferns` (an exhaustive `when` that slice 9 must extend or the build breaks; same for `classLabel()` in `StatsState.kt`).
 
 **Grid cell** — unchanged except the number: `P012` is the kingdom mark. No extra badge.
 
@@ -890,6 +890,17 @@ Done (JVM): with the full catalogue and an empty query, the state reports the pr
 **R22 — The camera intent needs `CAMERA` after all.** Resolved: it does not. `ACTION_IMAGE_CAPTURE` is served by the system camera app, which holds the permission itself, and declaring the permission without holding it is what throws. Verified on the phone; the manifest stays at `INTERNET` + `ACCESS_NETWORK_STATE`.
 
 **R23 — A design number that resolves to nothing.** 580 comments across the Kotlin and Python source cite `M##`, `D##`, `R##` and `S##` identifiers, and for a while 216 of them named entries that existed only in an uncommitted draft. Anyone cloning the repo — a person or a future agent — read "M41: a plant keeps no photograph" and had no way to look M41 up. Mitigation: an identifier cited in shipped code is defined in a committed document, and a design draft is folded in when the work it describes ships rather than left as the only home of its numbering.
+
+### 11.8 After slice 13 — the work that was never sliced
+
+The slice maps stop here, and the app did not. Fungi as a third kingdom, the in-app camera, Pl@ntNet identification, the plant that keeps no photograph, the caution pass and the filter dropdowns all landed after slice 13, as conversations rather than planned slices — so there is no slice entry, no "Does / Does not / Done" gate, and no deviation table for any of them.
+
+That is a deliberate stop, not an omission: slicing exists to keep parallel agents off each other's files, and none of this work was parallel. But it means **§9 and §11.6 are no longer a picture of what is built.** Two places carry that picture instead:
+
+- **`STATUS.md`** — what is built, what was last verified and how, what is deliberately not built, and where to pick up. It is the file to read first and the file to update when the state changes.
+- **The registers in `DESIGN.md`** — every requirement and decision from this second wave is numbered there (`M31`–`M42`, `S11`–`S15`, `C09`–`C12`, `D19`–`D28`) and cited from the code that implements it, exactly as the earlier ones are. `R16`–`R23` in §11.7 above are its risk half.
+
+If a future wave *is* planned as parallel slices, add §11.9 and follow §11.6's shape — the disjointness table is the part that earns its keep.
 
 ---
 

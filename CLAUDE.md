@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 120 animals, 80 plants, 30 fungi. Species start as silhouettes and unlock when the user registers a photo.
 
-`README.md` is written for the user. `DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up.
+**Start with `STATUS.md`** — what is built, what was last verified and how, what is deliberately not built, and where to pick up. It is the file that goes stale fastest, so update it when the state changes.
+
+`README.md` is written for the user. `DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up. Both design documents stop before the most recent wave of work; `ARCHITECTURE.md` §11.8 says so and points here.
 
 ## Environment
 
