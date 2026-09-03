@@ -20,7 +20,7 @@ The gallery picker needs an explicit **Done** tap after you select a photo. Sele
 
 Offline, the entry is created immediately from the name and photo alone and filled in the next time you open it with a connection.
 
-**Filtering.** The chip row composes rather than replaces: *Plants* + *Food source* + *Riparian & Wetland* narrows to exactly that. Search matches common and scientific names.
+**Filtering.** *Caught* and *Uncaught* are chips; *Class*, *Ecosystem* and *Uses* are dropdowns underneath them. They compose rather than replace — *Mammals* + *Riparian & Wetland* narrows to exactly the four wetland mammals. Each menu marks the value currently filtering and opens with a row that undoes just that one (*All classes*, *All ecosystems*, *Any use*); the *All* chip clears the lot. There is no kingdom filter, because picking *Trees* or *Mammals* already says which kingdom you meant. Search matches common and scientific names.
 
 **Plants have a uses section** where an animal has nothing: a short note on which part and which season, and a muted line recording what Duke's holds. Any plant Duke's records as toxic carries a one-line caution, and the build fails if one is missing — so which plants get a warning is decided by a public dataset rather than by whoever wrote the entry.
 
