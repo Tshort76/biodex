@@ -125,6 +125,7 @@ fun DexGridScreen(
                 regionLabel = state.regionLabel,
                 animals = state.animals,
                 plants = state.plants.takeIf { state.showPlantPill },
+                fungi = state.fungi.takeIf { state.showFungiPill },
                 onOpenSettings = onOpenSettings,
             )
             SearchField(query = state.query, onQueryChange = onQueryChange)
@@ -170,6 +171,7 @@ private fun GridAppBar(
     regionLabel: String,
     animals: Meter,
     plants: Meter?,
+    fungi: Meter?,
     onOpenSettings: () -> Unit,
 ) {
     Row(
@@ -185,7 +187,10 @@ private fun GridAppBar(
             color = DexTheme.colors.fg,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
+            // Deliberately unweighted. A weighted title splits the leftover width with the
+            // spacer below it, which was invisible at two progress pills and truncated the
+            // product name to "Bio…" at three. The name is a fixed short string; it should
+            // measure at its own size and let the spacer absorb whatever is left.
         )
         if (regionLabel.isNotEmpty()) RegionPill(regionLabel)
         Box(modifier = Modifier.weight(1f))
@@ -196,6 +201,14 @@ private fun GridAppBar(
                 total = it.total,
                 color = DexTheme.colors.ok,
                 glyph = "\uD83C\uDF3F",
+            )
+        }
+        fungi?.let {
+            ProgressPill(
+                caught = it.caught,
+                total = it.total,
+                color = DexTheme.colors.warn,
+                glyph = "\uD83C\uDF44",
             )
         }
         TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 4.dp)) {

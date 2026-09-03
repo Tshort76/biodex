@@ -44,9 +44,10 @@ data class DexGridFilters(
 data class DexGridUiState(
     /** The region's own name, read from the `regions` table — "Pacific USA" (11.1). */
     val regionLabel: String = "",
-    /** The two kingdoms' meters, rendered as two pills. Plants hide while the total is 0. */
+    /** One pill per kingdom. A kingdom with nothing in it hides rather than reading `0/0`. */
     val animals: Meter = Meter(0, 0, 0),
     val plants: Meter = Meter(0, 0, 0),
+    val fungi: Meter = Meter(0, 0, 0),
     val query: String = "",
     val filters: DexGridFilters = DexGridFilters(),
     val ecosystems: List<Ecosystem> = emptyList(),
@@ -64,6 +65,9 @@ data class DexGridUiState(
 
     /** M29: a plant pill on a dex with no plants in it would only ever read `0/0`. */
     val showPlantPill: Boolean get() = plants.total > 0
+
+    /** The same rule for fungi, which arrived as a kingdom before they arrived in the asset. */
+    val showFungiPill: Boolean get() = fungi.total > 0
 
     /**
      * The kingdoms the region actually holds, derived from [availableClasses] because every
@@ -160,6 +164,7 @@ fun dexGridUiState(
             regionLabel = prog.regionName,
             animals = prog.animals,
             plants = prog.plants,
+            fungi = prog.fungi,
             query = q,
             filters = f,
             ecosystems = ecos,
