@@ -160,11 +160,18 @@ fun dexGridUiState(
 fun kingdomChipLabel(kingdom: Kingdom): String = when (kingdom) {
     Kingdom.ANIMAL -> "Animals"
     Kingdom.PLANT -> "Plants"
+    Kingdom.FUNGUS -> "Fungi"
 }
 
-/** The use chips of M23. Adjectives, because they describe the plant rather than count it. */
+/**
+ * The use chips of M23. Adjectives, because they describe the plant rather than count it.
+ *
+ * A use chip narrows the grid to plants by construction: fungi carry no uses at all, by
+ * design and not by omission (there is no Duke's data behind a mushroom, so any use claim
+ * would be the curator's alone), and animals never had them.
+ */
 fun useChipLabel(use: PlantUse): String = when (use) {
-    PlantUse.EDIBLE -> "Edible"
+    PlantUse.EDIBLE -> "Food source"
     PlantUse.MEDICINAL -> "Medicinal"
 }
 
@@ -181,4 +188,7 @@ fun TaxClass.chipLabel(): String = when (this) {
     TaxClass.SHRUB -> "Shrubs"
     TaxClass.HERB -> "Herbs"
     TaxClass.FERN -> "Ferns"
+    TaxClass.MUSHROOM -> "Mushrooms"
+    TaxClass.BRACKET -> "Brackets"
+    TaxClass.OTHER_FUNGUS -> "Other fungi"
 }

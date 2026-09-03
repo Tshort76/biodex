@@ -764,6 +764,6 @@ private fun previewCard() = ConfirmSpeciesUiState.Card(
 /** The chip words for the two use tags; the enum's wire names are storage, not copy. */
 private val PlantUse.label: String
     get() = when (this) {
-        PlantUse.EDIBLE -> "Edible"
+        PlantUse.EDIBLE -> "Food source"
         PlantUse.MEDICINAL -> "Medicinal"
     }

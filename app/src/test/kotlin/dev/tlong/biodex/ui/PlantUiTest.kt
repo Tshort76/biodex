@@ -131,7 +131,12 @@ class PlantUiTest {
             ).first()
         }
         assertTrue(both.showKingdomChips)
-        assertEquals(TaxClass.entries, classChips(both.filters, both.availableClasses))
+        // Not `TaxClass.entries`: this row offers only the classes the region actually holds,
+        // which is the whole point of the slice 9 fix above, and this fixture has two
+        // kingdoms and no fungi. Comparing against `entries` was right only for as long as
+        // every class in the enum happened to be in the fixture.
+        val nonFungal = TaxClass.entries.filter { it.kingdom != Kingdom.FUNGUS }
+        assertEquals(nonFungal, classChips(both.filters, both.availableClasses))
     }
 
     @Test

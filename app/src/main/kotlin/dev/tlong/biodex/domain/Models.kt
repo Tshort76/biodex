@@ -13,6 +13,7 @@ package dev.tlong.biodex.domain
 enum class Kingdom(val wireName: String) {
     ANIMAL("animal"),
     PLANT("plant"),
+    FUNGUS("fungus"),
     ;
 
     companion object {
@@ -45,6 +46,11 @@ enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
     SHRUB("shrub", Kingdom.PLANT),
     HERB("herb", Kingdom.PLANT),
     FERN("fern", Kingdom.PLANT),
+    // Growth form, not taxonomy — the same editorial choice D12 made for plants. A forager
+    // recognises a shelf fungus on a trunk before they can name its order.
+    MUSHROOM("mushroom", Kingdom.FUNGUS),
+    BRACKET("bracket", Kingdom.FUNGUS),
+    OTHER_FUNGUS("other_fungus", Kingdom.FUNGUS),
     ;
 
     companion object {
@@ -58,6 +64,7 @@ enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
         fun defaultFor(kingdom: Kingdom): TaxClass = when (kingdom) {
             Kingdom.ANIMAL -> OTHER_INVERTEBRATE
             Kingdom.PLANT -> HERB
+            Kingdom.FUNGUS -> OTHER_FUNGUS
         }
 
         fun of(kingdom: Kingdom): List<TaxClass> = entries.filter { it.kingdom == kingdom }
@@ -111,6 +118,9 @@ const val USER_DEX_NUMBER_BASE = 9000
 
 const val PLANT_DEX_NUMBER_BASE = 2000
 
+/** Fungi sit between the plants and the user block, leaving each kingdom room to grow. */
+const val FUNGUS_DEX_NUMBER_BASE = 4000
+
 /**
  * The stored number for a curated species the catalogue asset numbers per kingdom (1..n).
  * The asset stays readable — the curator writes 47, not 2047 — and the importer is the only
@@ -119,9 +129,10 @@ const val PLANT_DEX_NUMBER_BASE = 2000
 fun storedDexNumber(kingdom: Kingdom, dexNumber: Int): Int = when (kingdom) {
     Kingdom.ANIMAL -> dexNumber
     Kingdom.PLANT -> PLANT_DEX_NUMBER_BASE + dexNumber
+    Kingdom.FUNGUS -> FUNGUS_DEX_NUMBER_BASE + dexNumber
 }
 
-/** `#021` for a curated animal, `P012` for a curated plant, `U01` for a user-added one (M02). */
+/** `#021` animal, `P012` plant, `F007` fungus, `U01` user-added (M02). */
 fun displayDexNumber(dexNumber: Int, source: SpeciesSource, kingdom: Kingdom): String =
     when (source) {
         SpeciesSource.USER ->
@@ -131,6 +142,9 @@ fun displayDexNumber(dexNumber: Int, source: SpeciesSource, kingdom: Kingdom): S
             Kingdom.ANIMAL -> "#" + dexNumber.toString().padStart(3, '0')
             Kingdom.PLANT ->
                 "P" + (dexNumber - PLANT_DEX_NUMBER_BASE).toString().padStart(3, '0')
+
+            Kingdom.FUNGUS ->
+                "F" + (dexNumber - FUNGUS_DEX_NUMBER_BASE).toString().padStart(3, '0')
         }
     }
 
@@ -254,19 +268,20 @@ data class Meter(
     val fraction: Float get() = if (total == 0) 0f else caught.toFloat() / total.toFloat()
 }
 
-/** One ecosystem's row on the Stats screen: the two kingdoms are counted separately (D13). */
+/** One ecosystem's row on the Stats screen: each kingdom is counted separately (D13). */
 data class EcosystemProgress(
     val ecosystem: Ecosystem,
     val animals: Meter,
     val plants: Meter = Meter(0, 0, 0),
+    val fungi: Meter = Meter(0, 0, 0),
 )
 
 /**
  * Derived, never stored (DESIGN.md §2 "Dex"). Shared by the grid header and Stats (6.3).
  *
- * The two kingdoms have their own meters and never mix (D13): 47/120 animals and 3/80
- * plants are two life lists that happen to share a region, and a single blended fraction
- * would hide which of them the user is actually working on.
+ * Each kingdom has its own meter and they never mix (D13): 47/120 animals, 3/80 plants and
+ * 0/30 fungi are separate life lists that happen to share a region, and a single blended
+ * fraction would hide which of them the user is actually working on.
  */
 data class DexProgress(
     val regionId: String,
@@ -276,15 +291,17 @@ data class DexProgress(
     val plants: Meter,
     val perClass: List<Pair<TaxClass, Meter>>,
     val perEcosystem: List<EcosystemProgress>,
+    val fungi: Meter = Meter(0, 0, 0),
 ) {
-    /** Both kingdoms together — what "is there anything to show yet" asks. */
-    val totalSpecies: Int get() = animals.total + plants.total
-    val caughtCount: Int get() = animals.caught + plants.caught
-    val userAddedCount: Int get() = animals.userAdded + plants.userAdded
+    /** Every kingdom together — what "is there anything to show yet" asks. */
+    val totalSpecies: Int get() = animals.total + plants.total + fungi.total
+    val caughtCount: Int get() = animals.caught + plants.caught + fungi.caught
+    val userAddedCount: Int get() = animals.userAdded + plants.userAdded + fungi.userAdded
 
     fun meterFor(kingdom: Kingdom): Meter = when (kingdom) {
         Kingdom.ANIMAL -> animals
         Kingdom.PLANT -> plants
+        Kingdom.FUNGUS -> fungi
     }
 
     companion object {

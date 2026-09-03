@@ -133,4 +133,7 @@ fun classLabel(taxClass: TaxClass): String = when (taxClass) {
     TaxClass.SHRUB -> "Shrubs"
     TaxClass.HERB -> "Herbs"
     TaxClass.FERN -> "Ferns"
+    TaxClass.MUSHROOM -> "Mushrooms"
+    TaxClass.BRACKET -> "Brackets"
+    TaxClass.OTHER_FUNGUS -> "Other fungi"
 }

@@ -172,7 +172,7 @@ private fun UseTag(use: PlantUse) {
     }
     Text(
         text = when (use) {
-            PlantUse.EDIBLE -> "Edible"
+            PlantUse.EDIBLE -> "Food source"
             PlantUse.MEDICINAL -> "Medicinal"
         },
         style = MaterialTheme.typography.labelSmall.copy(
