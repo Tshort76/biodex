@@ -1,0 +1,22 @@
+{
+  "usageKey": 3033842,
+  "scientificName": "Berberis L.",
+  "canonicalName": "Berberis",
+  "rank": "GENUS",
+  "status": "ACCEPTED",
+  "confidence": 95,
+  "note": "Similarity: name=104; classification=-2; rank=-1; status=1; score=102",
+  "matchType": "HIGHERRANK",
+  "kingdom": "Plantae",
+  "phylum": "Tracheophyta",
+  "order": "Ranunculales",
+  "family": "Berberidaceae",
+  "genus": "Berberis",
+  "kingdomKey": 6,
+  "phylumKey": 7707728,
+  "classKey": 220,
+  "orderKey": 399,
+  "familyKey": 6673,
+  "genusKey": 3033842,
+  "class": "Magnoliopsida"
+}
