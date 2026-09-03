@@ -372,7 +372,7 @@ Slice 5 built the photo layer, the register flow, the unlock reveal and the phot
 | Wikipedia parse API (sections → habitat), REST summary (lede + image) | every curated species | user-added lookup + backfill |
 | Wikimedia image bytes | — | streamed by Coil on view, disk-cached (S02) |
 
-Everything else the app shows is bundled. There is no other network traffic; photos and locations never leave the device (M10).
+Everything else the app shows is bundled. The only other network traffic is identification, and only when the user presses *Identify* on a plant photo: a downscaled, re-encoded JPEG goes to the Pl@ntNet API, and each returned name is then resolved through GBIF. Nothing is uploaded automatically; no location, no original file bytes, and no other photo ever leaves the device (M10, M36).
 
 ### 5.2 Clients
 
@@ -865,7 +865,7 @@ Done (JVM): with the full catalogue and an empty query, the state reports the pr
 
 **R10 — GBIF's plant taxonomy is inconsistent.** Many flowering plants come back with no `class` at all, or with `Magnoliopsida` for everything, and conifers sometimes with class `Pinopsida` and sometimes only order `Pinales`. The only automated decision that leans on it — conifer versus broadleaf silhouette — checks both and falls back to broadleaf, and the curator's `overrides.silhouetteRes` pins the rest. Growth form itself is curatorial precisely so this cannot mis-class a plant.
 
-**R11 — A wrong edible note.** The pipeline can check that a note exists, not that it is true, and the edible notes are the one unsourced text in the plant list. Mitigation: the medicinal half is no longer written at all (Duke's supplies it); the caution set is decided by Duke's `Poison` records, not by the writer; the notes are short and limited to part and season; the disclaimer sits on every uses section (M30); and the app refuses to identify (D2). The residual risk is the user's, and the design says so rather than pretending the app carries it.
+**R11 — A wrong food-source note.** The pipeline can check that a note exists, not that it is true, and these notes are the one unsourced text in the plant list. Mitigation: the medicinal half is no longer written at all (Duke's supplies it); the caution set is decided by Duke's `Poison` records, not by the writer; the notes are short and limited to part and season, and were cut shorter still on 2026-09-02; the disclaimer sits under any section that shows a use (M30), with the longer statement at the top of the README; and identification, when the user invokes it, produces a source's candidates rather than the app's answer (D2), and only ever for a plant — the app still refuses to suggest what a mushroom is. The residual risk is the user's, and the design says so rather than pretending the app carries it — now including the risk that a suggested name is wrong, which is why the suggestion is always labelled as one.
 
 **R15 — The Duke's join misses through nomenclature.** Duke's keys on genus and species strings from its own era, so an accepted name that GBIF has since moved (Oregon grape *Berberis* ↔ *Mahonia*, elder *Sambucus cerulea* ↔ *S. nigra*) returns nothing on the first try. The synonym pass and the `dukeName` pin cover it, and the report's "no Duke's record" list is the check: a well-known medicinal plant on that list is a join miss, not a true absence. Duke's spelling variants (`Achillea millefolium` versus a hyphenated or misspelled row) are normalised by lower-casing and collapsing whitespace before the join; anything stranger is pinned.
 
@@ -874,6 +874,22 @@ Done (JVM): with the full catalogue and an empty query, the state reports the pr
 **R13 — Twelve silhouettes drawn by hand, on a phone, with no previews.** The five plant shapes are the visual difference between "plants are in the app" and "plants look like a slug". `adb exec-out screencap` after the first install of slice 11 is the review, and the mockup's symbols are the reference; expect one redraw.
 
 **R14 — The interim between slices 9 and 11.** After 9, a user-added plant cannot yet exist and the asset has no plants, so nothing renders a `TREE` class; but if slice 10's asset were committed early it would render with the other-invertebrate silhouette. Harmless and temporary, and the commit-after-9 rule on the asset (slice 10) plus the fixture-based JVM check (slice 11) keep it from ever being what the user sees.
+
+**R16 — The keys are a human step.** The feature ships dark until a key is pasted; the button says why, and Settings makes the paste a one-minute task with a link. Mitigation: the on-phone checks were done with a real key, so "not verified" cannot hide.
+
+**R17 — Provider terms.** Pl@ntNet's attribution wording and non-commercial scope are re-read at `my.plantnet.org/terms_of_use` before the licenses text changes. The app is personal and non-commercial, which is the easy side of any such term.
+
+**R18 — A provider names something that does not exist, or exists elsewhere.** Mitigated by M32 (the GBIF drop) and M33 (catalogue matching on the accepted name). The residual — a real species from the wrong continent — surfaces as "not in dex", where the confirmation card's habitat text is the check, as it is for a typed name today.
+
+**R19 — GBIF backbone drift between catalogue build and runtime.** Rare; C11 closes it. Until then it reads as "not in dex" rather than as a wrong match, which is the safe failure.
+
+**R20 — The fungal cautions have no source behind them.** Duke's covers no fungi, so nothing decides which mushrooms need a warning the way it does for plants. Mitigation, after the 2026-09-02 trim: a caution is written only where the species itself is dangerous, ten of thirty carry one, each says what the thing does to a person rather than what it is mistaken for, and each traces to text the pipeline actually fetched. The app never suggests a mushroom's name (D23) and shows no uses on one (M35), so a fungal entry makes no claim the curator did not write by hand. The residual risk is the user's, as R11 already says.
+
+**R21 — The first real migration.** `Migration(1, 2)` — relaxing `captures.photoUri` and `thumbPath` to nullable — is the first time the "no destructive migration" rule was exercised on a real user database. Mitigation: a migration test against the exported v1 schema JSON, and an export before upgrading (S01 exists for exactly this). Verified on the phone against a real v1 database.
+
+**R22 — The camera intent needs `CAMERA` after all.** Resolved: it does not. `ACTION_IMAGE_CAPTURE` is served by the system camera app, which holds the permission itself, and declaring the permission without holding it is what throws. Verified on the phone; the manifest stays at `INTERNET` + `ACCESS_NETWORK_STATE`.
+
+**R23 — A design number that resolves to nothing.** 580 comments across the Kotlin and Python source cite `M##`, `D##`, `R##` and `S##` identifiers, and for a while 216 of them named entries that existed only in an uncommitted draft. Anyone cloning the repo — a person or a future agent — read "M41: a plant keeps no photograph" and had no way to look M41 up. Mitigation: an identifier cited in shipped code is defined in a committed document, and a design draft is folded in when the work it describes ships rather than left as the only home of its numbering.
 
 ---
 
