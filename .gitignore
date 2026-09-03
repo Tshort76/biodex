@@ -22,3 +22,6 @@ tools/catalogue/cache/
 keystore.properties
 *.jks
 *.keystore
+
+# Agent worktrees
+.claude/

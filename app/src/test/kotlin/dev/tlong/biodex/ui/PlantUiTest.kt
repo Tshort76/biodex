@@ -140,6 +140,42 @@ class PlantUiTest {
     }
 
     @Test
+    fun `the row offers no kingdom chip for a kingdom the region does not hold`() {
+        // The slice 9 bug, arriving a second time through a different door: adding FUNGUS to
+        // the enum put a Fungi chip on a catalogue with no fungi in it, whose only possible
+        // result was an empty grid. Kingdom chips come from the data, not from the enum.
+        val state = runBlocking {
+            dexGridUiState(
+                species = MutableStateFlow(all),
+                ecosystems = MutableStateFlow(TwoKingdomFixture.ecosystems),
+                progress = MutableStateFlow(TwoKingdomFixture.progress(all)),
+                query = MutableStateFlow(""),
+                filters = MutableStateFlow(DexGridFilters()),
+            ).first()
+        }
+        assertEquals(setOf(Kingdom.ANIMAL, Kingdom.PLANT), state.availableKingdoms)
+        assertFalse(Kingdom.FUNGUS in state.availableKingdoms)
+        assertTrue(state.showKingdomChips)
+    }
+
+    @Test
+    fun `one kingdom alone is offered no kingdom chips at all`() {
+        val animalsOnly = all.filter { it.kingdom == Kingdom.ANIMAL }
+        val state = runBlocking {
+            dexGridUiState(
+                species = MutableStateFlow(animalsOnly),
+                ecosystems = MutableStateFlow(TwoKingdomFixture.ecosystems),
+                progress = MutableStateFlow(TwoKingdomFixture.progress(animalsOnly)),
+                query = MutableStateFlow(""),
+                filters = MutableStateFlow(DexGridFilters()),
+            ).first()
+        }
+        assertEquals(setOf(Kingdom.ANIMAL), state.availableKingdoms)
+        assertFalse(state.showKingdomChips)
+        assertFalse(state.showUseChips)
+    }
+
+    @Test
     fun `a selected class chip survives a kingdom that excludes it`() {
         // Tapping Trees and then Animals must not hide the Trees chip: the grid would be
         // empty with no visible filter to un-tap.

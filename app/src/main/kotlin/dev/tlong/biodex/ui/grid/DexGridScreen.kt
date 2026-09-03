@@ -297,13 +297,17 @@ private fun FilterChipRow(
             onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
         )
         if (state.showKingdomChips) {
-            Kingdom.entries.forEach { kingdom ->
+            // Enum order, filtered by what the region holds — never `Kingdom.entries` raw,
+            // or an empty kingdom gets a chip whose only result is an empty grid.
+            Kingdom.entries.filter { it in state.availableKingdoms }.forEach { kingdom ->
                 DexFilterChip(
                     label = kingdomChipLabel(kingdom),
                     selected = state.filters.kingdom == kingdom,
                     onClick = { onKingdomFilter(kingdom) },
                 )
             }
+        }
+        if (state.showUseChips) {
             PlantUse.entries.forEach { use ->
                 DexFilterChip(
                     label = useChipLabel(use),

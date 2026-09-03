@@ -66,11 +66,24 @@ data class DexGridUiState(
     val showPlantPill: Boolean get() = plants.total > 0
 
     /**
-     * The same rule, applied to the kingdom and use chips. Until a region has plants in it,
-     * `Plants`, `Edible` and `Medicinal` can only ever empty the grid, and `Animals` can only
-     * ever match everything — four chips that cost a scroll and do nothing.
+     * The kingdoms the region actually holds, derived from [availableClasses] because every
+     * class knows its kingdom and the breakdown already only carries a class some species has.
+     *
+     * This is what stops a `Fungi` chip appearing over a catalogue with no fungi in it — the
+     * same bug slice 9 left for `Trees` / `Shrubs`, which arrived again the moment a third
+     * kingdom existed in the enum but not yet in the asset.
      */
-    val showKingdomChips: Boolean get() = plants.total > 0
+    val availableKingdoms: Set<Kingdom>
+        get() = availableClasses.mapTo(mutableSetOf()) { it.kingdom }
+
+    /**
+     * One kingdom is no choice at all: `Animals` over an all-animal dex can only ever match
+     * everything, so the row is offered only once there is something to switch between.
+     */
+    val showKingdomChips: Boolean get() = availableKingdoms.size > 1
+
+    /** The use chips describe plants, so they follow the plants rather than the kingdoms. */
+    val showUseChips: Boolean get() = plants.total > 0
 }
 
 /** Case-insensitive substring over common and scientific name (M14). */
