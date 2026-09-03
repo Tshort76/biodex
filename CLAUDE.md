@@ -6,50 +6,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 120 animals, 80 plants, 30 fungi. Species start as silhouettes and unlock when the user registers a photo.
 
-**Start with `STATUS.md`** — what is built, what was last verified and how, what is deliberately not built, and where to pick up. It is the file that goes stale fastest, so update it when the state changes.
+`README.md` is written for the user; `docs/BUILD.md` covers setup and signing, and `make` is the entry point for every routine build command.
 
-`README.md` is written for the user. `DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up. Both design documents stop before the most recent wave of work; `ARCHITECTURE.md` §11.8 says so and points here.
-
-## Environment
-
-The build needs JDK 17 and the Android SDK. Neither is on `PATH` by default in a fresh shell — export both before any Gradle command, or the build fails confusingly:
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-export ANDROID_HOME=$(sed -n 's/^sdk\.dir=//p' local.properties)
-export PATH="$PATH:$ANDROID_HOME/platform-tools"    # for adb
-```
-
-There is no Android Studio and no system Gradle — the repo carries the Gradle 8.13 wrapper. `local.properties` (holding `sdk.dir`, the SDK's location on this machine) is git-ignored, so it is absent from a fresh clone and nothing builds until you write it.
+`DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up. **For what is built today, read `ARCHITECTURE.md` §11.8**: the slice maps in §9 and §11.6 stop before the most recent wave of work, and §11.8 is the table that covers it. `BACKLOG.md` holds what is not started.
 
 ## Commands
 
-```bash
-./gradlew assembleDebug      # APK at app/build/outputs/apk/debug/app-debug.apk
-./gradlew installDebug       # build and install onto a connected phone
-./gradlew testDebugUnitTest  # 441 JVM tests, no device
-./gradlew connectedDebugAndroidTest   # 43 instrumented tests, phone required
-./gradlew compileDebugKotlin # fastest check that Kotlin still compiles
+`make` is the entry point and resolves the toolchain itself, so these work in a fresh shell with nothing exported:
 
-# one test class / one test
-./gradlew testDebugUnitTest --tests "dev.tlong.biodex.ui.PlantUiTest"
+```bash
+make            # list targets
+make doctor     # check the toolchain; names whatever is missing
+make check      # JVM tests + catalogue tests, no phone      (the usual pre-commit gate)
+make test       # JVM tests only
+make install    # build and install onto an attached phone
+make test-device   # instrumented tests; UNINSTALLS the app afterwards
+make catalogue  # regenerate the bundled catalogue asset
+```
+
+Gradle direct, for what `make` does not wrap:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew compileDebugKotlin   # fastest compile check
+./gradlew testDebugUnitTest --tests "dev.tlong.biodex.ui.PlantUiTest"    # one class
 ./gradlew testDebugUnitTest --tests "*.PlantUiTest.a fungus caution reaches the screen"
 ```
 
-Catalogue pipeline (pure stdlib Python, no virtualenv):
+Environment, if you bypass `make`: JDK 17 via `/usr/libexec/java_home -v 17`, and `ANDROID_HOME` from `sdk.dir` in `local.properties` — which is git-ignored, so a fresh clone has none and nothing builds until it is written. `docs/BUILD.md` covers setup and signing.
 
-```bash
-cd tools/catalogue
-python3 -m unittest test_build_catalogue           # 13 tests
-python3 build_catalogue.py --out ../../app/src/main/assets/catalogue/pacific.json
-```
+Three traps worth knowing before you trust a green run:
 
-Two traps worth knowing before you trust a green run:
+- **`testDebugUnitTest` does not treat the catalogue asset as an input.** Change `pacific.json` or anything under `tools/catalogue/` and Gradle reports `BUILD SUCCESSFUL in 3s` off stale results. `make check` passes `--rerun-tasks` for exactly this reason; plain `make test` does not.
+- **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
+- **`make test-device` uninstalls the app when it finishes.** If BioDex vanishes from the phone after a test run, that is why — `make install` puts it back.
 
-- **`testDebugUnitTest` does not treat the catalogue asset as an input.** Change `pacific.json` or anything under `tools/catalogue/` and Gradle reports `BUILD SUCCESSFUL in 3s` off stale results. Use `--rerun-tasks` to actually re-run the suite after a catalogue change.
-- **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/` (git-ignored), so a re-run makes zero HTTP requests; `--refresh` bypasses the cache.
-
-`connectedDebugAndroidTest` **uninstalls the app when it finishes** — reinstall with `./gradlew installDebug` if BioDex vanishes from the phone after a test run.
+Counts as of the last commit: **441 JVM, 43 instrumented, 13 Python.**
 
 ## The design registers — the convention to respect
 

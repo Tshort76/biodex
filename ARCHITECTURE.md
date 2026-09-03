@@ -1,6 +1,6 @@
 # BioDex (formerly Animal Dex) — Technical Architecture (v1 + the BioDex expansion)
 
-Companion to `DESIGN.md` (product requirements, approved; v4 adds plants and the BioDex naming) and `mockup.html` (visual design, approved). **For what is actually built today, read `STATUS.md` first** — this document's slice maps stop at slice 13 and a second wave of work landed after them (§11.8). Sections 1–10 are the v1 design plus the deviation log eight slices appended; section 11 designs the BioDex expansion on top of what was actually built. This document tells the implementing agents every cross-cutting decision so no slice has to invent one. Written 2026-09-01; every version number below was verified against release pages on that date.
+Companion to `DESIGN.md` (product requirements, approved; v4 adds plants and the BioDex naming) and `mockup.html` (visual design, approved). **For what is actually built today, read §11.8** — the slice maps below stop at slice 13, and a second wave of work landed after them. Sections 1–10 are the v1 design plus the deviation log eight slices appended; section 11 designs the BioDex expansion on top of what was actually built. This document tells the implementing agents every cross-cutting decision so no slice has to invent one. Written 2026-09-01; every version number below was verified against release pages on that date.
 
 ---
 
@@ -893,14 +893,25 @@ Done (JVM): with the full catalogue and an empty query, the state reports the pr
 
 ### 11.8 After slice 13 — the work that was never sliced
 
-The slice maps stop here, and the app did not. Fungi as a third kingdom, the in-app camera, Pl@ntNet identification, the plant that keeps no photograph, the caution pass and the filter dropdowns all landed after slice 13, as conversations rather than planned slices — so there is no slice entry, no "Does / Does not / Done" gate, and no deviation table for any of them.
+The slice maps stop here, and the app did not. A second wave landed after slice 13 as conversations rather than planned slices, so there is no slice entry, no "Does / Does not / Done" gate and no deviation table for any of it. That is a deliberate stop rather than an omission — slicing exists to keep parallel agents off each other's files, and none of this work was parallel — but it does mean **§9 and §11.6 are no longer a picture of what is built.** This section is.
 
-That is a deliberate stop, not an omission: slicing exists to keep parallel agents off each other's files, and none of this work was parallel. But it means **§9 and §11.6 are no longer a picture of what is built.** Two places carry that picture instead:
+What shipped after slice 13, each with its registers in `DESIGN.md`:
 
-- **`STATUS.md`** — what is built, what was last verified and how, what is deliberately not built, and where to pick up. It is the file to read first and the file to update when the state changes.
-- **The registers in `DESIGN.md`** — every requirement and decision from this second wave is numbered there (`M31`–`M42`, `S11`–`S15`, `C09`–`C12`, `D19`–`D28`) and cited from the code that implements it, exactly as the earlier ones are. `R16`–`R23` in §11.7 above are its risk half.
+| What | Where it lives | Registers |
+|---|---|---|
+| **Fungi as a third kingdom** — own classes (mushroom, bracket, other fungus), silhouettes, meter, stats block and dex-number range. Not a flavour of plant. | `domain/`, `ui/stats/`, the pipeline's `curated_fungi.json` | `D27` |
+| **An in-app camera** — `ACTION_IMAGE_CAPTURE` into app cache via FileProvider, promoted to the gallery at registration. Needs **no `CAMERA` permission**: the system camera app holds it, and declaring a permission you do not hold is what throws. | `data/photo/`, `ui/register/` | `D26`, `R22` |
+| **Plant identification through Pl@ntNet** — opt-in per photo, plants only. One downscaled, re-encoded copy of one photo leaves the device (so EXIF and GPS go with the re-encode); candidates are checked against the GBIF backbone before display; the app never picks one. | `data/identify/`, `ui/register/` | `M36`, `D19`–`D23` |
+| **A plant keeps no photograph of its own** — its tile shows the catalogue's reference image, and the same holds for a plant the user adds. Animals and fungi still keep theirs. | invariant in `data/repo/AddSpeciesRegistrar.kt`; side effects in `ui/addspecies/ConfirmSpeciesViewModel.kt` | `M41`, `D25` |
+| **The caution pass** — the build rule that forced a warning onto every fungus was deleted; it wrote paragraphs onto the turkey tail and the puffball, which is noise rather than safety. Ten of the thirty fungi carry one short sentence. The Duke's `Poison` → mandatory `Caution:` rule for plants was **kept**, so that set stays decided by a public dataset. | `tools/catalogue/`, `ui/common/UsesSection.kt` | `D14`, `R20` |
+| **The first real Room migration** — `MIGRATION_1_2` relaxing `captures.photoUri` and `thumbPath` to nullable, so a plant's capture can carry no photo. No `fallbackToDestructiveMigration`, then or ever. | `data/db/` | `R21` |
+| **Grid filters as dropdowns** — caught chips over Class / Ecosystem / Uses menus, kingdom control removed. | `ui/grid/` | `M23`, `D28` |
 
-If a future wave *is* planned as parallel slices, add §11.9 and follow §11.6's shape — the disjointness table is the part that earns its keep.
+The structural point behind two of these is worth stating once, because it is the pattern to copy: **an invariant belongs at the single door into the store, not on a screen.** `M41` is enforced in `AddSpeciesRegistrar` because that is the one write path and it is JVM-testable; only the side effects it cannot perform — promoting a camera shot, sweeping the cache — live in the ViewModel, which is the first place that knows the kingdom.
+
+**Verification as of this wave: 441 JVM tests, 43 instrumented, 13 Python** (§8 has the split and the commands). There are still no screenshot or UI tests by choice, so UI work is finished on the phone. That is not ceremony: the filter dropdowns passed every JVM test and still shipped two defects a device pass caught in a minute — the menus were rendering on Material's default lavender surface instead of the app palette, and an open menu gave no sign of which option was active.
+
+If a future wave *is* planned as parallel slices, add §11.9 and follow §11.6's shape — the disjointness table is the part that earns its keep. Work not yet started is in `BACKLOG.md`, not here.
 
 ---
 
