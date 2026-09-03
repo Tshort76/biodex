@@ -40,6 +40,12 @@ object Silhouettes {
         TaxClass.SHRUB to R.drawable.sil_shrub,
         TaxClass.HERB to R.drawable.sil_herb,
         TaxClass.FERN to R.drawable.sil_fern,
+        // The three fungal growth forms. Unlike the trees, no fungal class picks between
+        // two shapes per species, so the pipeline writes `sil_<taxClass>` and this map and
+        // that string always agree.
+        TaxClass.MUSHROOM to R.drawable.sil_mushroom,
+        TaxClass.BRACKET to R.drawable.sil_bracket,
+        TaxClass.OTHER_FUNGUS to R.drawable.sil_other_fungus,
     )
 
     private val resolved = mutableMapOf<String, Int>()

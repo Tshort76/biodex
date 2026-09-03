@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
 """Build the bundled Pacific USA catalogue asset from the curated species lists.
 
-Reads three hand-authored inputs — `region.json` (header + the seven ecosystems),
-`curated_animals.json` (120 animals) and `curated_plants.json` (80 plants) —
-enriches each entry from GBIF, Wikipedia/Wikimedia Commons and Dr. Duke's
-ethnobotanical database (plants only), and writes
-`app/src/main/assets/catalogue/pacific.json` in the shape ARCHITECTURE.md
-sections 3.2 and 11.1 specify, plus `duke_ethnobot.json` beside it.
+Reads four hand-authored inputs — `region.json` (header + the seven ecosystems),
+`curated_animals.json` (120 animals), `curated_plants.json` (80 plants) and
+`curated_fungi.json` (30 fungi) — enriches each entry from GBIF,
+Wikipedia/Wikimedia Commons and Dr. Duke's ethnobotanical database (plants
+only), and writes `app/src/main/assets/catalogue/pacific.json` in the shape
+ARCHITECTURE.md sections 3.2 and 11.1 specify, plus `duke_ethnobot.json` beside
+it.
+
+Dr. Duke's is ethnobotanical and has no fungal records at all, so the fungi half
+of the build has no medicinal join and — the part that matters — no `Poison`
+record to make a caution mandatory. Every fungal caution is the curator's own
+sentence, checked by nothing, and the build enforces what it can instead: a
+fungus carries no use tag, ever, and its note must be a `Caution:` sentence that
+makes no claim about edibility. See DESIGN-identification.md 8.1 / M35 / S15.
 
 Usage:
     python3 build_catalogue.py                       # default --out path
     python3 build_catalogue.py --out /some/where.json
     python3 build_catalogue.py --refresh             # ignore the cache
     python3 build_catalogue.py --plants /tmp/x.json  # swap an input file
+    python3 build_catalogue.py --fungi /tmp/f.json   # ditto for the fungi
 
 Standard library only (no `requests` on this machine).  Every HTTP response is
 cached under `cache/`, so a re-run makes zero requests.
@@ -58,7 +67,43 @@ MEDICINAL_ACTIVITY_THRESHOLD = 3
 MEDICINAL_ACTIVITY_CAP = 8
 
 PLANT_CLASSES = ("tree", "shrub", "herb", "fern")
+FUNGUS_CLASSES = ("mushroom", "bracket", "other_fungus")
 USES_NOTE_MAX_CHARS = 240
+
+# The one rule that has to hold over every word of fungal text the asset carries,
+# whether the curator wrote it or Wikipedia did: **the app never says a mushroom
+# is edible** (DESIGN-identification.md M35).
+#
+# Two pieces of the pattern are deliberate and easy to break by tidying:
+#  - `\b` before "edible" leaves "inedible" alone. That is a claim in the safe
+#    direction and it stays.
+#  - `eaten` is excluded only when it is not `eaten by`. "It is widely eaten"
+#    is an edibility claim; "may be eaten by caterpillars of the fungus moth"
+#    is ecology, and the turkey tail's habitat prose would lose its best
+#    sentence if the two were treated alike.
+EDIBILITY_RE = re.compile(
+    r"\b(edible|edibility|choice|delicious|tasty|palatable|good eating|safe to eat"
+    r"|delicac(?:y|ies)|prized|culinary|for the table)\b"
+    r"|\beaten\b(?!\s+by\b)",
+    re.I,
+)
+
+# `collect_uses_review`'s section filter for fungi. A mushroom article keeps what
+# a caution has to be written from under "Toxicity", "Similar species" and
+# "Identification" rather than under "Uses", so the plant word list would walk
+# straight past it.
+FUNGI_REVIEW_WORDS = (
+    "toxic", "poison", "similar", "look-alike", "lookalike", "confus",
+    "identif", "edib", "safety", "uses",
+)
+
+# Input keys that would smuggle a use onto a fungus. Refused outright rather than
+# ignored, so a row that means to claim one fails the build instead of shipping
+# with the claim quietly dropped.
+FUNGUS_FORBIDDEN_KEYS = (
+    "edible", "uses", "medicinal", "medicinalActivities", "medicinalRecordCount",
+    "usesAttribution", "dukeName",
+)
 
 # Politeness delays, per ARCHITECTURE.md 7.2.
 DELAY_GBIF = 0.5
@@ -641,16 +686,20 @@ def slugify(name: str) -> str:
 USES_SECTION_WORDS = ("uses", "culinary", "edib", "medicin", "ethnobot")
 
 
-def collect_uses_review(title, sections, refresh, common, uses_review):
+def collect_uses_review(title, sections, refresh, common, uses_review, words=USES_SECTION_WORDS):
     """Append any uses-ish section's prose to the curator's review file.
 
     This is a *check* on the hand-written `usesNote`, never a source for it —
     the asset's `provenance.uses` is always "curated" for the edible half
     (11.3 step 3). Nothing here is copied into the catalogue.
+
+    `words` selects which section titles count. Plants want the uses sections;
+    fungi want toxicity, similar species and identification, which is where the
+    material for a caution actually lives (FUNGI_REVIEW_WORDS).
     """
     for section in sections:
         line = (section.get("line") or "").strip()
-        if not any(word in line.lower() for word in USES_SECTION_WORDS):
+        if not any(word in line.lower() for word in words):
             continue
         wikitext = wiki_section_wikitext(title, str(section.get("index")), refresh)
         prose = strip_wikitext(wikitext or "")
@@ -659,12 +708,15 @@ def collect_uses_review(title, sections, refresh, common, uses_review):
         uses_review.append(f"### {common} — {title} § {line}\n{prose[:600]}\n")
 
 
-def fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, uses_review=None):
-    """The Wikipedia/Commons half of a record, shared by both kingdoms.
+def fetch_wikipedia(
+    entry, accepted, common, refresh, report, prov, warnings,
+    uses_review=None, review_words=USES_SECTION_WORDS,
+):
+    """The Wikipedia/Commons half of a record, shared by all three kingdoms.
 
-    `uses_review` is the plant path's curator aid: when a list is passed, any
-    section whose title looks like a uses section is stripped and appended for
-    review. Nothing it collects ever reaches the asset (11.3 step 3).
+    `uses_review` is the curator aid the plant and fungus paths pass: when a list
+    is given, any section whose title matches `review_words` is stripped and
+    appended for review. Nothing it collects ever reaches the asset (11.3 step 3).
     """
     habitat_text = None
     description = None
@@ -735,7 +787,7 @@ def fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, us
             prov["imageAttribution"] = "wikimedia:imageinfo:extmetadata"
 
     if uses_review is not None and summary and wiki_title:
-        collect_uses_review(wiki_title, sections, refresh, common, uses_review)
+        collect_uses_review(wiki_title, sections, refresh, common, uses_review, review_words)
 
     return {
         "habitatText": habitat_text,
@@ -1018,6 +1070,175 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
     return record_out
 
 
+def drop_edibility_sentences(text, dropped):
+    """`text` with every sentence that makes an edibility claim taken out.
+
+    The fetched prose is as much "the app" as the curated note is, and the lede
+    of a mushroom article routinely opens "... is an edible mushroom found in
+    ...". M35 says the app makes no edibility claim about a fungus anywhere, so
+    the claim has to come out of the fetched half too.
+
+    Whole sentences are dropped rather than reworded. What survives is still
+    Wikipedia's own words, just fewer of them; rewriting would add a second body
+    of unsourced prose to the one kingdom that already has more of it than the
+    curator can check. Every dropped sentence is appended to `dropped` and lands
+    in the report, because a species whose description loses its only sentence
+    needs a curator override rather than a silence.
+    """
+    if not text:
+        return text
+    kept = []
+    for sentence in SENTENCE_RE.split(text):
+        if EDIBILITY_RE.search(sentence):
+            dropped.append(sentence.strip())
+        else:
+            kept.append(sentence)
+    return " ".join(kept).strip() or None
+
+
+def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
+    """One fungal record. The plant builder minus Dr. Duke's, plus two guards.
+
+    Duke's is ethnobotanical: it has no fungal taxa, so there is no medicinal
+    join, no activities, no record count — and no `Poison` row to make a caution
+    mandatory the way 11.3 does for plants. The two guards stand in for what the
+    source cannot do here:
+
+      1. A fungus carries `uses: []` unconditionally. Not "usually empty" —
+         there is no input, no override and no derivation that can put a tag on
+         one, and the function refuses the row rather than dropping the claim
+         quietly.
+      2. No text on the record may claim edibility, curated or fetched.
+    """
+    common = entry["commonName"]
+    curated_sci = entry["scientificName"]
+    fungus_class = entry.get("fungusClass")
+    slug = slugify(common)
+    prov = {}
+    warnings = []
+
+    if fungus_class not in FUNGUS_CLASSES:
+        raise SystemExit(
+            f"{common}: fungusClass must be one of {FUNGUS_CLASSES}, got {fungus_class!r}"
+        )
+
+    overrides = entry.get("overrides") or {}
+    smuggled = sorted(
+        {k for k in FUNGUS_FORBIDDEN_KEYS if k in entry}
+        | {k for k in FUNGUS_FORBIDDEN_KEYS if k in overrides}
+    )
+    if smuggled:
+        raise SystemExit(
+            f"{common}: fungi carry no uses (M35); this row sets {smuggled}. "
+            f"A caution belongs in usesNote, and nothing else does."
+        )
+
+    # --- GBIF -------------------------------------------------------------
+    match = gbif_match(curated_sci, refresh) or {}
+    accepted = match.get("species") or match.get("canonicalName") or curated_sci
+    match_type = match.get("matchType", "NONE")
+    confidence = match.get("confidence", 0)
+    rank = match.get("rank")
+    gbif_kingdom = match.get("kingdom")
+
+    if (gbif_kingdom or "").strip().lower() != "fungi":
+        raise SystemExit(
+            f"{common}: declared a fungus but GBIF matched '{accepted}' in "
+            f"kingdom {gbif_kingdom or 'NONE'}"
+        )
+    prov["kingdom"] = f"gbif:kingdom:{gbif_kingdom}"
+    prov["scientificName"] = "gbif"
+    # Growth form, like the plant classes, is editorial judgment (D13): GBIF's
+    # orders cut across cap-and-stem and shelf, so the curator names it.
+    prov["taxClass"] = "curated"
+    prov["silhouetteRes"] = "curated"
+    # Written out rather than left absent, so a reader of the asset can see that
+    # the empty uses list is a rule and not a species that happened to miss one.
+    prov["uses"] = "none:fungi-carry-no-uses"
+    prov["duke"] = "duke:not-applicable:no-fungal-taxa"
+
+    if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
+        warnings.append(
+            f"GBIF {match_type}/{confidence}%/{match.get('status')} "
+            f"curated='{curated_sci}' accepted='{accepted}'"
+        )
+    if rank and rank != "SPECIES":
+        warnings.append(f"GBIF rank is {rank}, not SPECIES")
+
+    # --- Wikipedia (and the curator's caution-review aid) -------------------
+    wiki = fetch_wikipedia(
+        entry, accepted, common, refresh, report, prov, warnings,
+        caution_review, FUNGI_REVIEW_WORDS,
+    )
+
+    dropped = []
+    description = drop_edibility_sentences(wiki["description"], dropped)
+    habitat_text = drop_edibility_sentences(wiki["habitatText"], dropped)
+    if dropped:
+        prov["edibilityScrub"] = f"dropped {len(dropped)} sentence(s)"
+        report["fungi_edibility_dropped"].extend(f"{common}: {d}" for d in dropped)
+    if wiki["description"] and not description:
+        warnings.append("every sentence of the description claimed edibility; needs an override")
+    if wiki["habitatText"] and not habitat_text:
+        warnings.append("every sentence of the habitat text claimed edibility; needs an override")
+
+    uses_note = (entry.get("usesNote") or "").strip() or None
+
+    record_out = {
+        "id": slug,
+        "dexNumber": entry["dexNumber"],
+        "commonName": common,
+        "scientificName": accepted,
+        "taxClass": fungus_class,
+        "kingdom": "fungus",
+        "ecosystemIds": entry["ecosystemIds"],
+        "habitatText": habitat_text,
+        "description": description,
+        "imageUrl": wiki["imageUrl"],
+        "infoUrl": wiki["infoUrl"],
+        "imageAttribution": wiki["imageAttribution"],
+        "silhouetteRes": f"sil_{fungus_class}",
+        # M35, unconditionally. `kept_uses_note` with no tags keeps the
+        # `Caution:` sentence and discards the rest, which is the same rule the
+        # app applies on import — so what is written here is what will render.
+        "uses": [],
+        "usesNote": kept_uses_note(uses_note, []),
+        "medicinalActivities": [],
+        "medicinalRecordCount": 0,
+        "usesAttribution": None,
+        "provenance": prov,
+        # Pipeline-internal, stripped before the asset is written.
+        "_curatedNote": uses_note,
+        "_edibilityDropped": len(dropped),
+    }
+
+    for field, value in overrides.items():
+        record_out[field] = value
+        prov[field] = "override"
+
+    # The assertion the whole builder exists to make, taken after the overrides
+    # so nothing applied last can undo it. A plain `assert` would vanish under
+    # `python3 -O`, and this one is a safety rule rather than a sanity check.
+    if record_out["uses"] or record_out["medicinalActivities"] \
+            or record_out["medicinalRecordCount"] or record_out["usesAttribution"]:
+        raise SystemExit(f"{common}: a fungus ended the build carrying a use or a Duke's field")
+    if EDIBILITY_RE.search(record_out["usesNote"] or ""):
+        raise SystemExit(
+            f"{common}: the caution uses an edibility word. The app makes no edibility "
+            f"claim about a fungus (M35) — say what the species does, not what it is "
+            f"good for."
+        )
+
+    for warn in warnings:
+        report["gbif_warnings"].append(f"F{entry['dexNumber']:03d} {common}: {warn}")
+
+    unknown_eco = [e for e in entry["ecosystemIds"] if e not in ecosystem_ids]
+    if unknown_eco:
+        raise SystemExit(f"{common}: undeclared ecosystemIds {unknown_eco}")
+
+    return record_out
+
+
 ANIMAL_CLASSES = {"bird", "mammal", "reptile", "amphibian", "fish", "insect", "other_invertebrate"}
 PLANT_SILHOUETTES = {
     "shrub": {"sil_shrub"},
@@ -1040,16 +1261,21 @@ def validate(catalogue, ecosystem_ids, internals):
 
     animals = [s for s in species if s["kingdom"] == "animal"]
     plants = [s for s in species if s["kingdom"] == "plant"]
-    if len(species) != 200:
-        problems.append(f"expected 200 species, got {len(species)}")
+    fungi = [s for s in species if s["kingdom"] == "fungus"]
+    if len(species) != 230:
+        problems.append(f"expected 230 species, got {len(species)}")
     if len(animals) != 120:
         problems.append(f"expected 120 animals, got {len(animals)}")
     if len(plants) != 80:
         problems.append(f"expected 80 plants, got {len(plants)}")
+    if len(fungi) != 30:
+        problems.append(f"expected 30 fungi, got {len(fungi)}")
     if sorted(s["dexNumber"] for s in animals) != list(range(1, 121)):
         problems.append("animal dexNumbers are not exactly 1..120 with no duplicates")
     if sorted(s["dexNumber"] for s in plants) != list(range(1, 81)):
         problems.append("plant dexNumbers are not exactly 1..80 with no duplicates")
+    if sorted(s["dexNumber"] for s in fungi) != list(range(1, 31)):
+        problems.append("fungus dexNumbers are not exactly 1..30 with no duplicates")
 
     dupes = [i for i, n in Counter(s["id"] for s in species).items() if n > 1]
     if dupes:
@@ -1121,6 +1347,46 @@ def validate(catalogue, ecosystem_ids, internals):
                     f"'Caution:' sentence only — the rest describes a use it does "
                     f"not claim and is dropped on import"
                 )
+        elif s["kingdom"] == "fungus":
+            internal = internals.get(sid, {})
+            if s["taxClass"] not in FUNGUS_CLASSES:
+                problems.append(f"{sid}: bad fungus taxClass {s['taxClass']}")
+            elif s["silhouetteRes"] != f"sil_{s['taxClass']}":
+                problems.append(f"{sid}: silhouetteRes does not match taxClass")
+            # M35, checked again on the finished asset rather than only inside the
+            # builder: this is the assertion a reviewer can run against a file
+            # somebody hand-edited, which is the failure the builder cannot see.
+            if s["uses"] or s["medicinalActivities"] or s["medicinalRecordCount"] \
+                    or s["usesAttribution"]:
+                problems.append(f"{sid}: a fungus carries a use tag or a Duke's field")
+            # Duke's cannot fire the plant poison rule here, so the rule is
+            # inverted and made unconditional: EVERY fungus carries a caution. It
+            # costs a sentence on the harmless ones and it means the kingdom has
+            # no row where the absence of a warning could be read as reassurance.
+            if not has_caution(s["usesNote"]):
+                problems.append(
+                    f"{sid}: every fungus must carry a 'Caution:' sentence — nothing "
+                    f"sources the fungal notes, so the rule is unconditional"
+                )
+            if s["usesNote"] and len(s["usesNote"]) > USES_NOTE_MAX_CHARS:
+                problems.append(
+                    f"{sid}: usesNote is {len(s['usesNote'])} characters, over {USES_NOTE_MAX_CHARS}"
+                )
+            # A fungus has no use tag by construction, so anything written outside
+            # the caution sentence is dropped on import; refuse it rather than
+            # discard it.
+            curated = internal.get("curatedNote")
+            if curated and caution_split(curated)[0]:
+                problems.append(
+                    f"{sid}: a fungal usesNote must be a 'Caution:' sentence only — a "
+                    f"fungus carries no use for the rest of it to describe"
+                )
+            for field in ("usesNote", "description", "habitatText"):
+                if EDIBILITY_RE.search(s.get(field) or ""):
+                    problems.append(
+                        f"{sid}: {field} claims something about edibility; the app makes "
+                        f"no edibility claim about a fungus (M35)"
+                    )
         else:
             problems.append(f"{sid}: unknown kingdom {s['kingdom']}")
 
@@ -1152,6 +1418,7 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
     species = catalogue["species"]
     animals = [s for s in species if s["kingdom"] == "animal"]
     plants = [s for s in species if s["kingdom"] == "plant"]
+    fungi = [s for s in species if s["kingdom"] == "fungus"]
     lines = []
     add = lines.append
     add("BioDex — catalogue build report")
@@ -1172,13 +1439,14 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
         add(f"  infoUrl              {sum(1 for s in group if s['infoUrl'])}/{total}")
         add("")
 
-    add(f"COVERAGE  (lede fallback across both kingdoms: {len(report['lede_fallback'])})")
+    add(f"COVERAGE  (lede fallback across all three kingdoms: {len(report['lede_fallback'])})")
     add("")
     coverage("ANIMALS", animals)
     coverage("PLANTS", plants)
+    coverage("FUNGI", fungi)
 
     add("CLASS DISTRIBUTION")
-    for kingdom, group in (("animal", animals), ("plant", plants)):
+    for kingdom, group in (("animal", animals), ("plant", plants), ("fungus", fungi)):
         add(f"  {kingdom}")
         for cls, n in sorted(Counter(s["taxClass"] for s in group).items(), key=lambda kv: -kv[1]):
             add(f"    {cls:20s} {n}")
@@ -1200,13 +1468,18 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
     add("")
 
     add("ECOSYSTEM DISTRIBUTION (a species counts in each of its ecosystems)")
-    animal_eco, plant_eco = Counter(), Counter()
+    animal_eco, plant_eco, fungus_eco = Counter(), Counter(), Counter()
     for s in animals:
         animal_eco.update(s["ecosystemIds"])
     for s in plants:
         plant_eco.update(s["ecosystemIds"])
+    for s in fungi:
+        fungus_eco.update(s["ecosystemIds"])
     for eco in catalogue["ecosystems"]:
-        add(f"  {eco['name']:30s} {animal_eco[eco['id']]:3d} animals  {plant_eco[eco['id']]:3d} plants")
+        add(
+            f"  {eco['name']:30s} {animal_eco[eco['id']]:3d} animals  "
+            f"{plant_eco[eco['id']]:3d} plants  {fungus_eco[eco['id']]:3d} fungi"
+        )
     add("")
 
     def block(title, items):
@@ -1243,6 +1516,20 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
             if "medicinal" not in s["uses"] and internals[s["id"]]["recordCount"]
         ],
     )
+    add("FUNGI — EVERY CAUTION BELOW IS UNSOURCED (DESIGN-identification.md R20)")
+    add("  Dr. Duke's has no fungal taxa, so no dataset decided which of these species")
+    add("  needs a warning or what it should say. Nothing downstream checks this text.")
+    add("  It is the deliverable of the fungi slice, and it is read by a human or by")
+    add("  nobody. Read every line.")
+    add("")
+    for s in sorted(fungi, key=lambda r: r["dexNumber"]):
+        add(f"  F{s['dexNumber']:03d} {s['commonName']} ({s['scientificName']}) [{s['taxClass']}]")
+        add(f"        {s['usesNote']}")
+    add("")
+    block(
+        "FUNGI — EDIBILITY SENTENCES DROPPED FROM FETCHED PROSE (M35)",
+        report["fungi_edibility_dropped"],
+    )
     block("HABITAT TEXT FELL BACK TO THE SUMMARY LEDE", report["lede_fallback"])
     block("NO WIKIPEDIA PAGE FOUND", report["no_wikipedia"])
     block("NO IMAGE URL", [s["commonName"] for s in species if not s["imageUrl"]])
@@ -1260,6 +1547,7 @@ def main():
     ap.add_argument("--region", default=str(HERE / "region.json"))
     ap.add_argument("--animals", default=str(HERE / "curated_animals.json"))
     ap.add_argument("--plants", default=str(HERE / "curated_plants.json"))
+    ap.add_argument("--fungi", default=str(HERE / "curated_fungi.json"))
     ap.add_argument("--duke-out", default=None, help="path of the generated duke_ethnobot.json")
     ap.add_argument("--refresh", action="store_true", help="ignore the cache and re-fetch everything")
     ap.add_argument("--only", type=int, default=0, help="build only the first N of each kingdom")
@@ -1271,14 +1559,18 @@ def main():
         animals_input = json.load(fh)
     with open(args.plants, encoding="utf-8") as fh:
         plants_input = json.load(fh)
+    with open(args.fungi, encoding="utf-8") as fh:
+        fungi_input = json.load(fh)
 
     ecosystems = region["ecosystems"]
     ecosystem_ids = {e["id"] for e in ecosystems}
     animal_entries = animals_input["species"]
     plant_entries = plants_input["species"]
+    fungus_entries = fungi_input["species"]
     if args.only:
         animal_entries = animal_entries[: args.only]
         plant_entries = plant_entries[: args.only]
+        fungus_entries = fungus_entries[: args.only]
 
     report = defaultdict(list)
     built = []
@@ -1311,9 +1603,23 @@ def main():
             failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
             print(f"    !! FAILED: {exc}", file=sys.stderr)
 
+    caution_review = []
+    for i, entry in enumerate(fungus_entries, 1):
+        print(f"[fungus {i:3d}/{len(fungus_entries)}] {entry['commonName']}", flush=True)
+        try:
+            built.append(
+                build_fungus(entry, ecosystem_ids, args.refresh, report, caution_review)
+            )
+        except SystemExit:
+            raise
+        except Exception as exc:
+            failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
+            print(f"    !! FAILED: {exc}", file=sys.stderr)
+
     # Kingdom then dex number: the asset reads animals 1..120, then plants 1..80,
-    # and the importer applies the per-kingdom base (11.1).
-    built.sort(key=lambda s: (0 if s["kingdom"] == "animal" else 1, s["dexNumber"]))
+    # then fungi 1..30, and the importer applies the per-kingdom base (11.1).
+    kingdom_order = {"animal": 0, "plant": 1, "fungus": 2}
+    built.sort(key=lambda s: (kingdom_order[s["kingdom"]], s["dexNumber"]))
 
     # Lift the pipeline-only facts out of the records before anything is written.
     internals = {}
@@ -1324,6 +1630,7 @@ def main():
             "recordCount": record.pop("_dukeRecordCount", 0),
             "dukeMatchedName": record.pop("_dukeMatchedName", None),
             "curatedNote": record.pop("_curatedNote", None),
+            "edibilityDropped": record.pop("_edibilityDropped", 0),
         }
 
     catalogue = {
@@ -1340,6 +1647,16 @@ def main():
         "Wikipedia uses/culinary/edibility/medicinal section text, for CHECKING the\n"
         "hand-written usesNote in curated_plants.json. Never copied into the asset.\n\n"
         + "\n".join(uses_review),
+        encoding="utf-8",
+    )
+    # The fungal twin, and the more important of the two: it is where a caution is
+    # written FROM, because nothing else sources one.
+    caution_path = CACHE_DIR / "fungi_caution_review.txt"
+    caution_path.write_text(
+        "Wikipedia toxicity / similar-species / identification section text, for\n"
+        "WRITING and then CHECKING the hand-written cautions in curated_fungi.json.\n"
+        "Never copied into the asset verbatim.\n\n"
+        + "\n".join(caution_review),
         encoding="utf-8",
     )
 
@@ -1375,6 +1692,7 @@ def main():
     print(f"wrote {duke_out} ({duke_bytes / 1e6:.2f} MB)")
     print(f"report: {CACHE_DIR / 'report.txt'}")
     print(f"uses review: {review_path}")
+    print(f"caution review: {caution_path}")
     return 0
 
 

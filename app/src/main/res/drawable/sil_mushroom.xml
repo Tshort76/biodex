@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fungus silhouette (ARCHITECTURE.md 11.4, M25). Unlike the twelve animal and plant
+     shapes this one has no <symbol> in mockup.html to copy — the mockup predates the third
+     kingdom — so it is drawn here to the same rules: one solid fill on the shared 100x100
+     viewport, no strokes, tinted at runtime over silBg.
+
+     Cap-and-stem, the growth form D12's `mushroom` class names: a dome wider than it is
+     tall over a stem that flares slightly at the base, so it reads as a mushroom at the
+     44dp the grid cell and the recent strip draw it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M14 54 C14 31 30 14 50 14 C70 14 86 31 86 54 Z M41 54 L59 54 L61 80 C61 86 56 90 50 90 C44 90 39 86 39 80 Z" />
+</vector>
