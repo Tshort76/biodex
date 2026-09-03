@@ -1,0 +1,54 @@
+{
+  "query": {
+    "project": "all",
+    "images": ["photo.jpg"],
+    "organs": ["auto"],
+    "includeRelatedImages": false
+  },
+  "language": "en",
+  "preferedReferential": "k-world-flora",
+  "bestMatch": "Berberis aquifolium Pursh",
+  "results": [
+    {
+      "score": 0.72434,
+      "species": {
+        "scientificNameWithoutAuthor": "Berberis aquifolium",
+        "scientificNameAuthorship": "Pursh",
+        "genus": {
+          "scientificNameWithoutAuthor": "Berberis"
+        },
+        "family": {
+          "scientificNameWithoutAuthor": "Berberidaceae"
+        },
+        "commonNames": ["Oregon grape", "Holly-leaved barberry"],
+        "scientificName": "Berberis aquifolium Pursh"
+      },
+      "gbif": { "id": "3033663" }
+    },
+    {
+      "score": 0.14012,
+      "species": {
+        "scientificNameWithoutAuthor": "Berberis nervosa",
+        "scientificNameAuthorship": "Pursh",
+        "genus": { "scientificNameWithoutAuthor": "Berberis" },
+        "family": { "scientificNameWithoutAuthor": "Berberidaceae" },
+        "commonNames": ["Cascade barberry", "Dwarf Oregon grape"],
+        "scientificName": "Berberis nervosa Pursh"
+      },
+      "gbif": { "id": "3033795" }
+    },
+    {
+      "score": 0.06188,
+      "species": {
+        "scientificNameWithoutAuthor": "Berberis inventata",
+        "scientificNameAuthorship": "",
+        "genus": { "scientificNameWithoutAuthor": "Berberis" },
+        "family": { "scientificNameWithoutAuthor": "Berberidaceae" },
+        "commonNames": [],
+        "scientificName": "Berberis inventata"
+      }
+    }
+  ],
+  "version": "2026-08-27 (7.3)",
+  "remainingIdentificationRequests": 487
+}

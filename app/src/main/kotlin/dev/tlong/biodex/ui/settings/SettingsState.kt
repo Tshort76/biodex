@@ -1,6 +1,8 @@
 package dev.tlong.biodex.ui.settings
 
 import dev.tlong.biodex.data.backup.ImportReport
+import dev.tlong.biodex.data.identify.DEFAULT_MONTHLY_IDENTIFICATION_CAP
+import dev.tlong.biodex.data.identify.identificationCountLine
 import dev.tlong.biodex.data.backup.PhotoReport
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PERSISTED_GRANT_CAP
@@ -26,7 +28,40 @@ data class SettingsUiState(
     /** The outcome of the last export, import or cache clear, shown until the next one. */
     val message: String? = null,
     val messageIsWarning: Boolean = false,
-)
+
+    // Identification (M37, M39). The key and the month's count.
+    val plantNetKey: String = "",
+    val identificationsUsed: Int = 0,
+    val identificationCap: Int = DEFAULT_MONTHLY_IDENTIFICATION_CAP,
+) {
+    val hasPlantNetKey: Boolean get() = plantNetKey.isNotBlank()
+
+    val identificationLine: String
+        get() = identificationCountLine(identificationsUsed, identificationCap)
+
+    /** Warns in the same register the grant count does, once the cap is actually in the way. */
+    val identificationCapReached: Boolean get() = identificationsUsed >= identificationCap
+}
+
+/**
+ * The privacy sentence, said where the key is pasted rather than only in `licenses.md` (M36,
+ * §7). It is deliberately specific about the three things a user would want to know and would
+ * otherwise have to take on trust: that nothing goes anywhere until they press the button, that
+ * what leaves is a reduced copy rather than their file, and that the location the photo was
+ * taken at does not go with it.
+ */
+const val IDENTIFICATION_PRIVACY_TEXT =
+    "Nothing is uploaded unless you press Identify on a photo. What is sent then is a " +
+        "reduced copy of that one photo, re-encoded so it carries no location and no other " +
+        "metadata — never the original file, and never anything else in your collection. " +
+        "BioDex makes no claim about what the service does with it; its terms are the place " +
+        "to check."
+
+/** M39/D24, said plainly beside the field so the human step reads as deliberate. */
+const val IDENTIFICATION_KEY_TEXT =
+    "Identification needs a free Pl@ntNet API key, which you sign up for by email and paste " +
+        "here. It is stored on this phone only. No key is built into the app, because this " +
+        "app's source is public."
 
 enum class SettingsBusy { EXPORTING, IMPORTING, CLEARING }
 
@@ -45,7 +80,16 @@ fun exportSummary(fileName: String, report: PhotoReport): String {
     val head = "Saved $fileName — ${report.captures} " +
         (if (report.captures == 1) "photo record" else "photo records") +
         ", ${report.thumbnailsIncluded} thumbnails, " +
-        "${report.fullSizeIncluded} full-size photos."
+        "${report.fullSizeIncluded} full-size photos." +
+        // M41: said as a fact about the catches, never as a shortfall in the archive. A plant
+        // keeps no photograph, so an archive that holds none of them is complete.
+        if (report.neverHadPhoto > 0) {
+            " ${report.neverHadPhoto} " +
+                (if (report.neverHadPhoto == 1) "catch keeps" else "catches keep") +
+                " no photo of your own."
+        } else {
+            ""
+        }
     if (report.complete) {
         return "$head Every photo you still have is in the archive."
     }

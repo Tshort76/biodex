@@ -51,6 +51,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
+import dev.tlong.biodex.data.identify.ResolvedCandidate
+import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -62,15 +65,22 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Frame 3 of `mockup.html` (M07, M08, M10, S06). Species-first: search the catalogue offline,
- * attach one gallery photo through the system picker, register. There is no camera anywhere
- * in this app, by design (DESIGN.md §7).
+ * attach one photo — from the system picker or the in-app camera (M40) — and register.
+ *
+ * The camera and the Identify action are new; everything above them is unchanged. A photo is
+ * still one photo, still optional for the kingdoms that keep none (M41), and the typed-name
+ * path is byte-for-byte what it always was.
  */
 @Composable
 fun RegisterRoute(
     preselectedSpeciesId: String?,
     onBack: () -> Unit,
     onRegistered: (speciesId: String, justUnlocked: Boolean) -> Unit,
-    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
+    onAddOwnSpecies: (
+        typedName: String,
+        photoUri: String,
+        prefetched: LookupOutcome?,
+    ) -> Unit,
 ) {
     val context = LocalContext.current
     val container = context.appContainer
@@ -94,9 +104,39 @@ fun RegisterRoute(
         )
     }
 
+    // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
+    // system camera app takes the photograph, so this app declares no CAMERA permission and
+    // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
+    // declaring CAMERA *without holding it* is what throws; not declaring it is free.)
+    //
+    // The pending URI is remembered across the launch because the result carries only a
+    // success flag — the camera app writes to where the intent said, not to a returned URI.
+    var pendingCameraUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val camera = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { saved: Boolean ->
+        val uri = pendingCameraUri
+        pendingCameraUri = null
+        if (saved && uri != null) {
+            viewModel.onPhotoPicked(
+                PickedPhoto(
+                    uri = uri,
+                    displayName = "Taken just now",
+                    source = PhotoSourceKind.CAMERA_CACHE,
+                ),
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
-            if (event is RegisterEvent.Registered) onRegistered(event.speciesId, event.isFirst)
+            when (event) {
+                is RegisterEvent.Registered -> onRegistered(event.speciesId, event.isFirst)
+                is RegisterEvent.AddOwnSpecies ->
+                    onAddOwnSpecies(event.typedName, event.photoUri, event.prefetched)
+
+                RegisterEvent.PhotoUnreadable -> Unit
+            }
         }
     }
 
@@ -110,9 +150,19 @@ fun RegisterRoute(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
             )
         },
+        onTakePhoto = {
+            val uri = container.photoGateway.newCameraCaptureUri()
+            if (uri != null) {
+                pendingCameraUri = uri
+                camera.launch(Uri.parse(uri))
+            }
+        },
         onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
-        onAddOwnSpecies = onAddOwnSpecies,
+        onIdentify = viewModel::onIdentify,
+        onPickCandidate = viewModel::onPickCandidate,
+        onDismissCandidates = viewModel::onDismissIdentification,
+        onAddOwnSpecies = viewModel::onAddOwnTyped,
     )
 }
 
@@ -138,9 +188,13 @@ fun RegisterScreen(
     onQueryChange: (String) -> Unit,
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
+    onTakePhoto: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
-    onAddOwnSpecies: (typedName: String, photoUri: String) -> Unit,
+    onIdentify: () -> Unit = {},
+    onPickCandidate: (ResolvedCandidate) -> Unit = {},
+    onDismissCandidates: () -> Unit = {},
+    onAddOwnSpecies: () -> Unit,
 ) {
     val colors = DexTheme.colors
     val listState = rememberLazyListState()
@@ -209,14 +263,30 @@ fun RegisterScreen(
                     .padding(top = 10.dp, bottom = 12.dp),
             ) {
                 Text(
-                    text = "PHOTO · FROM YOUR GALLERY",
+                    text = "PHOTO · GALLERY OR CAMERA",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
                     ),
                     color = colors.faint,
                 )
-                PhotoAttachRow(photo = state.photo, onPickPhoto = onPickPhoto)
+                PhotoAttachRow(
+                    photo = state.photo,
+                    onPickPhoto = onPickPhoto,
+                    onTakePhoto = onTakePhoto,
+                )
+
+                // M31/M38. Hidden entirely for a kingdom with no provider; present but
+                // disabled with the reason inline when something the user can act on is in
+                // the way. S06's Lens share stays below it either way — it is still the right
+                // tool when the service has nothing (S12).
+                if (state.identifyVisible) {
+                    IdentifyButton(
+                        label = state.identifyLabel,
+                        disabledReason = state.identifyDisabledReason,
+                        onClick = onIdentify,
+                    )
+                }
 
                 state.photo?.let { picked ->
                     Text(
@@ -229,6 +299,15 @@ fun RegisterScreen(
                             .background(colors.accentSoft)
                             .clickable { onOpenLens(picked.uri) }
                             .padding(horizontal = 12.dp, vertical = 9.dp),
+                    )
+                }
+
+                // §5.2 rule 10: said before the user registers, not discovered afterwards.
+                state.photoNotKeptWarning?.let { text ->
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.muted,
                     )
                 }
 
@@ -270,10 +349,7 @@ fun RegisterScreen(
                 GhostCta(
                     label = state.addOwnLabel,
                     enabled = state.canAddOwn,
-                    onClick = {
-                        val photo = state.photo ?: return@GhostCta
-                        onAddOwnSpecies(state.query.trim(), photo.uri)
-                    },
+                    onClick = onAddOwnSpecies,
                 )
             }
         },
@@ -286,6 +362,15 @@ fun RegisterScreen(
                 .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            // §5.2 rule 1: the panel sits above the catalogue list, inside the scrolling
+            // region, so the pinned search, photo row and buttons of D18 are untouched.
+            candidatePanel(
+                identification = state.identification,
+                selectedSpeciesId = state.selected?.id,
+                onPickCandidate = onPickCandidate,
+                onDismiss = onDismissCandidates,
+            )
+
             if (state.noResults) {
                 item(key = "no-results") {
                     Text(
@@ -416,7 +501,11 @@ private fun SpeciesResultRow(
  * one screen that renders a gallery URI before registration.
  */
 @Composable
-private fun PhotoAttachRow(photo: PickedPhoto?, onPickPhoto: () -> Unit) {
+private fun PhotoAttachRow(
+    photo: PickedPhoto?,
+    onPickPhoto: () -> Unit,
+    onTakePhoto: () -> Unit,
+) {
     val colors = DexTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -467,6 +556,17 @@ private fun PhotoAttachRow(photo: PickedPhoto?, onPickPhoto: () -> Unit) {
                 color = if (photo == null) colors.faint else colors.accent,
             )
         }
+        // M40. Its own tap target rather than a second row: the camera is the other way to
+        // get the same one photo, not a separate step.
+        Text(
+            text = "📷",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.accentSoft)
+                .clickable(onClick = onTakePhoto)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
     }
 }
 
@@ -584,7 +684,7 @@ private fun RegisterReadyPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = { _, _ -> },
+            onAddOwnSpecies = {},
         )
     }
 }
@@ -601,7 +701,7 @@ private fun RegisterNoResultsPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = { _, _ -> },
+            onAddOwnSpecies = {},
         )
     }
 }

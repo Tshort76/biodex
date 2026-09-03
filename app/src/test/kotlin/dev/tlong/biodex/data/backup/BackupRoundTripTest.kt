@@ -57,9 +57,9 @@ class BackupRoundTripTest {
                 "thumbnails/broken.jpg" to "thumb-broken".toByteArray(),
                 "photos/copied.jpg" to "full-copied".toByteArray(),
             ),
-            gallery = mutableMapOf(live.photoUri to "full-live".toByteArray()),
+            gallery = mutableMapOf(live.photoUri!! to "full-live".toByteArray()),
             refs = mutableMapOf(
-                "live" to PhotoRef.Available(live.photoUri),
+                "live" to PhotoRef.Available(live.photoUri!!),
                 "copied" to PhotoRef.LocalCopy("photos/copied.jpg"),
                 "broken" to PhotoRef.Revoked,
             ),
@@ -104,7 +104,7 @@ class BackupRoundTripTest {
     fun `a photo that fails mid-copy is reported, not silently claimed`() = runBlocking {
         val (store, gateway) = exportSide()
         // The reference resolved a moment ago and the bytes are gone now.
-        gateway.gallery[store.snapshot.captures.first().photoUri] = null
+        gateway.gallery[store.snapshot.captures.first().photoUri!!] = null
 
         val result = BackupService(store, gateway).export() as BackupService.ExportResult.Success
         val names = entryNames(gateway.archives.values.single())
@@ -274,8 +274,8 @@ class BackupRoundTripTest {
         val photo = capture("plant-shot", speciesId = "user-2")
         val gateway = FakeBackupGateway(
             ownedFiles = mutableMapOf("thumbnails/plant-shot.jpg" to "thumb".toByteArray()),
-            gallery = mutableMapOf(photo.photoUri to "full".toByteArray()),
-            refs = mutableMapOf("plant-shot" to PhotoRef.Available(photo.photoUri)),
+            gallery = mutableMapOf(photo.photoUri!! to "full".toByteArray()),
+            refs = mutableMapOf("plant-shot" to PhotoRef.Available(photo.photoUri!!)),
         )
         val store = FakeBackupStore(
             snapshot = BackupSnapshot(

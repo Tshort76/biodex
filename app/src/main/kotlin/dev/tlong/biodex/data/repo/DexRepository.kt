@@ -476,6 +476,8 @@ internal fun assembleSummaries(
             ecosystemIds = ecosystemsBySpecies[row.id].orEmpty(),
             caughtAt = status?.caughtAt,
             thumbPath = status?.thumbPath,
+            // M41: the grid's stand-in for a photo the user did not keep.
+            imageUrl = row.imageUrl,
             captureCount = status?.captureCount ?: 0,
         )
     }

@@ -44,6 +44,13 @@ fun availabilityFor(ref: PhotoRef?): PhotoAvailability = when (ref) {
         offerRelink = false,
         showFullSize = false,
     )
+
+    // M41. The viewer should never open on a photoless capture at all — the detail screen
+    // gives such a row no tap target — so this branch is the belt to that braces. What matters
+    // is what it does *not* do: no re-link. There is nothing to re-link to, and offering it
+    // would tell the user a photo of theirs had gone missing when none ever existed.
+    PhotoRef.None ->
+        PhotoAvailability(bannerText = null, offerRelink = false, showFullSize = false)
 }
 
 data class PhotoViewerUiState(

@@ -14,6 +14,10 @@ import androidx.room.TypeConverters
  * by uninstalling; from the first real capture on the phone every change ships a
  * hand-written `Migration`, writable because `exportSchema = true` keeps the schema JSON
  * in `app/schemas/` under git.
+ *
+ * **v2 is the first time that rule has been exercised** (R21). It relaxes the two photo
+ * columns on `captures` so a plant can be caught without a photograph of the user's own
+ * (M41); see [MIGRATION_1_2], which changes the columns and not one row.
  */
 @Database(
     entities = [
@@ -25,7 +29,7 @@ import androidx.room.TypeConverters
         MetaEntity::class,
         RegionEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -43,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, NAME)
+                .addMigrations(MIGRATION_1_2)
                 .build()
     }
 }

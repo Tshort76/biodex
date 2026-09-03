@@ -2,30 +2,54 @@ package dev.tlong.biodex.ui.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.viewModelScope
 import dev.tlong.biodex.AppContainer
+import dev.tlong.biodex.data.identify.CandidateResolver
+import dev.tlong.biodex.data.identify.IdentifierRegistry
+import dev.tlong.biodex.data.identify.ResolvedCandidate
+import dev.tlong.biodex.data.identify.UploadImage
+import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.net.LookupResult
+import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
+import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.PhotoSourceKind
+import dev.tlong.biodex.data.photo.keepsOwnPhoto
+import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
+import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.DexRepository
+import dev.tlong.biodex.data.settings.AppSettings
+import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.media.NetworkMonitor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The ViewModel is the pure state function plus `stateIn`, and the writes (6.2). One-shot
  * results go out on a `Channel` so the route navigates once rather than on every recomposition.
  */
 class RegisterViewModel(
-    repository: DexRepository,
+    private val repository: DexRepository,
     private val registrar: CaptureRegistrar,
     private val preselectedSpeciesId: String?,
+    private val identifiers: IdentifierRegistry,
+    private val resolver: CandidateResolver,
+    private val lookups: SpeciesLookupRepository,
+    private val photos: PhotoGateway,
+    private val settings: AppSettings,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -39,6 +63,24 @@ class RegisterViewModel(
 
     private val _grantWarning = MutableStateFlow<String?>(null)
 
+    private val identification = MutableStateFlow<IdentificationState>(IdentificationState.Idle)
+
+    /**
+     * The two things the Identify button's enabled-ness turns on that live in settings, taken
+     * from `AppSettings`' own flows rather than snapshotted.
+     *
+     * This is what makes D24 true rather than merely intended. The Register screen sits in the
+     * back stack while the user goes to Settings and pastes their key, so a value read once at
+     * construction would leave the button still saying "add a key in Settings" after they had
+     * — which is exactly the case the feature meets on its first day.
+     */
+    private val identifyGates = combine(
+        settings.plantNetKey,
+        settings.identificationsUsed,
+    ) { key, used ->
+        IdentifyGates(hasKey = key != null, used = used, cap = settings.identificationCapNow())
+    }
+
     val uiState: StateFlow<RegisterUiState> = combine(
         registerUiState(
             species = repository.speciesSummaries(),
@@ -50,7 +92,21 @@ class RegisterViewModel(
             preselectedSpeciesId = preselectedSpeciesId,
         ),
         _grantWarning,
-    ) { state, warning -> state.copy(grantWarning = warning) }
+        identification,
+        identifyGates,
+        networkMonitor.online,
+    ) { state, warning, identifyState, gates, online ->
+        state.copy(
+            grantWarning = warning,
+            identification = identifyState,
+            identifiableKingdoms = identifiableKingdoms,
+            identifyProviderName = identifyProviderName,
+            online = online,
+            hasIdentifyKey = gates.hasKey,
+            identificationsUsed = gates.used,
+            identificationCap = gates.cap,
+        )
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -70,18 +126,180 @@ class RegisterViewModel(
     fun onPhotoPicked(picked: PickedPhoto?) {
         photo.value = picked
         error.value = null
+        // §5.2 rule 9: no result cache. A new photo's candidates are that photo's, so the
+        // previous one's panel goes rather than lingering above an unrelated picture.
+        identification.value = IdentificationState.Idle
         if (picked != null) refreshGrantPressure()
+    }
+
+    /** The panel is dismissible (§5.2 rule 1); the photo and the selection stay. */
+    fun onDismissIdentification() {
+        identification.value = IdentificationState.Idle
+    }
+
+    /**
+     * M31/M36. The only network write of a photo this app makes, and it happens on this press
+     * and nowhere else — never on attach, never on capture, never in the background.
+     */
+    fun onIdentify() {
+        val picked = photo.value ?: return
+        val kingdom = identifyContextKingdom(uiState.value.selected?.kingdom)
+        val identifier = identifiers[kingdom] ?: return
+        if (identification.value is IdentificationState.Running) return
+        if (!uiState.value.canIdentify) return
+
+        identification.value = IdentificationState.Running(identifier.providerName)
+        viewModelScope.launch {
+            // The decode-and-re-encode is the expensive half and the privacy-relevant half
+            // (M36); it belongs off the main thread and before anything touches the network.
+            val bytes = withContext(Dispatchers.IO) { photos.readForUpload(picked.uri) }
+            if (bytes == null) {
+                identification.value =
+                    IdentificationState.Failed("That photo could not be read.")
+                return@launch
+            }
+
+            when (val raw = identifier.identify(UploadImage(bytes), kingdom)) {
+                is LookupResult.Found -> {
+                    // M37 counts a *successful upload*: the service answered, so the quota
+                    // this cap is protecting has actually been spent.
+                    settings.recordIdentification()
+                    resolveAndShow(identifier.providerName, identifier.scoreKind, raw.value, kingdom)
+                }
+
+                LookupResult.NotFound -> {
+                    settings.recordIdentification()
+                    identification.value =
+                        IdentificationState.NoCandidates(identifier.providerName)
+                }
+
+                is LookupResult.Failed ->
+                    identification.value = IdentificationState.Failed(raw.reason)
+            }
+        }
+    }
+
+    private suspend fun resolveAndShow(
+        provider: String,
+        scoreKind: dev.tlong.biodex.data.identify.ScoreKind,
+        candidates: List<dev.tlong.biodex.data.identify.IdCandidate>,
+        kingdom: Kingdom,
+    ) {
+        val catalogue = repository.speciesSummaries().first()
+        identification.value = when (
+            val resolved = resolver.resolve(candidates, catalogue, kingdom)
+        ) {
+            is LookupResult.Found -> IdentificationState.Done(
+                provider = provider,
+                scoreKind = scoreKind,
+                candidates = resolved.value.candidates,
+                dropped = resolved.value.dropped,
+            )
+
+            // Every name the service offered was dropped by M32. From the user's side that is
+            // indistinguishable from the service recognising nothing, and it is the same calm
+            // outcome — the app could ask, and the answer was nothing it will stand behind.
+            LookupResult.NotFound -> IdentificationState.NoCandidates(provider)
+
+            is LookupResult.Failed -> IdentificationState.Failed(resolved.reason)
+        }
+    }
+
+    /**
+     * D20: picking is the user's, always. A candidate already in the catalogue selects exactly
+     * as tapping its row in the list would — registration never learns that identification
+     * happened (§5.2 rule 4).
+     */
+    fun onPickCandidate(candidate: ResolvedCandidate) {
+        val speciesId = candidate.catalogueSpeciesId
+        if (speciesId != null) {
+            selectedSpeciesId.value = speciesId
+            error.value = null
+            return
+        }
+        openAddYourOwn(candidate)
+    }
+
+    /**
+     * M33's other half: a validated name the catalogue does not have goes to the **existing**
+     * confirmation card (M19) with the GBIF lookup already done, so there is one confirmation
+     * path in the app rather than two. `AddSpeciesDraft.prefetched` is the slot the backfill
+     * case already uses for exactly this.
+     */
+    private fun openAddYourOwn(candidate: ResolvedCandidate) {
+        if (photo.value == null) return
+        viewModelScope.launch {
+            val details = lookups.detailsFor(candidate.gbif.best, candidate.scientificName)
+            sendAddOwn(
+                typedName = candidate.scientificName,
+                prefetched = LookupOutcome.Resolved(
+                    candidates = candidate.gbif.candidates,
+                    selectedIndex = 0,
+                    details = details,
+                ),
+            )
+        }
+    }
+
+    /** M08's typed path, unchanged in behaviour and routed through the same hand-off. */
+    fun onAddOwnTyped() {
+        if (!uiState.value.canAddOwn) return
+        viewModelScope.launch { sendAddOwn(typedName = query.value.trim(), prefetched = null) }
+    }
+
+    /**
+     * The one place a photo leaves this screen for the add-your-own card.
+     *
+     * **A camera shot is promoted into the gallery first**, and that is not optional. The
+     * confirmation card hands its photo to `AddSpeciesRegistrar`, which registers a capture
+     * against whatever URI it is given; a cache URI would be registered and then deleted by
+     * the next cold start's sweep, leaving a capture whose photo the app itself destroyed and
+     * a re-link offer for it. Promoting here means the capture references a real gallery item.
+     */
+    private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?) {
+        val picked = photo.value ?: return
+        val uri = if (picked.source == PhotoSourceKind.CAMERA_CACHE) {
+            withContext(Dispatchers.IO) {
+                photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
+            } ?: picked.uri
+        } else {
+            picked.uri
+        }
+        events.send(RegisterEvent.AddOwnSpecies(typedName, uri, prefetched))
     }
 
     fun onRegister() {
         val speciesId = selectedSpeciesId.value ?: return
-        val picked = photo.value ?: return
+        val kingdom = uiState.value.selected?.kingdom ?: Kingdom.ANIMAL
+        // M41: a plant may register with no photo at all, so the null is a legitimate value
+        // here rather than a reason to bail.
+        val picked = photo.value
+        if (picked == null && keepsOwnPhoto(kingdom)) return
         if (registering.value) return
         registering.value = true
         viewModelScope.launch {
-            when (val result = registrar.register(speciesId, picked.uri)) {
-                is CaptureRegistrar.RegisterResult.Registered ->
+            // D26: a camera shot lives in app cache until this moment. A kingdom that keeps
+            // its photo gets it promoted into the gallery now, so the user finds it where
+            // every other photo of theirs is; a plant's is never promoted and is swept below,
+            // which is what keeps it out of the gallery entirely (M41).
+            val registerUri = when {
+                picked == null -> null
+                shouldPromoteToGallery(picked.source, kingdom) -> withContext(Dispatchers.IO) {
+                    photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
+                } ?: picked.uri
+                // A plant's attached photo is simply not carried into the capture (M41). It
+                // was there to be identified with; the tile shows the species' own picture.
+                !keepsOwnPhoto(kingdom) -> null
+                else -> picked.uri
+            }
+
+            when (val result = registrar.register(speciesId, registerUri)) {
+                is CaptureRegistrar.RegisterResult.Registered -> {
+                    if (picked != null && shouldDeleteCacheFile(picked.source)) {
+                        withContext(Dispatchers.IO) { photos.sweepCameraCache() }
+                    }
                     events.send(RegisterEvent.Registered(result.speciesId, result.isFirst))
+                }
 
                 is CaptureRegistrar.RegisterResult.ThumbnailFailed -> {
                     error.value = "That photo could not be read. Pick another one — nothing " +
@@ -108,6 +326,14 @@ class RegisterViewModel(
         }
     }
 
+    private val identifiableKingdoms: Set<Kingdom> =
+        Kingdom.entries.filter(identifiers::supports).toSet()
+
+    private val identifyProviderName: String =
+        identifiers[Kingdom.PLANT]?.providerName.orEmpty()
+
+    private data class IdentifyGates(val hasKey: Boolean, val used: Int, val cap: Int)
+
     companion object {
         fun factory(
             container: AppContainer,
@@ -118,6 +344,12 @@ class RegisterViewModel(
                     repository = container.dexRepository,
                     registrar = container.captureRegistrar,
                     preselectedSpeciesId = preselectedSpeciesId,
+                    identifiers = container.identifiers,
+                    resolver = container.candidateResolver,
+                    lookups = container.speciesLookupRepository,
+                    photos = container.photoGateway,
+                    settings = container.settings,
+                    networkMonitor = container.networkMonitor,
                 )
             }
         }

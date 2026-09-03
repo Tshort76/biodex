@@ -1,0 +1,13 @@
+{
+  "query": {
+    "project": "all",
+    "images": ["photo.jpg"],
+    "organs": ["auto"],
+    "includeRelatedImages": false
+  },
+  "language": "en",
+  "preferedReferential": "k-world-flora",
+  "results": [],
+  "version": "2026-08-27 (7.3)",
+  "remainingIdentificationRequests": 486
+}

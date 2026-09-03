@@ -11,6 +11,10 @@ import dev.tlong.biodex.data.catalogue.DukeIndex
 import dev.tlong.biodex.data.catalogue.ImportOutcome
 import dev.tlong.biodex.data.catalogue.RoomCatalogueStore
 import dev.tlong.biodex.data.db.AppDatabase
+import dev.tlong.biodex.data.identify.CandidateResolver
+import dev.tlong.biodex.data.identify.IdentifierRegistry
+import dev.tlong.biodex.data.identify.OkHttpIdentifyTransport
+import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.net.GbifClient
 import dev.tlong.biodex.data.net.JsonFetcher
 import dev.tlong.biodex.data.net.OkHttpJsonFetcher
@@ -22,6 +26,7 @@ import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.media.AndroidNetworkMonitor
 import dev.tlong.biodex.media.CacheManager
 import dev.tlong.biodex.media.NetworkMonitor
@@ -132,6 +137,35 @@ class AppContainer(val appContext: Context) {
         )
     }
 
+    // -----------------------------------------------------------------------
+    // Identification (M31–M39). One provider, one key, one path (D19).
+    // -----------------------------------------------------------------------
+
+    /**
+     * The registry the Register screen asks whether a kingdom can be identified at all.
+     *
+     * **`PLANT` is the only entry, and that is the feature's shape rather than an oversight**
+     * (D19): Pl@ntNet does not identify fungi, no animal provider has been chosen, and the
+     * missing entries are what hide the Identify button for those kingdoms (§5.1). Adding one
+     * later is one more line here (S14).
+     */
+    val identifiers: IdentifierRegistry by lazy {
+        IdentifierRegistry(
+            mapOf(
+                Kingdom.PLANT to PlantNetIdentifier(
+                    transport = OkHttpIdentifyTransport(httpClient),
+                    // Read on every call, never captured: a key pasted into Settings has to
+                    // work on the next press of the button, not the next process (D24).
+                    apiKey = settings::plantNetKeyNow,
+                ),
+            ),
+        )
+    }
+
+    val candidateResolver: CandidateResolver by lazy {
+        CandidateResolver(GbifClient(jsonFetcher))
+    }
+
     /** 6.1's Register→Confirm hand-off. In memory: a draft's whole life is two screens. */
     val addSpeciesDrafts: AddSpeciesDraftHolder by lazy { AddSpeciesDraftHolder() }
 
@@ -172,6 +206,12 @@ class AppContainer(val appContext: Context) {
         applicationScope.launch {
             _importOutcome.value = catalogueImporter.import()
         }
+        // M40's sweep, hung off the same start hook rather than a second one. A camera shot
+        // lives in `cacheDir/capture/` between the shutter and registration, so a Register
+        // screen the user backed out of — or a process Android killed — leaves a photograph
+        // behind that nothing else would ever collect. A cold start is a safe moment for it:
+        // nothing in that directory is still wanted by then.
+        applicationScope.launch { photoGateway.sweepCameraCache() }
     }
 }
 

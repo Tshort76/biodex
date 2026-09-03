@@ -188,8 +188,15 @@ data class Ecosystem(
 data class Capture(
     val id: String,
     val speciesId: String,
-    val photoUri: String,
-    val thumbPath: String,
+    /**
+     * Null for a plant registered from M41 onward: its photograph existed to identify it and
+     * is not kept, so there is no gallery reference and no persistable grant. Plant captures
+     * made before that change keep theirs — the migration relaxed the column and touched no
+     * row.
+     */
+    val photoUri: String?,
+    /** Null exactly when [photoUri] is: the tile shows the species' reference image instead. */
+    val thumbPath: String?,
     val localCopyPath: String? = null,
     val takenAt: Long,
     val lat: Double? = null,
@@ -228,6 +235,12 @@ data class SpeciesSummary(
     val caughtAt: Long?,
     /** Relative path under `filesDir` of the favorite (else first) capture's thumbnail. */
     val thumbPath: String?,
+    /**
+     * The species' own reference picture from Wikimedia Commons. The grid needs it for M41's
+     * caught-with-no-photo-of-your-own tile, where it stands in for the photograph the user
+     * did not keep; every other tile state ignores it.
+     */
+    val imageUrl: String? = null,
     val captureCount: Int,
 ) {
     val caught: Boolean get() = caughtAt != null
