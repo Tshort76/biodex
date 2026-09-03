@@ -537,7 +537,7 @@ Slice 8 built the Stats and Settings screens, the licenses screen and the two me
 
 ## 7. The catalogue build pipeline
 
-Lives in `tools/catalogue/`. Pure Python 3 (system `python3` plus `requests` in a local venv; the README gives the two setup lines). Runs only on the build machine; the app never sees it.
+Lives in `tools/catalogue/`. Pure Python 3, **standard library only** — no virtualenv and no dependencies (an earlier draft used `requests`; it was dropped so the pipeline runs anywhere `python3` does). Runs only on the build machine; the app never sees it.
 
 ### 7.1 Input: `curated_species.json`
 
@@ -586,6 +586,24 @@ Cross-cutting behavior:
 
 The output lands directly in `app/src/main/assets/catalogue/pacific.json` and **is committed to git** — builds must not depend on the network or on re-running the pipeline. Bumping `catalogueVersion` in the input is manual and only done when the output should reach existing installs (section 3.3).
 
+
+### 7.3 Sources, and the two rules the build enforces
+
+Four public sources are joined per species. Each contributes different fields, under different terms, and the entry's `provenance` map records which source every field came from — so the app can show the sourced half and the curated half as visibly different kinds of text:
+
+| Source | Supplies | Licence |
+|---|---|---|
+| GBIF | accepted scientific name, kingdom, class, synonyms | open |
+| Wikipedia | habitat prose, description, page link | CC BY-SA |
+| Wikimedia Commons | reference image and its credit | per-image |
+| Dr. Duke's (USDA ARS) | plant medicinal uses, activity list, poison flag | CC0 |
+
+Two invariants are **enforced by the build rather than trusted**, because both failure modes are silent and would ship as confident, fluent, wrong data:
+
+- **A synonym is accepted only if it keeps the accepted name's specific epithet.** Without this rule GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one. The join would succeed, the entry would look right, and it would be wrong about which species it is.
+- **Every plant with a `Poison` record in Duke's must carry a `Caution:` sentence**, or the build fails naming the species. This is what keeps the cautioned set decided by a public dataset rather than by whoever happened to write the entry — see D14, and note that trimming an entry's note can therefore fail the build legitimately.
+
+The edible tag is the counter-example and is labelled as one: Duke's holds almost no food records, so edibility stays curatorial judgement in the input files, and each entry's provenance says so rather than implying a source.
 ---
 
 ## 8. Testing strategy

@@ -13,55 +13,43 @@
   <img alt="License MIT" src="https://img.shields.io/badge/code-MIT-informational">
 </p>
 
-| The dex | Filtering | Plants |
-|:--:|:--:|:--:|
-| <img src="docs/screenshots/grid.png" alt="The dex grid, three columns of silhouetted species" width="240"> | <img src="docs/screenshots/filters.png" alt="The Class filter menu open, with Mammals ticked" width="240"> | <img src="docs/screenshots/plants.png" alt="The grid filtered to edible plants" width="240"> |
-| 230 species in dex order, caught ones in colour | Class, Ecosystem and Uses compose | `P`-numbers and growth-form silhouettes |
+<p align="center">
+  <img src="docs/screenshots/overview.png" alt="Three phone screens: the dex grid across all three kingdoms, a plant entry with its sourced uses section, and the stats screen" width="900">
+</p>
+<p align="center"><sub>Screens rendered from the project's design board. Every feature shown is built and shipping.</sub></p>
 
 > [!IMPORTANT]
 > **This is intended as a fun activity, and nothing in it should be construed as medical or dietary advice.** Exercise caution and do your own research on plants and animals before engaging with them.
 
-## At a glance
+## The game
 
-It ships with a curated catalogue for one region — the **Pacific USA BioDex**, everything west of the Rocky Mountains.
+A dex only works as a game if it can be finished, so BioDex does not ship a taxonomy. It ships one curated region — the **Pacific USA BioDex**, everything west of the Rockies — with 230 species a person can actually go and find: 120 animals (`#001`–`#120`), 80 plants (`P001`–`P080`) and 30 fungi (`F001`–`F030`). Each kingdom has its own meter, because they are played differently. The plant list is finishable in a season of walks; the animal list is a years-long luck game; folding them into one percentage would hide both facts. Plants also carry their uses — edible or medicinal, which part, which season — so the plant half doubles as a list of what is worth foraging for the camera.
 
-| | Count | Numbering | Notes |
-|---|--:|---|---|
-| 🦉 **Animals** | 120 | `#001`–`#120` | Seven classes, from birds to invertebrates |
-| 🌿 **Plants** | 80 | `P001`–`P080` | Grouped by growth form; carry a uses section |
-| 🍄 **Fungi** | 30 | `F001`–`F030` | No uses, no identification |
+Every species belongs to one or more of seven real ecosystems — coastal rainforest, oak woodland and chaparral, high desert and sagebrush, and so on — and each ecosystem carries its own fraction, so the big collection holds seven small winnable ones inside it and the grid doubles as a map of where to go next. Anything you photograph that the catalogue lacks becomes your own entry, filled in from GBIF and Wikipedia behind one confirmation, and takes a U-number outside the completion fraction: your additions can never make the dex unfinishable, and they can never inflate it either.
 
-Each kingdom is its own completable game, with its own meter. Species you add yourself get **U-numbers** and sit outside the completion fraction, so they never make the dex unfinishable.
+The first catch of a species is the moment: silhouette resolves into your photograph, the counter ticks up. The reveal is deliberately quiet, tuned to still feel good on the ninetieth unlock. Repeats join the strip without ceremony.
 
-**Your photos stay in your gallery.** For an animal or a fungus the app stores a reference and a small thumbnail, never a copy. A plant keeps no photograph at all — its entry shows the catalogue's own reference picture instead.
+## Your photos stay yours
 
-**Identification is opt-in, and only for plants.** Nothing is uploaded unless you press *Identify* on a photo you attached. When you do, a reduced copy of that one photo — re-encoded, so its EXIF and its GPS coordinates are gone — goes to the Pl@ntNet API, which sends back candidate species you choose from. The app never picks one for you and never claims the thing in your photo *is* a species. Animals and fungi have no identification at all: if you don't know what you're looking at, use Google Lens and type the name in.
+BioDex has no backend and no accounts, and it works offline from the first launch. Your photos are never copied out of your gallery. The app holds a reference and a small thumbnail of its own, and that is the point rather than a shortcut — linking is what lets a life list grow for years without the app growing with it. A plant keeps no photograph at all: its tile shows the species' own reference picture, because a catalogue portrait is a better tile than a snapshot of a shrub.
 
-## Using it
+Identification is opt-in, per photo, and only for plants. Nothing leaves the phone unless you press *Identify* on a photo you attached. When you do, one reduced copy of that one photo — re-encoded, so its EXIF and GPS coordinates are gone — goes to Pl@ntNet, which returns candidate species you choose from. The app never picks one and never claims the thing in your photo *is* a species; what it says is "Pl@ntNet suggested these", in the same register as the medicinal line that credits Dr. Duke's database — a source's statement, never the app's. Animals and fungi have no identification at all.
 
-**Catching something.** Tap the **+** button on the grid, or open a species and tap *Register this species*. Search by name, pick the species, attach a photo from your gallery, and register. The species flips from silhouette to your photograph and the counter ticks up. Photograph the same species again and the picture joins its strip without ceremony — the fanfare is reserved for firsts.
+Because the photos are referenced, backups matter more than usual, so the whole collection exports as a single ZIP — catalogue, entries, thumbnails and a full-size copy of every photo that still resolves — and import merges rather than replaces.
 
-> [!NOTE]
-> The gallery picker needs an explicit **Done** tap after you select a photo. Selecting alone returns nothing.
+<p align="center">
+  <img src="docs/screenshots/flows.png" alt="Three phone screens: the unlock reveal for a new species, Pl@ntNet candidates to choose from, and the register screen" width="900">
+</p>
 
-**Something not in the catalogue.** Type its name and choose *add your own species*. GBIF resolves the name to a real species, Wikipedia supplies habitat text and a photograph, and for a plant Duke's ethnobotanical database supplies its recorded medicinal uses. You get a confirmation card before anything is saved, because a name like "sparrow" matches several species and a silent wrong pick would be permanent.
+## Built the way it says it is
 
-Offline, the entry is created immediately from the name and photo alone, and fills in the next time you open it with a connection.
+The catalogue is generated and committed, so no build touches the network. It is joined from GBIF, Wikipedia, Wikimedia Commons and Dr. Duke's ethnobotanical database, and the build enforces two rules rather than trusting the join. A GBIF synonym is accepted only if it keeps the accepted name's specific epithet — without that rule GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one, which would have shipped confident, fluent, completely wrong data. And every plant Duke's records as poisonous must carry a one-line caution, or the build fails naming the species, so which plants get a caution is decided by a public dataset rather than by whoever wrote the entry.
 
-**Filtering.** *Caught* and *Uncaught* are chips; *Class*, *Ecosystem* and *Uses* are dropdowns underneath them. They compose rather than replace — *Mammals* + *Riparian & Wetland* narrows to exactly the four wetland mammals. Each menu marks the value currently filtering and opens with a row that undoes just that one (*All classes*, *All ecosystems*, *Any use*); the *All* chip clears the lot. There is no kingdom filter, because picking *Trees* or *Mammals* already says which kingdom you meant. Search matches common and scientific names.
+The app is one Gradle module with hand-wired singletons and no DI framework; package discipline does the work module boundaries would. Every screen's state is a pure top-level function over the repository's flows, and the ViewModel is that function plus `stateIn` — which is why 441 JVM tests exercise filtering, progress math and screen state with no device and no Room, alongside 43 instrumented tests and 13 Python tests on the catalogue pipeline. Invariants live at the one door into the store: the rule that a plant keeps no photo is enforced in the single registrar that writes entries, not on the screen that collects them.
 
-**Plants have a uses section** where an animal has nothing: a short note on which part and which season, and a muted line recording what Duke's holds. Any plant Duke's records as toxic carries a one-line caution, and the build fails if one is missing — so which plants get a warning is decided by a public dataset rather than by whoever wrote the entry.
+Room migrations are hand-written with schema export on, and there is no destructive fallback, because this database holds a collection that cannot be re-earned. The Pl@ntNet key lives in the app's settings rather than the build, because the repository is public and an APK is unpackable — a compiled-in key is a published key.
 
-**Fungi carry no uses**, no medicinal line and no identification. A mushroom gets a note only when the species itself is dangerous, which is ten of the thirty. The rest read like an animal.
-
-<details>
-<summary><strong>When a photo breaks, and why backups matter more than usual</strong></summary>
-
-**Your photos can break.** If you delete a photo from your gallery, the entry stays caught and shows its thumbnail with an offer to re-link. A photo that lives only in Google Photos' cloud and hasn't downloaded may not resolve until you're online. Turning on *Keep a local copy* in Settings makes future registrations immune to this, at the cost of storing the photo twice; it is off by default because linking rather than copying is the point.
-
-**Backups matter more than usual here**, precisely because photos are referenced. `Settings → Export collection…` writes one ZIP — the catalogue, every entry, every thumbnail, and a full-size copy of each photo whose reference still resolves — and hands it to the share sheet. Import merges rather than replaces: it adds what is missing, skips catches it already has, and deletes nothing.
-
-</details>
+Kotlin 2.3, Jetpack Compose, Room, minSdk 29.
 
 ## Building it
 
@@ -72,30 +60,6 @@ make check     # JVM + catalogue tests, no phone needed
 ```
 
 `make` on its own lists every target. **[docs/BUILD.md](docs/BUILD.md)** covers prerequisites, release signing, and sideloading an APK without a toolchain.
-
-## The catalogue
-
-`app/src/main/assets/catalogue/pacific.json` is generated and committed, so no build touches the network. It is built from four hand-authored input files plus four public sources:
-
-| Source | Supplies | Licence |
-|---|---|---|
-| GBIF | accepted scientific name, kingdom, class, synonyms | open |
-| Wikipedia | habitat prose, description, page link | CC BY-SA |
-| Wikimedia Commons | reference image and its credit | per-image |
-| Dr. Duke's (USDA ARS) | plant medicinal uses, activity list, poison flag | CC0 |
-
-```bash
-make catalogue    # regenerate the asset
-```
-
-Standard library only — no virtualenv, no dependencies. Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests. See [`tools/catalogue/README.md`](tools/catalogue/README.md).
-
-Two rules the build enforces rather than trusting:
-
-- **Every plant with a `Poison` record in Duke's must carry a `Caution:` sentence**, or the build fails naming the species. The cautioned set is decided by a public dataset, not by whoever wrote the entry.
-- **A synonym is only accepted if it keeps the accepted name's specific epithet.** Without this, GBIF offers Port Orford cedar as a synonym of coast redwood, and the eastern sycamore for the California one — which would have shipped confident, fluent, completely wrong data.
-
-Edible tags are curatorial judgement and are not derived from any source; the catalogue says so in each entry's provenance.
 
 ## The documents
 
