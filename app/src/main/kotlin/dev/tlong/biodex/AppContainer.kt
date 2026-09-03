@@ -206,6 +206,12 @@ class AppContainer(val appContext: Context) {
         applicationScope.launch {
             _importOutcome.value = catalogueImporter.import()
         }
+        // M40's sweep, hung off the same start hook rather than a second one. A camera shot
+        // lives in `cacheDir/capture/` between the shutter and registration, so a Register
+        // screen the user backed out of — or a process Android killed — leaves a photograph
+        // behind that nothing else would ever collect. A cold start is a safe moment for it:
+        // nothing in that directory is still wanted by then.
+        applicationScope.launch { photoGateway.sweepCameraCache() }
     }
 }
 

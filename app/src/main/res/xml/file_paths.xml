@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- S01: the only thing this app ever shares out is a finished backup archive, written to
      cacheDir/exports. Nothing else in the app's storage is exposed — in particular neither
-     thumbnails nor local copies, which live in filesDir. -->
+     thumbnails nor local copies, which live in filesDir.
+
+     M40 adds one more: cacheDir/capture, which the system camera app writes into through
+     EXTRA_OUTPUT. It is the *only* directory this app grants write access to, and nothing
+     durable lives there — a plant's shot is deleted after registration or cancel, and an
+     animal's is deleted once it has been promoted into the gallery. -->
 <paths>
     <cache-path name="exports" path="exports/" />
+    <cache-path name="capture" path="capture/" />
 </paths>

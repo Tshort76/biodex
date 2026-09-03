@@ -2,6 +2,7 @@ package dev.tlong.biodex.ui.register
 
 import dev.tlong.biodex.data.identify.DEFAULT_MONTHLY_IDENTIFICATION_CAP
 import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.grid.matchesQuery
@@ -18,6 +19,12 @@ import kotlinx.coroutines.flow.combine
 data class PickedPhoto(
     val uri: String,
     val displayName: String? = null,
+    /**
+     * M40/D26. Where it came from decides two things the URI string cannot: whether it must be
+     * promoted into the gallery at registration, and whether its cache file must be swept
+     * afterwards. A `FileProvider` URI and a picker URI are both `content://`.
+     */
+    val source: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
 )
 
 /** M09's outcome, raised to the screen as a one-shot event so the route can navigate. */

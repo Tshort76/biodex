@@ -112,4 +112,20 @@ class FakePhotoGateway(
     /** M36's re-encoded upload copy; null models a photo that would not decode. */
     override fun readForUpload(uri: String): ByteArray? =
         if (uploadBytes != null) uploadBytes else null
+
+    override fun newCameraCaptureUri(): String =
+        "content://dev.tlong.biodex.files/capture/${cameraCounter++}.jpg"
+
+    override fun promoteToGallery(cacheUri: String, displayName: String): String? {
+        promoted += cacheUri
+        return "content://media/external/images/promoted-${promoted.size}"
+    }
+
+    override fun sweepCameraCache() {
+        cacheSweeps++
+    }
+
+    val promoted = mutableListOf<String>()
+    var cacheSweeps = 0
+    private var cameraCounter = 1
 }

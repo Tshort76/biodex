@@ -59,6 +59,32 @@ interface PhotoGateway {
      * returns bytes rather than a path a caller could stream instead.
      */
     fun readForUpload(uri: String): ByteArray?
+
+    // -----------------------------------------------------------------------
+    // The in-app camera (M40, D26). Three calls, and all three are cache
+    // bookkeeping rather than camera code: the system camera app takes the
+    // photograph, and this app only says where to put it and what to do next.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Creates an empty file under `cacheDir/capture/` and returns the `FileProvider` URI the
+     * camera intent's `EXTRA_OUTPUT` should name, or null if it could not be created.
+     */
+    fun newCameraCaptureUri(): String?
+
+    /**
+     * Copies a cache capture into `Pictures/BioDex/` and returns the `MediaStore` URI, or null
+     * on failure. Called only at registration and only for a kingdom that keeps its photo
+     * (D26) — which is what stops a plant's shot ever reaching the gallery.
+     */
+    fun promoteToGallery(cacheUri: String, displayName: String): String?
+
+    /**
+     * Deletes everything under `cacheDir/capture/`. Called on app start, so an abandoned
+     * Register screen — the user backed out mid-flow, or the process was killed — leaves no
+     * photograph behind in a directory nothing else ever cleans.
+     */
+    fun sweepCameraCache()
 }
 
 /**

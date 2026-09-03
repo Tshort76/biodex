@@ -53,6 +53,7 @@ import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.identify.ResolvedCandidate
 import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -100,6 +101,30 @@ fun RegisterRoute(
         )
     }
 
+    // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
+    // system camera app takes the photograph, so this app declares no CAMERA permission and
+    // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
+    // declaring CAMERA *without holding it* is what throws; not declaring it is free.)
+    //
+    // The pending URI is remembered across the launch because the result carries only a
+    // success flag — the camera app writes to where the intent said, not to a returned URI.
+    var pendingCameraUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val camera = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { saved: Boolean ->
+        val uri = pendingCameraUri
+        pendingCameraUri = null
+        if (saved && uri != null) {
+            viewModel.onPhotoPicked(
+                PickedPhoto(
+                    uri = uri,
+                    displayName = "Taken just now",
+                    source = PhotoSourceKind.CAMERA_CACHE,
+                ),
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
@@ -121,6 +146,13 @@ fun RegisterRoute(
             picker.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
             )
+        },
+        onTakePhoto = {
+            val uri = container.photoGateway.newCameraCaptureUri()
+            if (uri != null) {
+                pendingCameraUri = uri
+                camera.launch(Uri.parse(uri))
+            }
         },
         onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
@@ -153,6 +185,7 @@ fun RegisterScreen(
     onQueryChange: (String) -> Unit,
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
+    onTakePhoto: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
     onIdentify: () -> Unit = {},
@@ -227,14 +260,18 @@ fun RegisterScreen(
                     .padding(top = 10.dp, bottom = 12.dp),
             ) {
                 Text(
-                    text = "PHOTO · FROM YOUR GALLERY",
+                    text = "PHOTO · GALLERY OR CAMERA",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
                     ),
                     color = colors.faint,
                 )
-                PhotoAttachRow(photo = state.photo, onPickPhoto = onPickPhoto)
+                PhotoAttachRow(
+                    photo = state.photo,
+                    onPickPhoto = onPickPhoto,
+                    onTakePhoto = onTakePhoto,
+                )
 
                 // M31/M38. Hidden entirely for a kingdom with no provider; present but
                 // disabled with the reason inline when something the user can act on is in
@@ -455,7 +492,11 @@ private fun SpeciesResultRow(
  * one screen that renders a gallery URI before registration.
  */
 @Composable
-private fun PhotoAttachRow(photo: PickedPhoto?, onPickPhoto: () -> Unit) {
+private fun PhotoAttachRow(
+    photo: PickedPhoto?,
+    onPickPhoto: () -> Unit,
+    onTakePhoto: () -> Unit,
+) {
     val colors = DexTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -506,6 +547,17 @@ private fun PhotoAttachRow(photo: PickedPhoto?, onPickPhoto: () -> Unit) {
                 color = if (photo == null) colors.faint else colors.accent,
             )
         }
+        // M40. Its own tap target rather than a second row: the camera is the other way to
+        // get the same one photo, not a separate step.
+        Text(
+            text = "📷",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.accentSoft)
+                .clickable(onClick = onTakePhoto)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
     }
 }
 

@@ -16,6 +16,8 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
+import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
 import dev.tlong.biodex.domain.Kingdom
@@ -238,12 +240,29 @@ class RegisterViewModel(
     fun onRegister() {
         val speciesId = selectedSpeciesId.value ?: return
         val picked = photo.value ?: return
+        val kingdom = uiState.value.selected?.kingdom ?: Kingdom.ANIMAL
         if (registering.value) return
         registering.value = true
         viewModelScope.launch {
-            when (val result = registrar.register(speciesId, picked.uri)) {
-                is CaptureRegistrar.RegisterResult.Registered ->
+            // D26: a camera shot lives in app cache until this moment. A kingdom that keeps
+            // its photo gets it promoted into the gallery now, so the user finds it where
+            // every other photo of theirs is; a plant's is never promoted and is swept below,
+            // which is what keeps it out of the gallery entirely (M41).
+            val registerUri = if (shouldPromoteToGallery(picked.source, kingdom)) {
+                withContext(Dispatchers.IO) {
+                    photos.promoteToGallery(picked.uri, picked.displayName ?: "BioDex.jpg")
+                } ?: picked.uri
+            } else {
+                picked.uri
+            }
+
+            when (val result = registrar.register(speciesId, registerUri)) {
+                is CaptureRegistrar.RegisterResult.Registered -> {
+                    if (shouldDeleteCacheFile(picked.source)) {
+                        withContext(Dispatchers.IO) { photos.sweepCameraCache() }
+                    }
                     events.send(RegisterEvent.Registered(result.speciesId, result.isFirst))
+                }
 
                 is CaptureRegistrar.RegisterResult.ThumbnailFailed -> {
                     error.value = "That photo could not be read. Pick another one — nothing " +
