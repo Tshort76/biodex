@@ -55,9 +55,22 @@ class SettingsViewModel(
                     cacheSizes = sizes,
                     grantCount = grants,
                     grantPressure = grantPressure(grants),
+                    plantNetKey = settings.plantNetKeyNow().orEmpty(),
+                    identificationsUsed = settings.identificationsUsedNow(),
+                    identificationCap = settings.identificationCapNow(),
                 )
             }
         }
+    }
+
+    /**
+     * M39. Stored the moment it is typed, because the alternative is a Save button whose only
+     * job is to be forgotten — and a key that looks pasted but is not is the exact failure the
+     * disabled button's reason would then be lying about.
+     */
+    fun setPlantNetKey(value: String) {
+        settings.setPlantNetKey(value)
+        _uiState.update { it.copy(plantNetKey = value) }
     }
 
     /**

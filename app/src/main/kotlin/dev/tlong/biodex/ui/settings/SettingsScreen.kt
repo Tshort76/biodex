@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,7 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.graphics.SolidColor
 import dev.tlong.biodex.appContainer
+import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.theme.DexTheme
@@ -80,6 +83,10 @@ fun SettingsRoute(
         onImport = { archivePicker.launch(ARCHIVE_MIME_TYPES) },
         onClearCaches = viewModel::clearReferenceCaches,
         onOpenLicenses = onOpenLicenses,
+        onPlantNetKey = viewModel::setPlantNetKey,
+        onOpenUrl = { url ->
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        },
     )
 }
 
@@ -99,6 +106,8 @@ fun SettingsScreen(
     onImport: () -> Unit,
     onClearCaches: () -> Unit,
     onOpenLicenses: () -> Unit,
+    onPlantNetKey: (String) -> Unit = {},
+    onOpenUrl: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -242,6 +251,43 @@ fun SettingsScreen(
                 )
             }
 
+            // M31/M36/M37/M39. The key, what the cap has left, and — said here rather than
+            // only in `licenses.md` — exactly what leaves the phone when the button is pressed.
+            SectionHeader("Identification")
+            SettingCard {
+                Text(
+                    text = IDENTIFICATION_KEY_TEXT,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.muted,
+                )
+                Box(modifier = Modifier.height(10.dp))
+                KeyField(
+                    value = state.plantNetKey,
+                    onValueChange = onPlantNetKey,
+                    placeholder = "Paste your Pl@ntNet API key",
+                )
+                Text(
+                    text = "Get a key at my.plantnet.org ↗",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.accent,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .clickable { onOpenUrl(PlantNetIdentifier.KEY_SIGNUP_URL) },
+                )
+                Text(
+                    text = state.identificationLine,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (state.identificationCapReached) colors.warn else colors.faint,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+                Text(
+                    text = IDENTIFICATION_PRIVACY_TEXT,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.muted,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+
             SectionHeader("About")
             SettingCard {
                 Text(
@@ -268,6 +314,39 @@ fun SettingsScreen(
 
             Box(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+/**
+ * The key field. It shows the key in full rather than masking it: this is a rate-limit token
+ * for a public plant API on the owner's own phone, and a masked field the user cannot check
+ * against the one they were emailed turns a typo into a mystery.
+ */
+@Composable
+private fun KeyField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
+    val colors = DexTheme.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.codeBg)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        if (value.isEmpty()) {
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.faint,
+            )
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+            cursorBrush = SolidColor(colors.accent),
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
