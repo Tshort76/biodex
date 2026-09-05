@@ -5,7 +5,11 @@ import dev.tlong.biodex.domain.DexProgressMath.SpeciesRow
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** M15 and D9: the counting rules that the grid header and the Stats screen both read. */
+/**
+ * M15 and D9 as revised by D29: the counting rules that the grid header and the Stats screen
+ * both read. A caught species the user added counts like any other, on both sides of every
+ * fraction it belongs to.
+ */
 class DexProgressMathTest {
 
     private fun curated(id: String, taxClass: TaxClass, caught: Boolean) =
@@ -21,7 +25,7 @@ class DexProgressMathTest {
     )
 
     @Test
-    fun `the overall meter counts curated species only, with user-added as an addendum`() {
+    fun `the overall meter counts the user's own species inside the fraction`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
@@ -36,9 +40,29 @@ class DexProgressMathTest {
             ecosystems = emptyList(),
         )
 
-        assertEquals(3, progress.totalSpecies)
-        assertEquals(2, progress.caughtCount)
+        // D29: three curated animals plus the two the user added is a denominator of five,
+        // and their two catches are in the numerator with the heron and the coyote.
+        assertEquals(5, progress.totalSpecies)
+        assertEquals(4, progress.caughtCount)
         assertEquals(2, progress.userAddedCount)
+    }
+
+    @Test
+    fun `an uncaught user-added species enters neither side of the fraction`() {
+        // Only a backup import can produce one. It must not inflate the denominator: a
+        // species nobody has found is not something the user is being asked to find.
+        val progress = DexProgressMath.compute(
+            regionId = "pacific",
+            regionName = "Pacific USA",
+            species = listOf(
+                curated("heron", TaxClass.BIRD, caught = true),
+                user("ghost", TaxClass.BIRD, caught = false),
+            ),
+            memberships = emptyList(),
+            ecosystems = emptyList(),
+        )
+
+        assertEquals(Meter(caught = 1, total = 1, userAdded = 0), progress.animals)
     }
 
     @Test
@@ -75,7 +99,7 @@ class DexProgressMathTest {
     }
 
     @Test
-    fun `class meters keep user-added species out of the fraction`() {
+    fun `class meters count user-added species inside the fraction`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
@@ -89,7 +113,7 @@ class DexProgressMathTest {
         )
 
         val birds = progress.perClass.single { it.first == TaxClass.BIRD }.second
-        assertEquals(Meter(caught = 1, total = 2, userAdded = 1), birds)
+        assertEquals(Meter(caught = 2, total = 3, userAdded = 1), birds)
     }
 
     @Test
@@ -132,7 +156,7 @@ class DexProgressMathTest {
     }
 
     @Test
-    fun `a tagged user-added species shows as an ecosystem addendum, outside the fraction`() {
+    fun `a tagged user-added species counts inside its ecosystem's fraction`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
@@ -150,7 +174,7 @@ class DexProgressMathTest {
         )
 
         val wetland = progress.perEcosystem.single { it.ecosystem.id == "riparian-wetland" }.animals
-        assertEquals(Meter(caught = 1, total = 2, userAdded = 1), wetland)
+        assertEquals(Meter(caught = 2, total = 3, userAdded = 1), wetland)
     }
 
     @Test
@@ -280,7 +304,7 @@ class DexProgressMathTest {
     }
 
     @Test
-    fun `each kingdom has its own meter and its own addenda`() {
+    fun `each kingdom counts its own user-added species and no other kingdom's`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
@@ -297,11 +321,11 @@ class DexProgressMathTest {
             ecosystems = emptyList(),
         )
 
-        assertEquals(Meter(caught = 1, total = 2, userAdded = 1), progress.animals)
-        assertEquals(Meter(caught = 1, total = 3, userAdded = 1), progress.plants)
-        // One number, both kingdoms — the "+2 of your own" line (D9).
+        assertEquals(Meter(caught = 2, total = 3, userAdded = 1), progress.animals)
+        assertEquals(Meter(caught = 2, total = 4, userAdded = 1), progress.plants)
+        // One number, both kingdoms — the "2 of your own" line (D29).
         assertEquals(2, progress.userAddedCount)
-        assertEquals(5, progress.totalSpecies)
+        assertEquals(7, progress.totalSpecies)
     }
 
     @Test
@@ -326,7 +350,9 @@ class DexProgressMathTest {
 
         val wetland = progress.perEcosystem.single { it.ecosystem.id == "riparian-wetland" }
         assertEquals(Meter(caught = 1, total = 2, userAdded = 0), wetland.animals)
-        assertEquals(Meter(caught = 1, total = 1, userAdded = 1), wetland.plants)
+        // The user's fern joins the elder in the plant fraction (D29); it stays out of the
+        // animal one, which is the "never mixed in" half of this test.
+        assertEquals(Meter(caught = 2, total = 2, userAdded = 1), wetland.plants)
     }
 
     @Test

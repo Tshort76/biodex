@@ -427,8 +427,11 @@ internal fun ecosystemHeader(state: StatsUiState): String = when {
 }
 
 /**
- * The mockup's `39% caught · +3 of your own · last new catch Aug 30, 2026`. Each clause
- * disappears when it has nothing to say, rather than reading "+0".
+ * The mockup's `39% caught · 3 of your own · last new catch Aug 30, 2026`. Each clause
+ * disappears when it has nothing to say, rather than reading "0".
+ *
+ * D29 dropped the `+`: the user's own species are inside the fractions now, so the clause
+ * says how many of the caught species they added rather than announcing an extra pile.
  *
  * The percentage is dropped once the region has a second kingdom: frame 5 drops it too, and
  * one percentage over two or three life lists would have to blend them, which D13 forbids.
@@ -436,7 +439,7 @@ internal fun ecosystemHeader(state: StatsUiState): String = when {
  */
 internal fun summaryLine(state: StatsUiState): String = buildList {
     if (!state.multipleKingdoms) add("${state.percentCaught}% caught")
-    if (state.userAdded > 0) add("+${state.userAdded} of your own")
+    if (state.userAdded > 0) add("${state.userAdded} of your own")
     state.lastCatchAt?.let { add("last new catch ${statsDateFormat.format(Date(it))}") }
 }.joinToString(" · ")
 

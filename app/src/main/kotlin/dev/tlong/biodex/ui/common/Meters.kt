@@ -35,9 +35,10 @@ import dev.tlong.biodex.ui.theme.DexTheme
  * class meters with `accent`**, so a glance tells the two breakdowns apart even though the
  * rows are otherwise identical.
  *
- * D9's addendum is the other rule these components exist to hold. A user-added species is
- * shown as a trailing `+1` beside the fraction, never inside it — the bar's fill and the
- * `12/24` are curated species only.
+ * D9 used to be the other rule these components held: a user-added species was a trailing
+ * `+1` beside the fraction, never inside it. D29 reversed that — a species the user added is
+ * counted in the fraction like any other, so there is no trailing slot any more and the bar
+ * fills with everything the user has caught.
  */
 
 /** `.brow.eco` — one ecosystem's progress. */
@@ -171,18 +172,8 @@ private fun MeterRow(
             maxLines = 1,
             modifier = Modifier.width(44.dp),
         )
-        // D9: outside the fraction, always. A blank slot keeps the rows aligned when a
-        // meter has no user-added species of its own.
-        Text(
-            text = if (meter.userAdded > 0) "+${meter.userAdded}" else "",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                fontFeatureSettings = "tnum",
-            ),
-            color = colors.faint,
-            maxLines = 1,
-            modifier = Modifier.width(24.dp),
-        )
+        // D29 removed the trailing `+N` slot. The user's own species are inside the fraction
+        // now, so a row that also carried the addendum read `2/122 +2` and counted them twice.
     }
 }
 

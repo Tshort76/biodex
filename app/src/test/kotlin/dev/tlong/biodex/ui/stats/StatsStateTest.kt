@@ -57,7 +57,7 @@ class StatsStateTest {
     )
 
     @Test
-    fun `the fraction counts curated species and the addendum stays outside it`() {
+    fun `the fraction counts the user's own species alongside the curated ones`() {
         val species = listOf(
             summary("owl", caughtAt = 100L),
             summary("heron"),
@@ -65,11 +65,12 @@ class StatsStateTest {
         )
         val state = buildStatsUiState(progressOf(species), species)
 
-        assertEquals(1, state.overall.caught)
-        assertEquals(2, state.overall.total)
+        // D29: the owl and the user's thrush are both caught, out of three birds counted.
+        assertEquals(2, state.overall.caught)
+        assertEquals(3, state.overall.total)
         assertEquals(1, state.overall.userAdded)
-        assertEquals(50, state.percentCaught)
-        assertTrue(summaryLine(state).contains("+1 of your own"))
+        assertEquals(66, state.percentCaught)
+        assertTrue(summaryLine(state).contains("1 of your own"))
     }
 
     @Test
@@ -180,7 +181,7 @@ class StatsStateTest {
     }
 
     @Test
-    fun `the addendum counts user-added species from all three kingdoms`() {
+    fun `the summary line counts user-added species from all three kingdoms`() {
         val species = listOf(
             summary("owl", caughtAt = 1L),
             summary("thrush", source = SpeciesSource.USER, caughtAt = 2L),
@@ -189,7 +190,7 @@ class StatsStateTest {
         val state = buildStatsUiState(withFungi(species, Meter(0, 30, 2)), species)
 
         assertEquals(4, state.userAdded)
-        assertTrue(summaryLine(state).contains("+4 of your own"))
+        assertTrue(summaryLine(state).contains("4 of your own"))
     }
 
     @Test

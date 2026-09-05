@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,14 +22,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -109,15 +108,6 @@ fun DexGridScreen(
     Scaffold(
         containerColor = colors.bg,
         bottomBar = { DexBottomBar(selected = 0, onDex = {}, onStats = onOpenStats) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onRegister,
-                containerColor = colors.accent,
-                contentColor = colors.card,
-            ) {
-                Text(text = "＋", style = MaterialTheme.typography.headlineSmall)
-            }
-        },
     ) { inner ->
         Column(
             modifier = Modifier
@@ -130,6 +120,7 @@ fun DexGridScreen(
                 animals = state.animals,
                 plants = state.plants.takeIf { state.showPlantPill },
                 fungi = state.fungi.takeIf { state.showFungiPill },
+                onRegister = onRegister,
                 onOpenSettings = onOpenSettings,
             )
             SearchField(query = state.query, onQueryChange = onQueryChange)
@@ -149,7 +140,7 @@ fun DexGridScreen(
                 else -> LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 88.dp),
+                    contentPadding = PaddingValues(bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -175,6 +166,7 @@ private fun GridAppBar(
     animals: Meter,
     plants: Meter?,
     fungi: Meter?,
+    onRegister: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     Row(
@@ -214,9 +206,55 @@ private fun GridAppBar(
                 glyph = "\uD83C\uDF44",
             )
         }
-        TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 4.dp)) {
-            Text(text = "⚙", color = DexTheme.colors.muted)
-        }
+        RegisterButton(onClick = onRegister)
+        // Was a TextButton, whose Material minimum size is 58dp wide for a one-glyph label.
+        // The Register button had to come from somewhere: matching the gear to it costs the
+        // header less width than it did before, rather than more.
+        HeaderIconButton(glyph = "⚙", tint = DexTheme.colors.muted, onClick = onOpenSettings)
+    }
+}
+
+/**
+ * Register a species (D31). This was the Scaffold's floating action button until the owner
+ * asked for it at the top: the grid is scrolled far more often than it is registered into,
+ * and a FAB sits over the tiles the whole time it is not being used.
+ *
+ * An accent circle rather than another muted text button, because it is the one control on
+ * this screen that adds to the collection.
+ */
+@Composable
+private fun RegisterButton(onClick: () -> Unit) = HeaderIconButton(
+    glyph = "＋",
+    tint = DexTheme.colors.card,
+    background = DexTheme.colors.accent,
+    onClick = onClick,
+)
+
+/**
+ * One glyph in a 34dp circle. Both of the header's controls are this shape, because the row
+ * has to hold a title, a region pill and three progress meters on a phone: a control here is
+ * bought with width that the numbers would otherwise have.
+ */
+@Composable
+private fun HeaderIconButton(
+    glyph: String,
+    tint: Color,
+    onClick: () -> Unit,
+    background: Color = Color.Transparent,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .background(background)
+            .clickable(onClick = onClick),
+    ) {
+        Text(
+            text = glyph,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = tint,
+        )
     }
 }
 

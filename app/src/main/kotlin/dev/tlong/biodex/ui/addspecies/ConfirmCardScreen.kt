@@ -443,7 +443,10 @@ private fun MiniHero(state: ConfirmSpeciesUiState.Card) {
             AsyncImage(
                 model = url,
                 contentDescription = state.fields.commonName,
-                contentScale = ContentScale.Crop,
+                // D30, same rule as the detail hero: this is the image the pipeline pulled
+                // from Wikimedia, and cropping it to fill is how the confirmation card came
+                // to show a bird's wing. The frame is the species' first impression.
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {

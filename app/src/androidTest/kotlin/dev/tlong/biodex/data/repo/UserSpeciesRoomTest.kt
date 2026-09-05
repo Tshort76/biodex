@@ -117,13 +117,13 @@ class UserSpeciesRoomTest {
     }
 
     @Test
-    fun aUserSpeciesIsExcludedFromTheCuratedMeter() = runBlocking {
+    fun aUserSpeciesIsCountedInTheMeter() = runBlocking {
         repository.upsertUserSpecies(
             record("user-1", 9001, SpeciesFields(commonName = "Varied Thrush")),
             listOf("coastal-rainforest"),
         )
 
-        // The addendum counts user species that are *caught*, and a species is caught only
+        // The meter counts user species that are *caught*, and a species is caught only
         // when it has an entry — which in the app it always does, because the only way to
         // add one is to register a photo. Written without that row, this test asked for a
         // count the math deliberately does not produce (found when a device first ran it).
@@ -131,10 +131,12 @@ class UserSpeciesRoomTest {
 
         val progress = repository.dexProgress().first()
 
-        // M02/D9: user-added species are an addendum, never part of the 120.
-        assertEquals(1, progress.totalSpecies)
+        // M02/D29: the user's thrush joins the curated owl on both sides of the fraction,
+        // so one curated bird plus one of the user's own reads 1/2 with one of them theirs.
+        assertEquals(2, progress.totalSpecies)
+        assertEquals(1, progress.caughtCount)
         assertEquals(1, progress.userAddedCount)
-        assertEquals(1, progress.animals.total)
+        assertEquals(2, progress.animals.total)
         assertEquals(1, progress.animals.userAdded)
     }
 

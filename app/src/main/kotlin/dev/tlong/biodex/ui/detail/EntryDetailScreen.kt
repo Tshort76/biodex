@@ -504,12 +504,18 @@ private fun Hero(
             .background(colors.silBg),
         contentAlignment = Alignment.Center,
     ) {
-        SilhouetteIcon(
-            silhouetteRes = summary.silhouetteRes,
-            taxClass = summary.taxClass,
-            size = 120.dp,
-            tint = if (summary.caught) colors.accent else colors.sil,
-        )
+        // Hidden once the photograph is actually on screen. The image is scaled to fit rather
+        // than to fill (D30), so it letterboxes, and a silhouette showing through the bands
+        // reads as a rendering fault rather than as a placeholder. Every other phase still
+        // draws it, which is what keeps the frame from being empty between request and pixel.
+        if (visual !is HeroVisual.Reference) {
+            SilhouetteIcon(
+                silhouetteRes = summary.silhouetteRes,
+                taxClass = summary.taxClass,
+                size = 120.dp,
+                tint = if (summary.caught) colors.accent else colors.sil,
+            )
+        }
         // Requested whenever there is something to request, and hidden rather than removed
         // when it is not the thing on show. Taking a failed image out of the composition would
         // reset Coil's painter, which reports its way back to Loading — and the hero would
@@ -519,7 +525,10 @@ private fun Hero(
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                    // D30. Reference photographs arrive at whatever aspect ratio Wikimedia
+                    // holds them at, and filling a 158dp letterbox frame with a portrait bird
+                    // shot cropped the bird out of it. Fit shows the whole animal.
+                    contentScale = ContentScale.Fit,
                     alpha = if (visual is HeroVisual.Reference) 1f else 0f,
                     onState = { coilState ->
                         when (coilState) {

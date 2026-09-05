@@ -270,8 +270,9 @@ data class SpeciesDetail(
 )
 
 /**
- * One meter. [caught] / [total] is the curated fraction; [userAdded] is D9's addendum
- * ("12/24 +1") and is deliberately outside the fraction.
+ * One meter. [caught] / [total] counts the curated catalogue plus every species the user
+ * added and caught (D29); [userAdded] says how many of the caught ones are the user's own,
+ * which is a breakdown of the numerator rather than an addendum beside it.
  */
 data class Meter(
     val caught: Int,

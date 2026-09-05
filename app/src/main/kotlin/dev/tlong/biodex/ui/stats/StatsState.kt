@@ -14,10 +14,11 @@ import kotlinx.coroutines.flow.combine
  * be checked without a device — which matters here more than on any other screen, because
  * the slice's phone check is "the stats reconcile with the grid by hand-count".
  *
- * Two rules from D9 run through everything below and neither is negotiable:
- *  - **Only curated species are inside a fraction.** 47 / 120 counts the catalogue.
- *  - **User-added species are an addendum**, "+3 of your own", never a numerator or a
- *    denominator. `DexProgressMath` already enforces this; this file only renders it.
+ * The counting rule, from D9 as revised by D29:
+ *  - **A caught species is a caught species, whoever put it in the dex.** 49 / 122 is the
+ *    catalogue's 120 animals plus the two the user added themselves.
+ *  - [userAdded] says how many of those are the user's own, for the summary line only.
+ *    `DexProgressMath` decides all of it; this file only renders what it decided.
  */
 
 data class StatsUiState(
@@ -61,7 +62,7 @@ data class StatsUiState(
      */
     val multipleKingdoms: Boolean get() = showPlants || showFungi
 
-    /** D9's addendum across every kingdom: "+3 of your own" stays one number (11.4). */
+    /** How many caught species are the user's own, across every kingdom (D29, 11.4). */
     val userAdded: Int get() = overall.userAdded + plants.userAdded + fungi.userAdded
 
     /**
