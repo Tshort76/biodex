@@ -937,7 +937,7 @@ Nearest is the clearest case yet for keeping the measure pure and in `domain/`: 
 
 The structural point behind two of these is worth stating once, because it is the pattern to copy: **an invariant belongs at the single door into the store, not on a screen.** `M41` is enforced in `AddSpeciesRegistrar` because that is the one write path and it is JVM-testable; only the side effects it cannot perform — promoting a camera shot, sweeping the cache — live in the ViewModel, which is the first place that knows the kingdom.
 
-**Verification as of this wave: 465 JVM tests, 43 instrumented, 18 Python** (§8 has the split and the commands). There are still no screenshot or UI tests by choice, so UI work is finished on the phone. That is not ceremony: the filter dropdowns passed every JVM test and still shipped two defects a device pass caught in a minute — the menus were rendering on Material's default lavender surface instead of the app palette, and an open menu gave no sign of which option was active.
+**Verification as of this wave: 469 JVM tests, 43 instrumented, 18 Python** (§8 has the split and the commands). There are still no screenshot or UI tests by choice, so UI work is finished on the phone. That is not ceremony: the filter dropdowns passed every JVM test and still shipped two defects a device pass caught in a minute — the menus were rendering on Material's default lavender surface instead of the app palette, and an open menu gave no sign of which option was active.
 
 If a future wave *is* planned as parallel slices, add §11.9 and follow §11.6's shape — the disjointness table is the part that earns its keep. Work not yet started is in `BACKLOG.md`, not here.
 
