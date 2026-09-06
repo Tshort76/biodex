@@ -17,20 +17,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.theme.DexTheme
@@ -136,8 +139,14 @@ fun AttributionLine(text: String, modifier: Modifier = Modifier) {
  *
  * The photo comes from the capture's **stored thumbnail**, never from the gallery URI (M11).
  * That is the rule that makes a broken reference a one-photo problem rather than a blank
- * collection: the grid does not resolve anything, so it cannot fail. If the thumbnail file is
- * somehow missing, Coil's error slot falls back to the silhouette rather than a hole.
+ * collection: the grid does not resolve anything, so it cannot fail.
+ *
+ * A thumbnail file can still go missing — restoring a database without the files beside it
+ * does exactly that — and then the cell draws the silhouette **the same way the no-photo
+ * branch draws it**, sized and centred, rather than through Coil's error slot. The error slot
+ * inherits the photo's `Crop` scaling, which blew the silhouette up to fill the tile and made
+ * a caught species read as an enlarged uncaught one. The chrome still says caught either way
+ * (M12): accent border, accent ground, the tick, and an accent-tinted shape.
  */
 @Composable
 fun SpeciesCell(
@@ -153,6 +162,7 @@ fun SpeciesCell(
     // §5.3.1. The image is whichever the state calls for; the *chrome* is decided before and
     // independently of it, which is what makes the offline fallback keep saying "caught".
     val imageModel = thumbModel ?: species.imageUrl.takeIf { accented }
+    var imageFailed by remember(imageModel) { mutableStateOf(false) }
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
@@ -171,18 +181,14 @@ fun SpeciesCell(
                 .background(if (accented) colors.accentSoft else colors.silBg),
             contentAlignment = Alignment.Center,
         ) {
-            if (imageModel != null) {
+            if (imageModel != null && !imageFailed) {
                 AsyncImage(
                     model = imageModel,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    error = painterResource(
-                        Silhouettes.resolve(
-                            LocalContext.current,
-                            species.silhouetteRes,
-                            species.taxClass,
-                        ),
-                    ),
+                    onState = { state ->
+                        if (state is AsyncImagePainter.State.Error) imageFailed = true
+                    },
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
