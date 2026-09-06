@@ -18,6 +18,7 @@ SDK_DIR := $(shell sed -n 's/^sdk\.dir=//p' local.properties 2>/dev/null)
 
 GRADLE := JAVA_HOME="$(JAVA_HOME)" ANDROID_HOME="$(SDK_DIR)" ./gradlew
 ADB := $(SDK_DIR)/platform-tools/adb
+PKG := dev.tlong.biodex
 
 .DEFAULT_GOAL := help
 .PHONY: help doctor debug release install test test-device check catalogue catalogue-test screenshot clean
@@ -62,9 +63,28 @@ install: ## Build and install onto the attached phone
 test: ## Run the JVM tests (no device needed)
 	@$(GRADLE) testDebugUnitTest
 
-test-device: ## Run the instrumented tests (needs a phone; UNINSTALLS the app afterwards)
+test-device: ## Run the instrumented tests (needs a phone; UNINSTALLS the app — see the guard)
+	@if [ "$(CONFIRM)" != "uninstall" ]; then \
+		tmp=$$(mktemp); \
+		"$(ADB)" shell run-as $(PKG) cat databases/biodex.db > $$tmp 2>/dev/null; \
+		n=$$(python3 -c "import sqlite3,sys;print(sqlite3.connect(sys.argv[1]).execute(\"select count(*) from captures where photoUri is not null\").fetchone()[0])" $$tmp 2>/dev/null || echo 0); \
+		rm -f $$tmp; \
+		if [ "$$n" != "0" ] && [ -n "$$n" ]; then \
+			echo "Refusing to run: the phone holds $$n registered photo(s)."; \
+			echo; \
+			echo "This target uninstalls the app when it finishes, and that costs more than the"; \
+			echo "database. The thumbnails under files/ are what the grid draws, and the stored"; \
+			echo "gallery URIs are grants held by the installed package — Android revokes them on"; \
+			echo "uninstall, so no backup restores them. Each photo has to be re-linked by hand."; \
+			echo; \
+			echo "Export from the app first (Settings -> export), then:"; \
+			echo "    make test-device CONFIRM=uninstall"; \
+			exit 1; \
+		fi; \
+	fi
 	@$(GRADLE) connectedDebugAndroidTest
-	@echo "Note: that run uninstalled BioDex from the phone. 'make install' puts it back."
+	@echo "Note: that run uninstalled BioDex from the phone. 'make install' puts it back,"
+	@echo "but every registered photo needs re-linking from its entry's photo viewer."
 
 check: catalogue-test ## Everything runnable without a phone: JVM tests + catalogue tests
 	@$(GRADLE) testDebugUnitTest --rerun-tasks

@@ -20,7 +20,7 @@ make doctor     # check the toolchain; names whatever is missing
 make check      # JVM tests + catalogue tests, no phone      (the usual pre-commit gate)
 make test       # JVM tests only
 make install    # build and install onto an attached phone
-make test-device   # instrumented tests; UNINSTALLS the app afterwards
+make test-device   # instrumented tests; UNINSTALLS the app — refuses while photos are registered
 make catalogue  # regenerate the bundled catalogue asset
 ```
 
@@ -38,7 +38,7 @@ Three traps worth knowing before you trust a green run:
 
 - **`testDebugUnitTest` does not treat the catalogue asset as an input.** Change `pacific.json` or anything under `tools/catalogue/` and Gradle reports `BUILD SUCCESSFUL in 3s` off stale results. `make check` passes `--rerun-tasks` for exactly this reason; plain `make test` does not.
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
-- **`make test-device` uninstalls the app when it finishes.** If BioDex vanishes from the phone after a test run, that is why — `make install` puts it back.
+- **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
 Counts as of the last commit: **469 JVM, 43 instrumented, 18 Python.**
 
