@@ -119,3 +119,9 @@ Pushes go over SSH. If a push fails with a 403, the remote is resolving to the w
 ## Driving the phone
 
 Verification on a real device is a normal part of finishing UI work here, since there are no screenshot tests. `adb shell input text` **drops characters in Compose text fields** ("Dandelion" arrives as "Dandeln") — type one character per call in a loop. To read the database, pull `biodex.db` **plus `biodex.db-wal` and `biodex.db-shm`** or you will see no rows; there is no `sqlite3` binary on the device, so query the pulled files locally.
+
+`adb` is not on `PATH`: it is at `$(dirname $(grep sdk.dir local.properties | cut -d= -f2))/platform-tools/adb` — today `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`.
+
+**Back up the database before anything that uninstalls the app**, which includes `make test-device` and every launcher-icon check below. The collection cannot be re-earned. Pull `biodex.db`, checkpoint its WAL locally (`PRAGMA wal_checkpoint(TRUNCATE)`, which also removes the sidecar files) so one file carries everything, then with the app force-stopped delete the `-wal`/`-shm` a fresh install made and push it back through `run-as` — using an **absolute** path, since `run-as ... sh -c 'cat > databases/x'` fails on a relative one.
+
+**A launcher-icon change will not appear on a same-version reinstall.** The launcher caches icons keyed by package version, so `make install` leaves the old icon on screen and a correct change reads as a failure — `adb uninstall dev.tlong.biodex && make install` is what busts it. Judge the icon's composition from a local render instead (crop the central 72dp of the generated 108dp PNG and apply the mask); a drawer screenshot is ~140px and too blurred to judge. `tools/icon/build_icon.py` holds the geometry and how the mask was measured.
