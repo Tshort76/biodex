@@ -267,7 +267,51 @@ data class SpeciesDetail(
     /** The Duke's credit line, non-null exactly when the two fields above are populated. */
     val usesAttribution: String? = null,
     val userEditedFields: List<String>,
+    /** D34: the cells this species shades on the range map. Empty means no map is drawn. */
+    val rangeCells: List<Int> = emptyList(),
 )
+
+/**
+ * The shared world outline every species' range map is drawn over (D34).
+ *
+ * One bit per cell of a [width] x [height] equirectangular grid, row-major from the
+ * north-west corner, land set. It is region-level because it is the same world every time —
+ * the whole point of the design is that only the shading differs between species.
+ */
+data class RangeGrid(
+    val width: Int,
+    val height: Int,
+    val land: List<Boolean>,
+) {
+    val isUsable: Boolean get() = width > 0 && height > 0 && land.size == width * height
+
+    companion object {
+        val Empty = RangeGrid(0, 0, emptyList())
+
+        /**
+         * Decodes the asset's base64 bitmask. Anything malformed decodes to [Empty] rather
+         * than throwing: a map is an ornament on the detail screen, and no ornament is ever
+         * worth taking down the screen that carries the user's own photographs.
+         */
+        fun fromMask(mask: String?, width: Int, height: Int): RangeGrid {
+            if (mask.isNullOrBlank() || width <= 0 || height <= 0) return Empty
+            // java.util.Base64, not android.util.Base64: nothing in `domain/` may touch
+            // Android, and the Android one is a stub in unit tests that throws rather than
+            // decoding. minSdk is 29, so this is available everywhere the app runs.
+            val bytes = runCatching { java.util.Base64.getDecoder().decode(mask) }
+                .getOrNull() ?: return Empty
+            val cells = width * height
+            if (bytes.size < (cells + 7) / 8) return Empty
+            return RangeGrid(
+                width = width,
+                height = height,
+                land = List(cells) { cell ->
+                    bytes[cell / 8].toInt() shr (cell % 8) and 1 == 1
+                },
+            )
+        }
+    }
+}
 
 /**
  * One meter. [caught] / [total] counts the curated catalogue plus every species the user

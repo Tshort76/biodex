@@ -33,6 +33,7 @@ class EntryDetailViewModel(
         captures = repository.captures(speciesId),
         progress = repository.dexProgress(),
         online = networkMonitor.online,
+        rangeGrid = repository.rangeGrid(),
     ).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

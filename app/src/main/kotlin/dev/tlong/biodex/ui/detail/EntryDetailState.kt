@@ -7,6 +7,7 @@ import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.UsesNote
 import dev.tlong.biodex.ui.common.UsesContent
+import dev.tlong.biodex.domain.RangeGrid
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -25,9 +26,24 @@ data class EntryDetailUiState(
     val totalCount: Int = 0,
     /** 5.3's network probe. Distinguishes "not cached yet" from "failed" in the image slot. */
     val online: Boolean = true,
+    /** D34's shared map outline. Empty until the catalogue has been imported. */
+    val rangeGrid: RangeGrid = RangeGrid.Empty,
     val loading: Boolean = true,
 ) {
     val missing: Boolean get() = !loading && detail == null
+
+    /**
+     * D34's mini-map, or null when there is nothing honest to draw — no outline yet, or a
+     * species GBIF holds no records for, which includes every user-added species until a
+     * backfill. An empty map frame would say "this species lives nowhere", which is a claim
+     * the app has no business making; drawing nothing says nothing.
+     */
+    val rangeMap: RangeMapContent?
+        get() {
+            val cells = detail?.rangeCells.orEmpty()
+            if (cells.isEmpty() || !rangeGrid.isUsable) return null
+            return RangeMapContent(grid = rangeGrid, cells = cells.toSet())
+        }
 
     val favoriteCaptureId: String? get() = captures.firstOrNull()?.id
 
@@ -67,12 +83,19 @@ data class EntryDetailUiState(
         }
 }
 
+/** What the mini-map needs: the shared outline, and this species' cells within it (D34). */
+data class RangeMapContent(
+    val grid: RangeGrid,
+    val cells: Set<Int>,
+)
+
 fun entryDetailUiState(
     detail: Flow<SpeciesDetail?>,
     ecosystems: Flow<List<Ecosystem>>,
     captures: Flow<List<Capture>>,
     progress: Flow<DexProgress>,
     online: Flow<Boolean>,
+    rangeGrid: Flow<RangeGrid> = kotlinx.coroutines.flow.flowOf(RangeGrid.Empty),
 ): Flow<EntryDetailUiState> {
     val fromRepository = combine(detail, ecosystems, captures, progress) { species, ecos, caps, prog ->
         EntryDetailUiState(
@@ -90,7 +113,9 @@ fun entryDetailUiState(
             loading = false,
         )
     }
-    return combine(fromRepository, online) { base, net -> base.copy(online = net) }
+    return combine(fromRepository, online, rangeGrid) { base, net, grid ->
+        base.copy(online = net, rangeGrid = grid)
+    }
 }
 
 /** Unknown ids are dropped rather than rendered raw; sort order is the catalogue's. */

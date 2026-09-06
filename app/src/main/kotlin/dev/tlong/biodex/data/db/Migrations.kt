@@ -58,6 +58,30 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 /**
+ * D34's range maps: three columns on `regions` for the shared map outline and its grid, and
+ * one on `species` for the cells that species shades.
+ *
+ * Every one is an `ADD COLUMN`, which SQLite does support — so unlike [MIGRATION_1_2] there
+ * is no table recreate here and no chance of a hand-typed `CREATE TABLE` drifting from
+ * Room's. The two rules that matter are that a `NOT NULL` column added to a table that has
+ * rows needs a `DEFAULT`, and that the default must match the `@ColumnInfo(defaultValue = …)`
+ * on the entity exactly — otherwise Room's identity check fails at the user's next launch
+ * rather than here.
+ *
+ * No row is touched. An existing install lands on this schema with no outline and no cells,
+ * which every screen reads as "no map"; the catalogue reconciler then fills both in from the
+ * asset, which is what the `catalogueVersion` bump to 4 is for.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `regions` ADD COLUMN `landMask` TEXT")
+        db.execSQL("ALTER TABLE `regions` ADD COLUMN `rangeGridWidth` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `regions` ADD COLUMN `rangeGridHeight` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `rangeCells` TEXT NOT NULL DEFAULT '[]'")
+    }
+}
+
+/**
  * The `CREATE TABLE` the migration produces, exposed so a JVM test can compare it against
  * Room's exported schema for version 2 without a device.
  *

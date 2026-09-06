@@ -102,6 +102,12 @@ object CatalogueReconciler {
                 id = document.regionId,
                 name = document.regionName,
                 sortOrder = 0,
+                // D34's map outline rides on the region row, so an upgrade that bumps
+                // `catalogueVersion` delivers it to an install that already exists — which
+                // is the only way a phone with the old schema ever gets a map.
+                landMask = document.landMask,
+                rangeGridWidth = document.rangeGridWidth,
+                rangeGridHeight = document.rangeGridHeight,
             ),
             ecosystems = document.ecosystems.map {
                 EcosystemEntity(
@@ -159,6 +165,9 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
         // The credit line belongs to Duke's data. Without the data it is a claim about a
         // source that contributed nothing, so it goes.
         usesAttribution = usesAttribution?.takeIf { hasDukeRecord },
+        // D34. Overwritten wholesale like every other curated field, so a rebuilt catalogue
+        // corrects a range the same way it corrects a habitat paragraph.
+        rangeCells = rangeCells,
     )
 }
 

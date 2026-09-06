@@ -18,6 +18,16 @@ data class CatalogueDocument(
     val regionName: String,
     val ecosystems: List<CatalogueEcosystem> = emptyList(),
     val species: List<CatalogueSpecies> = emptyList(),
+    /**
+     * D34's shared map outline: one bit per grid cell, land set, base64. It is region-level
+     * because it is the same world on every species' map — only the shading differs.
+     *
+     * Defaulted like everything else here, so an asset built before the range maps existed
+     * still imports; the detail screen simply draws no map.
+     */
+    val landMask: String? = null,
+    val rangeGridWidth: Int = 0,
+    val rangeGridHeight: Int = 0,
 )
 
 @Serializable
@@ -54,6 +64,12 @@ data class CatalogueSpecies(
     val medicinalActivities: List<String> = emptyList(),
     val medicinalRecordCount: Int = 0,
     val usesAttribution: String? = null,
+    /**
+     * D34: the grid cells to shade on this species' map, indexed
+     * `row * rangeGridWidth + column` over the region's grid. Empty is a real answer — GBIF
+     * holds no records for everything — and means the map is not drawn at all.
+     */
+    val rangeCells: List<Int> = emptyList(),
 )
 
 /** The asset path the app reads at runtime (ARCHITECTURE.md 3.2). */

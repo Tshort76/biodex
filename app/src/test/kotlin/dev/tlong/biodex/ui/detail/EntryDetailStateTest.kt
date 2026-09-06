@@ -57,6 +57,7 @@ class EntryDetailStateTest {
         progress: dev.tlong.biodex.domain.DexProgress =
             dev.tlong.biodex.domain.DexProgress.Empty,
         online: Boolean = true,
+        rangeGrid: dev.tlong.biodex.domain.RangeGrid = dev.tlong.biodex.domain.RangeGrid.Empty,
     ) = runBlocking {
         entryDetailUiState(
             detail = MutableStateFlow(species),
@@ -64,6 +65,7 @@ class EntryDetailStateTest {
             captures = MutableStateFlow(captures),
             progress = MutableStateFlow(progress),
             online = MutableStateFlow(online),
+            rangeGrid = MutableStateFlow(rangeGrid),
         ).first()
     }
 
@@ -184,6 +186,65 @@ class EntryDetailStateTest {
     @Test
     fun `an animal still shows no uses section, caution or not`() {
         assertNull(state(withCaution(Kingdom.ANIMAL, TaxClass.BIRD)).uses)
+    }
+
+    // -----------------------------------------------------------------------
+    // D34's range map, and when it must not be drawn.
+    // -----------------------------------------------------------------------
+
+    /** A 4x2 world with the left half land, as the asset's base64 bitmask. */
+    private fun tinyGrid(): dev.tlong.biodex.domain.RangeGrid {
+        // Cells 0,1 and 4,5 set: bits 0,1,4,5 of a single byte -> 0b00110011 = 0x33.
+        val mask = java.util.Base64.getEncoder().encodeToString(byteArrayOf(0x33))
+        return dev.tlong.biodex.domain.RangeGrid.fromMask(mask, width = 4, height = 2)
+    }
+
+    @Test
+    fun `the outline decodes from the asset's bitmask, bit per cell, row-major`() {
+        val grid = tinyGrid()
+        assertTrue(grid.isUsable)
+        assertEquals(listOf(true, true, false, false, true, true, false, false), grid.land)
+    }
+
+    @Test
+    fun `a malformed outline decodes to nothing rather than throwing`() {
+        // A map is an ornament; it must never take down the screen holding the user's photos.
+        val short = java.util.Base64.getEncoder().encodeToString(byteArrayOf(0x01))
+        assertEquals(
+            dev.tlong.biodex.domain.RangeGrid.Empty,
+            dev.tlong.biodex.domain.RangeGrid.fromMask(short, width = 64, height = 64),
+        )
+        assertEquals(
+            dev.tlong.biodex.domain.RangeGrid.Empty,
+            dev.tlong.biodex.domain.RangeGrid.fromMask("not base64 at all!!", 4, 2),
+        )
+        assertEquals(
+            dev.tlong.biodex.domain.RangeGrid.Empty,
+            dev.tlong.biodex.domain.RangeGrid.fromMask(null, 4, 2),
+        )
+    }
+
+    @Test
+    fun `the map is drawn when the species has cells and the outline is loaded`() {
+        val species = detail(listOf("coastal-rainforest")).copy(rangeCells = listOf(1, 5))
+        val map = state(species, rangeGrid = tinyGrid()).rangeMap
+        assertTrue(map != null)
+        assertEquals(setOf(1, 5), map!!.cells)
+    }
+
+    @Test
+    fun `no cells means no map, not an empty one`() {
+        // A species GBIF holds no records for — every user-added one, until a backfill. An
+        // empty frame would claim the species lives nowhere.
+        val species = detail(listOf("coastal-rainforest")).copy(rangeCells = emptyList())
+        assertNull(state(species, rangeGrid = tinyGrid()).rangeMap)
+    }
+
+    @Test
+    fun `no outline means no map, however many cells the species has`() {
+        // An install that has migrated but not yet re-imported the catalogue.
+        val species = detail(listOf("coastal-rainforest")).copy(rangeCells = listOf(1, 5))
+        assertNull(state(species).rangeMap)
     }
 
 }

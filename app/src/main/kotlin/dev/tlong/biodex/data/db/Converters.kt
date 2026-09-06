@@ -41,6 +41,18 @@ class Converters {
     fun jsonToStringList(value: String): List<String> =
         runCatching { json.decodeFromString<List<String>>(value) }.getOrDefault(emptyList())
 
+    /**
+     * D34's range cells. A separate pair from the string list because Room matches
+     * converters on their exact type, and a `List<Int>` stored through the string converter
+     * would round-trip as strings.
+     */
+    @TypeConverter
+    fun intListToJson(value: List<Int>): String = json.encodeToString(value)
+
+    @TypeConverter
+    fun jsonToIntList(value: String): List<Int> =
+        runCatching { json.decodeFromString<List<Int>>(value) }.getOrDefault(emptyList())
+
     private companion object {
         val json = Json
     }

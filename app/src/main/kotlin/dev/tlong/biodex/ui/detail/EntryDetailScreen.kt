@@ -54,6 +54,7 @@ import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.CaughtChip
 import dev.tlong.biodex.ui.common.LinkRow
+import dev.tlong.biodex.ui.common.RangeMap
 import dev.tlong.biodex.ui.common.ScientificName
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
@@ -304,6 +305,14 @@ private fun DetailBody(
                 .background(colors.warnSoft)
                 .padding(10.dp),
         )
+    }
+
+    // D34's map sits under the Range header and above Habitat: it is the same question the
+    // habitat paragraph answers, and a picture of it reads faster than the paragraph does.
+    // Absent entirely when there is nothing to draw, header and all.
+    state.rangeMap?.let {
+        SectionHeader("Range")
+        RangeMap(grid = it.grid, cells = it.cells, modifier = Modifier.padding(top = 2.dp))
     }
 
     SectionHeader("Habitat")

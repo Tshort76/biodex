@@ -16,7 +16,9 @@ the kind you can watch fail.
 
 from __future__ import annotations
 
+import struct
 import unittest
+import zlib
 from collections import defaultdict
 
 import build_catalogue as bc
@@ -170,6 +172,94 @@ class FungusValidationTest(unittest.TestCase):
         # The count and dex-range checks still fire on a one-species catalogue; what must
         # not appear is any problem naming this species.
         self.assertEqual([], [p for p in self.asset() if p.startswith("test-mushroom:")])
+
+
+class RangeMapTest(unittest.TestCase):
+    """D34's two pieces that would fail silently: the decoder and the threshold."""
+
+    def png(self, width, height, pixels, filter_type=0):
+        """A minimal 8-bit RGBA PNG, one filter type for every row."""
+        raw = bytearray()
+        for y in range(height):
+            raw.append(filter_type)
+            for x in range(width):
+                raw.extend(pixels[y * width + x])
+
+        def chunk(tag, body):
+            return (
+                struct.pack(">I", len(body)) + tag + body
+                + struct.pack(">I", zlib.crc32(tag + body) & 0xFFFFFFFF)
+            )
+
+        return (
+            b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw)))
+            + chunk(b"IEND", b"")
+        )
+
+    def test_the_decoder_reads_an_unfiltered_image(self):
+        pixels = [(10, 20, 30, 255), (40, 50, 60, 0), (70, 80, 90, 128), (1, 2, 3, 4)]
+        w, h, out = bc.decode_png(self.png(2, 2, pixels))
+        self.assertEqual((2, 2), (w, h))
+        self.assertEqual(bytes([10, 20, 30, 255, 40, 50, 60, 0]), out[:8])
+        self.assertEqual(128, out[11])
+
+    def test_the_decoder_undoes_the_up_and_sub_filters(self):
+        """A decoder that ignored the filter byte would return the deltas."""
+        def encoded(filter_type, rows):
+            raw = bytearray()
+            for row in rows:
+                raw.append(filter_type)
+                raw.extend(row)
+
+            def chunk(tag, body):
+                return (
+                    struct.pack(">I", len(body)) + tag + body
+                    + struct.pack(">I", zlib.crc32(tag + body) & 0xFFFFFFFF)
+                )
+
+            return (
+                b"\x89PNG\r\n\x1a\n"
+                + chunk(b"IHDR", struct.pack(">IIBBBBB", 2, 2, 8, 6, 0, 0, 0))
+                + chunk(b"IDAT", zlib.compress(bytes(raw)))
+                + chunk(b"IEND", b"")
+            )
+
+        solid = bytes([9, 9, 9, 255] * 2)
+        # Up: the second row is stored as all-zero deltas from the first.
+        _, _, out = bc.decode_png(encoded(2, [solid, bytes(8)]))
+        self.assertEqual(solid, out[8:])
+        # Sub: each pixel is stored as a delta from the pixel to its left.
+        first = bytes([9, 9, 9, 255]) + bytes(4)
+        _, _, out = bc.decode_png(encoded(1, [first, first]))
+        self.assertEqual(solid, out[:8])
+
+    def test_the_decoder_refuses_a_format_it_cannot_read(self):
+        # Palette PNGs decode to nonsense through an RGBA reader, and nonsense
+        # here shades the wrong part of the world while looking plausible.
+        png = bytearray(self.png(1, 1, [(0, 0, 0, 255)]))
+        png[25] = 3  # colour type 3, palette
+        with self.assertRaises(ValueError):
+            bc.decode_png(bytes(png))
+
+    def test_a_stray_record_is_dropped_and_a_real_cluster_is_kept(self):
+        # The shape measured on the California thrasher: a handful of one-pixel
+        # cells scattered across the world, and a few saturated ones where it
+        # lives. Only the saturated ones are range.
+        coverage = {100: 1, 200: 1, 300: 2, 400: 40, 401: 55, 402: 30}
+        best = max(coverage.values())
+        floor = max(bc.RANGE_MIN_PIXELS, bc.RANGE_KEEP_FRACTION * best)
+        kept = sorted(c for c, n in coverage.items() if n >= floor or n >= bc.RANGE_KEEP_ABSOLUTE)
+        self.assertEqual([400, 401, 402], kept)
+
+    def test_the_grid_divides_the_world_raster_exactly(self):
+        # A cell index means a patch of the world, and the same patch on every
+        # species' map. That only holds while the arithmetic divides.
+        self.assertEqual(0, (bc.RANGE_TILE_PX * 2) % bc.RANGE_GRID_W)
+        self.assertEqual(0, bc.RANGE_TILE_PX % bc.RANGE_GRID_H)
+        self.assertEqual(bc.RANGE_CELL_PX, bc.RANGE_TILE_PX * 2 // bc.RANGE_GRID_W)
+        self.assertEqual(bc.RANGE_CELL_PX, bc.RANGE_TILE_PX // bc.RANGE_GRID_H)
 
 
 if __name__ == "__main__":

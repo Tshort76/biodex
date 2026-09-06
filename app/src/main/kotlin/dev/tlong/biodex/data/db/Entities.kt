@@ -65,6 +65,13 @@ data class SpeciesEntity(
     val medicinalRecordCount: Int = 0,
     /** The Duke's credit line, non-null exactly when the two columns above are populated. */
     val usesAttribution: String? = null,
+
+    /**
+     * D34: the cells to shade on this species' range map, indexed over the region's grid
+     * (`row * rangeGridWidth + column`). Empty is a real answer, not a missing one — GBIF
+     * holds no records for every species, and a user-added species has none until a backfill.
+     */
+    @ColumnInfo(defaultValue = "[]") val rangeCells: List<Int> = emptyList(),
 )
 
 /**
@@ -78,6 +85,14 @@ data class RegionEntity(
     @PrimaryKey val id: String,
     val name: String,
     val sortOrder: Int = 0,
+    /**
+     * D34's shared map outline: one bit per grid cell, land set, base64. Region-level
+     * because every species' map is the same world; only the shading differs. Null on a
+     * database imported before range maps existed, and the detail screen draws no map then.
+     */
+    val landMask: String? = null,
+    @ColumnInfo(defaultValue = "0") val rangeGridWidth: Int = 0,
+    @ColumnInfo(defaultValue = "0") val rangeGridHeight: Int = 0,
 )
 
 @Entity(tableName = "ecosystems")

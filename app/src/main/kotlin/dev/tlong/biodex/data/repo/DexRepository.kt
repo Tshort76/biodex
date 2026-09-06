@@ -27,6 +27,7 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Entry
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.RangeGrid
 import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesFields
@@ -62,6 +63,14 @@ class DexRepository(
     private val ecosystemFlow: Flow<List<EcosystemEntity>> =
         db.ecosystemDao().observeEcosystems(regionId)
     private val regionFlow: Flow<RegionEntity?> = db.regionDao().observeRegion(regionId)
+
+    /**
+     * D34's shared map outline, decoded once per emission of the region row. Every species'
+     * map is drawn over this same grid; only the shading differs.
+     */
+    fun rangeGrid(): Flow<RangeGrid> = regionFlow.map { region ->
+        RangeGrid.fromMask(region?.landMask, region?.rangeGridWidth ?: 0, region?.rangeGridHeight ?: 0)
+    }
 
     /** Every species in dex order — curated first, user-added trailing (M01/M02). */
     fun speciesSummaries(): Flow<List<SpeciesSummary>> =
@@ -122,6 +131,7 @@ class DexRepository(
                     medicinalRecordCount = it.medicinalRecordCount,
                     usesAttribution = it.usesAttribution,
                     userEditedFields = it.userEditedFields,
+                    rangeCells = it.rangeCells,
                 )
             }
         }

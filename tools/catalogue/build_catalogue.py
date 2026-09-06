@@ -30,6 +30,7 @@ cached under `cache/`, so a re-run makes zero requests.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -38,8 +39,10 @@ import sys
 import csv
 import io
 import time
+import struct
 import unicodedata
 import zipfile
+import zlib
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -286,6 +289,222 @@ def plant_silhouette(plant_class: str, gbif_class, gbif_order) -> str:
     if (gbif_order or "").strip().lower() == "pinales":
         return "sil_tree_conifer"
     return "sil_tree_broadleaf"
+
+
+# --------------------------------------------------------------------------
+# Range maps (D34)
+# --------------------------------------------------------------------------
+#
+# Every species carries a list of grid cells to shade on the detail screen's
+# mini-map, and the region carries one land mask that every species is drawn
+# over.  Both are on the same equirectangular grid, which is the whole reason
+# the outline can be shared: a cell index means the same patch of the world on
+# the map and in the shading.
+#
+# The shading is **observation density, not a field guide's range polygon.**
+# It is where GBIF holds records of the species, so it is honest about being a
+# record of where people have looked.  Nobody should later "fix" this into
+# published range polygons without reading D34 first — that is a different
+# dataset with a different licence and a different meaning.
+
+RANGE_GRID_W = 128
+RANGE_GRID_H = 64
+
+# 1024x512 world raster over a 128x64 grid: 8x8 source pixels per cell, which
+# divides exactly.  Do not change one of these without the other.
+RANGE_TILE_PX = 512
+RANGE_CELL_PX = 8
+
+# A pixel counts as drawn at half alpha.  GBIF anti-aliases its points, so the
+# faint fringe around a record is not evidence of anything.
+RANGE_ALPHA_FLOOR = 128
+
+# What separates a range from a stray record.  Unbinned point rendering makes
+# the two look different: one record in a cell lights a handful of pixels, a
+# place the species actually lives saturates it.  Measured on the California
+# thrasher, whose cells came out as nine at 1px, three between 3 and 9, and six
+# between 28 and 55 — the range is the last group.  So a cell is kept when it
+# is a fifth as covered as the best cell, and always when it is half full.
+RANGE_KEEP_FRACTION = 0.2
+RANGE_KEEP_ABSOLUTE = RANGE_CELL_PX * RANGE_CELL_PX // 2
+RANGE_MIN_PIXELS = 3
+
+GBIF_MAP_URL = (
+    "https://api.gbif.org/v2/map/occurrence/density/0/{x}/0@1x.png"
+    "?srs=EPSG%3A4326&style=classic.point&taxonKey={key}"
+)
+
+# Natural Earth, public domain, from its own CDN.  110m is the coarsest land
+# layer they publish and is already finer than a 2.8-degree grid needs.
+NATURAL_EARTH_LAND_URL = "https://naciscdn.org/naturalearth/110m/physical/ne_110m_land.zip"
+
+
+def decode_png(data: bytes):
+    """Decode an 8-bit RGBA PNG to (width, height, pixels) using only the stdlib.
+
+    Deliberately not Pillow.  This pipeline has always been stdlib-only, and
+    the one case it needs — colour type 6, bit depth 8, no interlacing, which
+    is what the GBIF map API serves — is a page of code.  Anything else raises
+    rather than guessing, because a silently mis-decoded tile would shade the
+    wrong part of the world and look plausible doing it.
+    """
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG")
+    width = height = None
+    idat = bytearray()
+    off = 8
+    while off < len(data):
+        length, ctype = struct.unpack(">I4s", data[off:off + 8])
+        body = data[off + 8:off + 8 + length]
+        off += 12 + length  # length + type + body + CRC
+        if ctype == b"IHDR":
+            width, height, depth, colour, _, _, interlace = struct.unpack(">IIBBBBB", body)
+            if (depth, colour, interlace) != (8, 6, 0):
+                raise ValueError(f"unsupported PNG: depth={depth} colour={colour} interlace={interlace}")
+        elif ctype == b"IDAT":
+            idat += body
+        elif ctype == b"IEND":
+            break
+
+    raw = zlib.decompress(bytes(idat))
+    stride = width * 4
+    out = bytearray(width * height * 4)
+    prev = bytearray(stride)
+    pos = 0
+    for y in range(height):
+        filt = raw[pos]; pos += 1
+        line = bytearray(raw[pos:pos + stride]); pos += stride
+        # The five PNG filters, each predicting a byte from its neighbours.
+        if filt == 1:
+            for i in range(4, stride):
+                line[i] = (line[i] + line[i - 4]) & 0xFF
+        elif filt == 2:
+            for i in range(stride):
+                line[i] = (line[i] + prev[i]) & 0xFF
+        elif filt == 3:
+            for i in range(stride):
+                left = line[i - 4] if i >= 4 else 0
+                line[i] = (line[i] + ((left + prev[i]) >> 1)) & 0xFF
+        elif filt == 4:
+            for i in range(stride):
+                a = line[i - 4] if i >= 4 else 0
+                b = prev[i]
+                c = prev[i - 4] if i >= 4 else 0
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                pred = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                line[i] = (line[i] + pred) & 0xFF
+        elif filt != 0:
+            raise ValueError(f"unknown PNG filter {filt}")
+        out[y * stride:(y + 1) * stride] = line
+        prev = line
+    return width, height, bytes(out)
+
+
+def accepted_usage_key(match):
+    """The GBIF key to ask about, given a species/match payload.
+
+    For a SYNONYM match, `usageKey` is the synonym's own key; the accepted
+    taxon is the one carrying the occurrence records, so it comes first.
+    """
+    return match.get("acceptedUsageKey") or match.get("usageKey") or match.get("speciesKey")
+
+
+def range_cells(usage_key, refresh: bool):
+    """The grid cells to shade for one species, as sorted ints.
+
+    Fetches the two hemisphere tiles that make up an equirectangular world at
+    zoom 0.  **A 204 is data, not a failure**: an empty eastern hemisphere is
+    the ordinary case for a Pacific USA species, and it is cached like any
+    other answer so a re-run stays offline.
+    """
+    if not usage_key:
+        return []
+
+    coverage = defaultdict(int)
+    for tile_x in (0, 1):
+        url = GBIF_MAP_URL.format(x=tile_x, key=usage_key)
+        dest = CACHE_DIR / "range" / f"{usage_key}-{tile_x}.png"
+        try:
+            data = fetch_bytes(url, dest, refresh=refresh)
+        except urllib.error.URLError:
+            return []
+        if not data:
+            continue  # 204: nothing recorded in this half of the world
+        width, height, pixels = decode_png(data)
+        if (width, height) != (RANGE_TILE_PX, RANGE_TILE_PX):
+            raise SystemExit(f"GBIF map tile was {width}x{height}, expected square tiles")
+        for y in range(height):
+            row = y // RANGE_CELL_PX
+            base = y * width * 4
+            for x in range(width):
+                if pixels[base + x * 4 + 3] >= RANGE_ALPHA_FLOOR:
+                    col = (tile_x * RANGE_TILE_PX + x) // RANGE_CELL_PX
+                    coverage[row * RANGE_GRID_W + col] += 1
+
+    if not coverage:
+        return []
+    best = max(coverage.values())
+    floor = max(RANGE_MIN_PIXELS, RANGE_KEEP_FRACTION * best)
+    return sorted(
+        cell for cell, n in coverage.items()
+        if n >= floor or n >= RANGE_KEEP_ABSOLUTE
+    )
+
+
+def _land_rings(shp: bytes):
+    """Every ring of every polygon in a shapefile, as lists of (lon, lat)."""
+    rings, off = [], 100  # 100-byte file header
+    while off < len(shp):
+        _, content_words = struct.unpack(">ii", shp[off:off + 8])
+        off += 8
+        end = off + content_words * 2
+        if struct.unpack("<i", shp[off:off + 4])[0] == 5:  # polygon
+            n_parts, n_points = struct.unpack("<ii", shp[off + 36:off + 44])
+            parts = struct.unpack(f"<{n_parts}i", shp[off + 44:off + 44 + 4 * n_parts])
+            base = off + 44 + 4 * n_parts
+            xy = struct.unpack(f"<{n_points * 2}d", shp[base:base + 16 * n_points])
+            for i, start in enumerate(parts):
+                stop = parts[i + 1] if i + 1 < n_parts else n_points
+                rings.append([(xy[2 * j], xy[2 * j + 1]) for j in range(start, stop)])
+        off = end
+    return rings
+
+
+def land_mask(refresh: bool) -> str:
+    """The shared map outline: one bit per grid cell, base64, land set.
+
+    Natural Earth rather than anything derived from occurrence records.  The
+    obvious shortcut — GBIF's density with no taxon filter — was tried and is
+    not land-shaped: strict thresholds hole out the Sahara and the Amazon,
+    where few people record anything, and loose ones fill the oceans with ship
+    tracks and GPS noise.  A land polygon is a land polygon.
+    """
+    data = fetch_bytes(NATURAL_EARTH_LAND_URL, CACHE_DIR / "natural-earth-land.zip", refresh=refresh)
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        name = next(n for n in archive.namelist() if n.endswith(".shp"))
+        rings = _land_rings(archive.read(name))
+
+    bits = bytearray((RANGE_GRID_W * RANGE_GRID_H + 7) // 8)
+    for row in range(RANGE_GRID_H):
+        lat = 90.0 - (row + 0.5) * 180.0 / RANGE_GRID_H
+        # Only the segments spanning this latitude can be crossed by its ray.
+        spanning = [
+            (x1, y1, x2, y2)
+            for ring in rings
+            for (x1, y1), (x2, y2) in zip(ring, ring[1:])
+            if (y1 > lat) != (y2 > lat)
+        ]
+        for col in range(RANGE_GRID_W):
+            lon = -180.0 + (col + 0.5) * 360.0 / RANGE_GRID_W
+            crossings = 0
+            for x1, y1, x2, y2 in spanning:
+                if lon < x1 + (lat - y1) * (x2 - x1) / (y2 - y1):
+                    crossings += 1
+            if crossings % 2:
+                cell = row * RANGE_GRID_W + col
+                bits[cell // 8] |= 1 << (cell % 8)
+    return base64.b64encode(bytes(bits)).decode("ascii")
 
 
 # --------------------------------------------------------------------------
@@ -872,6 +1091,8 @@ def build_species(entry, ecosystem_ids, refresh, report):
         "medicinalActivities": [],
         "medicinalRecordCount": 0,
         "usesAttribution": None,
+        # D34: where GBIF holds records of this species, as grid cells.
+        "rangeCells": range_cells(accepted_usage_key(match), refresh),
         "provenance": prov,
     }
 
@@ -958,9 +1179,9 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
     gbif_class = match.get("class")
     gbif_order = match.get("order")
     gbif_kingdom = match.get("kingdom")
-    # For a SYNONYM match, `usageKey` is the synonym's own key and its
-    # /synonyms list is empty; the accepted taxon is the one that has synonyms.
-    usage_key = match.get("acceptedUsageKey") or match.get("usageKey") or match.get("speciesKey")
+    # A SYNONYM match resolves to the accepted taxon, which is the one that
+    # has synonyms and the one that has occurrence records.
+    usage_key = accepted_usage_key(match)
 
     if (gbif_kingdom or "").strip().lower() != "plantae":
         raise SystemExit(
@@ -1042,6 +1263,8 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
         "medicinalActivities": activities,
         "medicinalRecordCount": record_count,
         "usesAttribution": DUKE_ATTRIBUTION if activities else None,
+        # D34: where GBIF holds records of this species, as grid cells.
+        "rangeCells": range_cells(usage_key, refresh),
         "provenance": prov,
         # Pipeline-internal, stripped before the asset is written.
         "_poison": poison,
@@ -1206,6 +1429,8 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
         "medicinalActivities": [],
         "medicinalRecordCount": 0,
         "usesAttribution": None,
+        # D34: where GBIF holds records of this species, as grid cells.
+        "rangeCells": range_cells(accepted_usage_key(match), refresh),
         "provenance": prov,
         # Pipeline-internal, stripped before the asset is written.
         "_curatedNote": uses_note,
@@ -1486,6 +1711,23 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
             add(f"  - {item}")
         add("")
 
+    # D34: a species with no cells draws no map at all, which is a real outcome and not
+    # an error — but a long list here means the range fetch is failing rather than the
+    # species being genuinely unrecorded, and that is worth seeing at a glance.
+    block(
+        "NO RANGE MAP — GBIF HAS NO OCCURRENCE RECORDS",
+        [
+            f"{sp['commonName']} ({sp['scientificName']})"
+            for sp in catalogue["species"] if not sp.get("rangeCells")
+        ],
+    )
+    add(
+        f"Range maps: {sum(1 for sp in catalogue['species'] if sp.get('rangeCells'))} "
+        f"of {len(catalogue['species'])} species shaded, "
+        f"{RANGE_GRID_W}x{RANGE_GRID_H} grid"
+    )
+    add("")
+
     block("GBIF MATCHES NEEDING CURATOR REVIEW", report["gbif_warnings"])
     block(
         "DUKE'S — DERIVED MEDICINAL SET",
@@ -1635,6 +1877,11 @@ def main():
         "catalogueVersion": region.get("catalogueVersion", 1),
         "regionId": region["regionId"],
         "regionName": region["regionName"],
+        # D34: the map outline every species is drawn over, once for the whole
+        # region rather than once per species — it is the same world each time.
+        "rangeGridWidth": RANGE_GRID_W,
+        "rangeGridHeight": RANGE_GRID_H,
+        "landMask": land_mask(args.refresh),
         "ecosystems": ecosystems,
         "species": built,
     }
