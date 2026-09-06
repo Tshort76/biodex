@@ -190,9 +190,9 @@ private fun NeighbourRow(neighbour: Neighbour, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 if (!species.caught) {
-                    // The grid's bargain, kept here: an uncaught neighbour shows as its
-                    // silhouette and its Latin name, so you can see something is close by
-                    // without being handed what it is.
+                    // M01's bargain, kept here: what an uncaught species withholds is the
+                    // picture, never the identity — the grid names every silhouette, and a
+                    // neighbour you have not caught yet is exactly the one worth naming.
                     SilhouetteIcon(
                         silhouetteRes = species.silhouetteRes,
                         taxClass = species.taxClass,
@@ -201,7 +201,7 @@ private fun NeighbourRow(neighbour: Neighbour, onClick: () -> Unit) {
                     )
                 }
                 Text(
-                    text = if (species.caught) species.commonName else "? ? ?",
+                    text = species.commonName,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),

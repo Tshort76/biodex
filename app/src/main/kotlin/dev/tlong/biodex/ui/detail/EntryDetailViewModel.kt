@@ -57,10 +57,17 @@ class EntryDetailViewModel(
      * saved until the user accepts governs here too, and a silent write is exactly the
      * corruption D10 exists to prevent. And a lookup that finds nothing, or cannot be made,
      * presents nothing: the entry stays pending and the next open tries again.
+     *
+     * A missing classification re-enters the trigger on its own (D36). A species added before
+     * the path existed is not "pending" — it has its picture, its habitat and its name — so
+     * without this it could never acquire one, and Nearest would shut it out permanently while
+     * telling the user to open it online. The guard widens here rather than in
+     * `detailsPending`, which also drives the hero and the map frame: an entry with a picture
+     * must not start rendering as though it had none.
      */
     private suspend fun maybeBackfill(repository: DexRepository) {
         val detail = repository.speciesDetail(speciesId).first { it != null } ?: return
-        if (!detail.summary.detailsPending) return
+        if (!detail.summary.detailsPending && detail.summary.lineage.isKnown) return
         if (!networkMonitor.online.value) return
         val outcome = lookups.lookup(detail.summary.commonName)
         if (outcome !is LookupOutcome.Resolved) return
