@@ -60,6 +60,27 @@ class UserSpeciesTest {
     }
 
     @Test
+    fun `a backfill that found no classification leaves the stored one alone`() {
+        val classified = thrush.copy(
+            lineage = Lineage("Animalia", "Chordata", "Aves", "Passeriformes", "Turdidae"),
+        )
+
+        // A lookup always carries a Lineage; one that resolved nothing carries Unknown.
+        val merged = mergeLookup(classified, LookupFields(lineage = Lineage.Unknown), emptySet())
+
+        assertEquals("Turdidae", merged.lineage.family)
+    }
+
+    @Test
+    fun `a backfill that found a classification fills an empty one`() {
+        val found = Lineage("Animalia", "Chordata", "Aves", "Passeriformes", "Turdidae")
+
+        val merged = mergeLookup(thrush, LookupFields(lineage = found), emptySet())
+
+        assertEquals(found, merged.lineage)
+    }
+
+    @Test
     fun `a source that found nothing does not blank a field that has a value`() {
         val merged = mergeLookup(thrush, LookupFields(), emptySet())
 

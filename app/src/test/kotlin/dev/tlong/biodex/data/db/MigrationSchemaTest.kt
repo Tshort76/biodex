@@ -98,6 +98,43 @@ class MigrationSchemaTest {
         assertEquals(null, defaultOf("regions", "landMask"))
     }
 
+    /**
+     * D36's columns, checked one version later again. These are nullable with no default,
+     * which is the easiest kind to get wrong in the other direction: adding a
+     * `@ColumnInfo(defaultValue = …)` to the entity without touching the migration would
+     * pass a compile and fail Room's identity check on the user's phone.
+     */
+    @Test
+    fun `the lineage columns added by MIGRATION_3_4 match Room's exported v4 schema`() {
+        val v4 = File("schemas/dev.tlong.biodex.data.db.AppDatabase/4.json")
+        assertTrue("schema v4 has not been exported — run assembleDebug", v4.exists())
+        val species = Json.parseToJsonElement(v4.readText())
+            .jsonObject.getValue("database")
+            .jsonObject.getValue("entities")
+            .jsonArray
+            .map { it.jsonObject }
+            .single { it.getValue("tableName").jsonPrimitive.content == "species" }
+            .getValue("fields").jsonArray
+            .map { it.jsonObject }
+            .associateBy { it.getValue("fieldPath").jsonPrimitive.content }
+
+        val added = listOf(
+            "lineageKingdom", "lineagePhylum", "lineageClass", "lineageOrder", "lineageFamily",
+        )
+        added.forEach { name ->
+            val field = species[name]
+            assertTrue("v4 is missing $name", field != null)
+            // Nullable, so the migration's bare `ADD COLUMN … TEXT` is right.
+            assertTrue(
+                "$name should be nullable",
+                field!!["notNull"]?.jsonPrimitive?.content?.toBoolean() != true,
+            )
+            // No default, so there is nothing for the migration to keep in step with.
+            assertEquals(null, field["defaultValue"]?.jsonPrimitive?.content)
+            assertEquals("TEXT", field.getValue("affinity").jsonPrimitive.content)
+        }
+    }
+
     @Test
     fun `the speciesId index survives the table recreate`() {
         // Dropping the table drops its indices, so the migration recreates this one by hand.

@@ -72,6 +72,22 @@ data class SpeciesEntity(
      * holds no records for every species, and a user-added species has none until a backfill.
      */
     @ColumnInfo(defaultValue = "[]") val rangeCells: List<Int> = emptyList(),
+
+    /**
+     * D36: the GBIF path this species sits on, one column per rank, for the hop count on
+     * Nearest Five. Nullable rather than defaulted because a null here is a real answer with
+     * two distinct causes — GBIF fills no value at that rank (no ray-finned fish has a
+     * class), or the species is user-added and awaiting a backfill — and the distance
+     * measure treats those two the same way: it never invents a shared ancestor.
+     *
+     * Deliberately not named `kingdom` or `taxClass`. Those columns already exist and mean
+     * the app's own enums; these are Linnaean rank names.
+     */
+    val lineageKingdom: String? = null,
+    val lineagePhylum: String? = null,
+    val lineageClass: String? = null,
+    val lineageOrder: String? = null,
+    val lineageFamily: String? = null,
 )
 
 /**

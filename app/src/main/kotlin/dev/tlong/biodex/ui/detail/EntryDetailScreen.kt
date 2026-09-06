@@ -1,5 +1,6 @@
 package dev.tlong.biodex.ui.detail
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -83,6 +84,7 @@ fun EntryDetailRoute(
     onBack: () -> Unit,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onOpenNearest: () -> Unit,
     onBackfillReady: (draftId: String) -> Unit,
 ) {
     val container = LocalContext.current.appContainer
@@ -120,6 +122,7 @@ fun EntryDetailRoute(
             onBack = onBack,
             onRegister = onRegister,
             onOpenPhoto = onOpenPhoto,
+            onOpenNearest = onOpenNearest,
         )
         val detail = state.detail
         if (revealPending && detail != null) {
@@ -176,6 +179,7 @@ fun EntryDetailScreen(
     onBack: () -> Unit,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onOpenNearest: () -> Unit,
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -214,6 +218,7 @@ fun EntryDetailScreen(
                     filesDir = filesDir,
                     onRegister = onRegister,
                     onOpenPhoto = onOpenPhoto,
+                    onOpenNearest = onOpenNearest,
                 )
             }
         }
@@ -227,6 +232,7 @@ private fun DetailBody(
     filesDir: String,
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
+    onOpenNearest: () -> Unit,
 ) {
     val colors = DexTheme.colors
     val uriHandler = LocalUriHandler.current
@@ -315,6 +321,14 @@ private fun DetailBody(
         RangeMap(grid = it.grid, cells = it.cells, modifier = Modifier.padding(top = 2.dp))
     }
 
+    // D36. A link rather than the lineage chain the second design pass proposed: the owner
+    // cut the chain, and the useful thing on this screen is the way out to the comparison,
+    // not the path itself. Hidden for a species with no lineage — every user-added one until
+    // its backfill — because the screen behind it would have nothing to show.
+    if (detail.summary.lineage.isKnown) {
+        NearestLink(onClick = onOpenNearest)
+    }
+
     SectionHeader("Habitat")
     Text(
         text = detail.habitatText ?: detail.description ?: "No habitat text bundled.",
@@ -394,6 +408,34 @@ private fun DetailBody(
  * here: that is what guarantees a broken reference can dim one photo in the Photo Viewer but
  * can never blank the collection.
  */
+/**
+ * The way out to D36's Nearest screen. A row rather than a button because it is a detour
+ * from this species, not an action on it.
+ */
+@Composable
+private fun NearestLink(onClick: () -> Unit) {
+    val colors = DexTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .border(1.dp, colors.rule, RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+    ) {
+        Text(
+            text = "Nearest species",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = colors.accent,
+        )
+        Box(modifier = Modifier.weight(1f))
+        Text(text = "\u203A", color = colors.faint)
+    }
+}
+
 @Composable
 private fun PhotoStrip(
     captures: List<Capture>,
@@ -639,6 +681,7 @@ private fun EntryDetailCaughtPreview() {
             onBack = {},
             onRegister = {},
             onOpenPhoto = {},
+            onOpenNearest = {},
         )
     }
 }
@@ -659,6 +702,7 @@ private fun EntryDetailUncaughtPreview() {
             onBack = {},
             onRegister = {},
             onOpenPhoto = {},
+            onOpenNearest = {},
         )
     }
 }

@@ -168,6 +168,14 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
         // D34. Overwritten wholesale like every other curated field, so a rebuilt catalogue
         // corrects a range the same way it corrects a habitat paragraph.
         rangeCells = rangeCells,
+        // D36. Overwritten wholesale like every other curated field: a rebuilt catalogue
+        // corrects a lineage the same way it corrects a habitat paragraph, and a rank GBIF
+        // has since dropped goes back to null rather than lingering.
+        lineageKingdom = lineage?.kingdom,
+        lineagePhylum = lineage?.phylum,
+        lineageClass = lineage?.taxonClass,
+        lineageOrder = lineage?.order,
+        lineageFamily = lineage?.family,
     )
 }
 

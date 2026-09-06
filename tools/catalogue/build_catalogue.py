@@ -213,6 +213,27 @@ def gbif_match(scientific_name: str, refresh: bool):
     return fetch_json(url, refresh=refresh, delay=DELAY_GBIF)[0]
 
 
+# D36: the five ranks Nearest Five measures over.  They come out of the match
+# we already made, so this costs no request — the pipeline was reading `class`
+# and `order` out of the same payload and discarding the rest.
+#
+# Note the key here is NOT the record's `kingdom`, which is the app's own
+# animal/plant/fungus enum.  These are Linnaean rank names ("Animalia"), and
+# conflating the two would silently break every `taxClass` lookup.
+LINEAGE_RANKS = ("kingdom", "phylum", "class", "order", "family")
+
+
+def lineage(match: dict) -> dict:
+    """The taxonomic path GBIF gives for this species, blanks and all.
+
+    A rank GBIF does not fill in stays `None` rather than being guessed at: its
+    backbone gives no class to any ray-finned fish and no order to any of our
+    reptiles, and the distance measure has a rule for a missing rank that only
+    works if the gap is honestly recorded.
+    """
+    return {rank: (match.get(rank) or None) for rank in LINEAGE_RANKS}
+
+
 def tax_class_for(gbif_class: str | None, phylum: str | None = None) -> str:
     """Map GBIF's class to the app's taxClass enum.
 
@@ -1093,6 +1114,8 @@ def build_species(entry, ecosystem_ids, refresh, report):
         "usesAttribution": None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(accepted_usage_key(match), refresh),
+        # D36: the taxonomic path, for the hop count on Nearest Five.
+        "lineage": lineage(match),
         "provenance": prov,
     }
 
@@ -1265,6 +1288,8 @@ def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
         "usesAttribution": DUKE_ATTRIBUTION if activities else None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(usage_key, refresh),
+        # D36: the taxonomic path, for the hop count on Nearest Five.
+        "lineage": lineage(match),
         "provenance": prov,
         # Pipeline-internal, stripped before the asset is written.
         "_poison": poison,
@@ -1431,6 +1456,8 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
         "usesAttribution": None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(accepted_usage_key(match), refresh),
+        # D36: the taxonomic path, for the hop count on Nearest Five.
+        "lineage": lineage(match),
         "provenance": prov,
         # Pipeline-internal, stripped before the asset is written.
         "_curatedNote": uses_note,
@@ -1725,6 +1752,23 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
         f"Range maps: {sum(1 for sp in catalogue['species'] if sp.get('rangeCells'))} "
         f"of {len(catalogue['species'])} species shaded, "
         f"{RANGE_GRID_W}x{RANGE_GRID_H} grid"
+    )
+    add("")
+
+    # D36.  A blank rank is expected rather than wrong — GBIF's backbone gives
+    # no class to a ray-finned fish and no order to our reptiles — but a rank
+    # going blank for a species that used to have one would change every hop
+    # count around it, so the build says out loud where the gaps are.
+    gaps = [
+        f"{sp['commonName']} ({sp['scientificName']}) — no "
+        + ", ".join(r for r in LINEAGE_RANKS if not (sp.get("lineage") or {}).get(r))
+        for sp in catalogue["species"]
+        if any(not (sp.get("lineage") or {}).get(r) for r in LINEAGE_RANKS)
+    ]
+    block("LINEAGE GAPS — GBIF FILLS NO VALUE AT THIS RANK", gaps)
+    add(
+        f"Lineage: {sum(1 for sp in catalogue['species'] if sp.get('lineage'))} "
+        f"of {len(catalogue['species'])} species classified, {len(gaps)} with a gap"
     )
     add("")
 

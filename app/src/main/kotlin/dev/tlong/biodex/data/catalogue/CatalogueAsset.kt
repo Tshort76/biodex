@@ -70,6 +70,27 @@ data class CatalogueSpecies(
      * holds no records for everything — and means the map is not drawn at all.
      */
     val rangeCells: List<Int> = emptyList(),
+    /**
+     * D36: the GBIF path, nested so the five ranks stay visibly one thing in the asset.
+     * Absent for a catalogue built before D36, which decodes to every rank null — the same
+     * state a user-added species is in before its backfill, and handled the same way.
+     */
+    val lineage: LineageAsset? = null,
+)
+
+/**
+ * The five Linnaean ranks, exactly as GBIF's `species/match` returns them. Every one is
+ * nullable because GBIF genuinely leaves gaps — no ray-finned fish has a class, none of our
+ * reptiles has an order — and the hop count depends on those gaps being recorded rather than
+ * filled in.
+ */
+@Serializable
+data class LineageAsset(
+    val kingdom: String? = null,
+    val phylum: String? = null,
+    @SerialName("class") val taxonClass: String? = null,
+    val order: String? = null,
+    val family: String? = null,
 )
 
 /** The asset path the app reads at runtime (ARCHITECTURE.md 3.2). */

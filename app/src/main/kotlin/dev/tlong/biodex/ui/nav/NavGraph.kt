@@ -22,6 +22,7 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.ui.addspecies.ConfirmSpeciesRoute
 import dev.tlong.biodex.ui.detail.EntryDetailRoute
 import dev.tlong.biodex.ui.grid.DexGridRoute
+import dev.tlong.biodex.ui.nearest.NearestRoute
 import dev.tlong.biodex.ui.photoviewer.PhotoViewerRoute
 import dev.tlong.biodex.ui.register.RegisterRoute
 import dev.tlong.biodex.ui.settings.LicensesRoute
@@ -60,6 +61,13 @@ data class ConfirmSpecies(val draftId: String)
 @Serializable
 data class PhotoViewer(val captureId: String)
 
+/**
+ * D36. [speciesId] is null when opened from the grid's top bar, which anchors on the most
+ * recent catch; non-null when opened from a species' own detail screen.
+ */
+@Serializable
+data class Nearest(val speciesId: String? = null)
+
 @Serializable
 data object Stats
 
@@ -79,6 +87,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
                 onRegister = { navController.navigate(Register()) },
                 onOpenStats = { navController.navigate(Stats) },
+                onOpenNearest = { navController.navigate(Nearest()) },
                 onOpenSettings = { navController.navigate(Settings) },
             )
         }
@@ -91,6 +100,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
                 onRegister = { speciesId -> navController.navigate(Register(speciesId)) },
                 onOpenPhoto = { captureId -> navController.navigate(PhotoViewer(captureId)) },
+                onOpenNearest = { navController.navigate(Nearest(route.speciesId)) },
                 // M20: a details-pending entry opened online looks itself up and presents the
                 // same confirmation card. Single-top, so a second emission cannot stack cards.
                 onBackfillReady = { draftId ->
@@ -154,6 +164,17 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             PhotoViewerRoute(
                 captureId = route.captureId,
                 onBack = { navController.popBackStack() },
+            )
+        }
+        composable<Nearest> { backStackEntry ->
+            NearestRoute(
+                speciesId = backStackEntry.toRoute<Nearest>().speciesId,
+                onBack = { navController.popBackStack() },
+                // Single-top, so walking a chain of neighbours cannot stack a hundred copies
+                // of this screen behind the user.
+                onOpenSpecies = { speciesId ->
+                    navController.navigate(EntryDetail(speciesId)) { launchSingleTop = true }
+                },
             )
         }
         composable<Stats> {

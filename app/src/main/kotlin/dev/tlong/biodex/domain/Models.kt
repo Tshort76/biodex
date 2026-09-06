@@ -242,9 +242,52 @@ data class SpeciesSummary(
      */
     val imageUrl: String? = null,
     val captureCount: Int,
+    /**
+     * D36: the GBIF path this species sits on, for the hop count on Nearest Five. It lives
+     * on the summary rather than the detail because the screen measures one species against
+     * every other, and the summary list is the only place that already holds them all.
+     */
+    val lineage: Lineage = Lineage.Unknown,
 ) {
     val caught: Boolean get() = caughtAt != null
     val displayNumber: String get() = displayDexNumber(dexNumber, source, kingdom)
+}
+
+/**
+ * D36: the taxonomic path GBIF gives for a species, blanks and all.
+ *
+ * A rank GBIF does not fill in stays null rather than being guessed at — its backbone gives
+ * no class to any ray-finned fish and no order to any of our reptiles — and [TaxonDistance]
+ * has a rule for a missing rank that only works if the gap is recorded honestly.
+ *
+ * Nothing here is the app's own [Kingdom] or [TaxClass]. These are Linnaean rank names
+ * ("Animalia", "Aves"); [Kingdom] is the animal/plant/fungus split the meters count, and
+ * [TaxClass] mixes real classes with growth forms on purpose (D12). Conflating them would
+ * quietly break both.
+ */
+data class Lineage(
+    val kingdom: String? = null,
+    val phylum: String? = null,
+    val taxonClass: String? = null,
+    val order: String? = null,
+    val family: String? = null,
+) {
+    /** Coarsest first, which is the order [TaxonDistance] walks them in. */
+    val ranks: List<String?> get() = listOf(kingdom, phylum, taxonClass, order, family)
+
+    /** False for a user-added species until its backfill: no rank is known at all. */
+    val isKnown: Boolean get() = ranks.any { !it.isNullOrBlank() }
+
+    companion object {
+        val Unknown = Lineage()
+
+        /** Depth of a species below Life, and so half of the maximum distance. */
+        const val RANK_COUNT = 5
+
+        private val RANK_NAMES = listOf("kingdom", "phylum", "class", "order", "family")
+
+        fun rankNameAt(index: Int): String? = RANK_NAMES.getOrNull(index)
+    }
 }
 
 /** Everything the detail screen renders about one species (M04/M05). */

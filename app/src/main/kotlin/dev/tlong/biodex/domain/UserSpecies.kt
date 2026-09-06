@@ -62,6 +62,8 @@ data class SpeciesFields(
      * Read only while the class is still `TREE`, so re-picking the growth form drops it.
      */
     val silhouetteResOverride: String? = null,
+    /** D36: the Linnaean path, for the hop count. Never the user's to edit. */
+    val lineage: Lineage = Lineage.Unknown,
 ) {
     /** The class silhouette is derived, never stored independently (ARCHITECTURE.md 2). */
     val silhouetteRes: String
@@ -156,6 +158,8 @@ data class LookupFields(
     val medicinalRecordCount: Int? = null,
     val usesAttribution: String? = null,
     val silhouetteResOverride: String? = null,
+    /** D36. Sourced, like the Duke's fields — a lookup sets it and nothing else does. */
+    val lineage: Lineage? = null,
 )
 
 /**
@@ -222,6 +226,12 @@ fun mergeLookup(
         medicinalActivities = lookup.medicinalActivities ?: existing.medicinalActivities,
         medicinalRecordCount = lookup.medicinalRecordCount ?: existing.medicinalRecordCount,
         usesAttribution = lookup.usesAttribution ?: existing.usesAttribution,
+        // D36. Sourced data with no field the user can edit, so it merges like the Duke's
+        // columns rather than through `take`. The `isKnown` guard is load-bearing: a lookup
+        // always carries a non-null `Lineage`, and an unclassified one is `Lineage.Unknown`
+        // rather than null — so testing nullability alone would let a second backfill that
+        // came back empty wipe a path the first one found.
+        lineage = lookup.lineage?.takeIf { it.isKnown } ?: existing.lineage,
     )
 }
 

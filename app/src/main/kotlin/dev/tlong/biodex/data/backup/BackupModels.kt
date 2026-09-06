@@ -73,6 +73,14 @@ data class BackupSpecies(
     val medicinalActivities: List<String> = emptyList(),
     val medicinalRecordCount: Int = 0,
     val usesAttribution: String? = null,
+    // D36's path, five fields rather than a nested object so an older archive — which has
+    // none of them — still parses field by field into the same defaults a user-added
+    // species has before its backfill.
+    val lineageKingdom: String? = null,
+    val lineagePhylum: String? = null,
+    val lineageClass: String? = null,
+    val lineageOrder: String? = null,
+    val lineageFamily: String? = null,
 )
 
 @Serializable

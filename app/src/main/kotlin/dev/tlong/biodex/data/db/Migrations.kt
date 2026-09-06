@@ -96,3 +96,28 @@ const val CAPTURES_V2_CREATE_SQL =
         "`lat` REAL, `lng` REAL, `locationLabel` TEXT, `note` TEXT, " +
         "`createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`speciesId`) REFERENCES " +
         "`species`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+
+/**
+ * D36's lineage: five nullable columns on `species` holding the GBIF path — kingdom, phylum,
+ * class, order, family — that Nearest Five measures hops over.
+ *
+ * All five are `ADD COLUMN` and all five are nullable, so unlike [MIGRATION_2_3] there is
+ * not even a `DEFAULT` to keep in step with the entity: SQLite fills an added nullable
+ * column with NULL and Room's `@ColumnInfo` carries no default to disagree with. No row is
+ * touched.
+ *
+ * An existing install lands here with every lineage null, which every screen reads as "not
+ * classified", and the catalogue reconciler then fills the curated species in from the asset
+ * — which is what the `catalogueVersion` bump to 5 is for. A species the user added
+ * themselves stays null until its own backfill, and shows no neighbours rather than a wrong
+ * distance.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `lineageKingdom` TEXT")
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `lineagePhylum` TEXT")
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `lineageClass` TEXT")
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `lineageOrder` TEXT")
+        db.execSQL("ALTER TABLE `species` ADD COLUMN `lineageFamily` TEXT")
+    }
+}

@@ -1,6 +1,7 @@
 package dev.tlong.biodex.data.net
 
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.Lineage
 import dev.tlong.biodex.domain.TaxClass
 import java.net.URLEncoder
 import kotlinx.serialization.json.Json
@@ -150,6 +151,12 @@ data class SpeciesCandidate(
      * (11.3 step 1). Null for everything that is not a tree.
      */
     val silhouetteResOverride: String? = null,
+    /**
+     * D36: the Linnaean path, straight out of the same match payload the class was read
+     * from. Carrying it here is what lets a species the user adds themselves take part in
+     * the hop count instead of sitting outside it.
+     */
+    val lineage: Lineage = Lineage.Unknown,
 ) {
     val confidenceLabel: String
         get() = when (matchKind) {
@@ -269,6 +276,7 @@ private fun JsonObject.toCandidate(): SpeciesCandidate? {
         kingdom = kingdom,
         taxClass = taxClass,
         silhouetteResOverride = silhouette,
+        lineage = lineage(),
         usageKey = long("speciesKey") ?: long("usageKey"),
         rank = string("rank"),
         confidence = int("confidence") ?: 0,
@@ -285,6 +293,19 @@ private fun JsonObject.toCandidate(): SpeciesCandidate? {
  * animal class map: routing *Arbutus menziesii* (`Magnoliopsida`) through it would file a
  * madrone as an other-invertebrate, which is exactly the shape of the bug slice 2 hit with fish.
  */
+/**
+ * D36's five ranks. A rank GBIF does not fill in stays null: its backbone gives no class to
+ * any ray-finned fish and no order to any of our reptiles, and the hop count has a rule for
+ * a missing rank that only works if the gap is recorded rather than guessed at.
+ */
+private fun JsonObject.lineage() = Lineage(
+    kingdom = string("kingdom"),
+    phylum = string("phylum"),
+    taxonClass = string("class"),
+    order = string("order"),
+    family = string("family"),
+)
+
 private fun JsonObject.classify(): Triple<Kingdom, TaxClass, String?> {
     val kingdom = gbifKingdom(string("kingdom"))
     if (kingdom != Kingdom.PLANT) {
@@ -319,6 +340,9 @@ internal fun parseGbifVernacularSearch(body: String, query: String): List<Specie
                 kingdom = kingdom,
                 taxClass = taxClass,
                 silhouetteResOverride = silhouette,
+                // D36. `species/search` returns the same five rank keys as `species/match`,
+                // so a species added by its common name is classified like any other.
+                lineage = row.lineage(),
                 usageKey = row.long("speciesKey") ?: row.long("key"),
                 rank = row.string("rank"),
                 confidence = if (exact) 100 else 0,

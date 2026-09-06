@@ -69,6 +69,7 @@ class SpeciesLookupRepository(
                     kingdom = candidate.kingdom,
                     taxClass = candidate.taxClass,
                     silhouetteResOverride = candidate.silhouetteResOverride,
+                    lineage = candidate.lineage,
                     habitatText = facts.valueOrNull()?.habitatText,
                     description = facts.valueOrNull()?.description,
                     imageUrl = facts.valueOrNull()?.imageUrl,

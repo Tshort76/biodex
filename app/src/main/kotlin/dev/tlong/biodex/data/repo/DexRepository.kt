@@ -26,6 +26,7 @@ import dev.tlong.biodex.domain.DexProgressMath
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Entry
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.Lineage
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.RangeGrid
 import dev.tlong.biodex.domain.keptUsesNote
@@ -340,6 +341,11 @@ internal fun SpeciesEntity.toBackup(ecosystemIds: List<String>) = BackupSpecies(
     medicinalActivities = medicinalActivities,
     medicinalRecordCount = medicinalRecordCount,
     usesAttribution = usesAttribution,
+    lineageKingdom = lineageKingdom,
+    lineagePhylum = lineagePhylum,
+    lineageClass = lineageClass,
+    lineageOrder = lineageOrder,
+    lineageFamily = lineageFamily,
 )
 
 internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
@@ -372,6 +378,14 @@ internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
     usesAttribution = usesAttribution?.takeIf {
         medicinalRecordCount > 0 || medicinalActivities.isNotEmpty()
     },
+    // D36. Restored as written: an archive is the only record of a user-added species'
+    // classification, and dropping it here would leave every restored species outside the
+    // hop count until it happened to be opened online again.
+    lineageKingdom = lineageKingdom,
+    lineagePhylum = lineagePhylum,
+    lineageClass = lineageClass,
+    lineageOrder = lineageOrder,
+    lineageFamily = lineageFamily,
 )
 
 /** An archive is a file a user could have edited, so the pairing invariant is re-checked. */
@@ -415,6 +429,13 @@ internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
         // The stored string is the only record of the conifer/broadleaf pick, and it is read
         // back only while the class is still `TREE` — the getter enforces that.
         silhouetteResOverride = silhouetteRes,
+        lineage = Lineage(
+            kingdom = lineageKingdom,
+            phylum = lineagePhylum,
+            taxonClass = lineageClass,
+            order = lineageOrder,
+            family = lineageFamily,
+        ),
     ),
     userEditedFields = userEditedFields,
 )
@@ -441,6 +462,11 @@ internal fun UserSpeciesRecord.toEntity() = SpeciesEntity(
     medicinalActivities = fields.medicinalActivities,
     medicinalRecordCount = fields.medicinalRecordCount,
     usesAttribution = fields.usesAttribution,
+    lineageKingdom = fields.lineage.kingdom,
+    lineagePhylum = fields.lineage.phylum,
+    lineageClass = fields.lineage.taxonClass,
+    lineageOrder = fields.lineage.order,
+    lineageFamily = fields.lineage.family,
 )
 
 internal fun Capture.toEntity() = CaptureEntity(
@@ -489,6 +515,15 @@ internal fun assembleSummaries(
             // M41: the grid's stand-in for a photo the user did not keep.
             imageUrl = row.imageUrl,
             captureCount = status?.captureCount ?: 0,
+            // D36: five columns in, one value out, so nothing downstream has to know the
+            // path was ever stored flat.
+            lineage = Lineage(
+                kingdom = row.lineageKingdom,
+                phylum = row.lineagePhylum,
+                taxonClass = row.lineageClass,
+                order = row.lineageOrder,
+                family = row.lineageFamily,
+            ),
         )
     }
 }

@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 4,
+  "catalogueVersion": 5,
   "regionId": "pacific",
   "regionName": "Pacific USA",
   "rangeGridWidth": 128,
@@ -452,6 +452,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Anseriformes",
+        "family": "Anatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -1182,6 +1189,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Anseriformes",
+        "family": "Anatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -1267,6 +1281,13 @@
         6182,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Galliformes",
+        "family": "Odontophoridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -1461,6 +1482,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Galliformes",
+        "family": "Phasianidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -2441,6 +2469,13 @@
         6438,
         6439
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Columbiformes",
+        "family": "Columbidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -2704,6 +2739,13 @@
         3618,
         3747
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Columbiformes",
+        "family": "Columbidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -2783,6 +2825,13 @@
         2845,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Apodiformes",
+        "family": "Trochilidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -2956,6 +3005,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Apodiformes",
+        "family": "Trochilidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3204,6 +3260,13 @@
         3621,
         3877
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Gruiformes",
+        "family": "Rallidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3493,6 +3556,13 @@
         4516,
         4644
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Charadriiformes",
+        "family": "Charadriidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3553,6 +3623,13 @@
         2839,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Charadriiformes",
+        "family": "Haematopodidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3615,6 +3692,13 @@
         2968,
         2969
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Charadriiformes",
+        "family": "Laridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3713,6 +3797,13 @@
         2324,
         2452
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Charadriiformes",
+        "family": "Alcidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -3869,6 +3960,13 @@
         4259,
         4387
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Pelecaniformes",
+        "family": "Pelecanidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -4122,6 +4220,13 @@
         3232,
         3360
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Suliformes",
+        "family": "Phalacrocoracidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -4419,6 +4524,13 @@
         3878,
         4127
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Pelecaniformes",
+        "family": "Ardeidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -4872,6 +4984,13 @@
         6567,
         6568
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Accipitriformes",
+        "family": "Cathartidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -5737,6 +5856,13 @@
         5749,
         5875
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Accipitriformes",
+        "family": "Pandionidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -6037,6 +6163,13 @@
         2851,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Accipitriformes",
+        "family": "Accipitridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -6337,6 +6470,13 @@
         3617,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Accipitriformes",
+        "family": "Accipitridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -6762,6 +6902,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Accipitriformes",
+        "family": "Accipitridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -7054,6 +7201,13 @@
         5675,
         5676
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Strigiformes",
+        "family": "Strigidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -7143,6 +7297,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Strigiformes",
+        "family": "Strigidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -7593,6 +7754,13 @@
         6439,
         6567
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Falconiformes",
+        "family": "Falconidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -7913,6 +8081,13 @@
         3748,
         3749
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Coraciiformes",
+        "family": "Alcedinidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -7998,6 +8173,13 @@
         3877,
         4004
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Piciformes",
+        "family": "Picidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -8289,6 +8471,13 @@
         3229,
         3359
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Piciformes",
+        "family": "Picidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -8466,6 +8655,13 @@
         2850,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Piciformes",
+        "family": "Picidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -8601,6 +8797,13 @@
         5161,
         5288
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Tyrannidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -8713,6 +8916,13 @@
         3359,
         3360
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Corvidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -8782,6 +8992,13 @@
         2968,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Corvidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -9021,6 +9238,13 @@
         2850,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Corvidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -9683,6 +9907,13 @@
         3358,
         3359
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Corvidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -9767,6 +9998,13 @@
         2585,
         2586
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Corvidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -9835,6 +10073,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Paridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -9928,6 +10173,13 @@
         2585,
         2586
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Paridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10019,6 +10271,13 @@
         3357,
         3359
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Aegithalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10173,6 +10432,13 @@
         3489,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Hirundinidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10298,6 +10564,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Troglodytidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10401,6 +10674,13 @@
         3359,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Cinclidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10742,6 +11022,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Turdidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -10951,6 +11238,13 @@
         3240,
         3357
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Mimidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -11557,6 +11851,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Sturnidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -11771,6 +12072,13 @@
         3229,
         3357
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Fringillidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -11913,6 +12221,13 @@
         4387,
         4388
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Fringillidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -12059,6 +12374,13 @@
         3229,
         3359
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Passerellidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -12367,6 +12689,13 @@
         2842,
         2845
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Passerellidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -12689,6 +13018,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Passerellidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -12947,6 +13283,13 @@
         3100,
         3228
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Passerellidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13212,6 +13555,13 @@
         3617,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Icteridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13385,6 +13735,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Icteridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13564,6 +13921,13 @@
         3617,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Cardinalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13692,6 +14056,13 @@
         3488,
         3489
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Didelphimorphia",
+        "family": "Didelphidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13754,6 +14125,13 @@
         2330,
         2458
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Lagomorpha",
+        "family": "Ochotonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13849,6 +14227,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Lagomorpha",
+        "family": "Leporidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13897,6 +14282,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Rodentia",
+        "family": "Sciuridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13943,6 +14335,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Rodentia",
+        "family": "Sciuridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -13991,6 +14390,13 @@
         2197,
         2325
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Rodentia",
+        "family": "Sciuridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14056,6 +14462,13 @@
         2329,
         2330
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Rodentia",
+        "family": "Sciuridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14236,6 +14649,13 @@
         2844,
         6567
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Rodentia",
+        "family": "Castoridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14448,6 +14868,13 @@
         3617,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Canidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14581,6 +15008,13 @@
         3488,
         3617
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Canidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14758,6 +15192,13 @@
         2851,
         2972
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Ursidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -14987,6 +15428,13 @@
         3617,
         3618
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Procyonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15138,6 +15586,13 @@
         2845,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Mephitidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15273,6 +15728,13 @@
         2850,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Mustelidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15331,6 +15793,13 @@
         2452,
         2453
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Mustelidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15454,6 +15923,13 @@
         2581,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Phocidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15510,6 +15986,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Otariidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15678,6 +16161,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Carnivora",
+        "family": "Felidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15802,6 +16292,13 @@
         2839,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Artiodactyla",
+        "family": "Cervidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15889,6 +16386,13 @@
         2715,
         2716
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Mammalia",
+        "order": "Artiodactyla",
+        "family": "Cervidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "override",
@@ -15933,6 +16437,13 @@
         2453,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Testudines",
+        "order": null,
+        "family": "Emydidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -15989,6 +16500,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Phrynosomatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16062,6 +16580,13 @@
         2843,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Phrynosomatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16112,6 +16637,13 @@
         2583,
         2584
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Phrynosomatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16168,6 +16700,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Scincidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16214,6 +16753,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Anguidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16374,6 +16920,13 @@
         2850,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Colubridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16488,6 +17041,13 @@
         2970,
         2971
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Colubridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16548,6 +17108,13 @@
         2456,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Squamata",
+        "order": null,
+        "family": "Viperidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16597,6 +17164,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Caudata",
+        "family": "Salamandridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16639,6 +17213,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Caudata",
+        "family": "Salamandridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16687,6 +17268,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Caudata",
+        "family": "Plethodontidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16729,6 +17317,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Caudata",
+        "family": "Ambystomatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16790,6 +17385,13 @@
         2582,
         2711
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Anura",
+        "family": "Hylidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -16941,6 +17543,13 @@
         5294,
         5421
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Anura",
+        "family": "Ranidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17024,6 +17633,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Amphibia",
+        "order": "Anura",
+        "family": "Bufonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17124,6 +17740,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Salmoniformes",
+        "family": "Salmonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17202,6 +17825,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Salmoniformes",
+        "family": "Salmonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17418,6 +18048,13 @@
         6141,
         6182
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Salmoniformes",
+        "family": "Salmonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17482,6 +18119,13 @@
         2330,
         2458
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Salmoniformes",
+        "family": "Salmonidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17533,6 +18177,13 @@
         2195,
         2324
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Scorpaeniformes",
+        "family": "Cottidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17578,6 +18229,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Perciformes",
+        "family": "Kyphosidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17623,6 +18281,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Perciformes",
+        "family": "Pomacentridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17667,6 +18332,13 @@
         2581,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": null,
+        "order": "Scorpaeniformes",
+        "family": "Sebastidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17712,6 +18384,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Elasmobranchii",
+        "order": "Carcharhiniformes",
+        "family": "Triakidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17759,6 +18438,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Elasmobranchii",
+        "order": "Myliobatiformes",
+        "family": "Myliobatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17833,6 +18519,13 @@
         2582,
         2585
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Papilionidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -17914,6 +18607,13 @@
         2458,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Papilionidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -18153,6 +18853,13 @@
         6014,
         6141
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Nymphalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -18197,6 +18904,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Nymphalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "override",
@@ -18646,6 +19360,13 @@
         5578,
         5703
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Nymphalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -18948,6 +19669,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Nymphalidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19306,6 +20034,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Lepidoptera",
+        "family": "Pieridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19459,6 +20194,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Odonata",
+        "family": "Aeshnidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19547,6 +20289,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Odonata",
+        "family": "Libellulidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19674,6 +20423,13 @@
         2850,
         2851
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Odonata",
+        "family": "Libellulidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19728,6 +20484,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Hymenoptera",
+        "family": "Apidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19773,6 +20536,13 @@
         2841,
         3229
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Hymenoptera",
+        "family": "Apidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -19936,6 +20706,13 @@
         5545,
         5546
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Coleoptera",
+        "family": "Coccinellidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20010,6 +20787,13 @@
         2586,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Coleoptera",
+        "family": "Scarabaeidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20060,6 +20844,13 @@
         2586,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Orthoptera",
+        "family": "Stenopelmatidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20108,6 +20899,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Mollusca",
+        "class": "Gastropoda",
+        "order": "Stylommatophora",
+        "family": "Ariolimacidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20162,6 +20960,13 @@
         2581,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Echinodermata",
+        "class": "Asteroidea",
+        "order": "Forcipulatida",
+        "family": "Asteriidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20213,6 +21018,13 @@
         2581,
         2582
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Cnidaria",
+        "class": "Anthozoa",
+        "order": "Actiniaria",
+        "family": "Actiniidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20264,6 +21076,13 @@
         2582,
         2710
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Echinodermata",
+        "class": "Echinoidea",
+        "order": "Camarodonta",
+        "family": "Strongylocentrotidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20317,6 +21136,13 @@
         2195,
         2324
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Malacostraca",
+        "order": "Decapoda",
+        "family": "Cancridae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20374,6 +21200,13 @@
         2840,
         2968
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Malacostraca",
+        "order": "Decapoda",
+        "family": "Grapsidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20474,6 +21307,13 @@
         3099,
         3100
       ],
+      "lineage": {
+        "kingdom": "Animalia",
+        "phylum": "Arthropoda",
+        "class": "Arachnida",
+        "order": "Araneae",
+        "family": "Theridiidae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Animalia",
         "scientificName": "gbif",
@@ -20625,6 +21465,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -20696,6 +21543,13 @@
         2453,
         5886
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -20767,6 +21621,13 @@
         2324,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -20864,6 +21725,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -20913,6 +21781,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -20962,6 +21837,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21099,6 +21981,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21161,6 +22050,13 @@
         2197,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21211,6 +22107,13 @@
         2328,
         2454
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21269,6 +22172,13 @@
         2582,
         2584
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21320,6 +22230,13 @@
         2325,
         2454
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21373,6 +22290,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21473,6 +22397,13 @@
         2068,
         2113
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21572,6 +22503,13 @@
         2111,
         2112
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21657,6 +22595,13 @@
         2067,
         2068
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21752,6 +22697,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21797,6 +22749,13 @@
         2197,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21864,6 +22823,13 @@
         2068,
         2196
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21913,6 +22879,13 @@
         1943,
         2069
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Pinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -21976,6 +22949,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Taxaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22044,6 +23024,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Pinopsida",
+        "order": "Pinales",
+        "family": "Cupressaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22094,6 +23081,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22142,6 +23136,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22187,6 +23188,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22237,6 +23245,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22288,6 +23303,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22338,6 +23360,13 @@
         2452,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Fagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22399,6 +23428,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ericales",
+        "family": "Ericaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22457,6 +23493,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Sapindales",
+        "family": "Sapindaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22506,6 +23549,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Sapindales",
+        "family": "Sapindaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22577,6 +23627,13 @@
         2195,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Fagales",
+        "family": "Betulaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22672,6 +23729,13 @@
         2326,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Malpighiales",
+        "family": "Salicaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22837,6 +23901,13 @@
         2585,
         2970
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Malpighiales",
+        "family": "Salicaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22914,6 +23985,13 @@
         2582,
         2585
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Malpighiales",
+        "family": "Salicaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -22976,6 +24054,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Laurales",
+        "family": "Lauraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23032,6 +24117,13 @@
         2324,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Cornales",
+        "family": "Cornaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23080,6 +24172,13 @@
         2454,
         2455
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Liliopsida",
+        "order": "Asparagales",
+        "family": "Asparagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23146,6 +24245,13 @@
         2068,
         2195
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23211,6 +24317,13 @@
         2453,
         2454
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23259,6 +24372,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Proteales",
+        "family": "Platanaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23323,6 +24443,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ericales",
+        "family": "Ericaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23377,6 +24504,13 @@
         2324,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ericales",
+        "family": "Ericaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23434,6 +24568,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ericales",
+        "family": "Ericaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23518,6 +24659,13 @@
         2195,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23613,6 +24761,13 @@
         2330,
         2458
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23702,6 +24857,13 @@
         2466,
         2467
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23785,6 +24947,13 @@
         2584,
         2585
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Dipsacales",
+        "family": "Viburnaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23912,6 +25081,13 @@
         2324,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ranunculales",
+        "family": "Berberidaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -23958,6 +25134,13 @@
         2324,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ericales",
+        "family": "Ericaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24008,6 +25191,13 @@
         2453,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24122,6 +25312,13 @@
         2329,
         2330
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24188,6 +25385,13 @@
         2329,
         2330
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24283,6 +25487,13 @@
         6140,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Saxifragales",
+        "family": "Grossulariaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24369,6 +25580,13 @@
         2458,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Asterales",
+        "family": "Asteraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24419,6 +25637,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Boraginales",
+        "family": "Namaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24598,6 +25823,13 @@
         2457,
         2458
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24661,6 +25893,13 @@
         2195,
         2196
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rhamnaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24736,6 +25975,13 @@
         1942,
         2068
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Apiales",
+        "family": "Araliaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -24836,6 +26082,13 @@
         2584,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Caryophyllales",
+        "family": "Montiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -25155,6 +26408,13 @@
         5886,
         6014
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Urticaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -25632,6 +26892,13 @@
         6438,
         6567
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Asterales",
+        "family": "Asteraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -25693,6 +26960,13 @@
         2200,
         2325
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Liliopsida",
+        "order": "Asparagales",
+        "family": "Asparagaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -26110,6 +27384,13 @@
         2788,
         2915
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Myrtales",
+        "family": "Onagraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -26166,6 +27447,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Piperales",
+        "family": "Aristolochiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -26599,6 +27887,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Lamiales",
+        "family": "Lamiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -26924,6 +28219,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Lamiales",
+        "family": "Scrophulariaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -26991,6 +28293,13 @@
         6054,
         6182
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Rosales",
+        "family": "Rosaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -27336,6 +28645,13 @@
         6004,
         6132
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Liliopsida",
+        "order": "Poales",
+        "family": "Typhaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -27474,6 +28790,13 @@
         2851,
         3099
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Liliopsida",
+        "order": "Alismatales",
+        "family": "Alismataceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -27535,6 +28858,13 @@
         2452,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Lamiales",
+        "family": "Lamiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "override",
@@ -27681,6 +29011,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Ranunculales",
+        "family": "Papaveraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -27782,6 +29119,13 @@
         2585,
         2586
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Liliopsida",
+        "order": "Asparagales",
+        "family": "Amaryllidaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -28151,6 +29495,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Caryophyllales",
+        "family": "Caryophyllaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -28574,6 +29925,13 @@
         6182,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Asterales",
+        "family": "Asteraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29057,6 +30415,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Lamiales",
+        "family": "Plantaginaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29278,6 +30643,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Brassicales",
+        "family": "Brassicaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29331,6 +30703,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Magnoliopsida",
+        "order": "Asterales",
+        "family": "Asteraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29394,6 +30773,13 @@
         2325,
         2453
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Polypodiopsida",
+        "order": "Polypodiales",
+        "family": "Dryopteridaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29455,6 +30841,13 @@
         2196,
         2324
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Polypodiopsida",
+        "order": "Polypodiales",
+        "family": "Polypodiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29847,6 +31240,13 @@
         5577,
         5703
       ],
+      "lineage": {
+        "kingdom": "Plantae",
+        "phylum": "Tracheophyta",
+        "class": "Polypodiopsida",
+        "order": "Polypodiales",
+        "family": "Dennstaedtiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Plantae",
         "scientificName": "gbif",
@@ -29897,6 +31297,13 @@
         2195,
         2324
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Cantharellales",
+        "family": "Hydnaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30075,6 +31482,13 @@
         2325,
         3228
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Boletales",
+        "family": "Boletaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30369,6 +31783,13 @@
         6267,
         6268
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Amanitaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30415,6 +31836,13 @@
         2454,
         2582
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Amanitaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30523,6 +31951,13 @@
         2366,
         2453
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Amanitaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30643,6 +32078,13 @@
         2545,
         3228
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Amanitaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -30902,6 +32344,13 @@
         6140,
         6268
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Agaricaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31046,6 +32495,13 @@
         5609,
         5875
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Hymenogastraceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31090,6 +32546,13 @@
         2453,
         2582
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Omphalotaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31244,6 +32707,13 @@
         6003,
         6132
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Strophariaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31380,6 +32850,13 @@
         2582,
         2593
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Physalacriaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31495,6 +32972,13 @@
         5749,
         5875
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Agaricaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31574,6 +33058,13 @@
         5874,
         5875
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Agaricaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31709,6 +33200,13 @@
         6141,
         6268
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Marasmiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31756,6 +33254,13 @@
         2324,
         2453
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Russulales",
+        "family": "Russulaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31805,6 +33310,13 @@
         2213,
         3229
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Tricholomataceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31932,6 +33444,13 @@
         2339,
         2466
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Cantharellales",
+        "family": "Hydnaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -31999,6 +33518,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Russulales",
+        "family": "Russulaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32247,6 +33773,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Polyporales",
+        "family": "Polyporaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32413,6 +33946,13 @@
         5886,
         6003
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Polyporales",
+        "family": "Polyporaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32586,6 +34126,13 @@
         2545,
         3228
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Polyporales",
+        "family": "Fomitopsidaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32640,6 +34187,13 @@
         2324,
         2325
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Polyporales",
+        "family": "Laetiporaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32785,6 +34339,13 @@
         2594,
         2719
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Pleurotaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32870,6 +34431,13 @@
         2417,
         2544
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Marasmiaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -32930,6 +34498,13 @@
         2325,
         5875
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Ascomycota",
+        "class": "Pezizomycetes",
+        "order": "Pezizales",
+        "family": "Morchellaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -33061,6 +34636,13 @@
         2196,
         2238
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Ascomycota",
+        "class": "Pezizomycetes",
+        "order": "Pezizales",
+        "family": "Discinaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -33158,6 +34740,13 @@
         3228,
         3229
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Ascomycota",
+        "class": "Sordariomycetes",
+        "order": "Hypocreales",
+        "family": "Hypocreaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -33323,6 +34912,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Tremellomycetes",
+        "order": "Tremellales",
+        "family": "Tremellaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -33382,6 +34978,13 @@
         2458,
         2582
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Basidiomycota",
+        "class": "Agaricomycetes",
+        "order": "Agaricales",
+        "family": "Lycoperdaceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
@@ -33532,6 +35135,13 @@
         6140,
         6141
       ],
+      "lineage": {
+        "kingdom": "Fungi",
+        "phylum": "Ascomycota",
+        "class": "Pezizomycetes",
+        "order": "Pezizales",
+        "family": "Pyronemataceae"
+      },
       "provenance": {
         "kingdom": "gbif:kingdom:Fungi",
         "scientificName": "gbif",
