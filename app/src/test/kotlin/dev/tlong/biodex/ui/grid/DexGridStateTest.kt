@@ -107,6 +107,7 @@ class DexGridStateTest {
     private val speciesFlow = MutableStateFlow(catalogue + userAdded)
     private val query = MutableStateFlow("")
     private val filters = MutableStateFlow(DexGridFilters())
+    private val sort = MutableStateFlow(DexSort.DEX_NUMBER)
 
     private fun state(): DexGridUiState = runBlocking {
         dexGridUiState(
@@ -115,6 +116,7 @@ class DexGridStateTest {
             progress = MutableStateFlow(progress),
             query = query,
             filters = filters,
+            sort = sort,
         ).first()
     }
 
@@ -203,6 +205,45 @@ class DexGridStateTest {
         val numbers = state().species.map { it.dexNumber }
         assertEquals(numbers.sorted(), numbers)
         assertEquals(userAdded.commonName, names().last())
+    }
+
+    @Test
+    fun `name order is alphabetical and case-insensitive`() {
+        // The user types the name on a species they add, and types it however they like:
+        // "oak titmouse" is a real row in the shipped dex. A default String sort would file
+        // every lower-case name after every upper-case one, which is not alphabetical to a
+        // reader looking for the letter O.
+        speciesFlow.value = listOf(
+            species(3, "Zebra Finch", TaxClass.BIRD, emptyList()),
+            species(1, "acorn woodpecker", TaxClass.BIRD, emptyList()),
+            species(2, "Bald Eagle", TaxClass.BIRD, emptyList()),
+        )
+        sort.value = DexSort.NAME
+
+        assertEquals(listOf("acorn woodpecker", "Bald Eagle", "Zebra Finch"), names())
+    }
+
+    @Test
+    fun `name order breaks ties on the dex number, so the grid never reshuffles`() {
+        speciesFlow.value = listOf(
+            species(9, "Dipper", TaxClass.BIRD, emptyList()),
+            species(4, "Dipper", TaxClass.BIRD, emptyList()),
+        )
+        sort.value = DexSort.NAME
+
+        assertEquals(listOf(4, 9), state().species.map { it.dexNumber })
+    }
+
+    @Test
+    fun `sort survives clearing the filters, because it is not one`() {
+        sort.value = DexSort.NAME
+        filters.value = DexGridFilters(caught = CaughtFilter.CAUGHT)
+        filters.value = DexGridFilters()
+
+        val s = state()
+        assertTrue(s.filters.isEmpty)
+        assertEquals(DexSort.NAME, s.sort)
+        assertEquals(names().sortedBy { it.lowercase() }, names())
     }
 
     @Test

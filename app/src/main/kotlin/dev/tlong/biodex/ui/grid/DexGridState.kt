@@ -9,6 +9,7 @@ import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * The grid's search and filter logic (M14), kept as pure functions over plain lists and cold
@@ -19,6 +20,23 @@ import kotlinx.coroutines.flow.combine
 
 /** DESIGN.md M14's caught/uncaught filter. Single-select; `ALL` is the mockup's "All" chip. */
 enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT }
+
+/**
+ * How the grid is ordered (D32). **Not a filter**: it narrows nothing, always has a value,
+ * and the *All* chip that clears every filter deliberately leaves it alone — a reader who has
+ * chosen alphabetical order has not asked for it to be undone by clearing a class.
+ *
+ * [DEX_NUMBER] is the shipped order and the default. [NAME] exists because the dex is also a
+ * list you look things up in: 230 species is past the point where scanning for a name in
+ * catalogue order is pleasant.
+ */
+enum class DexSort { DEX_NUMBER, NAME }
+
+/** The label the sort dropdown shows. Plain words, like the class and use chips. */
+fun DexSort.label(): String = when (this) {
+    DexSort.DEX_NUMBER -> "Dex number"
+    DexSort.NAME -> "Name (A–Z)"
+}
 
 /**
  * Single-select within each dimension, AND across dimensions and with the search query —
@@ -52,6 +70,8 @@ data class DexGridUiState(
     val filters: DexGridFilters = DexGridFilters(),
     val ecosystems: List<Ecosystem> = emptyList(),
     val species: List<SpeciesSummary> = emptyList(),
+    /** D32. Separate from [filters] because clearing the filters must not reorder the grid. */
+    val sort: DexSort = DexSort.DEX_NUMBER,
     /**
      * The classes the region actually holds, from the same `perClass` breakdown Stats reads
      * (6.3) — which carries a class only when some species has it. It is what stops the chip
@@ -136,17 +156,31 @@ fun classChips(
 
 /**
  * Search and filters compose: a species survives only if it satisfies every active narrowing.
- * Dex order is the grid's order (M01), and user-added species trail the catalogue because
- * their dex numbers start above [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE], with the
- * plants between the two (M02).
+ *
+ * Dex order is the grid's default order (M01, revised by D32): user-added species trail the
+ * catalogue because their dex numbers start above
+ * [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE], with the plants between the two (M02).
+ *
+ * Name order is case-insensitive, because the name on a user-added species is whatever the
+ * user typed — "oak titmouse" and "California thrasher" are both real rows in this dex, and a
+ * default `sortedBy` would file every lower-case entry after every upper-case one. Ties fall
+ * back to the dex number so the order is total and the grid never reshuffles between reads.
  */
 fun filterSpecies(
     species: List<SpeciesSummary>,
     query: String,
     filters: DexGridFilters,
-): List<SpeciesSummary> = species
-    .filter { matchesQuery(it, query) && matchesFilters(it, filters) }
-    .sortedBy { it.dexNumber }
+    sort: DexSort = DexSort.DEX_NUMBER,
+): List<SpeciesSummary> {
+    val kept = species.filter { matchesQuery(it, query) && matchesFilters(it, filters) }
+    return when (sort) {
+        DexSort.DEX_NUMBER -> kept.sortedBy { it.dexNumber }
+        DexSort.NAME -> kept.sortedWith(
+            compareBy<SpeciesSummary, String>(String.CASE_INSENSITIVE_ORDER) { it.commonName }
+                .thenBy { it.dexNumber },
+        )
+    }
+}
 
 /**
  * The whole screen state as one cold flow over the repository's reads plus the two pieces of
@@ -158,21 +192,38 @@ fun dexGridUiState(
     progress: Flow<DexProgress>,
     query: Flow<String>,
     filters: Flow<DexGridFilters>,
+    sort: Flow<DexSort> = flowOf(DexSort.DEX_NUMBER),
 ): Flow<DexGridUiState> =
-    combine(species, ecosystems, progress, query, filters) { all, ecos, prog, q, f ->
+    // Six inputs, and `combine` is only typed up to five — so the five that were always here
+    // compose first and the sort joins the result. Nesting rather than folding sort into
+    // `filters`, because sort is not a filter (D32) and the *All* chip must not reset it.
+    combine(
+        combine(species, ecosystems, progress, query, filters, ::GridReads),
+        sort,
+    ) { reads, order ->
         DexGridUiState(
-            regionLabel = prog.regionName,
-            animals = prog.animals,
-            plants = prog.plants,
-            fungi = prog.fungi,
-            query = q,
-            filters = f,
-            ecosystems = ecos,
-            species = filterSpecies(all, q, f),
-            availableClasses = prog.perClass.map { it.first }.toSet(),
-            loading = all.isEmpty() && prog.totalSpecies == 0,
+            regionLabel = reads.progress.regionName,
+            animals = reads.progress.animals,
+            plants = reads.progress.plants,
+            fungi = reads.progress.fungi,
+            query = reads.query,
+            filters = reads.filters,
+            ecosystems = reads.ecosystems,
+            species = filterSpecies(reads.species, reads.query, reads.filters, order),
+            sort = order,
+            availableClasses = reads.progress.perClass.map { it.first }.toSet(),
+            loading = reads.species.isEmpty() && reads.progress.totalSpecies == 0,
         )
     }
+
+/** The five original inputs as one value, so the six-way composition above stays typed. */
+private data class GridReads(
+    val species: List<SpeciesSummary>,
+    val ecosystems: List<Ecosystem>,
+    val progress: DexProgress,
+    val query: String,
+    val filters: DexGridFilters,
+)
 
 /**
  * The use chips of M23. Adjectives, because they describe the plant rather than count it.

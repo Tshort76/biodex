@@ -82,6 +82,7 @@ fun DexGridRoute(
         onUseFilter = viewModel::onUseFilter,
         onClassFilter = viewModel::onClassFilter,
         onEcosystemFilter = viewModel::onEcosystemFilter,
+        onSort = viewModel::onSort,
         onClearFilters = viewModel::onClearFilters,
         onOpenSpecies = onOpenSpecies,
         onRegister = onRegister,
@@ -98,6 +99,7 @@ fun DexGridScreen(
     onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
+    onSort: (DexSort) -> Unit,
     onClearFilters: () -> Unit,
     onOpenSpecies: (String) -> Unit,
     onRegister: () -> Unit,
@@ -130,6 +132,7 @@ fun DexGridScreen(
                 onUseFilter = onUseFilter,
                 onClassFilter = onClassFilter,
                 onEcosystemFilter = onEcosystemFilter,
+                onSort = onSort,
                 onClearFilters = onClearFilters,
             )
             when {
@@ -324,6 +327,7 @@ private fun FilterRow(
     onUseFilter: (PlantUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
+    onSort: (DexSort) -> Unit,
     onClearFilters: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -385,6 +389,17 @@ private fun FilterRow(
                     onSelect = onUseFilter,
                 )
             }
+            // Sits with the filters because it is the same kind of control over the same
+            // grid, but it carries no clear row: picking *Dex number* is how you go back
+            // (D32), and there is no state of "unsorted" to return to.
+            FilterDropdown(
+                label = "Sort",
+                clearLabel = null,
+                selectedLabel = state.sort.takeIf { it != DexSort.DEX_NUMBER }?.label(),
+                tickedLabel = state.sort.label(),
+                options = DexSort.entries.map { it.label() to it },
+                onSelect = onSort,
+            )
         }
     }
 }
@@ -404,10 +419,16 @@ private fun FilterRow(
 @Composable
 private fun <T> FilterDropdown(
     label: String,
-    clearLabel: String,
+    clearLabel: String?,
     selectedLabel: String?,
     options: List<Pair<String, T>>,
     onSelect: (T) -> Unit,
+    /**
+     * Which row wears the tick. Defaults to the selection, and differs only for Sort, where
+     * the grid is always in *some* order: the button reads "Sort" while that order is the
+     * default one, but the menu still has to say which order you are in.
+     */
+    tickedLabel: String? = selectedLabel,
 ) {
     val colors = DexTheme.colors
     var expanded by remember { mutableStateOf(false) }
@@ -436,7 +457,7 @@ private fun <T> FilterDropdown(
             onDismissRequest = { expanded = false },
             containerColor = colors.card,
         ) {
-            if (active) {
+            if (active && clearLabel != null) {
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -454,7 +475,7 @@ private fun <T> FilterDropdown(
                 )
             }
             options.forEach { (optionLabel, value) ->
-                val isSelected = optionLabel == selectedLabel
+                val isSelected = optionLabel == tickedLabel
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -573,6 +594,7 @@ private fun DexGridPreview() {
             onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},
+            onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
             onRegister = {},
@@ -603,6 +625,7 @@ private fun DexGridSearchPreview() {
             onUseFilter = {},
             onClassFilter = {},
             onEcosystemFilter = {},
+            onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
             onRegister = {},

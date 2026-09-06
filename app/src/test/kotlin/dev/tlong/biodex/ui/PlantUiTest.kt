@@ -373,6 +373,19 @@ class PlantUiTest {
         )
         assertEquals("4 / 80 plants", revealCounterLabel(content(Kingdom.PLANT, 4, 80)))
         assertEquals("47 / 120 animals", revealCounterLabel(content(Kingdom.ANIMAL, 47, 120)))
+
+        // D33: the reveal shows the count the user walked in with, then ticks to the new one.
+        // The total never rolls back — on a user-added species it grew with the catch (D29),
+        // so a "before" denominator would be a number that never existed.
+        assertEquals(
+            "46 / 120 animals",
+            revealCounterLabel(content(Kingdom.ANIMAL, 47, 120), showNewValue = false),
+        )
+        // A first-ever catch counts from zero rather than from minus one.
+        assertEquals(
+            "0 / 120 animals",
+            revealCounterLabel(content(Kingdom.ANIMAL, 0, 120), showNewValue = false),
+        )
     }
 
     @Test

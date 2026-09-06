@@ -40,7 +40,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes.** If BioDex vanishes from the phone after a test run, that is why — `make install` puts it back.
 
-Counts as of the last commit: **442 JVM, 43 instrumented, 13 Python.**
+Counts as of the last commit: **445 JVM, 43 instrumented, 13 Python.**
 
 ## The design registers — the convention to respect
 

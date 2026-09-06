@@ -24,6 +24,7 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val filters = MutableStateFlow(DexGridFilters())
+    private val sort = MutableStateFlow(DexSort.DEX_NUMBER)
 
     val uiState: StateFlow<DexGridUiState> = dexGridUiState(
         species = repository.speciesSummaries(),
@@ -31,6 +32,7 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
         progress = repository.dexProgress(),
         query = query,
         filters = filters,
+        sort = sort,
     ).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -56,6 +58,14 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
 
     fun onEcosystemFilter(value: String) = filters.update {
         it.copy(ecosystemId = if (it.ecosystemId == value) null else value)
+    }
+
+    /**
+     * Set, never toggle: the grid always has an order, so there is no "no sort" to fall back
+     * to (D32). This is also why [onClearFilters] does not touch it.
+     */
+    fun onSort(value: DexSort) {
+        sort.value = value
     }
 
     fun onClearFilters() {
