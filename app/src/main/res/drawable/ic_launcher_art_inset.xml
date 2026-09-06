@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher art, held back from the edge of the adaptive-icon canvas so the white
+     background shows around it as a rim (D35).
+
+     The inset is what produces the border, and the arithmetic is the whole trick. The
+     canvas is 108dp and a launcher mask shows roughly the central 72dp, so 18dp on each
+     side is cropped before anything is drawn. An inset of 21dp therefore leaves about 3dp
+     of background visible inside the mask — a thin rim that follows the mask's own shape,
+     circle or squircle, rather than a ring we drew at a radius the launcher might not use.
+     A rim measured this way is thinnest at the corners of a squircle, which is correct:
+     it is the mask's outline, not a shape competing with it. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@mipmap/ic_launcher_art"
+    android:inset="21dp" />

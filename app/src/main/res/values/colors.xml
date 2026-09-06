@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="dex_bg">#FBFAF7</color>
-    <color name="ic_launcher_background">#4A3524</color>
+    <!-- The launcher icon's border (D35). It is the background layer of the adaptive icon,
+         and it shows as a rim because the foreground is inset — see ic_launcher.xml. Pure
+         white rather than the app's off-white paper: this sits on the user's wallpaper, not
+         on a BioDex screen, and it is there to separate a dark walnut mark from a dark
+         home screen. -->
+    <color name="ic_launcher_border">#FFFFFF</color>
 </resources>

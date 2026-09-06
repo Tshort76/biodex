@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The BioDex mark: a bird, an oak leaf and a butterfly around the dex ring,
-     carved in walnut. The art is opaque and full-bleed in the foreground layer,
-     composed so the emblem sits inside the 66dp safe zone; the background is a
-     flat walnut tone that only shows if a launcher insets the foreground.
+     carved in walnut. The art is opaque and composed so the emblem sits inside the
+     66dp safe zone.
+
+     The background is white and the foreground is inset, so what shows around the art
+     is a thin white rim in the shape of whatever mask the launcher applies (D35). The
+     walnut icon is dark and was disappearing into a dark home screen; the rim is what
+     separates it from the wallpaper. The background is therefore load-bearing now — it
+     is the border — where before it only showed if a launcher chose to inset the
+     foreground itself.
+
      No monochrome layer: a photographic mark cannot theme cleanly, so themed
      launchers fall back to this icon rather than showing a muddy silhouette. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@mipmap/ic_launcher_art" />
+    <background android:drawable="@color/ic_launcher_border" />
+    <foreground android:drawable="@drawable/ic_launcher_art_inset" />
 </adaptive-icon>
