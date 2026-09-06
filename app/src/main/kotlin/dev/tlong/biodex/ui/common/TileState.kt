@@ -49,6 +49,28 @@ fun tileStateFor(species: SpeciesSummary): TileState = when {
  */
 fun tileWearsAccentChrome(state: TileState): Boolean = state == TileState.CAUGHT_REFERENCE_IMAGE
 
+/**
+ * **The loud tick (M44/D38).** A caught species whose cell is drawing a shape rather than a
+ * picture gets a filled green tick instead of the quiet outline one, so "caught, but there is
+ * no photograph here" reads at thumbnail size instead of looking like a species still missing.
+ *
+ * Three different situations land here and the tick deliberately does not distinguish them:
+ * a capture that never had a photograph of its own (M41), one whose gallery photo has been
+ * deleted or had its permission withdrawn, and one whose reference image has not cached while
+ * offline. What they have in common is the only thing the grid can say honestly — you have
+ * this one, and the picture is not here — and the entry screen is where the difference
+ * between them is explained.
+ *
+ * `showingSilhouette` is a fact about what the cell actually drew, which is why it is a
+ * parameter rather than something derived from the state: whether a file is on disk or a fetch
+ * succeeded is not knowable from a [SpeciesSummary]. That is the same reason
+ * [tileWearsAccentChrome] refuses to take it — the *chrome* must never depend on a load, or a
+ * caught species would demote itself to looking uncaught. The tick is the opposite case: it
+ * exists precisely to mark the load having produced nothing.
+ */
+fun tileWearsLoudTick(state: TileState, showingSilhouette: Boolean): Boolean =
+    state != TileState.UNCAUGHT && showingSilhouette
+
 /** The glyph in the caption band; null for the two states that carry no mark. */
 fun tileGlyph(state: TileState): String? =
     if (state == TileState.CAUGHT_REFERENCE_IMAGE) LEAF_GLYPH else null

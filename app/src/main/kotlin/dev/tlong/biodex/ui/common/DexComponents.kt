@@ -200,16 +200,33 @@ fun SpeciesCell(
                 )
             }
             if (species.caught) {
+                // M44. Filled and green when the cell is showing a shape, quiet when it is
+                // showing a picture: the tick has to carry "caught" on its own exactly when
+                // there is no photograph doing it.
+                val loud = tileWearsLoudTick(
+                    state = tileState,
+                    showingSilhouette = imageModel == null || imageFailed,
+                )
                 Text(
                     text = "✓",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.ok,
+                    style = if (loud) {
+                        MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    } else {
+                        MaterialTheme.typography.labelSmall
+                    },
+                    // On the filled tick the ground is the accent green, so the mark itself
+                    // takes the page colour — which keeps it legible in both themes, where a
+                    // white one would vanish against the lighter green of the dark palette.
+                    color = if (loud) colors.bg else colors.ok,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(4.dp)
                         .clip(CircleShape)
-                        .background(colors.accentSoft)
-                        .padding(horizontal = 5.dp, vertical = 1.dp),
+                        .background(if (loud) colors.ok else colors.accentSoft)
+                        .padding(
+                            horizontal = if (loud) 7.dp else 5.dp,
+                            vertical = if (loud) 2.dp else 1.dp,
+                        ),
                 )
             }
         }

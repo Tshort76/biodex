@@ -98,4 +98,35 @@ class TileStateTest {
         assertFalse(NO_OWN_PHOTO_MARK.contains("Pl@ntNet"))
         assertEquals("caught — no photo of your own", NO_OWN_PHOTO_MARK)
     }
+
+    @Test
+    fun `the loud tick marks a caught species whose cell is showing a shape`() {
+        // The three ways a caught cell ends up drawing a silhouette — a broken or deleted
+        // gallery photo, a plant that never had one (M41), a reference image not yet cached —
+        // all read the same on the grid, which is the honest thing it can say (M44).
+        assertTrue(tileWearsLoudTick(TileState.CAUGHT_OWN_PHOTO, showingSilhouette = true))
+        assertTrue(tileWearsLoudTick(TileState.CAUGHT_REFERENCE_IMAGE, showingSilhouette = true))
+    }
+
+    @Test
+    fun `a caught cell showing a picture keeps the quiet tick`() {
+        assertFalse(tileWearsLoudTick(TileState.CAUGHT_OWN_PHOTO, showingSilhouette = false))
+        assertFalse(tileWearsLoudTick(TileState.CAUGHT_REFERENCE_IMAGE, showingSilhouette = false))
+    }
+
+    @Test
+    fun `an uncaught cell never wears a tick, drawing a shape or not`() {
+        // The one that would be a real bug: an uncaught species is *always* a silhouette, so a
+        // rule keyed on the silhouette alone would put a caught mark on every missing species.
+        assertFalse(tileWearsLoudTick(TileState.UNCAUGHT, showingSilhouette = true))
+        assertFalse(tileWearsLoudTick(TileState.UNCAUGHT, showingSilhouette = false))
+    }
+
+    @Test
+    fun `the chrome still refuses to know whether the image loaded`() {
+        // M44 adds a rule that depends on the load; §5.3.1's does not, and must not. Keeping
+        // both in this file is what makes the difference visible to whoever changes one.
+        assertTrue(tileWearsAccentChrome(TileState.CAUGHT_REFERENCE_IMAGE))
+        assertFalse(tileWearsAccentChrome(TileState.UNCAUGHT))
+    }
 }
