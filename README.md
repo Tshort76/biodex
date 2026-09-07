@@ -35,6 +35,8 @@ BioDex has no backend and no accounts, and it works offline from the first launc
 
 Identification is opt-in, per photo, and only for plants. Nothing leaves the phone unless you press *Identify* on a photo you attached. When you do, one reduced copy of that one photo — re-encoded, so its EXIF and GPS coordinates are gone — goes to Pl@ntNet, which returns candidate species you choose from. The app never picks one and never claims the thing in your photo *is* a species; what it says is "Pl@ntNet suggested these", in the same register as the medicinal line that credits Dr. Duke's database — a source's statement, never the app's. Animals and fungi have no identification at all.
 
+A reference can go stale — you delete the photo, or Android withdraws the app's permission to read it — and that is an expected state rather than an error. The catch is never undone: the entry keeps its date, the species keeps its tick, and the photo viewer offers to re-link a new picture. On the grid a caught species with no picture to show wears a filled green tick, so it never reads as one you have still to find.
+
 Because the photos are referenced, backups matter more than usual, so the whole collection exports as a single ZIP — catalogue, entries, thumbnails and a full-size copy of every photo that still resolves — and import merges rather than replaces.
 
 <p align="center">
@@ -68,6 +70,7 @@ make check     # JVM + catalogue tests, no phone needed
 | [`DESIGN.md`](DESIGN.md) | Product requirements and decisions, numbered — `M##`, `D##` and friends, cited from the code that implements them |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Technical decisions and their reasoning. §11.8 is what is built today |
 | [`BACKLOG.md`](BACKLOG.md) | What is not started, and what is deliberately never happening |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed and when, newest first |
 | [`docs/BUILD.md`](docs/BUILD.md) | Setup, signing, sideloading |
 
 ## License

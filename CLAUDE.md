@@ -8,7 +8,7 @@ A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-worl
 
 `README.md` is written for the user; `docs/BUILD.md` covers setup and signing, and `make` is the entry point for every routine build command.
 
-`DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up. **For what is built today, read `ARCHITECTURE.md` §11.8**: the slice maps in §9 and §11.6 stop before the most recent wave of work, and §11.8 is the table that covers it. `BACKLOG.md` holds what is not started.
+`DESIGN.md` (product requirements) and `ARCHITECTURE.md` (technical decisions) are the tracked design record — see **The design registers** below, which is the convention most likely to trip you up. **For what is built today, read `ARCHITECTURE.md` §11.8**: the slice maps in §9 and §11.6 stop before the most recent wave of work, and §11.8 is the table that covers it. `BACKLOG.md` holds what is not started, and `CHANGELOG.md` what changed and when — keep it current, newest first, using `DESIGN.md`'s version numbers.
 
 ## Commands
 
