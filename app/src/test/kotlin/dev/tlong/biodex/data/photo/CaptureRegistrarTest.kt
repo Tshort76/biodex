@@ -118,40 +118,6 @@ class CaptureRegistrarTest {
             )
         }
 
-    @Test
-    fun `a shared photo is copied even with the setting off (D39)`() = runBlocking {
-        // The whole point of M45's forced copy: a share-sheet grant cannot be persisted, so a
-        // reference alone would resolve today and be revoked by tomorrow. `keepLocalCopy` is
-        // off here, exactly as it is by default.
-        val sharing = CaptureRegistrar(
-            store = store,
-            photos = photos,
-            newCaptureId = { "cap-shared" },
-            now = { clock },
-        )
-
-        sharing.register("wren", "content://shared/9", forceLocalCopy = true)
-
-        assertEquals(1, photos.localCopiesWritten)
-        assertEquals(
-            localCopyRelativePath("cap-shared"),
-            store.captures.getValue("cap-shared").localCopyPath,
-        )
-    }
-
-    @Test
-    fun `a capture with a local copy still resolves after its grant is gone`() {
-        // The property the copy exists for, stated where it can fail: with a copy on disk the
-        // reference is never consulted, so a revoked grant cannot reach the user.
-        val ref = resolvePhotoRef(
-            photoUri = "content://shared/9",
-            localCopyPath = localCopyRelativePath("cap-shared"),
-            probe = { SecurityException("grant is long gone") },
-        )
-
-        assertEquals(PhotoRef.LocalCopy(localCopyRelativePath("cap-shared")), ref)
-    }
-
     // -- Deletion (S07) ------------------------------------------------------
 
     @Test

@@ -6,14 +6,6 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
-## v14 — 2026-09-07
-
-**Share a photo or a name into BioDex.**
-
-- **Added** — BioDex is a share target. From Merlin, Lens, Google Photos, or a smart feeder's own app, Share → BioDex opens Register with the photo attached and the name already in the search box, so a species identified elsewhere no longer has to be remembered and retyped. It opens above the grid, so Back stays in the dex. (`M45`, `D39`)
-- **Added** — shared text is used only when it looks like a name: the first line, never a link, never longer than a short name. Anything else leaves the box empty rather than filling it with something that has to be cleared.
-- **Changed** — a shared photo is copied into the app rather than referenced. A share-sheet grant cannot be made persistable the way the gallery picker's can, so a stored reference would work until the next launch and then be revoked; the copy is what makes the catch durable.
-
 ## v13 — 2026-09-06
 
 **A caught species with no picture now says so.**

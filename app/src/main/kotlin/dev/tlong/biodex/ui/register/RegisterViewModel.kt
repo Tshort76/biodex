@@ -18,14 +18,12 @@ import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.keepsOwnPhoto
-import dev.tlong.biodex.data.photo.needsLocalCopy
 import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
 import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.media.NetworkMonitor
-import dev.tlong.biodex.ui.nav.ShareIntake
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,18 +50,11 @@ class RegisterViewModel(
     private val photos: PhotoGateway,
     private val settings: AppSettings,
     networkMonitor: NetworkMonitor,
-    /** M45. What the share sheet handed us, if the screen was opened that way. */
-    shared: ShareIntake? = null,
 ) : ViewModel() {
 
-    private val query = MutableStateFlow(shared?.query.orEmpty())
+    private val query = MutableStateFlow("")
     private val selectedSpeciesId = MutableStateFlow(preselectedSpeciesId)
-
-    // M45. A shared photo is attached before the screen is first drawn, and marked SHARED so
-    // registration knows to keep a copy — its grant dies with this task (D39).
-    private val photo = MutableStateFlow(
-        shared?.photoUri?.let { PickedPhoto(uri = it, source = PhotoSourceKind.SHARED) },
-    )
+    private val photo = MutableStateFlow<PickedPhoto?>(null)
     private val registering = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
@@ -297,8 +288,7 @@ class RegisterViewModel(
                 else -> picked.uri
             }
 
-            val keepCopy = picked != null && needsLocalCopy(picked.source) && registerUri != null
-            when (val result = registrar.register(speciesId, registerUri, forceLocalCopy = keepCopy)) {
+            when (val result = registrar.register(speciesId, registerUri)) {
                 is CaptureRegistrar.RegisterResult.Registered -> {
                     if (picked != null && shouldDeleteCacheFile(picked.source)) {
                         withContext(Dispatchers.IO) { photos.sweepCameraCache() }
@@ -343,7 +333,6 @@ class RegisterViewModel(
         fun factory(
             container: AppContainer,
             preselectedSpeciesId: String?,
-            shared: ShareIntake? = null,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 RegisterViewModel(
@@ -356,7 +345,6 @@ class RegisterViewModel(
                     photos = container.photoGateway,
                     settings = container.settings,
                     networkMonitor = container.networkMonitor,
-                    shared = shared,
                 )
             }
         }
