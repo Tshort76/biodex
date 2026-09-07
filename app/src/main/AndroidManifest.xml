@@ -25,6 +25,22 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- M45. BioDex as a share target, so whatever named the bird — Merlin, Lens, a
+                 feeder's own app — can hand the photo and the name straight to Register
+                 instead of the name being retyped from memory. Two filters rather than one
+                 because a sender offers a photo, or text, or both, and Android matches on the
+                 MIME type it is sending. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <!-- S01's share sheet: a ZIP in cacheDir/exports handed to another app as a

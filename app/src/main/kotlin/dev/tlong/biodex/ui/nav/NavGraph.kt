@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -53,7 +54,17 @@ data class EntryDetail(
 )
 
 @Serializable
-data class Register(val preselectedSpeciesId: String? = null)
+data class Register(
+    val preselectedSpeciesId: String? = null,
+    /**
+     * M45. What a share handed us. These ride the route rather than being read from the intent
+     * inside the screen, so the Register screen has one way in whatever opened it — and so the
+     * back stack behaves: a share lands on the grid with Register above it, and Back leaves
+     * the user in the app rather than throwing them out to whatever shared.
+     */
+    val sharedPhotoUri: String? = null,
+    val sharedQuery: String? = null,
+)
 
 @Serializable
 data class ConfirmSpecies(val draftId: String)
@@ -79,8 +90,22 @@ data object Settings
 data object Licenses
 
 @Composable
-fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
+fun BioDexNavHost(
+    navController: NavHostController = rememberNavController(),
+    /** M45. Non-null when the app was opened by a share rather than from the launcher. */
+    intake: ShareIntake? = null,
+) {
     val container = LocalContext.current.appContainer
+    // The grid stays the start destination and Register is pushed on top of it, so Back from a
+    // shared photo goes to the dex. Keyed on the intake so one share opens one screen; a second
+    // share arrives as a new intent and a new instance, which is Android's default and right.
+    LaunchedEffect(intake) {
+        if (intake != null) {
+            navController.navigate(
+                Register(sharedPhotoUri = intake.photoUri, sharedQuery = intake.query),
+            )
+        }
+    }
     NavHost(navController = navController, startDestination = DexGrid) {
         composable<DexGrid> {
             DexGridRoute(
@@ -112,6 +137,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             val route = backStackEntry.toRoute<Register>()
             RegisterRoute(
                 preselectedSpeciesId = route.preselectedSpeciesId,
+                shared = shareIntakeOf(route),
                 onBack = { navController.popBackStack() },
                 onRegistered = { speciesId, justUnlocked ->
                     // DESIGN.md §6's navigation rule: after registering, back from the detail
@@ -228,3 +254,8 @@ private fun Placeholder(
         }
     }
 }
+
+/** The share payload a [Register] route is carrying, or null when it was opened normally. */
+private fun shareIntakeOf(route: Register): ShareIntake? =
+    ShareIntake(photoUri = route.sharedPhotoUri, query = route.sharedQuery)
+        .takeIf { it.hasSomething }

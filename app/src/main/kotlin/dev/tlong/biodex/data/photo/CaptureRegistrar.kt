@@ -43,6 +43,12 @@ class CaptureRegistrar(
         photoUri: String?,
         note: String? = null,
         locationLabel: String? = null,
+        /**
+         * D39. Forces the local copy for a photo whose grant cannot outlive this task — a
+         * shared one. It is an argument rather than a second setting because it is a fact
+         * about where the photo came from, which only the caller knows.
+         */
+        forceLocalCopy: Boolean = false,
     ): RegisterResult {
         // M41. A photoless capture skips the grant, the EXIF read and the thumbnail entirely —
         // there is nothing to take a grant on, nothing to read a date out of, and nothing to
@@ -70,7 +76,7 @@ class CaptureRegistrar(
                 speciesId = speciesId,
                 photoUri = photoUri,
                 thumbPath = thumbPath,
-                localCopyPath = if (keepLocalCopy()) {
+                localCopyPath = if (keepLocalCopy() || forceLocalCopy) {
                     photos.writeLocalCopy(captureId, photoUri)
                 } else {
                     null

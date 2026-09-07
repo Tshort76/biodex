@@ -59,4 +59,20 @@ fun shouldDeleteCacheFile(source: PhotoSourceKind): Boolean =
  * cleanup — and at neither of them can the URI string be trusted to say: a `FileProvider` URI
  * and a picker URI are both `content://`.
  */
-enum class PhotoSourceKind { GALLERY_PICKER, CAMERA_CACHE }
+enum class PhotoSourceKind { GALLERY_PICKER, CAMERA_CACHE, SHARED }
+
+/**
+ * Whether the app has to keep its own full-size copy of this photo, whatever S03's setting says
+ * (M45, D39).
+ *
+ * True for exactly one source, and the reason is Android's, not ours. A photo picked from the
+ * gallery comes with a grant the app can make persistable, which is what lets M10 store a
+ * reference and no copy. **A photo arriving through the share sheet does not**: its grant is
+ * scoped to the task that received it and cannot be persisted, so a stored reference would
+ * resolve for as long as the app stayed open and be revoked by the next launch.
+ *
+ * Copying is therefore not a preference here, it is the only way the photo survives at all —
+ * and it is better than the alternatives, which are to refuse shared photos or to let a catch
+ * quietly lose its picture overnight.
+ */
+fun needsLocalCopy(source: PhotoSourceKind): Boolean = source == PhotoSourceKind.SHARED

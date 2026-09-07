@@ -54,6 +54,7 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.identify.ResolvedCandidate
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
+import dev.tlong.biodex.ui.nav.ShareIntake
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -74,6 +75,8 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun RegisterRoute(
     preselectedSpeciesId: String?,
+    /** M45. A photo and a name handed over by another app, or null. */
+    shared: ShareIntake? = null,
     onBack: () -> Unit,
     onRegistered: (speciesId: String, justUnlocked: Boolean) -> Unit,
     onAddOwnSpecies: (
@@ -86,8 +89,12 @@ fun RegisterRoute(
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel: RegisterViewModel = viewModel(
-        key = preselectedSpeciesId ?: "register",
-        factory = RegisterViewModel.factory(container, preselectedSpeciesId),
+        // The key carries the share too: two shares in a row are two different screens, and
+        // reusing one view model would leave the second showing the first one's photo.
+        key = listOfNotNull(preselectedSpeciesId, shared?.photoUri, shared?.query)
+            .ifEmpty { listOf("register") }
+            .joinToString("|"),
+        factory = RegisterViewModel.factory(container, preselectedSpeciesId, shared),
     )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
