@@ -6,6 +6,14 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v17 — 2026-09-11
+
+**The grid cell is the photograph.**
+
+- **Changed** — a grid cell is now one picture filling the whole tile with the species' name written across the foot of it, over a soft gradient. The caption band is gone, so the photograph gets the 30dp it was using — about 40% more picture. (`M01` revised, `D46`)
+- **Fixed** — a tile crops from the top of the photograph instead of the middle, which was cutting the heads off birds. (`D46`)
+- **Removed** — the dex number on a grid cell. It is still on the entry screen, on the unlock reveal and in search results. (`M26` revised, `D46`)
+
 ## v16.1 — 2026-09-11
 
 - **Changed** — species you added before v16 are respelled the same way the next time the app starts ("brown pelican" becomes "Brown Pelican"). Only the names change; a name you hand-edited stays locked. (`D45`)

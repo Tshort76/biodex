@@ -96,6 +96,12 @@ class TileStateTest {
     }
 
     @Test
+    fun `the name sits on the picture, and falls back to the surface exactly when the picture does (D46)`() {
+        assertTrue(tileLabelOnPicture(showingSilhouette = false))
+        assertFalse(tileLabelOnPicture(showingSilhouette = true))
+    }
+
+    @Test
     fun `a catch that prefers its own photo leads with the thumbnail and keeps the reference as the fallback`() {
         val sources = tileImageSources(
             species(caught = true, thumbPath = "thumbnails/a.jpg", preferOwnPhoto = true),

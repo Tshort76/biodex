@@ -142,7 +142,18 @@ fun tileWearsAccentChrome(state: TileState): Boolean = state == TileState.CAUGHT
 fun tileWearsLoudTick(state: TileState, showingSilhouette: Boolean): Boolean =
     state != TileState.UNCAUGHT && showingSilhouette
 
-/** The glyph in the caption band; null for the two states that carry no mark. */
+/**
+ * **Where the name sits (D46).** The tile is one picture with the name overlaid at its foot,
+ * on a scrim — but a cell that ended up drawing a silhouette has no photograph to overlay,
+ * and a dark band across a pale silhouette ground reads as damage. So the name falls back to
+ * the tile's own surface exactly when the picture did.
+ *
+ * Like [tileWearsLoudTick] this takes the fact rather than deriving it: whether a fetch
+ * succeeded or a thumbnail is still on disk is not knowable from a [SpeciesSummary].
+ */
+fun tileLabelOnPicture(showingSilhouette: Boolean): Boolean = !showingSilhouette
+
+/** The glyph in the label; null for the two states that carry no mark. */
 fun tileGlyph(state: TileState): String? =
     if (state == TileState.CAUGHT_NO_OWN_PHOTO) LEAF_GLYPH else null
 

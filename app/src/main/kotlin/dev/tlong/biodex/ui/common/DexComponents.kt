@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -209,7 +211,7 @@ fun SpeciesCell(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(74.dp)
+                .height(TILE_PICTURE_HEIGHT)
                 .background(if (accented) colors.accentSoft else colors.silBg),
             contentAlignment = Alignment.Center,
         ) {
@@ -220,9 +222,12 @@ fun SpeciesCell(
                     AsyncImage(
                         model = imageModel,
                         contentDescription = null,
-                        // Cropped, not fitted (D30 fits the hero): at 74dp a letterboxed
-                        // photograph is a stripe, and a tile wants a picture.
+                        // Cropped, not fitted (D30 fits the hero): a letterboxed photograph
+                        // at this size is a stripe, and a tile wants a picture. D46 aligns
+                        // the crop to the top, because a centred one took the heads off
+                        // portrait-shaped photographs.
                         contentScale = ContentScale.Crop,
+                        alignment = Alignment.TopCenter,
                         onState = { state ->
                             if (state is AsyncImagePainter.State.Error) failedCount += 1
                         },
@@ -273,39 +278,69 @@ fun SpeciesCell(
                         ),
                 )
             }
-        }
-        Column(
-            modifier = Modifier
-                .background(if (accented) colors.accentSoft else colors.card)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-        ) {
-            tileGlyph(tileState)?.let { glyph ->
+            // D46: the name rides on the picture. Over a photograph it sits on a scrim
+            // that fades up from the foot of the tile, so it reads over a bright sky and a
+            // dark trunk alike; over a silhouette it sits on the tile's own surface, where
+            // a dark band on a pale ground would look like damage rather than design.
+            val onPicture = tileLabelOnPicture(showingSilhouette = imageFailed)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .then(
+                        if (onPicture) {
+                            Modifier.background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, SCRIM_TOP, SCRIM_FOOT),
+                                ),
+                            )
+                        } else {
+                            Modifier.background(if (accented) colors.accentSoft else colors.card)
+                        },
+                    )
+                    .padding(start = 6.dp, end = 6.dp, top = if (onPicture) 14.dp else 4.dp, bottom = 5.dp),
+            ) {
+                tileGlyph(tileState)?.let { glyph ->
+                    Text(
+                        text = "$glyph $NO_OWN_PHOTO_MARK",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                        color = if (onPicture) SCRIM_FAINT else colors.accent,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Text(
-                    text = "$glyph $NO_OWN_PHOTO_MARK",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                    color = colors.accent,
-                    maxLines = 1,
+                    text = species.commonName,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 13.sp,
+                    ),
+                    color = when {
+                        onPicture -> SCRIM_TEXT
+                        species.caught -> colors.fg
+                        else -> colors.muted
+                    },
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                text = species.displayNumber,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                color = colors.faint,
-            )
-            Text(
-                text = species.commonName,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = if (species.caught) colors.fg else colors.muted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
+
+/**
+ * D46: one picture, tile-high. The caption band it replaced cost 30dp of the cell and took
+ * it out of the photograph; the grid keeps the same cell height and spends all of it on the
+ * picture.
+ */
+private val TILE_PICTURE_HEIGHT = 104.dp
+
+/** The scrim under an overlaid name, and the two colours that read on it. */
+private val SCRIM_TOP = Color(0x66000000)
+private val SCRIM_FOOT = Color(0xC2000000)
+private val SCRIM_TEXT = Color(0xFFF4F3EE)
+private val SCRIM_FAINT = Color(0xFFCFE3CF)
 
 /** `.linkrow` — the outbound "Learn more" row; disabled-looking when there is no URL. */
 @Composable
