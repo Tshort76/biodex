@@ -24,8 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -135,13 +138,15 @@ fun AttributionLine(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * `.cell` — one grid cell (M01). A caught species shows the species' reference picture (D39);
- * an uncaught one shows the class silhouette on `silBg`.
+ * `.cell` — one grid cell (M01). Every species shows its reference picture (D39): a caught
+ * one in full colour, an uncaught one dimmed to grey on `silBg` (D41). The class silhouette
+ * is the fallback for both when no picture is available.
  *
  * The pictures a cell may try, and their order, come from [tileImageSources]: the reference
- * picture first, then the capture's **stored thumbnail** (M11) as the fallback for when the
- * reference has not cached. Neither is the gallery URI — the grid never resolves one, so a
- * broken photo reference stays a one-entry problem rather than a blank collection.
+ * picture first, then — for a caught species — the capture's **stored thumbnail** (M11) as the
+ * fallback for when the reference has not cached. Neither is the gallery URI — the grid never
+ * resolves one, so a broken photo reference stays a one-entry problem rather than a blank
+ * collection.
  *
  * When every candidate has failed — the phone is offline with nothing cached, or the thumbnail
  * file went missing because a database was restored without the files beside it — the cell
@@ -161,6 +166,7 @@ fun SpeciesCell(
     val filesDir = LocalContext.current.filesDir
     val tileState = tileStateFor(species)
     val accented = tileWearsAccentChrome(tileState)
+    val dimmed = tileDrawsDimmed(tileState)
     // §5.3.1. The *chrome* is decided before and independently of any picture, which is what
     // makes the offline fallback keep saying "caught". The pictures are walked in D39's
     // order, advancing one place on each load failure until the list runs out.
@@ -206,7 +212,13 @@ fun SpeciesCell(
                         onState = { state ->
                             if (state is AsyncImagePainter.State.Error) failedCount += 1
                         },
-                        modifier = Modifier.fillMaxSize(),
+                        // D41: an uncaught tile's picture is greyed and faded, so the grid
+                        // reads locked-versus-unlocked at a glance where the caught tile is
+                        // the same picture in full colour.
+                        colorFilter = if (dimmed) DIMMED_FILTER else null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(if (dimmed) DIMMED_ALPHA else 1f),
                     )
                 }
             } else {
@@ -337,3 +349,7 @@ fun ScientificName(name: String, modifier: Modifier = Modifier) {
         modifier = modifier,
     )
 }
+
+/** D41's dimming: the colour drained out of an uncaught tile's picture, and most of its weight. */
+private val DIMMED_FILTER = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+private const val DIMMED_ALPHA = 0.42f

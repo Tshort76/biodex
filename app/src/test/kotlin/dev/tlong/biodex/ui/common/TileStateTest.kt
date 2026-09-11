@@ -38,7 +38,7 @@ class TileStateTest {
     )
 
     @Test
-    fun `an uncaught species is the silhouette on the neutral ground, as before`() {
+    fun `an uncaught species keeps the neutral ground and no mark`() {
         val state = tileStateFor(species(caught = false, thumbPath = null))
 
         assertEquals(TileState.UNCAUGHT, state)
@@ -109,11 +109,21 @@ class TileStateTest {
     }
 
     @Test
-    fun `an uncaught species never draws its reference picture`() {
-        // The one that matters: the reference picture is a picture of the species whether or
-        // not it has been caught, and drawing it on an uncaught tile would end the
-        // silhouette-unlock mechanic the grid exists for.
-        assertEquals(emptyList<TileImage>(), tileImageSources(species(caught = false, thumbPath = null)))
+    fun `an uncaught species draws its reference picture and nothing else`() {
+        // D41. A thumbnail on an uncaught row would be a stale capture; it is never drawn.
+        assertEquals(
+            listOf(TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg")),
+            tileImageSources(species(caught = false, thumbPath = "thumbnails/stale.jpg")),
+        )
+    }
+
+    @Test
+    fun `only an uncaught tile is dimmed`() {
+        // D41: the dimming is the whole caught/uncaught distinction now that both draw the
+        // same picture, so it is a function of the state alone and never of the load.
+        assertTrue(tileDrawsDimmed(TileState.UNCAUGHT))
+        assertFalse(tileDrawsDimmed(TileState.CAUGHT_OWN_PHOTO))
+        assertFalse(tileDrawsDimmed(TileState.CAUGHT_NO_OWN_PHOTO))
     }
 
     // -----------------------------------------------------------------------

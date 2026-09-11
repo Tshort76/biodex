@@ -6,16 +6,18 @@ import dev.tlong.biodex.domain.SpeciesSummary
  * §5.3.1's three tile states, decided away from Compose so the rules that matter can be
  * pinned in the JVM suite.
  *
- * Since D39 every caught tile draws the species' **reference picture** — the catalogue's
- * Wikimedia image — rather than the user's own photograph, which lives on the entry screen.
- * So a picture on the grid means one thing only: caught. An uncaught tile is a flat dark shape
- * on a grey field and never a picture, which is what keeps the two unconfusable at thumbnail
- * size. The states still differ in their chrome: a catch that keeps no photograph of the
- * user's own (M41) wears the accent chrome and the leaf, because that is a fact about the
- * catch worth reading off the grid, not about which picture happens to be drawn.
+ * Since D39 every tile draws the species' **reference picture** — the catalogue's Wikimedia
+ * image — and since D41 that includes the uncaught ones. What separates caught from uncaught
+ * is no longer whether there is a picture but how it is drawn: a caught tile is the picture in
+ * full colour with a tick, an uncaught one is the same picture **dimmed** — greyed and faded
+ * on the grey field — the way a locked entry looks in any collecting game. The user's own
+ * photograph lives on the entry screen. The states still differ in their chrome: a catch
+ * that keeps no photograph of the user's own (M41) wears the accent chrome and the leaf,
+ * because that is a fact about the catch worth reading off the grid, not about which picture
+ * happens to be drawn.
  */
 enum class TileState {
-    /** Any kingdom, not yet caught: the class silhouette on `silBg`. */
+    /** Any kingdom, not yet caught: the reference picture dimmed on `silBg`, else the silhouette. */
     UNCAUGHT,
 
     /**
@@ -50,20 +52,25 @@ sealed interface TileImage {
  * **D39: the pictures a cell tries, in order.** A caught species leads with its reference
  * picture and keeps the user's own thumbnail as the fallback for when that picture has not
  * cached — the phone is offline, or the fetch failed — so the cell still shows *something*
- * before it gives up and draws the silhouette. An uncaught species tries nothing: the
- * reference picture is a picture of the species whether or not it has been caught, and
- * drawing it on an uncaught tile would end the silhouette-unlock mechanic the grid is for.
+ * before it gives up and draws the silhouette. An uncaught species (D41) tries the reference
+ * picture alone — there is no thumbnail of a species never caught — and is drawn dimmed by
+ * [tileDrawsDimmed]; it too falls back to the silhouette.
  *
  * Pure and ordered so the JVM suite can pin it: the composable walks the list and advances
  * on each load failure, but which pictures are eligible and which comes first is decided here.
  */
-fun tileImageSources(species: SpeciesSummary): List<TileImage> {
-    if (!species.caught) return emptyList()
-    return listOfNotNull(
-        species.imageUrl?.let { TileImage.Reference(it) },
-        species.thumbPath?.let { TileImage.OwnThumbnail(it) },
-    )
-}
+fun tileImageSources(species: SpeciesSummary): List<TileImage> = listOfNotNull(
+    species.imageUrl?.let { TileImage.Reference(it) },
+    species.thumbPath?.takeIf { species.caught }?.let { TileImage.OwnThumbnail(it) },
+)
+
+/**
+ * **D41: an uncaught tile's picture is dimmed, a caught one's is not.** This is the whole
+ * distinction now that both draw the same picture, so it is a function of the state alone,
+ * never of the load: the dimming is applied to whatever the cell draws, picture or
+ * silhouette, and a caught tile is never dimmed for any reason.
+ */
+fun tileDrawsDimmed(state: TileState): Boolean = state == TileState.UNCAUGHT
 
 /**
  * **The rule §5.3.1 asks a test to pin.** Whether the tile wears the accent chrome depends
