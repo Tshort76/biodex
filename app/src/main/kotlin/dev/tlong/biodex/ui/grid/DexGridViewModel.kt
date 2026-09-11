@@ -24,7 +24,7 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val filters = MutableStateFlow(DexGridFilters())
-    private val sort = MutableStateFlow(DexSort.DEX_NUMBER)
+    private val sort = MutableStateFlow(DexSort.DEFAULT)
 
     val uiState: StateFlow<DexGridUiState> = dexGridUiState(
         species = repository.speciesSummaries(),

@@ -235,6 +235,23 @@ class DexGridStateTest {
     }
 
     @Test
+    fun `the grid opens in name order (D42)`() {
+        assertEquals(DexSort.NAME, DexSort.DEFAULT)
+        assertEquals(DexSort.NAME, DexGridUiState().sort)
+        val opened = runBlocking {
+            dexGridUiState(
+                species = speciesFlow,
+                ecosystems = MutableStateFlow(ecosystems),
+                progress = MutableStateFlow(progress),
+                query = query,
+                filters = filters,
+            ).first()
+        }
+        assertEquals(DexSort.NAME, opened.sort)
+        assertEquals(opened.species.map { it.commonName }.sortedBy { it.lowercase() }, opened.species.map { it.commonName })
+    }
+
+    @Test
     fun `sort survives clearing the filters, because it is not one`() {
         sort.value = DexSort.NAME
         filters.value = DexGridFilters(caught = CaughtFilter.CAUGHT)

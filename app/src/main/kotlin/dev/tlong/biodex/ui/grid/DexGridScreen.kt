@@ -450,12 +450,12 @@ private fun FilterRow(
                 )
             }
             // Sits with the filters because it is the same kind of control over the same
-            // grid, but it carries no clear row: picking *Dex number* is how you go back
-            // (D32), and there is no state of "unsorted" to return to.
+            // grid, but it carries no clear row: picking *Name* is how you go back (D32,
+            // D42), and there is no state of "unsorted" to return to.
             FilterDropdown(
                 label = "Sort",
                 clearLabel = null,
-                selectedLabel = state.sort.takeIf { it != DexSort.DEX_NUMBER }?.label(),
+                selectedLabel = state.sort.takeIf { it != DexSort.DEFAULT }?.label(),
                 tickedLabel = state.sort.label(),
                 options = DexSort.entries.map { it.label() to it },
                 onSelect = onSort,

@@ -26,11 +26,19 @@ enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT }
  * and the *All* chip that clears every filter deliberately leaves it alone — a reader who has
  * chosen alphabetical order has not asked for it to be undone by clearing a class.
  *
- * [DEX_NUMBER] is the shipped order and the default. [NAME] exists because the dex is also a
- * list you look things up in: 230 species is past the point where scanning for a name in
- * catalogue order is pleasant.
+ * [NAME] is the default (D42): the dex is a list you look things up in, and 230 species is
+ * past the point where scanning for a name in catalogue order is pleasant. [DEX_NUMBER] is
+ * the catalogue's own order — animals, plants, fungi — for anyone who wants the game's
+ * numbering back.
  */
-enum class DexSort { DEX_NUMBER, NAME }
+enum class DexSort {
+    DEX_NUMBER, NAME;
+
+    companion object {
+        /** The order the grid opens in (D42). */
+        val DEFAULT: DexSort = NAME
+    }
+}
 
 /** The label the sort dropdown shows. Plain words, like the class and use chips. */
 fun DexSort.label(): String = when (this) {
@@ -71,7 +79,7 @@ data class DexGridUiState(
     val ecosystems: List<Ecosystem> = emptyList(),
     val species: List<SpeciesSummary> = emptyList(),
     /** D32. Separate from [filters] because clearing the filters must not reorder the grid. */
-    val sort: DexSort = DexSort.DEX_NUMBER,
+    val sort: DexSort = DexSort.DEFAULT,
     /**
      * The classes the region actually holds, from the same `perClass` breakdown Stats reads
      * (6.3) — which carries a class only when some species has it. It is what stops the chip
@@ -170,7 +178,7 @@ fun filterSpecies(
     species: List<SpeciesSummary>,
     query: String,
     filters: DexGridFilters,
-    sort: DexSort = DexSort.DEX_NUMBER,
+    sort: DexSort = DexSort.DEFAULT,
 ): List<SpeciesSummary> {
     val kept = species.filter { matchesQuery(it, query) && matchesFilters(it, filters) }
     return when (sort) {
@@ -192,7 +200,7 @@ fun dexGridUiState(
     progress: Flow<DexProgress>,
     query: Flow<String>,
     filters: Flow<DexGridFilters>,
-    sort: Flow<DexSort> = flowOf(DexSort.DEX_NUMBER),
+    sort: Flow<DexSort> = flowOf(DexSort.DEFAULT),
 ): Flow<DexGridUiState> =
     // Six inputs, and `combine` is only typed up to five — so the five that were always here
     // compose first and the sort joins the result. Nesting rather than folding sort into
