@@ -88,6 +88,8 @@ data class BackupEntry(
     val speciesId: String,
     val caughtAt: Long,
     val favoriteCaptureId: String? = null,
+    /** M46. Defaulted, so an archive written before the preference existed still imports. */
+    val preferOwnPhoto: Boolean = false,
 )
 
 @Serializable

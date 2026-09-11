@@ -152,6 +152,7 @@ class DexRepository(
                     favoriteCaptureId = it.favoriteCaptureId,
                     captureCount = statuses.firstOrNull { s -> s.speciesId == it.speciesId }
                         ?.captureCount ?: 0,
+                    preferOwnPhoto = it.preferOwnPhoto,
                 )
             }
         }
@@ -171,6 +172,7 @@ class DexRepository(
                 caughtAt = it.caughtAt,
                 favoriteCaptureId = it.favoriteCaptureId,
                 captureCount = db.captureDao().countForSpecies(speciesId),
+                preferOwnPhoto = it.preferOwnPhoto,
             )
         }
 
@@ -216,6 +218,10 @@ class DexRepository(
 
     override suspend fun setFavoriteCapture(speciesId: String, captureId: String?) {
         db.entryDao().setFavoriteCapture(speciesId, captureId)
+    }
+
+    override suspend fun setPreferOwnPhoto(speciesId: String, preferOwnPhoto: Boolean) {
+        db.entryDao().setPreferOwnPhoto(speciesId, preferOwnPhoto)
     }
 
     override suspend fun updateCaptureReference(
@@ -274,7 +280,7 @@ class DexRepository(
             regionId = regionId,
             species = species.map { it.toBackup(ecosystemsBySpecies[it.id].orEmpty()) },
             entries = db.entryDao().entriesOnce().map {
-                BackupEntry(it.speciesId, it.caughtAt, it.favoriteCaptureId)
+                BackupEntry(it.speciesId, it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
             },
             captures = db.captureDao().capturesOnce().map { it.toDomain() },
         )
@@ -289,7 +295,9 @@ class DexRepository(
                 .toSet(),
             captureIds = db.captureDao().captureIdsOnce().toSet(),
             entries = db.entryDao().entriesOnce()
-                .associate { it.speciesId to LocalEntry(it.caughtAt, it.favoriteCaptureId) },
+                .associate {
+                    it.speciesId to LocalEntry(it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
+                },
             ecosystemIds = db.ecosystemDao().ecosystemsOnce(regionId).map { it.id }.toSet(),
         )
     }
@@ -312,6 +320,7 @@ class DexRepository(
                         speciesId = it.speciesId,
                         caughtAt = it.caughtAt,
                         favoriteCaptureId = it.favoriteCaptureId,
+                        preferOwnPhoto = it.preferOwnPhoto,
                     ),
                 )
             }
@@ -515,6 +524,7 @@ internal fun assembleSummaries(
             // M41: the grid's stand-in for a photo the user did not keep.
             imageUrl = row.imageUrl,
             captureCount = status?.captureCount ?: 0,
+            preferOwnPhoto = status?.preferOwnPhoto ?: false,
             // D36: five columns in, one value out, so nothing downstream has to know the
             // path was ever stored flat.
             lineage = Lineage(

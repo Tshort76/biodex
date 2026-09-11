@@ -54,6 +54,7 @@ import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.CaughtChip
+import dev.tlong.biodex.ui.common.DexFilterChip
 import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.RangeMap
 import dev.tlong.biodex.ui.common.ScientificName
@@ -123,6 +124,7 @@ fun EntryDetailRoute(
             onRegister = onRegister,
             onOpenPhoto = onOpenPhoto,
             onOpenNearest = onOpenNearest,
+            onPreferOwnPhoto = viewModel::onPreferOwnPhoto,
         )
         val detail = state.detail
         if (revealPending && detail != null) {
@@ -180,6 +182,7 @@ fun EntryDetailScreen(
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
+    onPreferOwnPhoto: (Boolean) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -219,6 +222,7 @@ fun EntryDetailScreen(
                     onRegister = onRegister,
                     onOpenPhoto = onOpenPhoto,
                     onOpenNearest = onOpenNearest,
+                    onPreferOwnPhoto = onPreferOwnPhoto,
                 )
             }
         }
@@ -233,6 +237,7 @@ private fun DetailBody(
     onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
+    onPreferOwnPhoto: (Boolean) -> Unit,
 ) {
     val colors = DexTheme.colors
     val uriHandler = LocalUriHandler.current
@@ -245,7 +250,18 @@ private fun DetailBody(
         imageUrl = detail.imageUrl,
         imageAttribution = detail.imageAttribution,
         online = state.online,
+        ownPhotoModel = if (summary.preferOwnPhoto) ownedFileModel(File(filesDir), summary.thumbPath) else null,
     )
+    // M46: only when there are two pictures to choose between — a caught species with a
+    // thumbnail of its own *and* a reference picture. A photoless plant has nothing to
+    // toggle to, and a user-added species with no picture yet has nothing to toggle from.
+    if (summary.caught && summary.thumbPath != null && detail.imageUrl != null) {
+        PicturePreference(
+            preferOwnPhoto = summary.preferOwnPhoto,
+            onPreferOwnPhoto = onPreferOwnPhoto,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
 
     Row(
         verticalAlignment = Alignment.Bottom,
@@ -523,13 +539,47 @@ private fun PhotoStrip(
  * frame is never empty for the moment between request and first pixel.
  */
 @Composable
+private fun PicturePreference(
+    preferOwnPhoto: Boolean,
+    onPreferOwnPhoto: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        Text(
+            text = "Show",
+            style = MaterialTheme.typography.labelSmall,
+            color = DexTheme.colors.faint,
+        )
+        DexFilterChip(
+            label = "Stock photo",
+            selected = !preferOwnPhoto,
+            onClick = { onPreferOwnPhoto(false) },
+        )
+        DexFilterChip(
+            label = "My photo",
+            selected = preferOwnPhoto,
+            onClick = { onPreferOwnPhoto(true) },
+        )
+    }
+}
+
+@Composable
 private fun Hero(
     summary: SpeciesSummary,
     imageUrl: String?,
     imageAttribution: String?,
     online: Boolean,
+    ownPhotoModel: String? = null,
 ) {
     val colors = DexTheme.colors
+    // M46: the own thumbnail is a local file, so it loads or it does not; once it has not,
+    // the hero forgets the preference for this composition and shows the reference picture.
+    var ownFailed by remember(ownPhotoModel) { mutableStateOf(false) }
+    val ownModel = ownPhotoModel?.takeUnless { ownFailed }
     // Retrying a failed load means building a *new* Coil painter — resetting our own phase
     // restarts nothing, because the model has not changed and `onState` never fires again.
     // Hence the generation counter: it keys the AsyncImage, so coming back online after a
@@ -546,6 +596,7 @@ private fun Hero(
         caught = summary.caught,
         phase = phase,
         online = online,
+        ownPhotoModel = ownModel,
     )
     Box(
         modifier = Modifier
@@ -559,7 +610,7 @@ private fun Hero(
         // than to fill (D30), so it letterboxes, and a silhouette showing through the bands
         // reads as a rendering fault rather than as a placeholder. Every other phase still
         // draws it, which is what keeps the frame from being empty between request and pixel.
-        if (visual !is HeroVisual.Reference) {
+        if (visual !is HeroVisual.Reference && visual !is HeroVisual.OwnPhoto) {
             SilhouetteIcon(
                 silhouetteRes = summary.silhouetteRes,
                 taxClass = summary.taxClass,
@@ -571,7 +622,20 @@ private fun Hero(
         // when it is not the thing on show. Taking a failed image out of the composition would
         // reset Coil's painter, which reports its way back to Loading — and the hero would
         // then retry forever against a URL that is not answering.
-        if (summary.caught && imageUrl != null) {
+        if (visual is HeroVisual.OwnPhoto) {
+            key(visual.model) {
+                AsyncImage(
+                    model = visual.model,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    onState = { coilState ->
+                        if (coilState is AsyncImagePainter.State.Error) ownFailed = true
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        if (summary.caught && imageUrl != null && ownModel == null) {
             key(imageUrl, generation) {
                 AsyncImage(
                     model = imageUrl,

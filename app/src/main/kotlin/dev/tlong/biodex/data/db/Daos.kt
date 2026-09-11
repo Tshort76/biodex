@@ -27,6 +27,8 @@ data class EntryStatusRow(
     val caughtAt: Long,
     val captureCount: Int,
     val thumbPath: String?,
+    /** M46. */
+    val preferOwnPhoto: Boolean = false,
 )
 
 @Dao
@@ -107,6 +109,7 @@ interface EntryDao {
         """
         SELECT e.speciesId AS speciesId,
                e.caughtAt AS caughtAt,
+               e.preferOwnPhoto AS preferOwnPhoto,
                (SELECT COUNT(*) FROM captures c WHERE c.speciesId = e.speciesId) AS captureCount,
                COALESCE(
                    (SELECT cf.thumbPath FROM captures cf
@@ -143,6 +146,10 @@ interface EntryDao {
 
     @Query("UPDATE entries SET favoriteCaptureId = :captureId WHERE speciesId = :speciesId")
     suspend fun setFavoriteCapture(speciesId: String, captureId: String?)
+
+    /** M46: which picture leads for this species. */
+    @Query("UPDATE entries SET preferOwnPhoto = :preferOwnPhoto WHERE speciesId = :speciesId")
+    suspend fun setPreferOwnPhoto(speciesId: String, preferOwnPhoto: Boolean)
 }
 
 @Dao

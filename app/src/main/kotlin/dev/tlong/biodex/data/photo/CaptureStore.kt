@@ -34,5 +34,8 @@ interface CaptureStore {
     /** S04. Null clears the favorite, which makes the earliest capture the entry's face. */
     suspend fun setFavoriteCapture(speciesId: String, captureId: String?)
 
+    /** M46. Which picture leads the species' tile and hero: the user's own, or the reference. */
+    suspend fun setPreferOwnPhoto(speciesId: String, preferOwnPhoto: Boolean)
+
     suspend fun updateCaptureReference(captureId: String, photoUri: String, thumbPath: String)
 }

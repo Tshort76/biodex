@@ -23,6 +23,12 @@ sealed interface HeroVisual {
     /** The reference image is rendering; the credit chip belongs on top of it (M17). */
     data class Reference(val url: String) : HeroVisual
 
+    /**
+     * M46: the user's own thumbnail is the hero, because the entry prefers it. No credit
+     * chip — it is their photograph — and no note, because nothing is being fetched.
+     */
+    data class OwnPhoto(val model: String) : HeroVisual
+
     /** Coil is fetching. The silhouette sits underneath as the placeholder, undimmed. */
     data class LoadingReference(val url: String) : HeroVisual
 
@@ -36,14 +42,20 @@ sealed interface HeroVisual {
  * The caught rule is a product rule, not a loading optimisation: M05 says an uncaught detail
  * screen shows the silhouette, and DESIGN.md §5 explains why — "present, named, but withheld"
  * is the engine of the collection. So an uncaught species never requests the image at all.
+ *
+ * [ownPhotoModel] is the user's own thumbnail when the entry prefers it (M46) and that file
+ * is still readable; the caller blanks it once the file fails to load, and the decision falls
+ * through to the reference picture exactly as if there had been no preference.
  */
 fun heroVisual(
     imageUrl: String?,
     caught: Boolean,
     phase: ImageLoadPhase,
     online: Boolean,
+    ownPhotoModel: String? = null,
 ): HeroVisual = when {
     !caught -> HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT)
+    ownPhotoModel != null -> HeroVisual.OwnPhoto(ownPhotoModel)
     imageUrl == null -> HeroVisual.Silhouette(SilhouetteReason.NO_IMAGE)
     phase == ImageLoadPhase.LOADED -> HeroVisual.Reference(imageUrl)
     phase == ImageLoadPhase.LOADING -> HeroVisual.LoadingReference(imageUrl)
@@ -56,6 +68,7 @@ fun heroVisual(
 /** The line under the hero. Null where a message would be noise — the silhouette says it. */
 fun heroNote(visual: HeroVisual): String? = when (visual) {
     is HeroVisual.Reference -> null
+    is HeroVisual.OwnPhoto -> null
     is HeroVisual.LoadingReference -> "Loading reference photo…"
     is HeroVisual.Silhouette -> when (visual.reason) {
         SilhouetteReason.NOT_CAUGHT -> null

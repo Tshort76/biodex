@@ -121,3 +121,18 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("ALTER TABLE `species` ADD COLUMN `lineageFamily` TEXT")
     }
 }
+
+/**
+ * M46's picture preference: one `NOT NULL DEFAULT 0` column on `entries`, the same shape as
+ * [MIGRATION_2_3]'s counters, with the same rule — the `DEFAULT` here and the
+ * `@ColumnInfo(defaultValue = "0")` on [EntryEntity] must agree to the character, or Room's
+ * identity check fails at the user's next launch. `MigrationSchemaTest` compares the two.
+ *
+ * No row is touched. Every caught species lands preferring the reference picture, which is
+ * what the grid has drawn since D39.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `entries` ADD COLUMN `preferOwnPhoto` INTEGER NOT NULL DEFAULT 0")
+    }
+}

@@ -135,6 +135,29 @@ class MigrationSchemaTest {
         }
     }
 
+    /**
+     * M46's column, the [MIGRATION_2_3] shape again: `NOT NULL DEFAULT 0` on both sides, and
+     * the identity check on the phone is what fails if they drift.
+     */
+    @Test
+    fun `the preference column added by MIGRATION_4_5 matches Room's exported v5 schema`() {
+        val v5 = File("schemas/dev.tlong.biodex.data.db.AppDatabase/5.json")
+        assertTrue("schema v5 has not been exported — run assembleDebug", v5.exists())
+        val field = Json.parseToJsonElement(v5.readText())
+            .jsonObject.getValue("database")
+            .jsonObject.getValue("entities")
+            .jsonArray
+            .map { it.jsonObject }
+            .single { it.getValue("tableName").jsonPrimitive.content == "entries" }
+            .getValue("fields").jsonArray
+            .map { it.jsonObject }
+            .single { it.getValue("fieldPath").jsonPrimitive.content == "preferOwnPhoto" }
+
+        assertEquals("0", field["defaultValue"]?.jsonPrimitive?.content)
+        assertTrue(field["notNull"]?.jsonPrimitive?.content?.toBoolean() == true)
+        assertEquals("INTEGER", field.getValue("affinity").jsonPrimitive.content)
+    }
+
     @Test
     fun `the speciesId index survives the table recreate`() {
         // Dropping the table drops its indices, so the migration recreates this one by hand.

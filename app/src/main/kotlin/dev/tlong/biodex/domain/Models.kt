@@ -212,6 +212,8 @@ data class Entry(
     val caughtAt: Long,
     val favoriteCaptureId: String? = null,
     val captureCount: Int,
+    /** M46. */
+    val preferOwnPhoto: Boolean = false,
 )
 
 /**
@@ -242,6 +244,11 @@ data class SpeciesSummary(
      */
     val imageUrl: String? = null,
     val captureCount: Int,
+    /**
+     * M46: the user has asked for their own photograph to lead this species' tile and hero
+     * instead of the reference picture. Meaningless — and false — for an uncaught species.
+     */
+    val preferOwnPhoto: Boolean = false,
     /**
      * D36: the GBIF path this species sits on, for the hop count on Nearest Five. It lives
      * on the summary rather than the detail because the screen measures one species against

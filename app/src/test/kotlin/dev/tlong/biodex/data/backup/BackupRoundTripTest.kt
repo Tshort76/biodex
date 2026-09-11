@@ -69,7 +69,7 @@ class BackupRoundTripTest {
                 regionId = "pacific",
                 species = listOf(owl, thrush),
                 entries = listOf(
-                    BackupEntry("western-screech-owl", 100L, "live"),
+                    BackupEntry("western-screech-owl", 100L, "live", preferOwnPhoto = true),
                     BackupEntry("user-1", 200L, "copied"),
                 ),
                 captures = listOf(live, copied, broken),
@@ -157,6 +157,10 @@ class BackupRoundTripTest {
         assertEquals(3, report.thumbnailsRestored)
         assertEquals(1, report.speciesAdded)
         assertEquals(2, report.entriesAdded)
+
+        // M46: the picture preference rides along with the entry it belongs to.
+        assertTrue(plan.entriesToWrite.first { it.speciesId == "western-screech-owl" }.preferOwnPhoto)
+        assertFalse(plan.entriesToWrite.first { it.speciesId == "user-1" }.preferOwnPhoto)
 
         // The bytes really landed in the new install's own storage.
         assertEquals("full-live", String(target.ownedFiles.getValue("photos/live.jpg")))
@@ -306,11 +310,14 @@ class BackupRoundTripTest {
              "species":[{"id":"user-1","source":"user","dexNumber":1001,
                          "commonName":"Varied Thrush","taxClass":"bird",
                          "silhouetteRes":"sil_bird"}],
-             "entries":[],"captures":[]}
+             "entries":[{"speciesId":"western-screech-owl","caughtAt":10}],"captures":[]}
         """.trimIndent()
 
         val manifest = Json { ignoreUnknownKeys = true }.decodeFromString<BackupManifest>(v3)
         val species = manifest.species.single()
+
+        // An entry written before the picture preference existed reads as "reference".
+        assertFalse(manifest.entries.single().preferOwnPhoto)
 
         assertEquals("animal", species.kingdom)
         assertTrue(species.uses.isEmpty())

@@ -4,6 +4,7 @@ import dev.tlong.biodex.data.photo.PhotoRef
 import dev.tlong.biodex.data.photo.resolvePhotoRef
 import dev.tlong.biodex.domain.SpeciesSource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -143,6 +144,30 @@ class ImportMergeTest {
         assertEquals(5L, entry.caughtAt)
         assertEquals("local-cap", entry.favoriteCaptureId)
         assertEquals(1, plan.report.entriesMerged)
+    }
+
+    @Test
+    fun `the picture preference restores on a fresh install and stays local on a merge`() {
+        val fresh = planImport(
+            manifest(
+                entries = listOf(BackupEntry("western-screech-owl", 10L, "cap1", preferOwnPhoto = true)),
+                captures = listOf(archivedCapture("cap1")),
+            ),
+            freshInstall,
+        )
+        assertTrue(fresh.entriesToWrite.single().preferOwnPhoto)
+
+        val merged = planImport(
+            manifest(
+                entries = listOf(BackupEntry("western-screech-owl", 5L, "cap1", preferOwnPhoto = true)),
+                captures = listOf(archivedCapture("cap1")),
+            ),
+            freshInstall.copy(
+                captureIds = setOf("local-cap"),
+                entries = mapOf("western-screech-owl" to LocalEntry(9L, "local-cap", preferOwnPhoto = false)),
+            ),
+        )
+        assertFalse(merged.entriesToWrite.single().preferOwnPhoto)
     }
 
     @Test

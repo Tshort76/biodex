@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class EntryDetailViewModel(
-    repository: DexRepository,
+    private val repository: DexRepository,
     private val networkMonitor: NetworkMonitor,
     private val lookups: SpeciesLookupRepository,
     private val drafts: AddSpeciesDraftHolder,
@@ -47,6 +47,11 @@ class EntryDetailViewModel(
 
     init {
         viewModelScope.launch { maybeBackfill(repository) }
+    }
+
+    /** M46: the picture toggle under the hero. A write, so the ViewModel owns it. */
+    fun onPreferOwnPhoto(preferOwnPhoto: Boolean) {
+        viewModelScope.launch { repository.setPreferOwnPhoto(speciesId, preferOwnPhoto) }
     }
 
     /**

@@ -37,7 +37,11 @@ data class LocalSnapshot(
     val ecosystemIds: Set<String> = emptySet(),
 )
 
-data class LocalEntry(val caughtAt: Long, val favoriteCaptureId: String?)
+data class LocalEntry(
+    val caughtAt: Long,
+    val favoriteCaptureId: String?,
+    val preferOwnPhoto: Boolean = false,
+)
 
 data class ImportPlan(
     /** User-added species the database has never seen, renumbered where necessary. */
@@ -162,12 +166,13 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
         if (archived.speciesId !in availableSpecies) return@mapNotNull null
         val existing = local.entries[archived.speciesId]
         if (existing != null) {
-            // Keep the local entry's identity and its favorite; the only thing an archive
-            // can legitimately improve is the catch date, and only by making it earlier.
+            // Keep the local entry's identity, its favorite and its picture preference; the
+            // only thing an archive can legitimately improve is the catch date, and only by
+            // making it earlier.
             val caughtAt = minOf(existing.caughtAt, archived.caughtAt)
             if (caughtAt == existing.caughtAt) return@mapNotNull null
             entriesMerged++
-            BackupEntry(archived.speciesId, caughtAt, existing.favoriteCaptureId)
+            BackupEntry(archived.speciesId, caughtAt, existing.favoriteCaptureId, existing.preferOwnPhoto)
         } else {
             // An entry with no captures on either side would render as a caught species
             // with nothing behind it; skip it rather than invent a catch.
@@ -177,6 +182,7 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
                 speciesId = archived.speciesId,
                 caughtAt = archived.caughtAt,
                 favoriteCaptureId = archived.favoriteCaptureId?.takeIf { it in captureIdsAfterMerge },
+                preferOwnPhoto = archived.preferOwnPhoto,
             )
         }
     }

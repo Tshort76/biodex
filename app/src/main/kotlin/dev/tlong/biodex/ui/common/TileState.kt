@@ -56,13 +56,23 @@ sealed interface TileImage {
  * picture alone — there is no thumbnail of a species never caught — and is drawn dimmed by
  * [tileDrawsDimmed]; it too falls back to the silhouette.
  *
+ * **M46 / D44 turns the order round.** A caught species whose entry prefers the user's own
+ * photograph leads with the thumbnail and keeps the reference picture as its fallback — the
+ * same two pictures, the other way up, so a thumbnail whose file has gone still shows the
+ * species rather than a silhouette.
+ *
  * Pure and ordered so the JVM suite can pin it: the composable walks the list and advances
  * on each load failure, but which pictures are eligible and which comes first is decided here.
  */
-fun tileImageSources(species: SpeciesSummary): List<TileImage> = listOfNotNull(
-    species.imageUrl?.let { TileImage.Reference(gridThumbnailUrl(it)) },
-    species.thumbPath?.takeIf { species.caught }?.let { TileImage.OwnThumbnail(it) },
-)
+fun tileImageSources(species: SpeciesSummary): List<TileImage> {
+    val reference = species.imageUrl?.let { TileImage.Reference(gridThumbnailUrl(it)) }
+    val own = species.thumbPath?.takeIf { species.caught }?.let { TileImage.OwnThumbnail(it) }
+    return if (species.caught && species.preferOwnPhoto) {
+        listOfNotNull(own, reference)
+    } else {
+        listOfNotNull(reference, own)
+    }
+}
 
 /**
  * **The grid fetches a small rendition, not the catalogue's picture.** `imageUrl` is what the

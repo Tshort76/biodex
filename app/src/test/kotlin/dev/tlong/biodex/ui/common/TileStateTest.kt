@@ -24,6 +24,7 @@ class TileStateTest {
         thumbPath: String?,
         kingdom: Kingdom = Kingdom.PLANT,
         imageUrl: String? = ORIGINAL,
+        preferOwnPhoto: Boolean = false,
     ) = SpeciesSummary(
         id = "p048",
         regionId = "pacific",
@@ -40,6 +41,7 @@ class TileStateTest {
         thumbPath = thumbPath,
         imageUrl = imageUrl,
         captureCount = if (caught) 1 else 0,
+        preferOwnPhoto = preferOwnPhoto,
     )
 
     @Test
@@ -90,6 +92,33 @@ class TileStateTest {
                 TileImage.OwnThumbnail("thumbnails/a.jpg"),
             ),
             sources,
+        )
+    }
+
+    @Test
+    fun `a catch that prefers its own photo leads with the thumbnail and keeps the reference as the fallback`() {
+        val sources = tileImageSources(
+            species(caught = true, thumbPath = "thumbnails/a.jpg", preferOwnPhoto = true),
+        )
+
+        assertEquals(
+            listOf(
+                TileImage.OwnThumbnail("thumbnails/a.jpg"),
+                TileImage.Reference(GRID_RENDITION),
+            ),
+            sources,
+        )
+    }
+
+    @Test
+    fun `a preference with no thumbnail to prefer changes nothing`() {
+        assertEquals(
+            listOf(TileImage.Reference(GRID_RENDITION)),
+            tileImageSources(species(caught = true, thumbPath = null, preferOwnPhoto = true)),
+        )
+        assertEquals(
+            listOf(TileImage.Reference(GRID_RENDITION)),
+            tileImageSources(species(caught = false, thumbPath = "thumbnails/stale.jpg", preferOwnPhoto = true)),
         )
     }
 

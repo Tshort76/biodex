@@ -166,6 +166,12 @@ data class EntryEntity(
     @PrimaryKey val speciesId: String,
     val caughtAt: Long,
     val favoriteCaptureId: String? = null,
+    /**
+     * M46: the user's own photograph leads the tile and the hero for this species instead of
+     * the reference picture. Lives on the entry rather than a capture because it is a choice
+     * about the species, and the capture it shows is still the favourite (S04).
+     */
+    @ColumnInfo(defaultValue = "0") val preferOwnPhoto: Boolean = false,
 )
 
 @Entity(
