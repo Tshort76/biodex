@@ -114,6 +114,7 @@ fun defaultSilhouetteFor(taxClass: TaxClass): String =
  * - Uses are plant-only, so an animal carries no uses, no note and no Duke's columns.
  * - `usesNote` is null when `uses` is empty **except for a caution** — see [keptUsesNote].
  * - `usesAttribution` is null unless there is Duke's data to attribute.
+ * - The names are spelled the catalogue's way (M45: [formatCommonName], [formatScientificName]).
  */
 fun SpeciesFields.normalized(): SpeciesFields {
     val plant = kingdom == Kingdom.PLANT
@@ -122,6 +123,8 @@ fun SpeciesFields.normalized(): SpeciesFields {
     val activities = if (plant) medicinalActivities else emptyList()
     val recordCount = if (plant) medicinalRecordCount else 0
     return copy(
+        commonName = formatCommonName(commonName),
+        scientificName = formatScientificName(scientificName),
         taxClass = pairedClass,
         uses = keptUses,
         // An animal has no uses slot to render a note in at all, caution or not.

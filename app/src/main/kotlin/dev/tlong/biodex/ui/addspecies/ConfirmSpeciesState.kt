@@ -7,6 +7,7 @@ import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
@@ -69,6 +70,14 @@ sealed interface ConfirmSpeciesUiState {
         /** Whether a photo came with the draft — the only thing [photoNotKeptWarning] needs. */
         val hasPhoto: Boolean = false,
         val error: String? = null,
+        /**
+         * The name exactly as it is being typed, while a hand-edit is open. [fields] carries
+         * the formatted spelling (M45), and a text field bound to that would fight the typist —
+         * a trailing space vanishes, "o" flips to "O" and back on "of". The editors read these
+         * and the read-only rows read [fields], so the card still shows what will be saved.
+         */
+        val typedCommonName: String? = null,
+        val typedScientificName: String? = null,
     ) : ConfirmSpeciesUiState {
 
         val selectedCandidate: SpeciesCandidate? get() = candidates.getOrNull(selectedIndex)
@@ -223,6 +232,10 @@ fun confirmCardState(
         saving = saving,
         hasPhoto = draft.photoUri != null,
         error = error,
+        typedCommonName = edits.values?.commonName
+            ?.takeIf { SpeciesField.COMMON_NAME in edits.editedFields },
+        typedScientificName = edits.values?.scientificName
+            ?.takeIf { SpeciesField.SCIENTIFIC_NAME in edits.editedFields },
     )
 }
 

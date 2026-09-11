@@ -433,4 +433,42 @@ class AddSpeciesRegistrarTest {
         assertEquals(TaxClass.SHRUB, updated.fields.taxClass)
         assertEquals("sil_shrub", updated.fields.silhouetteRes)
     }
+
+    // -----------------------------------------------------------------------
+    // Names are spelled the catalogue's way at the door (M45).
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a created species stores its names formatted`() = runBlocking {
+        val result = registrar.create(
+            fields = SpeciesFields(commonName = "brown pelican", scientificName = "pelecanus OCCIDENTALIS"),
+            ecosystemIds = emptyList(),
+            photoUri = "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        val record = store.species.getValue(result.speciesId)
+        assertEquals("Brown Pelican", record.fields.commonName)
+        assertEquals("Pelecanus occidentalis", record.fields.scientificName)
+    }
+
+    @Test
+    fun `a hand-edited name is formatted on backfill and still locked`() = runBlocking {
+        val created = registrar.create(
+            SpeciesFields(commonName = "Varied Thrush"),
+            emptyList(),
+            "content://photo/1",
+        ) as AddSpeciesRegistrar.CreateResult.Created
+
+        val updated = registrar.backfill(
+            speciesId = created.speciesId,
+            lookup = LookupFields(scientificName = "Ixoreus naevius", taxClass = TaxClass.BIRD),
+            edits = AddSpeciesRegistrar.FieldEdits(
+                values = SpeciesFields(commonName = "pacific varied thrush"),
+                fields = listOf(SpeciesField.COMMON_NAME),
+            ),
+        )!!
+
+        assertEquals("Pacific Varied Thrush", updated.fields.commonName)
+        assertTrue(SpeciesField.COMMON_NAME in updated.userEditedFields)
+    }
 }

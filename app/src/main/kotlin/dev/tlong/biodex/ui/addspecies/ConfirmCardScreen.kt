@@ -302,14 +302,14 @@ private fun CardBody(
     if (state.handEditing) {
         SectionHeader("Name and identity")
         FieldEditor(
-            value = state.fields.commonName,
+            value = state.typedCommonName ?: state.fields.commonName,
             placeholder = "Common name",
             onValueChange = { typed ->
                 onEditField(SpeciesField.COMMON_NAME) { it.copy(commonName = typed) }
             },
         )
         FieldEditor(
-            value = state.fields.scientificName.orEmpty(),
+            value = (state.typedScientificName ?: state.fields.scientificName).orEmpty(),
             placeholder = "Scientific name",
             onValueChange = { typed ->
                 onEditField(SpeciesField.SCIENTIFIC_NAME) {
