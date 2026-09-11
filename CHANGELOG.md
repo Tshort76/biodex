@@ -11,6 +11,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 **Uncaught species show their picture too, dimmed.**
 
 - **Changed** — an uncaught grid cell now draws the species' reference picture drained to grey and faded, where a caught one draws it in full colour with the tick. The unlock becomes a grey picture turning to colour. The silhouette remains the fallback for either when no picture is available; the entry screen still withholds an uncaught species' full-size picture. (`M01`, `D39` revised, `D41`)
+- **Fixed** — the grid fetches a 960px rendition of each reference picture instead of the catalogue's original (up to 9 MB) or 3840px thumbnail, and a cell whose picture failed to load retries once. On the first launch after the change above, most of the grid sat on silhouettes because the phone was queuing 230 full-size downloads. (`D39`)
 
 ## v14 — 2026-09-11
 

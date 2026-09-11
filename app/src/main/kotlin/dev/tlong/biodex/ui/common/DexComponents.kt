@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,7 @@ import coil3.compose.AsyncImagePainter
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.theme.DexTheme
+import kotlinx.coroutines.delay
 
 // ---------------------------------------------------------------------------
 // The component vocabulary of ARCHITECTURE.md 6.4, each element matching one
@@ -174,6 +176,17 @@ fun SpeciesCell(
         tileImageSources(species)
     }
     var failedCount by remember(sources) { mutableStateOf(0) }
+    var retried by remember(sources) { mutableStateOf(false) }
+    // One quiet retry once every candidate has failed. On a first launch the grid asks
+    // Wikimedia for ~230 renditions it may be making on demand, and a few of those time out
+    // in the queue; without this the cell sat on the silhouette until it scrolled off screen.
+    if (failedCount >= sources.size && sources.isNotEmpty() && !retried) {
+        LaunchedEffect(sources) {
+            delay(RETRY_AFTER_MS)
+            retried = true
+            failedCount = 0
+        }
+    }
     val imageModel = sources.getOrNull(failedCount)?.let { source ->
         when (source) {
             is TileImage.Reference -> source.url
@@ -353,3 +366,6 @@ fun ScientificName(name: String, modifier: Modifier = Modifier) {
 /** D41's dimming: the colour drained out of an uncaught tile's picture, and most of its weight. */
 private val DIMMED_FILTER = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
 private const val DIMMED_ALPHA = 0.42f
+
+/** How long a cell whose every picture failed waits before trying the list once more. */
+private const val RETRY_AFTER_MS = 6_000L

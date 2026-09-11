@@ -60,9 +60,35 @@ sealed interface TileImage {
  * on each load failure, but which pictures are eligible and which comes first is decided here.
  */
 fun tileImageSources(species: SpeciesSummary): List<TileImage> = listOfNotNull(
-    species.imageUrl?.let { TileImage.Reference(it) },
+    species.imageUrl?.let { TileImage.Reference(gridThumbnailUrl(it)) },
     species.thumbPath?.takeIf { species.caught }?.let { TileImage.OwnThumbnail(it) },
 )
+
+/**
+ * **The grid fetches a small rendition, not the catalogue's picture.** `imageUrl` is what the
+ * pipeline found — usually the full-size original (up to 9 MB) or a 3840px thumbnail — which
+ * is fine for one hero and hopeless for 230 tiles at once: on the first launch after D41 most
+ * of the grid timed out and sat on silhouettes. Wikimedia Commons renders any file at a set of
+ * widths on demand, and 960px is the smallest it accepts for these files (640px is refused);
+ * at ~100–200 KB each the whole catalogue is ~30 MB, inside the image cache's 250 MB.
+ *
+ * Two shapes are rewritten, both under `upload.wikimedia.org/wikipedia/commons/`: an original
+ * `…/commons/h/hh/Name.jpg` becomes `…/commons/thumb/h/hh/Name.jpg/960px-Name.jpg`, and a
+ * thumbnail's `NNNNpx-` prefix is swapped for `960px-`. Anything else — the one `wikipedia/en`
+ * picture, a user-added species' image from elsewhere — is returned unchanged.
+ */
+fun gridThumbnailUrl(imageUrl: String): String {
+    val prefix = "https://upload.wikimedia.org/wikipedia/commons/"
+    if (!imageUrl.startsWith(prefix)) return imageUrl
+    val path = imageUrl.removePrefix(prefix)
+    if (path.startsWith("thumb/")) {
+        return prefix + path.replace(Regex("""/\d+px-([^/]+)$"""), "/${GRID_THUMB_WIDTH}px-$1")
+    }
+    val name = path.substringAfterLast('/')
+    return "${prefix}thumb/$path/${GRID_THUMB_WIDTH}px-$name"
+}
+
+private const val GRID_THUMB_WIDTH = 960
 
 /**
  * **D41: an uncaught tile's picture is dimmed, a caught one's is not.** This is the whole

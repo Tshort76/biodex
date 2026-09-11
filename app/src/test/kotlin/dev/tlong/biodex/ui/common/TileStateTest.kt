@@ -14,11 +14,16 @@ import org.junit.Test
 /** §5.3.1's three states, the one rule it asks explicitly for a test to pin, and D39's picture order. */
 class TileStateTest {
 
+    /** What the catalogue holds, and what the grid asks for instead. */
+    private val ORIGINAL = "https://upload.wikimedia.org/wikipedia/commons/a/a1/Oregon-grape.jpg"
+    private val GRID_RENDITION =
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Oregon-grape.jpg/960px-Oregon-grape.jpg"
+
     private fun species(
         caught: Boolean,
         thumbPath: String?,
         kingdom: Kingdom = Kingdom.PLANT,
-        imageUrl: String? = "https://upload.wikimedia.org/oregon-grape.jpg",
+        imageUrl: String? = ORIGINAL,
     ) = SpeciesSummary(
         id = "p048",
         regionId = "pacific",
@@ -81,7 +86,7 @@ class TileStateTest {
 
         assertEquals(
             listOf(
-                TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg"),
+                TileImage.Reference(GRID_RENDITION),
                 TileImage.OwnThumbnail("thumbnails/a.jpg"),
             ),
             sources,
@@ -102,7 +107,7 @@ class TileStateTest {
     @Test
     fun `a photoless catch has only the reference picture to try`() {
         assertEquals(
-            listOf(TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg")),
+            listOf(TileImage.Reference(GRID_RENDITION)),
             tileImageSources(species(caught = true, thumbPath = null)),
         )
         assertEquals(emptyList<TileImage>(), tileImageSources(species(caught = true, thumbPath = null, imageUrl = null)))
@@ -112,9 +117,32 @@ class TileStateTest {
     fun `an uncaught species draws its reference picture and nothing else`() {
         // D41. A thumbnail on an uncaught row would be a stale capture; it is never drawn.
         assertEquals(
-            listOf(TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg")),
+            listOf(TileImage.Reference(GRID_RENDITION)),
             tileImageSources(species(caught = false, thumbPath = "thumbnails/stale.jpg")),
         )
+    }
+
+    @Test
+    fun `the grid asks Commons for a 960px rendition of an original`() {
+        assertEquals(
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Brown_pelican_in_flight_%28Bodega_Bay%29.jpg/960px-Brown_pelican_in_flight_%28Bodega_Bay%29.jpg",
+            gridThumbnailUrl("https://upload.wikimedia.org/wikipedia/commons/0/06/Brown_pelican_in_flight_%28Bodega_Bay%29.jpg"),
+        )
+    }
+
+    @Test
+    fun `the grid shrinks a catalogue thumbnail rather than fetching its 3840px width`() {
+        assertEquals(
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/960px-GreatBlueHeronInARiver.jpg",
+            gridThumbnailUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/3840px-GreatBlueHeronInARiver.jpg"),
+        )
+    }
+
+    @Test
+    fun `a picture that is not on Commons is fetched as it is`() {
+        val en = "https://upload.wikimedia.org/wikipedia/en/f/f8/Taricha_torosa%2C_Napa_County%2C_CA.jpg"
+        assertEquals(en, gridThumbnailUrl(en))
+        assertEquals("https://example.org/mine.jpg", gridThumbnailUrl("https://example.org/mine.jpg"))
     }
 
     @Test
