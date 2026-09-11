@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -621,6 +622,10 @@ private fun Hero(
                 taxClass = summary.taxClass,
                 size = 120.dp,
                 tint = if (summary.caught) colors.accent else colors.sil,
+                // D53. An uncaught frame never draws anything at full strength: the
+                // silhouette is the placeholder for a picture that arrives dimmed, and at
+                // full tint it lands as a hard dark shape that then fades to pale grey.
+                modifier = Modifier.alpha(if (summary.caught) 1f else DIMMED_ALPHA),
             )
         }
         // Requested whenever there is something to request, and hidden rather than removed

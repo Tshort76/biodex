@@ -47,9 +47,22 @@ class HeroStateTest {
     }
 
     @Test
-    fun `an uncaught hero carries no note, dimmed picture or silhouette`() {
-        assertNull(heroNote(hero(caught = false, phase = ImageLoadPhase.LOADED)))
-        assertNull(heroNote(hero(caught = false, phase = ImageLoadPhase.FAILED, online = false)))
+    fun `an uncaught hero carries no note in any phase (D53)`() {
+        // Including while it loads. A note that appears and then vanishes takes a line of
+        // height with it, which moved the whole entry under the reader's thumb.
+        for (phase in ImageLoadPhase.entries) {
+            for (online in listOf(true, false)) {
+                assertNull(heroNote(hero(caught = false, phase = phase, online = online)))
+            }
+        }
+    }
+
+    @Test
+    fun `an uncaught hero loads dimmed, so its placeholder is drawn dimmed too (D53)`() {
+        assertEquals(
+            HeroVisual.LoadingReference(url, dimmed = true),
+            hero(caught = false, phase = ImageLoadPhase.LOADING),
+        )
     }
 
     @Test
@@ -86,7 +99,13 @@ class HeroStateTest {
 
     @Test
     fun `while loading, the hero is the image slot - the silhouette is only underneath it`() {
-        assertEquals(HeroVisual.LoadingReference(url), hero(phase = ImageLoadPhase.LOADING))
+        assertEquals(
+            HeroVisual.LoadingReference(url, dimmed = false),
+            hero(phase = ImageLoadPhase.LOADING),
+        )
+        // A caught entry does say it is waiting: there, the picture is the thing being
+        // waited for. Only the uncaught one stays silent (D53).
+        assertNotNull(heroNote(hero(phase = ImageLoadPhase.LOADING)))
     }
 
     @Test

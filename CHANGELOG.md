@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v19.2 — 2026-09-11
+
+- **Fixed** — an uncaught species' page no longer glitches as it loads. It used to open as a hard dark silhouette captioned *Loading reference photo…*, then swap to the pale dimmed photo while the caption vanished and pulled the whole page up a line. The placeholder is now drawn at the weight the picture arrives at, and an uncaught hero stays silent while it loads. A caught entry still says it is loading. (`D52` revised, `D53`)
+
 ## v19.1 — 2026-09-11
 
 - **Fixed** — opening an uncaught species no longer replaces its picture with a silhouette. The entry's hero now draws the same greyed, faded reference picture the grid tile has drawn since v15, from the same two constants, so the unlock reads as one picture gaining colour on both screens. The silhouette stays as the fallback where there is no picture to draw. (`M05` and `D41` revised, `D52`)

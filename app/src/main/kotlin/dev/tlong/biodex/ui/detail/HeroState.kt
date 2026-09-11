@@ -30,7 +30,9 @@ sealed interface HeroVisual {
     /**
      * D52: the same reference image on an uncaught species — greyed and faded, exactly as
      * the grid tile draws it (D41). No credit chip: the picture is not being presented as
-     * this species' photograph yet, and the chip would read as a reward already given.
+     * this species' photograph yet, and the chip would read as a reward already given. The
+     * silhouette the hero falls back to is dimmed to match (D53), so nothing in an uncaught
+     * frame is drawn at full strength.
      */
     data class DimmedReference(val url: String) : HeroVisual
 
@@ -40,8 +42,14 @@ sealed interface HeroVisual {
      */
     data class OwnPhoto(val model: String) : HeroVisual
 
-    /** Coil is fetching. The silhouette sits underneath as the placeholder, undimmed. */
-    data class LoadingReference(val url: String) : HeroVisual
+    /**
+     * Coil is fetching, and the silhouette is the placeholder underneath. [dimmed] says the
+     * hero is heading for a [DimmedReference], so the placeholder is drawn dimmed too and the
+     * "loading" line is withheld (D53) — otherwise an uncaught entry opens as a hard dark
+     * shape over a caption, then swaps to a pale grey picture as the caption disappears and
+     * takes a line of height with it.
+     */
+    data class LoadingReference(val url: String, val dimmed: Boolean = false) : HeroVisual
 
     data class Silhouette(val reason: SilhouetteReason) : HeroVisual
 }
@@ -72,7 +80,7 @@ fun heroVisual(
     imageUrl == null -> HeroVisual.Silhouette(uncaughtOr(caught, SilhouetteReason.NO_IMAGE))
     phase == ImageLoadPhase.LOADED ->
         if (caught) HeroVisual.Reference(imageUrl) else HeroVisual.DimmedReference(imageUrl)
-    phase == ImageLoadPhase.LOADING -> HeroVisual.LoadingReference(imageUrl)
+    phase == ImageLoadPhase.LOADING -> HeroVisual.LoadingReference(imageUrl, dimmed = !caught)
     // Failed. Offline is the ordinary field case (S02's cache missed), not a fault worth
     // an error voice; online failure is.
     online -> HeroVisual.Silhouette(uncaughtOr(caught, SilhouetteReason.LOAD_FAILED))
@@ -92,7 +100,10 @@ fun heroNote(visual: HeroVisual): String? = when (visual) {
     is HeroVisual.Reference -> null
     is HeroVisual.DimmedReference -> null
     is HeroVisual.OwnPhoto -> null
-    is HeroVisual.LoadingReference -> "Loading reference photo…"
+    // D53: an uncaught hero stays silent while it loads. The line is honest on a caught
+    // entry, where the picture is the thing being waited for; on an uncaught one it labels a
+    // picture the user has not earned and then vanishes, moving the page under their thumb.
+    is HeroVisual.LoadingReference -> if (visual.dimmed) null else "Loading reference photo…"
     is HeroVisual.Silhouette -> when (visual.reason) {
         SilhouetteReason.NOT_CAUGHT -> null
         SilhouetteReason.NO_IMAGE -> null
