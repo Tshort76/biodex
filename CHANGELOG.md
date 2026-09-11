@@ -6,6 +6,14 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v16 — 2026-09-11
+
+**Name order, tidy names, and your own photo where you want it.**
+
+- **Changed** — the grid opens in name order. Dex number is still in the Sort dropdown. (`M01`, `D32` revised, `D42`)
+- **Added** — a species you add has its names spelled the catalogue's way before they are shown or saved: "brown pelican" becomes "Brown Pelican", "red-tailed hawk" becomes "Red-tailed Hawk", "pelecanus OCCIDENTALIS" becomes "Pelecanus occidentalis". The confirm card previews the result; a field you are typing in shows what you type. Species already in your dex keep their names. (`M19` revised, `M45`, `D43`)
+- **Added** — a *Show: Stock photo / My photo* toggle under the picture on a caught species' entry. Choosing your photo puts it on the grid tile and in the entry's picture frame, with the stock picture as the fallback; the stock picture stays the default. The choice is saved per species and included in a backup. Database schema 5. (`M01` revised, `M46`, `D44`)
+
 ## v15 — 2026-09-11
 
 **Uncaught species show their picture too, dimmed.**
