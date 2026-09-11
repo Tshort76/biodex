@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v19.1 — 2026-09-11
+
+- **Fixed** — opening an uncaught species no longer replaces its picture with a silhouette. The entry's hero now draws the same greyed, faded reference picture the grid tile has drawn since v15, from the same two constants, so the unlock reads as one picture gaining colour on both screens. The silhouette stays as the fallback where there is no picture to draw. (`M05` and `D41` revised, `D52`)
+
 ## v19 — 2026-09-11
 
 **The animal list nearly doubles: 120 species to 224.**

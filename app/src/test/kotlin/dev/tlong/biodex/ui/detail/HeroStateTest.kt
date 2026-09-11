@@ -22,15 +22,34 @@ class HeroStateTest {
     ) = heroVisual(imageUrl, caught, phase, online, ownPhotoModel)
 
     @Test
-    fun `an uncaught species is withheld - silhouette, whatever the network is doing (M05)`() {
-        for (phase in ImageLoadPhase.entries) {
-            for (online in listOf(true, false)) {
-                assertEquals(
-                    HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT),
-                    hero(caught = false, phase = phase, online = online),
-                )
-            }
+    fun `an uncaught species shows the reference picture dimmed, as its grid tile does (D52)`() {
+        assertEquals(
+            HeroVisual.DimmedReference(url),
+            hero(caught = false, phase = ImageLoadPhase.LOADED),
+        )
+    }
+
+    @Test
+    fun `an uncaught species with no picture to draw is still withheld, and says nothing about why`() {
+        // Every route that leaves an uncaught hero without a picture reports NOT_CAUGHT
+        // rather than the load failure behind it: the species is withheld either way, and a
+        // "could not be loaded" line about a picture the user has not earned is noise.
+        for (online in listOf(true, false)) {
+            assertEquals(
+                HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT),
+                hero(caught = false, phase = ImageLoadPhase.FAILED, online = online),
+            )
+            assertEquals(
+                HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT),
+                hero(imageUrl = null, caught = false, online = online),
+            )
         }
+    }
+
+    @Test
+    fun `an uncaught hero carries no note, dimmed picture or silhouette`() {
+        assertNull(heroNote(hero(caught = false, phase = ImageLoadPhase.LOADED)))
+        assertNull(heroNote(hero(caught = false, phase = ImageLoadPhase.FAILED, online = false)))
     }
 
     @Test
@@ -47,9 +66,12 @@ class HeroStateTest {
     }
 
     @Test
-    fun `an uncaught species is withheld even with a stale thumbnail on offer (M05 over M46)`() {
+    fun `an uncaught species never leads with a stale thumbnail (M05 over M46)`() {
+        // Only a caught species can have a photograph of its own. A thumbnail left behind by
+        // an entry that was deleted must not unlock the hero; the dimmed reference is what
+        // an uncaught species gets, exactly as if there were no thumbnail at all.
         assertEquals(
-            HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT),
+            HeroVisual.DimmedReference(url),
             hero(caught = false, ownPhotoModel = "thumbnails/stale.jpg"),
         )
     }

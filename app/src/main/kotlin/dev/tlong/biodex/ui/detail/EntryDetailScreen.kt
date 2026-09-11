@@ -54,6 +54,8 @@ import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.CaughtChip
+import dev.tlong.biodex.ui.common.DIMMED_ALPHA
+import dev.tlong.biodex.ui.common.DIMMED_FILTER
 import dev.tlong.biodex.ui.common.DexFilterChip
 import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.RangeMap
@@ -610,7 +612,10 @@ private fun Hero(
         // than to fill (D30), so it letterboxes, and a silhouette showing through the bands
         // reads as a rendering fault rather than as a placeholder. Every other phase still
         // draws it, which is what keeps the frame from being empty between request and pixel.
-        if (visual !is HeroVisual.Reference && visual !is HeroVisual.OwnPhoto) {
+        if (visual !is HeroVisual.Reference &&
+            visual !is HeroVisual.DimmedReference &&
+            visual !is HeroVisual.OwnPhoto
+        ) {
             SilhouetteIcon(
                 silhouetteRes = summary.silhouetteRes,
                 taxClass = summary.taxClass,
@@ -635,7 +640,11 @@ private fun Hero(
                 )
             }
         }
-        if (summary.caught && imageUrl != null && ownModel == null) {
+        // D52: an uncaught species requests the same picture a caught one does. It used to be
+        // skipped entirely, which is what left the silhouette on screen here while the grid
+        // tile beside it already drew the species.
+        if (imageUrl != null && ownModel == null) {
+            val dimmed = visual is HeroVisual.DimmedReference
             key(imageUrl, generation) {
                 AsyncImage(
                     model = imageUrl,
@@ -644,7 +653,12 @@ private fun Hero(
                     // holds them at, and filling a 158dp letterbox frame with a portrait bird
                     // shot cropped the bird out of it. Fit shows the whole animal.
                     contentScale = ContentScale.Fit,
-                    alpha = if (visual is HeroVisual.Reference) 1f else 0f,
+                    colorFilter = if (dimmed) DIMMED_FILTER else null,
+                    alpha = when {
+                        dimmed -> DIMMED_ALPHA
+                        visual is HeroVisual.Reference -> 1f
+                        else -> 0f
+                    },
                     onState = { coilState ->
                         when (coilState) {
                             is AsyncImagePainter.State.Success -> phase = ImageLoadPhase.LOADED

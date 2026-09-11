@@ -41,7 +41,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
-Counts as of the last commit: **502 JVM, 43 instrumented, 18 Python.**
+Counts as of the last commit: **505 JVM, 43 instrumented, 18 Python.**
 
 ## The design registers — the convention to respect
 

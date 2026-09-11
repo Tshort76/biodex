@@ -400,8 +400,13 @@ fun ScientificName(name: String, modifier: Modifier = Modifier) {
 }
 
 /** D41's dimming: the colour drained out of an uncaught tile's picture, and most of its weight. */
-private val DIMMED_FILTER = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
-private const val DIMMED_ALPHA = 0.42f
+/**
+ * How an uncaught picture is drawn: all the colour out of it and well under half opacity.
+ * `internal` because the entry hero draws the same picture the same way (D52) and the two
+ * must not drift — the unlock reads as one picture gaining colour across both screens.
+ */
+internal val DIMMED_FILTER = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+internal const val DIMMED_ALPHA = 0.42f
 
 /** How long a cell whose every picture failed waits before trying the list once more. */
 private const val RETRY_AFTER_MS = 6_000L
