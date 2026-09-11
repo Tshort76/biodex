@@ -54,6 +54,14 @@ interface SpeciesDao {
     @Query("SELECT MAX(dexNumber) FROM species WHERE regionId = :regionId AND source = 'user'")
     suspend fun maxUserDexNumber(regionId: String): Int?
 
+    /** D45's sweep reads only the rows the user added; curated spelling is the catalogue's. */
+    @Query("SELECT * FROM species WHERE regionId = :regionId AND source = 'user'")
+    suspend fun userSpeciesOnce(regionId: String): List<SpeciesEntity>
+
+    /** D45: names only — every other column, `userEditedFields` included, is left alone. */
+    @Query("UPDATE species SET commonName = :commonName, scientificName = :scientificName WHERE id = :id")
+    suspend fun rename(id: String, commonName: String, scientificName: String?)
+
     @Upsert
     suspend fun upsertAll(species: List<SpeciesEntity>)
 

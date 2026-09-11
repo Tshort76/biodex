@@ -35,6 +35,25 @@ fun formatScientificName(raw: String?): String? {
     }.joinToString(" ")
 }
 
+/** A stored user-added species' names, as [nameCorrections] reads them. */
+data class NamedSpecies(val id: String, val commonName: String, val scientificName: String?)
+
+/** One row whose stored spelling differs from what the door would have written. */
+data class NameCorrection(val id: String, val commonName: String, val scientificName: String?)
+
+/**
+ * D45: the species added before M45 existed, spelled the way the door spells them now. Only
+ * rows that would actually change come back, so a sweep that finds nothing writes nothing —
+ * which is what lets it run on every start without a flag to remember it by.
+ */
+fun nameCorrections(species: List<NamedSpecies>): List<NameCorrection> =
+    species.mapNotNull { row ->
+        val common = formatCommonName(row.commonName)
+        val scientific = formatScientificName(row.scientificName)
+        if (common == row.commonName && scientific == row.scientificName) null
+        else NameCorrection(row.id, common, scientific)
+    }
+
 private val WHITESPACE = Regex("\\s+")
 
 /** Joining words the catalogue keeps lowercase mid-name ("Chicken of the Woods"). */

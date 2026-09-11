@@ -57,6 +57,26 @@ class NameFormatTest {
     }
 
     @Test
+    fun `the sweep respells only the rows that differ, and leaves a null scientific name null (D45)`() {
+        val corrections = nameCorrections(
+            listOf(
+                NamedSpecies("u1", "brown pelican", "pelecanus OCCIDENTALIS"),
+                NamedSpecies("u2", "Bald Eagle", "Haliaeetus leucocephalus"),
+                NamedSpecies("u3", "banana slug", null),
+                NamedSpecies("u4", "Douglas-fir", ""),
+            ),
+        )
+        assertEquals(
+            listOf(
+                NameCorrection("u1", "Brown Pelican", "Pelecanus occidentalis"),
+                NameCorrection("u3", "Banana Slug", null),
+            ),
+            corrections,
+        )
+        assertEquals(emptyList<NameCorrection>(), nameCorrections(corrections.map { NamedSpecies(it.id, it.commonName, it.scientificName) }))
+    }
+
+    @Test
     fun `normalized spells both names`() {
         val fields = SpeciesFields(commonName = "brown pelican", scientificName = "pelecanus OCCIDENTALIS")
             .normalized()
