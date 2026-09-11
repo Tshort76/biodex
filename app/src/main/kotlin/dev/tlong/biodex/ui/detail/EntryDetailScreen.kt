@@ -140,7 +140,7 @@ fun EntryDetailRoute(
                         container.appContext.filesDir,
                         state.captures.firstOrNull()?.thumbPath,
                     ) ?: detail.summary.imageUrl,
-                    leafMark = tileStateFor(detail.summary) == TileState.CAUGHT_REFERENCE_IMAGE,
+                    leafMark = tileStateFor(detail.summary) == TileState.CAUGHT_NO_OWN_PHOTO,
                     caughtCount = state.caughtCount,
                     totalCount = state.totalCount,
                     whereAndWhen = state.captures.firstOrNull()?.let {

@@ -2,6 +2,7 @@ package dev.tlong.biodex.ui.reveal
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -23,10 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -62,20 +66,24 @@ import kotlinx.coroutines.delay
  * a still card holding for a second and a half. And once that was fixed, the moment was still
  * thinner than the thing it marks, so the beats below were added.
  *
- * The order is deliberate, because a catch should read as an arrival rather than a fanfare:
- * the silhouette waits a beat and swells, the photograph resolves out of it as rings push
- * outward, the naming lines rise in one at a time, and the counter lands last with its own
- * haptic — the number moving is the point of the whole screen. Everything is drawn in the
- * accent on the app's own background: no confetti, no colour it does not already use, no
- * sound and no mascot, because D8's original reasoning still holds and this has to be worth
- * watching on the ninetieth unlock as much as the first.
+ * The order is deliberate, because a catch should read as an arrival: the silhouette waits a
+ * beat and swells, the photograph resolves out of it as rings push outward, the naming lines
+ * rise in one at a time, and the counter lands last with its own haptic — the number moving
+ * is the point of the whole screen.
+ *
+ * **D40 made it a party.** The owner asked for colour and confetti, so the accent-only rule
+ * D8 and D33 held to is gone: a burst of confetti is thrown up from the halo as the photograph
+ * lands, a warm wash sits behind it, a rainbow ring turns slowly around the picture, and the
+ * "NEW SPECIES" label goes gold. What stays from D33 is the sequence and its timing, the
+ * fixed scatter (the same screen every time), and no sound or mascot.
  */
-const val REVEAL_DURATION_MS = 2_600L
+const val REVEAL_DURATION_MS = 2_800L
 
 /** The beats, in milliseconds from the start. Each one reads as its own event. */
 private const val HOLD_MS = 180L
 private const val CROSSFADE_MS = 620
 private const val BURST_MS = 900
+private const val CONFETTI_MS = 2_400
 private const val TEXT_MS = 520
 private const val COUNTER_MS = 480
 
@@ -138,12 +146,14 @@ fun UnlockRevealOverlay(
     val colors = DexTheme.colors
     val haptics = LocalHapticFeedback.current
 
-    // Four Animatables rather than one clock, because the beats overlap: the rings run across
+    // Six Animatables rather than one clock, because the beats overlap: the rings run across
     // the crossfade, and the text is still arriving as the counter starts. Each is remembered
     // at 0f and driven by the timeline below — never by `animateFloatAsState`, which would
     // start at its target and play nothing (the defect D33 fixes).
     val resolve = remember { Animatable(0f) }
     val burst = remember { Animatable(0f) }
+    val confetti = remember { Animatable(0f) }
+    val ring = remember { Animatable(0f) }
     val naming = remember { Animatable(0f) }
     val counter = remember { Animatable(0f) }
 
@@ -154,6 +164,18 @@ fun UnlockRevealOverlay(
         delay(HOLD_MS)
         launch {
             burst.animateTo(1f, tween(durationMillis = BURST_MS, easing = LinearOutSlowInEasing))
+        }
+        // The confetti is linear: the arc is in the maths, and easing the clock would make
+        // gravity look wrong.
+        launch {
+            confetti.animateTo(1f, tween(durationMillis = CONFETTI_MS, easing = LinearEasing))
+        }
+        // One slow turn of the ring across the whole reveal.
+        launch {
+            ring.animateTo(
+                1f,
+                tween(durationMillis = (REVEAL_DURATION_MS - HOLD_MS).toInt(), easing = LinearEasing),
+            )
         }
         resolve.animateTo(1f, tween(durationMillis = CROSSFADE_MS, easing = FastOutSlowInEasing))
         naming.animateTo(1f, tween(durationMillis = TEXT_MS, easing = LinearOutSlowInEasing))
@@ -167,138 +189,178 @@ fun UnlockRevealOverlay(
 
     val progress = resolve.value
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg)
+            // D40's wash: a warm glow that rises behind the halo as the photograph lands, so
+            // the screen itself changes colour rather than only the things on it.
+            .drawBehind {
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            CONFETTI_GOLD.copy(alpha = 0.30f * progress),
+                            CONFETTI_PALETTE[5].copy(alpha = 0.12f * progress),
+                            Color.Transparent,
+                        ),
+                        center = Offset(size.width / 2f, size.height * WASH_CENTRE_Y),
+                        radius = size.maxDimension * 0.55f,
+                    ),
+                )
+            }
             // Skippable: any tap ends it (DESIGN.md §4). No ripple — the overlay is the target.
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onDismiss,
-            )
-            .padding(24.dp),
+            ),
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(260.dp),
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
         ) {
-            // The rings and motes are drawn outside the halo so they can travel past it.
-            RevealBurst(progress = burst.value, colour = colors.accent)
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(190.dp)
-                    .clip(CircleShape)
-                    // 6.4's "soft accentSoft radial glow", as a flat halo — a real radial
-                    // gradient would read as heavier than D8 wants.
-                    .background(colors.accentSoft),
+                modifier = Modifier.size(260.dp),
             ) {
+                // The rings and motes are drawn outside the halo so they can travel past it.
+                RevealBurst(progress = burst.value, colour = colors.accent)
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(150.dp)
+                        .size(190.dp)
+                        // D40's ring: every confetti colour swept around the halo, turning once
+                        // over the reveal and fading up with the photograph.
+                        .drawBehind {
+                            rotate(degrees = ring.value * 360f) {
+                                drawCircle(
+                                    brush = Brush.sweepGradient(CONFETTI_PALETTE + CONFETTI_PALETTE.first()),
+                                    radius = size.minDimension / 2f - 2.dp.toPx(),
+                                    alpha = progress,
+                                    style = Stroke(width = 4.dp.toPx()),
+                                )
+                            }
+                        }
+                        .padding(6.dp)
                         .clip(CircleShape)
-                        .background(colors.silBg)
-                        // Swells past its resting size as the photograph lands, then settles.
-                        // The overshoot is what makes the resolve read as an event rather
-                        // than a dissolve.
-                        .scale(0.94f + 0.10f * progress - 0.04f * progress * progress),
+                        // 6.4's "soft accentSoft radial glow", as a flat halo.
+                        .background(colors.accentSoft),
                 ) {
-                    SilhouetteIcon(
-                        silhouetteRes = content.silhouetteRes,
-                        taxClass = content.taxClass,
-                        size = 104.dp,
-                        tint = colors.sil,
-                        modifier = Modifier.alpha(1f - progress),
-                    )
-                    if (content.thumbnailModel != null) {
-                        AsyncImage(
-                            model = content.thumbnailModel,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .alpha(progress),
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(CircleShape)
+                            .background(colors.silBg)
+                            // Swells past its resting size as the photograph lands, then settles.
+                            // The overshoot is what makes the resolve read as an event rather
+                            // than a dissolve.
+                            .scale(0.94f + 0.10f * progress - 0.04f * progress * progress),
+                    ) {
+                        SilhouetteIcon(
+                            silhouetteRes = content.silhouetteRes,
+                            taxClass = content.taxClass,
+                            size = 104.dp,
+                            tint = colors.sil,
+                            modifier = Modifier.alpha(1f - progress),
                         )
-                    }
-                    if (content.leafMark) {
-                        Text(
-                            text = "🍃",
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .alpha(progress),
-                        )
+                        if (content.thumbnailModel != null) {
+                            AsyncImage(
+                                model = content.thumbnailModel,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .alpha(progress),
+                            )
+                        }
+                        if (content.leafMark) {
+                            Text(
+                                text = "🍃",
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .alpha(progress),
+                            )
+                        }
                     }
                 }
             }
-        }
-        if (content.leafMark) {
-            Text(
-                text = NO_OWN_PHOTO_MARK,
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.accent,
-                modifier = Modifier.padding(top = 10.dp).alpha(progress),
-            )
-        }
+            if (content.leafMark) {
+                Text(
+                    text = NO_OWN_PHOTO_MARK,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.accent,
+                    modifier = Modifier.padding(top = 10.dp).alpha(progress),
+                )
+            }
 
-        // The naming lines arrive one after another rather than together. Four labels landing
-        // on the same frame is a block of text appearing; landing in sequence is the app
-        // telling you what you caught.
-        Text(
-            text = "NEW SPECIES",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
-            ),
-            color = colors.accent,
-            modifier = Modifier.padding(top = 22.dp).arrive(naming.value, 0),
-        )
-        Text(
-            text = content.commonName,
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = colors.fg,
-            modifier = Modifier.padding(top = 6.dp).arrive(naming.value, 1),
-        )
-        Text(
-            text = listOfNotNull(content.displayNumber, content.scientificName)
-                .joinToString(" · "),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.muted,
-            modifier = Modifier.padding(top = 2.dp).arrive(naming.value, 2),
-        )
-        content.whereAndWhen?.let {
+            // The naming lines arrive one after another rather than together. Four labels landing
+            // on the same frame is a block of text appearing; landing in sequence is the app
+            // telling you what you caught.
             Text(
-                text = it,
+                text = "NEW SPECIES",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp,
+                ),
+                // Amber rather than accent (D40): the label is the shout, the counter keeps the
+                // app's own voice. The theme's `warn`, not the confetti gold, which is unreadable
+                // on the light background.
+                color = colors.warn,
+                modifier = Modifier.padding(top = 22.dp).arrive(naming.value, 0),
+            )
+            Text(
+                text = content.commonName,
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = colors.fg,
+                modifier = Modifier.padding(top = 6.dp).arrive(naming.value, 1),
+            )
+            Text(
+                text = listOfNotNull(content.displayNumber, content.scientificName)
+                    .joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.muted,
+                modifier = Modifier.padding(top = 2.dp).arrive(naming.value, 2),
+            )
+            content.whereAndWhen?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 6.dp).arrive(naming.value, 3),
+                )
+            }
+            // The counter is the only number on screen that changed, so it says so: it holds the
+            // old value, flips to the new one, and swells as it does. S10's label is unchanged.
+            val ticked = counter.value >= 0.5f
+            Text(
+                text = revealCounterLabel(content, showNewValue = ticked),
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = colors.accent,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .alpha(0.35f + 0.65f * counter.value)
+                    .scale(1f + 0.22f * counterPop(counter.value)),
+            )
+            Text(
+                text = "Tap to continue",
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.faint,
-                modifier = Modifier.padding(top = 6.dp).arrive(naming.value, 3),
+                modifier = Modifier.padding(top = 10.dp).alpha(counter.value),
             )
         }
-        // The counter is the only number on screen that changed, so it says so: it holds the
-        // old value, flips to the new one, and swells as it does. S10's label is unchanged.
-        val ticked = counter.value >= 0.5f
-        Text(
-            text = revealCounterLabel(content, showNewValue = ticked),
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-            color = colors.accent,
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .alpha(0.35f + 0.65f * counter.value)
-                .scale(1f + 0.22f * counterPop(counter.value)),
-        )
-        Text(
-            text = "Tap to continue",
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.faint,
-            modifier = Modifier.padding(top = 10.dp).alpha(counter.value),
-        )
+        // Above everything, so the pieces cross the naming lines on their way down.
+        ConfettiBurst(progress = confetti.value, originY = WASH_CENTRE_Y)
     }
 }
+
+/** Where the halo sits as a fraction of the screen: the wash and the confetti centre on it. */
+private const val WASH_CENTRE_Y = 0.36f
 
 /**
  * One text line's entrance: it fades up and rises the last few pixels into place. [index] is

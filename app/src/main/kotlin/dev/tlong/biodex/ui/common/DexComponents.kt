@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -134,19 +135,21 @@ fun AttributionLine(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * `.cell` — one grid cell (M01). A caught species shows the user's own photo; an uncaught one
- * shows the class silhouette on `silBg`.
+ * `.cell` — one grid cell (M01). A caught species shows the species' reference picture (D39);
+ * an uncaught one shows the class silhouette on `silBg`.
  *
- * The photo comes from the capture's **stored thumbnail**, never from the gallery URI (M11).
- * That is the rule that makes a broken reference a one-photo problem rather than a blank
- * collection: the grid does not resolve anything, so it cannot fail.
+ * The pictures a cell may try, and their order, come from [tileImageSources]: the reference
+ * picture first, then the capture's **stored thumbnail** (M11) as the fallback for when the
+ * reference has not cached. Neither is the gallery URI — the grid never resolves one, so a
+ * broken photo reference stays a one-entry problem rather than a blank collection.
  *
- * A thumbnail file can still go missing — restoring a database without the files beside it
- * does exactly that — and then the cell draws the silhouette **the same way the no-photo
- * branch draws it**, sized and centred, rather than through Coil's error slot. The error slot
- * inherits the photo's `Crop` scaling, which blew the silhouette up to fill the tile and made
- * a caught species read as an enlarged uncaught one. The chrome still says caught either way
- * (M12): accent border, accent ground, the tick, and an accent-tinted shape.
+ * When every candidate has failed — the phone is offline with nothing cached, or the thumbnail
+ * file went missing because a database was restored without the files beside it — the cell
+ * draws the silhouette **the same way the no-photo branch draws it**, sized and centred, rather
+ * than through Coil's error slot. The error slot inherits the photo's `Crop` scaling, which
+ * blew the silhouette up to fill the tile and made a caught species read as an enlarged
+ * uncaught one. The chrome still says caught either way (M12): accent border, accent ground,
+ * the tick, and an accent-tinted shape.
  */
 @Composable
 fun SpeciesCell(
@@ -156,13 +159,22 @@ fun SpeciesCell(
 ) {
     val colors = DexTheme.colors
     val filesDir = LocalContext.current.filesDir
-    val thumbModel = remember(species.thumbPath) { ownedFileModel(filesDir, species.thumbPath) }
     val tileState = tileStateFor(species)
     val accented = tileWearsAccentChrome(tileState)
-    // §5.3.1. The image is whichever the state calls for; the *chrome* is decided before and
-    // independently of it, which is what makes the offline fallback keep saying "caught".
-    val imageModel = thumbModel ?: species.imageUrl.takeIf { accented }
-    var imageFailed by remember(imageModel) { mutableStateOf(false) }
+    // §5.3.1. The *chrome* is decided before and independently of any picture, which is what
+    // makes the offline fallback keep saying "caught". The pictures are walked in D39's
+    // order, advancing one place on each load failure until the list runs out.
+    val sources = remember(species.imageUrl, species.thumbPath, species.caught) {
+        tileImageSources(species)
+    }
+    var failedCount by remember(sources) { mutableStateOf(0) }
+    val imageModel = sources.getOrNull(failedCount)?.let { source ->
+        when (source) {
+            is TileImage.Reference -> source.url
+            is TileImage.OwnThumbnail -> ownedFileModel(filesDir, source.path)
+        }
+    }
+    val imageFailed = imageModel == null
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
@@ -181,16 +193,22 @@ fun SpeciesCell(
                 .background(if (accented) colors.accentSoft else colors.silBg),
             contentAlignment = Alignment.Center,
         ) {
-            if (imageModel != null && !imageFailed) {
-                AsyncImage(
-                    model = imageModel,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    onState = { state ->
-                        if (state is AsyncImagePainter.State.Error) imageFailed = true
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+            if (imageModel != null) {
+                // Keyed on the model so a failure advances exactly one place: the next
+                // candidate gets a fresh request rather than inheriting a failed painter.
+                key(imageModel) {
+                    AsyncImage(
+                        model = imageModel,
+                        contentDescription = null,
+                        // Cropped, not fitted (D30 fits the hero): at 74dp a letterboxed
+                        // photograph is a stripe, and a tile wants a picture.
+                        contentScale = ContentScale.Crop,
+                        onState = { state ->
+                            if (state is AsyncImagePainter.State.Error) failedCount += 1
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             } else {
                 SilhouetteIcon(
                     silhouetteRes = species.silhouetteRes,
@@ -205,7 +223,7 @@ fun SpeciesCell(
                 // there is no photograph doing it.
                 val loud = tileWearsLoudTick(
                     state = tileState,
-                    showingSilhouette = imageModel == null || imageFailed,
+                    showingSilhouette = imageFailed,
                 )
                 Text(
                     text = "✓",

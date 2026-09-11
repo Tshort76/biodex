@@ -6,6 +6,13 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v14 — 2026-09-11
+
+**The stock picture on the grid, and a party when you catch one.**
+
+- **Changed** — a caught grid cell now draws the species' reference picture from the catalogue instead of the user's own photograph, which keeps the entry screen, the photo viewer and the reveal. The user's thumbnail becomes the fallback for when the picture has not cached, so an offline grid still shows a picture where it can; the silhouette and the filled tick remain the last resort. Uncaught cells are unchanged — they never draw a picture. (`M01`, `M11` revised, `D39`)
+- **Changed** — the unlock reveal gains confetti thrown up from the halo as the photograph lands, a warm wash behind it, a rainbow ring turning around the picture, and an amber "NEW SPECIES" label. The sequence, the counter tick and the fixed scatter are as before; it runs two hundred milliseconds longer so the confetti can fall. This overrules the no-fanfare rule the reveal was built under. (`D8`, `D33` revised, `D40`)
+
 ## v13 — 2026-09-06
 
 **A caught species with no picture now says so.**

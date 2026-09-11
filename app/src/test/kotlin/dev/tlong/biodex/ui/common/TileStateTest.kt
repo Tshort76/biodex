@@ -11,7 +11,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** §5.3.1's three states, and the one rule it asks explicitly for a test to pin. */
+/** §5.3.1's three states, the one rule it asks explicitly for a test to pin, and D39's picture order. */
 class TileStateTest {
 
     private fun species(
@@ -47,7 +47,7 @@ class TileStateTest {
     }
 
     @Test
-    fun `a catch with the user's own photo is unchanged`() {
+    fun `a catch with the user's own photo keeps its neutral chrome`() {
         // Animals, fungi, and every plant registered before M41.
         val animal = tileStateFor(
             species(caught = true, thumbPath = "thumbnails/a.jpg", kingdom = Kingdom.ANIMAL),
@@ -61,12 +61,59 @@ class TileStateTest {
     }
 
     @Test
-    fun `a catch with no photo of the user's own gets the reference image and the accent chrome`() {
+    fun `a catch with no photo of the user's own gets the accent chrome and the leaf`() {
         val state = tileStateFor(species(caught = true, thumbPath = null))
 
-        assertEquals(TileState.CAUGHT_REFERENCE_IMAGE, state)
+        assertEquals(TileState.CAUGHT_NO_OWN_PHOTO, state)
         assertTrue(tileWearsAccentChrome(state))
         assertNotNull(tileGlyph(state))
+    }
+
+    // -----------------------------------------------------------------------
+    // D39: which picture a caught cell draws, and what it falls back to.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a caught species leads with its reference picture and keeps its own thumbnail as the fallback`() {
+        val sources = tileImageSources(
+            species(caught = true, thumbPath = "thumbnails/a.jpg", kingdom = Kingdom.ANIMAL),
+        )
+
+        assertEquals(
+            listOf(
+                TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg"),
+                TileImage.OwnThumbnail("thumbnails/a.jpg"),
+            ),
+            sources,
+        )
+    }
+
+    @Test
+    fun `a catch with no reference picture still draws its own thumbnail`() {
+        // A user-added species whose lookup found no image, or a catalogue entry with none:
+        // the thumbnail is the only picture there is, and the cell must not skip to the shape.
+        val sources = tileImageSources(
+            species(caught = true, thumbPath = "thumbnails/a.jpg", imageUrl = null),
+        )
+
+        assertEquals(listOf(TileImage.OwnThumbnail("thumbnails/a.jpg")), sources)
+    }
+
+    @Test
+    fun `a photoless catch has only the reference picture to try`() {
+        assertEquals(
+            listOf(TileImage.Reference("https://upload.wikimedia.org/oregon-grape.jpg")),
+            tileImageSources(species(caught = true, thumbPath = null)),
+        )
+        assertEquals(emptyList<TileImage>(), tileImageSources(species(caught = true, thumbPath = null, imageUrl = null)))
+    }
+
+    @Test
+    fun `an uncaught species never draws its reference picture`() {
+        // The one that matters: the reference picture is a picture of the species whether or
+        // not it has been caught, and drawing it on an uncaught tile would end the
+        // silhouette-unlock mechanic the grid exists for.
+        assertEquals(emptyList<TileImage>(), tileImageSources(species(caught = false, thumbPath = null)))
     }
 
     // -----------------------------------------------------------------------
@@ -84,7 +131,7 @@ class TileStateTest {
 
         val state = tileStateFor(noImageAtAll)
 
-        assertEquals(TileState.CAUGHT_REFERENCE_IMAGE, state)
+        assertEquals(TileState.CAUGHT_NO_OWN_PHOTO, state)
         assertTrue("still caught, still accented", tileWearsAccentChrome(state))
         assertNotNull("still marked", tileGlyph(state))
         // And it is still plainly not an uncaught tile, which is the separation that matters.
@@ -105,13 +152,13 @@ class TileStateTest {
         // gallery photo, a plant that never had one (M41), a reference image not yet cached —
         // all read the same on the grid, which is the honest thing it can say (M44).
         assertTrue(tileWearsLoudTick(TileState.CAUGHT_OWN_PHOTO, showingSilhouette = true))
-        assertTrue(tileWearsLoudTick(TileState.CAUGHT_REFERENCE_IMAGE, showingSilhouette = true))
+        assertTrue(tileWearsLoudTick(TileState.CAUGHT_NO_OWN_PHOTO, showingSilhouette = true))
     }
 
     @Test
     fun `a caught cell showing a picture keeps the quiet tick`() {
         assertFalse(tileWearsLoudTick(TileState.CAUGHT_OWN_PHOTO, showingSilhouette = false))
-        assertFalse(tileWearsLoudTick(TileState.CAUGHT_REFERENCE_IMAGE, showingSilhouette = false))
+        assertFalse(tileWearsLoudTick(TileState.CAUGHT_NO_OWN_PHOTO, showingSilhouette = false))
     }
 
     @Test
@@ -126,7 +173,7 @@ class TileStateTest {
     fun `the chrome still refuses to know whether the image loaded`() {
         // M44 adds a rule that depends on the load; §5.3.1's does not, and must not. Keeping
         // both in this file is what makes the difference visible to whoever changes one.
-        assertTrue(tileWearsAccentChrome(TileState.CAUGHT_REFERENCE_IMAGE))
+        assertTrue(tileWearsAccentChrome(TileState.CAUGHT_NO_OWN_PHOTO))
         assertFalse(tileWearsAccentChrome(TileState.UNCAUGHT))
     }
 }

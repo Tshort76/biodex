@@ -236,9 +236,9 @@ data class SpeciesSummary(
     /** Relative path under `filesDir` of the favorite (else first) capture's thumbnail. */
     val thumbPath: String?,
     /**
-     * The species' own reference picture from Wikimedia Commons. The grid needs it for M41's
-     * caught-with-no-photo-of-your-own tile, where it stands in for the photograph the user
-     * did not keep; every other tile state ignores it.
+     * The species' own reference picture from Wikimedia Commons. Every caught grid tile draws
+     * it (D39), with the user's own thumbnail as the fallback when it has not cached; an
+     * uncaught tile ignores it and keeps the silhouette.
      */
     val imageUrl: String? = null,
     val captureCount: Int,
