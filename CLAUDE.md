@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 120 animals, 80 plants, 30 fungi. Species start as silhouettes and unlock when the user registers a photo.
+A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 224 animals, 80 plants, 30 fungi. Species start as silhouettes and unlock when the user registers a photo.
 
 `README.md` is written for the user; `docs/BUILD.md` covers setup and signing, and `make` is the entry point for every routine build command.
 

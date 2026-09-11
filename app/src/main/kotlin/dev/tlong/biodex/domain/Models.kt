@@ -107,10 +107,11 @@ enum class SpeciesSource(val wireName: String) {
 
 /**
  * One sortable integer column orders the whole grid (ARCHITECTURE.md 3.1, 11.1): curated
- * animals 1–120, curated plants 2001–2080, user-added 9001 upward. Presentation subtracts
+ * animals 1–224, curated plants 2001–2080, user-added 9001 upward. Presentation subtracts
  * the base and renders `#021`, `P012` or `U01`.
  *
- * The bases are wide apart on purpose. A catalogue that grows past 120 animals must not
+ * The bases are wide apart on purpose. A catalogue that grows — it went from 120 animals
+ * to 224 (D50) — must not
  * walk into the plant range, and the unique `(regionId, dexNumber)` index is what would
  * fail the whole import if it did.
  */

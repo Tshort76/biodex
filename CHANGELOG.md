@@ -6,6 +6,14 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v19 — 2026-09-11
+
+**The animal list nearly doubles: 120 species to 224.**
+
+- **Added** — 104 more common Pacific animals, `#121`–`#224`. They are picked by how often you actually meet them rather than by charisma: 32 birds (dabbling ducks, grebes, egrets, gulls, the small woodpeckers, the everyday sparrows and finches), 14 mammals, 14 fish, 6 reptiles, 5 amphibians, 18 insects and 15 other invertebrates — the mussel, the barnacle, the sea star, the pill bug. The catalogue is now 334 species: 224 animals, 80 plants, 30 fungi. (`D1` revised, `D50`)
+- **Added** — 26 of the new animals carry the *Food source* tag under the same rule, taking the tagged set from 23 to 49; most of the growth is fish and shellfish. (`D48` revised)
+- **Changed** — the catalogue build's size checks now come from the curated input files instead of hardcoded totals, so an expansion no longer fails the build on its own success. The two tests that pinned 230 species and 120 animals were changed the same way. (`D51`)
+
 ## v18 — 2026-09-11
 
 **Game is a food source, and the caches ask before they go.**

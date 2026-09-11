@@ -1504,7 +1504,7 @@ PLANT_SILHOUETTES = {
 }
 
 
-def validate(catalogue, ecosystem_ids, internals):
+def validate(catalogue, ecosystem_ids, internals, expected_counts):
     """Everything section 11.3 says must hold before the asset is written.
 
     `internals` maps a species id to the pipeline-only facts the asset does not
@@ -1518,20 +1518,28 @@ def validate(catalogue, ecosystem_ids, internals):
     animals = [s for s in species if s["kingdom"] == "animal"]
     plants = [s for s in species if s["kingdom"] == "plant"]
     fungi = [s for s in species if s["kingdom"] == "fungus"]
-    if len(species) != 230:
-        problems.append(f"expected 230 species, got {len(species)}")
-    if len(animals) != 120:
-        problems.append(f"expected 120 animals, got {len(animals)}")
-    if len(plants) != 80:
-        problems.append(f"expected 80 plants, got {len(plants)}")
-    if len(fungi) != 30:
-        problems.append(f"expected 30 fungi, got {len(fungi)}")
-    if sorted(s["dexNumber"] for s in animals) != list(range(1, 121)):
-        problems.append("animal dexNumbers are not exactly 1..120 with no duplicates")
-    if sorted(s["dexNumber"] for s in plants) != list(range(1, 81)):
-        problems.append("plant dexNumbers are not exactly 1..80 with no duplicates")
-    if sorted(s["dexNumber"] for s in fungi) != list(range(1, 31)):
-        problems.append("fungus dexNumbers are not exactly 1..30 with no duplicates")
+    # The counts come from the curated inputs rather than from literals here. The check
+    # this is: every species the curator listed reached the asset, and the numbering is a
+    # gapless 1..N per kingdom. Hardcoding the totals meant every expansion failed the
+    # build on its own success, which teaches whoever hits it to edit the guard — and a
+    # guard nobody trusts catches nothing.
+    for kingdom, built_species in (("animal", animals), ("plant", plants), ("fungus", fungi)):
+        wanted = expected_counts.get(kingdom, 0)
+        if len(built_species) != wanted:
+            problems.append(
+                f"expected {wanted} {kingdom}s from the curated input, "
+                f"got {len(built_species)}"
+            )
+        numbers = sorted(s["dexNumber"] for s in built_species)
+        if numbers != list(range(1, len(built_species) + 1)):
+            problems.append(
+                f"{kingdom} dexNumbers are not exactly 1..{len(built_species)} "
+                f"with no duplicates"
+            )
+    if len(species) != sum(expected_counts.values()):
+        problems.append(
+            f"expected {sum(expected_counts.values())} species, got {len(species)}"
+        )
 
     dupes = [i for i, n in Counter(s["id"] for s in species).items() if n > 1]
     if dupes:
@@ -1860,6 +1868,12 @@ def main():
     animal_entries = animals_input["species"]
     plant_entries = plants_input["species"]
     fungus_entries = fungi_input["species"]
+    # What the curator asked for, which is what `validate` holds the asset to.
+    expected_counts = {
+        "animal": len(animal_entries),
+        "plant": len(plant_entries),
+        "fungus": len(fungus_entries),
+    }
     if args.only:
         animal_entries = animal_entries[: args.only]
         plant_entries = plant_entries[: args.only]
@@ -1974,7 +1988,7 @@ def main():
         return 1
 
     if not args.only:
-        problems = validate(catalogue, ecosystem_ids, internals)
+        problems = validate(catalogue, ecosystem_ids, internals, expected_counts)
         problems += validate_duke_asset(duke_out, built, internals)
         if problems:
             print("VALIDATION FAILED:", file=sys.stderr)

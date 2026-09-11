@@ -17,16 +17,20 @@ class AnimalFoodSourceTest {
 
     private val animals = RealCatalogueAsset.speciesOf("animal")
 
-    /** The list the owner settled on: a licensed season plus commonly eaten. */
+    /** The list the owner settled on: a licensed season plus commonly eaten (D48, D50). */
     private val expected = setOf(
-        "Canada Goose", "Mallard", "California Quail", "Wild Turkey", "Mourning Dove",
-        "American Coot",
-        "Mule Deer", "Roosevelt Elk", "American Black Bear", "Black-tailed Jackrabbit",
-        "Western Gray Squirrel", "Douglas Squirrel",
-        "Chinook Salmon", "Coho Salmon", "Cutthroat Trout", "Rainbow Trout", "Blue Rockfish",
-        "Opaleye",
-        "Dungeness Crab", "Purple Sea Urchin",
-        "Yellow-faced Bumble Bee", "Valley Carpenter Bee", "Ten-lined June Beetle",
+        "American Black Bear", "American Coot", "Band-tailed Pigeon", "Barred Surfperch",
+        "Black Rockfish", "Black-tailed Jackrabbit", "Blue Rockfish", "Bufflehead", "Cabezon",
+        "California Grunion", "California Mussel", "California Quail", "Canada Goose",
+        "Chinook Salmon", "Chum Salmon", "Coho Salmon", "Cutthroat Trout", "Douglas Squirrel",
+        "Dungeness Crab", "Field Cricket", "Giant Pacific Octopus", "Gooseneck Barnacle",
+        "Kelp Greenling", "Largemouth Bass", "Lingcod", "Mallard", "Mourning Dove",
+        "Mule Deer", "Opaleye", "Pacific Herring", "Pacific Oyster", "Pacific Razor Clam",
+        "Pink Salmon", "Purple Sea Urchin", "Rainbow Trout", "Red Rock Crab", "Roosevelt Elk",
+        "Sandhill Crane", "Snowshoe Hare", "Sockeye Salmon", "Starry Flounder",
+        "Ten-lined June Beetle", "Valley Carpenter Bee", "Western Gray Squirrel",
+        "Western Honey Bee", "White Sturgeon", "Wild Turkey", "Wood Duck",
+        "Yellow-faced Bumble Bee",
     )
 
     @Test

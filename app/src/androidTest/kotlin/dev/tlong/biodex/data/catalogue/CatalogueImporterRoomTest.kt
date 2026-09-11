@@ -145,18 +145,19 @@ class CatalogueImporterRoomTest {
 
         assertTrue("import failed: $outcome", outcome is ImportOutcome.Imported)
         val species = db.speciesDao().speciesOnce("pacific")
-        assertEquals(230, species.size)
         assertTrue(species.all { it.source == SpeciesSource.CURATED })
         val animals = species.filter { it.kingdom == Kingdom.ANIMAL }
         val plants = species.filter { it.kingdom == Kingdom.PLANT }
         val fungi = species.filter { it.kingdom == Kingdom.FUNGUS }
-        assertEquals(120, animals.size)
-        assertEquals(80, plants.size)
-        assertEquals(30, fungi.size)
-        assertEquals((1..120).toList(), animals.map { it.dexNumber }.sorted())
-        // Fungi are stored offset by FUNGUS_DEX_NUMBER_BASE and displayed as F001..F030.
+        // The catalogue grows, so the check is that every species landed in one of the three
+        // kingdoms and each kingdom numbers gaplessly from 1 — not a total that an expansion
+        // would fail on its own success.
+        assertEquals(species.size, animals.size + plants.size + fungi.size)
+        assertTrue(animals.isNotEmpty() && plants.isNotEmpty() && fungi.isNotEmpty())
+        assertEquals((1..animals.size).toList(), animals.map { it.dexNumber }.sorted())
+        // Fungi are stored offset by FUNGUS_DEX_NUMBER_BASE and displayed as F001, F002, ...
         assertEquals(
-            (1..30).map { FUNGUS_DEX_NUMBER_BASE + it },
+            (1..fungi.size).map { FUNGUS_DEX_NUMBER_BASE + it },
             fungi.map { it.dexNumber }.sorted(),
         )
         // The rule the pipeline enforces and nothing else can: no mushroom carries a use

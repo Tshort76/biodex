@@ -135,7 +135,9 @@ class FungusValidationTest(unittest.TestCase):
         species.update(overrides)
         catalogue = {"species": [species], "ecosystems": []}
         internals = {"test-mushroom": {"curatedNote": species["usesNote"]}}
-        return bc.validate(catalogue, ECOSYSTEMS, internals)
+        # The counts now come from the curated inputs; this fixture is one fungus.
+        counts = {"animal": 0, "plant": 0, "fungus": 1}
+        return bc.validate(catalogue, ECOSYSTEMS, internals, counts)
 
     def problems_about(self, fragment, **overrides):
         return [p for p in self.asset(**overrides) if fragment in p]

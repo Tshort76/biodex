@@ -137,7 +137,7 @@ class FungiCatalogueTest {
         assertTrue(plants.max() < fungal.min())
         // The unique (regionId, dexNumber) index is what would fail the whole import if two
         // kingdoms ever overlapped, so the gap is the assertion, not the exact bases.
-        assertEquals(230, stored.map { it.dexNumber }.distinct().size)
+        assertEquals(stored.size, stored.map { it.dexNumber }.distinct().size)
     }
 
     private fun store() = runBlocking {
