@@ -1982,6 +1982,30 @@ def main():
                 print(f"  - {p}", file=sys.stderr)
             return 1
 
+    # The trap this closes: the app imports the asset only when `catalogueVersion`
+    # differs from the one already in the database (ARCHITECTURE.md 3.3), so a
+    # content change shipped under the old number installs and changes nothing —
+    # silently, on a phone, after a full build. Caught here instead, where the fix
+    # is one line in region.json.
+    if not args.only and out.exists():
+        try:
+            previous = json.loads(out.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            previous = None
+        if previous is not None:
+            same_version = previous.get("catalogueVersion") == catalogue.get("catalogueVersion")
+            changed = {k: v for k, v in catalogue.items() if k != "catalogueVersion"} != \
+                {k: v for k, v in previous.items() if k != "catalogueVersion"}
+            if same_version and changed:
+                print(
+                    f"REFUSING TO WRITE: the catalogue's content changed but "
+                    f"catalogueVersion is still {catalogue.get('catalogueVersion')}. "
+                    f"A phone that already imported that version would ignore this "
+                    f"asset. Bump catalogueVersion in tools/catalogue/region.json.",
+                    file=sys.stderr,
+                )
+                return 1
+
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8") as fh:
         json.dump(catalogue, fh, ensure_ascii=False, indent=2)

@@ -12,6 +12,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 - **Added** — 23 animals now carry the *Food source* tag, so the Uses filter finds them: game birds and mammals, the salmon and trout, Dungeness crab and purple sea urchin, and the three insects eaten as brood or grubs. The rule is a licensed season in CA/OR/WA plus commonly eaten. Medicinal stays plant-only. It is a tag, not advice — the entry carries the same disclaimer the plants do. (`M24` and `D14` revised, `D48`)
 - **Added** — *Clear reference caches* now asks for confirmation, naming how much it would throw away and what it would not touch. (`D49`)
+- **Fixed** — the catalogue build now refuses to write an asset whose content changed under an unchanged `catalogueVersion`. A phone that had already imported that version ignored the new asset, which is how the food-source tags shipped without appearing.
 
 ## v17.1 — 2026-09-11
 

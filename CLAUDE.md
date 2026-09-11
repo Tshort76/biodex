@@ -37,6 +37,7 @@ Environment, if you bypass `make`: JDK 17 via `/usr/libexec/java_home -v 17`, an
 Three traps worth knowing before you trust a green run:
 
 - **`testDebugUnitTest` does not treat the catalogue asset as an input.** Change `pacific.json` or anything under `tools/catalogue/` and Gradle reports `BUILD SUCCESSFUL in 3s` off stale results. `make check` passes `--rerun-tasks` for exactly this reason; plain `make test` does not.
+- **A content change needs a `catalogueVersion` bump in `tools/catalogue/region.json`.** The app imports the asset only when the number differs from the one in its database, so a changed asset under the old number installs and does nothing. The build now refuses to write in that case and says so.
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
