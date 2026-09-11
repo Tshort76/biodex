@@ -6,6 +6,13 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v18 — 2026-09-11
+
+**Game is a food source, and the caches ask before they go.**
+
+- **Added** — 23 animals now carry the *Food source* tag, so the Uses filter finds them: game birds and mammals, the salmon and trout, Dungeness crab and purple sea urchin, and the three insects eaten as brood or grubs. The rule is a licensed season in CA/OR/WA plus commonly eaten. Medicinal stays plant-only. It is a tag, not advice — the entry carries the same disclaimer the plants do. (`M24` and `D14` revised, `D48`)
+- **Added** — *Clear reference caches* now asks for confirmation, naming how much it would throw away and what it would not touch. (`D49`)
+
 ## v17.1 — 2026-09-11
 
 - **Added** — Settings → Grid → *Sort the dex by*, Name (A–Z) or Dex number. The grid's own Sort control writes the same preference, so the order you pick is the order the dex opens in next time. (`M01` revised, `D47`)

@@ -1103,14 +1103,18 @@ def build_species(entry, ecosystem_ids, refresh, report):
         "infoUrl": info_url,
         "imageAttribution": image_attr,
         "silhouetteRes": f"sil_{tax_class}",
-        # The uses block is plant-only (DESIGN.md D14): whether an animal is
-        # edible is a hunting-and-fishing regulation question, not a field-guide
-        # fact, and the app stays out of it.
+        # D48: an animal carries the edible tag when the curator marked it
+        # `foodSource` — game and the shellfish and insects that are eaten. It is
+        # the tag and nothing else: the medicinal half stays plant-only, because
+        # Duke's is a plant database, and no note is written, because a season and
+        # a bag limit are a regulator's answer and change every year.
         "kingdom": "animal",
-        "uses": [],
+        "uses": ["edible"] if entry.get("foodSource") else [],
         "usesNote": None,
         "medicinalActivities": [],
         "medicinalRecordCount": 0,
+        # None even when tagged: this field credits *Duke's*, and the screen renders
+        # it as "Medicinal: <attribution>".
         "usesAttribution": None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(accepted_usage_key(match), refresh),
@@ -1555,9 +1559,14 @@ def validate(catalogue, ecosystem_ids, internals):
                 problems.append(f"{sid}: bad animal taxClass {s['taxClass']}")
             elif s["silhouetteRes"] != f"sil_{s['taxClass']}":
                 problems.append(f"{sid}: silhouetteRes does not match taxClass")
-            if s["uses"] or s["usesNote"] or s["medicinalActivities"] \
+            # D48: an animal may carry the edible tag and nothing else. The medicinal
+            # half stays plant-only (Duke's is a plant database), and no note is
+            # written, because a season and a bag limit go stale within the year.
+            if set(s["uses"]) - {"edible"}:
+                problems.append(f"{sid}: an animal carries a use other than edible")
+            if s["usesNote"] or s["medicinalActivities"] \
                     or s["medicinalRecordCount"] or s["usesAttribution"]:
-                problems.append(f"{sid}: an animal carries a uses/Duke's field")
+                problems.append(f"{sid}: an animal carries a note or a Duke's field")
         elif s["kingdom"] == "plant":
             if s["taxClass"] not in PLANT_CLASSES:
                 problems.append(f"{sid}: bad plant taxClass {s['taxClass']}")

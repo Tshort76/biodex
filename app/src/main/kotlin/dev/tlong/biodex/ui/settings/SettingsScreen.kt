@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -101,6 +102,51 @@ fun SettingsRoute(
 }
 
 /**
+ * D49: the one destructive button in Settings asks first. Material's own dialog, because this
+ * is exactly what it is for and a hand-rolled one would be the same shape with worse
+ * accessibility; the destructive action is the *confirm* side and says what it does ("Clear"),
+ * never "OK", so the two buttons can be told apart without reading the title again.
+ */
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    body: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = DexTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.card,
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = colors.fg,
+            )
+        },
+        text = {
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.muted,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = confirmLabel, color = colors.stop, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel", color = colors.muted)
+            }
+        },
+    )
+}
+
+/**
  * A ZIP is often typed `application/octet-stream` by whichever app wrote it, and Google
  * Drive types its own downloads differently again, so the picker accepts both rather than
  * greying out the file the user came here for.
@@ -121,6 +167,21 @@ fun SettingsScreen(
     onOpenUrl: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
+    var confirmClear by remember { mutableStateOf(false) }
+
+    if (confirmClear) {
+        ConfirmDialog(
+            title = "Clear the cached pictures?",
+            body = clearCacheConfirmBody(state.cacheSizes),
+            confirmLabel = "Clear",
+            onConfirm = {
+                confirmClear = false
+                onClearCaches()
+            },
+            onDismiss = { confirmClear = false },
+        )
+    }
+
     Scaffold(containerColor = colors.bg) { inner ->
         Column(
             modifier = Modifier
@@ -287,7 +348,10 @@ fun SettingsScreen(
                         else -> "Clear reference caches"
                     },
                     enabled = state.busy == null,
-                    onClick = onClearCaches,
+                    // D49: the ask, not the act. This button is inside a scrolling page and a
+                    // mis-tap threw away every picture on the phone — cheap to refetch, but
+                    // slow and silent, and indistinguishable from the app breaking.
+                    onClick = { confirmClear = true },
                 )
             }
 

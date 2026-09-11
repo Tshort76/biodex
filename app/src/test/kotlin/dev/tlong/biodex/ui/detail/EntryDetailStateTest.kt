@@ -1,6 +1,7 @@
 package dev.tlong.biodex.ui.detail
 
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
@@ -184,8 +185,31 @@ class EntryDetailStateTest {
     }
 
     @Test
-    fun `an animal still shows no uses section, caution or not`() {
-        assertNull(state(withCaution(Kingdom.ANIMAL, TaxClass.BIRD)).uses)
+    fun `an animal with nothing to say still shows no uses section`() {
+        val plain = detail(listOf("oak-chaparral")).let {
+            it.copy(summary = it.summary.copy(kingdom = Kingdom.ANIMAL, taxClass = TaxClass.BIRD))
+        }
+        assertNull(state(plain).uses)
+    }
+
+    @Test
+    fun `a game animal shows its food-source tag, and only that (D48)`() {
+        val goose = detail(listOf("oak-chaparral")).let {
+            it.copy(
+                summary = it.summary.copy(
+                    kingdom = Kingdom.ANIMAL,
+                    taxClass = TaxClass.BIRD,
+                    uses = setOf(PlantUse.EDIBLE),
+                ),
+            )
+        }
+        val uses = state(goose).uses
+        assertTrue("a tagged animal must show the tag", uses != null)
+        assertEquals(setOf(PlantUse.EDIBLE), uses!!.uses)
+        // No note and no Duke's line: the catalogue refuses to write either for an animal.
+        assertNull(uses.usesNote)
+        assertEquals(0, uses.medicinalRecordCount)
+        assertNull(uses.usesAttribution)
     }
 
     // -----------------------------------------------------------------------

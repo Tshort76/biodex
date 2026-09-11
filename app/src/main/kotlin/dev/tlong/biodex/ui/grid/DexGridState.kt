@@ -62,7 +62,7 @@ data class DexGridFilters(
     val caught: CaughtFilter = CaughtFilter.ALL,
     /** M23's kingdom chips. Null is "both", which is what the `All` chip restores. */
     val kingdom: Kingdom? = null,
-    /** M23's use chips. A use never matches an animal, whose `uses` is always empty. */
+    /** M23's use chips. Since D48 an animal can carry the edible tag; a fungus never does. */
     val use: PlantUse? = null,
     val taxClass: TaxClass? = null,
     val ecosystemId: String? = null,
@@ -142,7 +142,7 @@ internal fun matchesFilters(species: SpeciesSummary, filters: DexGridFilters): B
     }
     val kingdomOk = filters.kingdom == null || species.kingdom == filters.kingdom
     // M23: a plain membership test, which is why the medicinal tag is stored rather than
-    // derived. An animal's `uses` is empty, so a use chip can never return one.
+    // derived. Most animals carry no uses, but a game animal carries `edible` (D48).
     val useOk = filters.use == null || filters.use in species.uses
     val classOk = filters.taxClass == null || species.taxClass == filters.taxClass
     val ecoOk = filters.ecosystemId == null || filters.ecosystemId in species.ecosystemIds
@@ -244,9 +244,9 @@ private data class GridReads(
 /**
  * The use chips of M23. Adjectives, because they describe the plant rather than count it.
  *
- * A use chip narrows the grid to plants by construction: fungi carry no uses at all, by
- * design and not by omission (there is no Duke's data behind a mushroom, so any use claim
- * would be the curator's alone), and animals never had them.
+ * A use chip narrows the grid to plants and the game animals D48 tagged. Fungi carry no uses
+ * at all, by design and not by omission (there is no Duke's data behind a mushroom, so any use
+ * claim would be the curator's alone), and Medicinal stays plant-only for the same reason.
  */
 fun useChipLabel(use: PlantUse): String = when (use) {
     PlantUse.EDIBLE -> "Food source"

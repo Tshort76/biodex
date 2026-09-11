@@ -145,6 +145,19 @@ fun importSummary(report: ImportReport): String {
     return if (notes.isEmpty()) head else "$head " + notes.joinToString("; ") + "."
 }
 
+/**
+ * D49's dialog, said in full. It names the amount, because "clear the caches" means nothing
+ * until you know whether that is 2 MB or 200; it names the cost, which is a slow silent refetch
+ * rather than a loss; and it repeats what is *not* touched, because that is the fear the button
+ * triggers. Pure, so the sentence is under test rather than trusted.
+ */
+fun clearCacheConfirmBody(sizes: CacheSizes): String {
+    val total = formatBytes(sizes.imageBytes + sizes.httpBytes)
+    return "This throws away $total of downloaded pictures and lookups. Every picture is " +
+        "fetched again the next time you look at it, which needs a connection and takes a " +
+        "while across the whole dex. Your photos, thumbnails and entries are not touched."
+}
+
 fun cacheLine(sizes: CacheSizes): String =
     "Images ${formatBytes(sizes.imageBytes)} · " +
         "Lookups ${formatBytes(sizes.httpBytes)}"

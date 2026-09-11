@@ -17,6 +17,16 @@ import org.junit.Test
 class SettingsStateTest {
 
     @Test
+    fun `the clear-caches confirmation names the amount and what survives (D49)`() {
+        val body = clearCacheConfirmBody(CacheSizes(imageBytes = 68L * 1024 * 1024, httpBytes = 512L * 1024))
+        // The amount is the point: "clear the caches" means nothing until you know the size.
+        assertTrue(body, body.contains("68.5 MB"))
+        // And the fear the button triggers is answered in the same breath.
+        assertTrue(body, body.contains("not touched"))
+    }
+
+
+    @Test
     fun `a complete export says so plainly`() {
         val line = exportSummary(
             "biodex-backup-2026-09-01-0941.zip",
