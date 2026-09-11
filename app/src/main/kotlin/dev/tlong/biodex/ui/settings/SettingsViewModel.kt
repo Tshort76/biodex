@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
+import dev.tlong.biodex.ui.grid.DexSort
+import dev.tlong.biodex.ui.grid.dexSortFromWireName
 import dev.tlong.biodex.data.backup.BackupService
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.photo.grantPressure
@@ -52,6 +54,7 @@ class SettingsViewModel(
             _uiState.update {
                 it.copy(
                     keepLocalCopy = settings.keepLocalCopyNow(),
+                    dexSort = dexSortFromWireName(settings.dexSortNow()),
                     cacheSizes = sizes,
                     grantCount = grants,
                     grantPressure = grantPressure(grants),
@@ -77,6 +80,12 @@ class SettingsViewModel(
      * S03. Takes effect on the *next* registration and is never retroactive — ARCHITECTURE.md
      * 4.5 rules out copying old captures, and the screen says so beside the switch.
      */
+    /** D47. Written here and read by the grid; the Sort dropdown writes the same key. */
+    fun setDexSort(value: DexSort) {
+        settings.setDexSort(value.wireName)
+        _uiState.update { it.copy(dexSort = value) }
+    }
+
     fun setKeepLocalCopy(enabled: Boolean) {
         settings.setKeepLocalCopy(enabled)
         _uiState.update { it.copy(keepLocalCopy = enabled) }

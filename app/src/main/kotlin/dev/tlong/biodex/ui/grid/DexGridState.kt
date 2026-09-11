@@ -31,14 +31,22 @@ enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT }
  * the catalogue's own order — animals, plants, fungi — for anyone who wants the game's
  * numbering back.
  */
-enum class DexSort {
-    DEX_NUMBER, NAME;
+enum class DexSort(val wireName: String) {
+    DEX_NUMBER("dex_number"), NAME("name");
 
     companion object {
-        /** The order the grid opens in (D42). */
+        /** The order a phone that has never been told otherwise opens in (D42). */
         val DEFAULT: DexSort = NAME
     }
 }
+
+/**
+ * D47: the stored preference read back. Anything unrecognised — nothing saved yet, or a value
+ * written by a version that named the orders differently — is [DexSort.DEFAULT], because a
+ * grid that will not open is a worse answer than a grid in the wrong order.
+ */
+fun dexSortFromWireName(value: String?): DexSort =
+    DexSort.entries.firstOrNull { it.wireName == value?.trim()?.lowercase() } ?: DexSort.DEFAULT
 
 /** The label the sort dropdown shows. Plain words, like the class and use chips. */
 fun DexSort.label(): String = when (this) {

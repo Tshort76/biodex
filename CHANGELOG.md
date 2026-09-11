@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v17.1 — 2026-09-11
+
+- **Added** — Settings → Grid → *Sort the dex by*, Name (A–Z) or Dex number. The grid's own Sort control writes the same preference, so the order you pick is the order the dex opens in next time. (`M01` revised, `D47`)
+
 ## v17 — 2026-09-11
 
 **The grid cell is the photograph.**

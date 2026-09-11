@@ -235,6 +235,17 @@ class DexGridStateTest {
     }
 
     @Test
+    fun `the saved order is read back, and anything unrecognised opens in the default (D47)`() {
+        for (sort in DexSort.entries) {
+            assertEquals(sort, dexSortFromWireName(sort.wireName))
+        }
+        assertEquals(DexSort.NAME, dexSortFromWireName("NAME"))
+        assertEquals(DexSort.DEFAULT, dexSortFromWireName(null))
+        assertEquals(DexSort.DEFAULT, dexSortFromWireName(""))
+        assertEquals(DexSort.DEFAULT, dexSortFromWireName("by_colour"))
+    }
+
+    @Test
     fun `the grid opens in name order (D42)`() {
         assertEquals(DexSort.NAME, DexSort.DEFAULT)
         assertEquals(DexSort.NAME, DexGridUiState().sort)

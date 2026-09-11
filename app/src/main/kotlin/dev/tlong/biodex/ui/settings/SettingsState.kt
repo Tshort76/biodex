@@ -8,6 +8,7 @@ import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PERSISTED_GRANT_CAP
 import dev.tlong.biodex.media.CacheSizes
 import dev.tlong.biodex.media.formatBytes
+import dev.tlong.biodex.ui.grid.DexSort
 
 /**
  * The Settings screen's state, and the sentences it says.
@@ -21,6 +22,8 @@ import dev.tlong.biodex.media.formatBytes
 
 data class SettingsUiState(
     val keepLocalCopy: Boolean = false,
+    /** D47: the order the grid opens in, and the order the Sort dropdown last wrote. */
+    val dexSort: DexSort = DexSort.DEFAULT,
     val cacheSizes: CacheSizes = CacheSizes(0, 0),
     val grantCount: Int = 0,
     val grantPressure: GrantPressure = GrantPressure.FINE,

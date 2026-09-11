@@ -455,7 +455,9 @@ private fun FilterRow(
             FilterDropdown(
                 label = "Sort",
                 clearLabel = null,
-                selectedLabel = state.sort.takeIf { it != DexSort.DEFAULT }?.label(),
+                // D47: the sort is a saved preference now, so the control names the order it
+                // is in rather than staying blank until it differs from a fixed default.
+                selectedLabel = state.sort.label(),
                 tickedLabel = state.sort.label(),
                 options = DexSort.entries.map { it.label() to it },
                 onSelect = onSort,

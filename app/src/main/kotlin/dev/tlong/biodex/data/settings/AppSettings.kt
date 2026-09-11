@@ -101,8 +101,31 @@ class AppSettings(context: Context) {
         used = prefs.getInt(KEY_IDENTIFICATION_USED, 0),
     )
 
+    // -----------------------------------------------------------------------
+    // The grid's order (D47). Stored as the sort's wire name; this class deliberately does
+    // not know the enum, which lives with the screen that uses it.
+    // -----------------------------------------------------------------------
+
+    private val _dexSort = MutableStateFlow(dexSortNow())
+
+    /**
+     * The grid collects this rather than reading the key once, so a change made on the
+     * Settings screen reaches a grid that is already composed behind it.
+     */
+    val dexSort: StateFlow<String?> = _dexSort.asStateFlow()
+
+    fun dexSortNow(): String? = prefs.getString(KEY_DEX_SORT, null)
+
+    fun setDexSort(wireName: String) {
+        prefs.edit().putString(KEY_DEX_SORT, wireName).apply()
+        _dexSort.value = wireName
+    }
+
     companion object {
         const val PREFS_NAME = "settings"
+
+        /** D47: absent until the user picks an order; the grid's own default stands in. */
+        const val KEY_DEX_SORT = "dex_sort"
 
         /** Default off: linking, not storing, is the point (DESIGN.md D6/S03). */
         const val KEY_KEEP_LOCAL_COPY = "keep_local_copy"

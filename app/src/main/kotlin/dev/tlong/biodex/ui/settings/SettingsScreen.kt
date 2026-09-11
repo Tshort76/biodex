@@ -46,6 +46,9 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.ui.common.SectionHeader
+import dev.tlong.biodex.ui.common.DexFilterChip
+import dev.tlong.biodex.ui.grid.label
+import dev.tlong.biodex.ui.grid.DexSort
 import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.theme.DexTheme
 
@@ -85,6 +88,7 @@ fun SettingsRoute(
         state = state,
         onBack = onBack,
         onKeepLocalCopy = viewModel::setKeepLocalCopy,
+        onDexSort = viewModel::setDexSort,
         onExport = viewModel::export,
         onImport = { archivePicker.launch(ARCHIVE_MIME_TYPES) },
         onClearCaches = viewModel::clearReferenceCaches,
@@ -108,6 +112,7 @@ fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
     onKeepLocalCopy: (Boolean) -> Unit,
+    onDexSort: (DexSort) -> Unit = {},
     onExport: () -> Unit,
     onImport: () -> Unit,
     onClearCaches: () -> Unit,
@@ -149,6 +154,35 @@ fun SettingsScreen(
 
             if (state.message != null) {
                 MessageCard(text = state.message, warning = state.messageIsWarning)
+            }
+
+            SectionHeader("Grid")
+            SettingCard {
+                Text(
+                    text = "Sort the dex by",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = colors.fg,
+                )
+                Text(
+                    text = "The order the grid opens in. The Sort control on the grid writes " +
+                        "here too, so whichever you pick is the one you come back to.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.muted,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(top = 10.dp),
+                ) {
+                    for (option in DexSort.entries) {
+                        DexFilterChip(
+                            label = option.label(),
+                            selected = state.dexSort == option,
+                            onClick = { onDexSort(option) },
+                        )
+                    }
+                }
             }
 
             SectionHeader("Photos")

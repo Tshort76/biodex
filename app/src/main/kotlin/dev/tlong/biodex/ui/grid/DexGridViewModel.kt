@@ -7,9 +7,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.repo.DexRepository
+import dev.tlong.biodex.data.settings.AppSettings
 import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -20,11 +22,18 @@ import kotlinx.coroutines.flow.update
  * flows. The composition itself lives in `DexGridState.kt` as a pure function so it is unit
  * testable; this class only owns the two mutable inputs and the sharing policy.
  */
-class DexGridViewModel(repository: DexRepository) : ViewModel() {
+class DexGridViewModel(
+    repository: DexRepository,
+    private val settings: AppSettings,
+) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val filters = MutableStateFlow(DexGridFilters())
-    private val sort = MutableStateFlow(DexSort.DEFAULT)
+
+    // D47: the grid opens in the order the user last chose, wherever they chose it — the Sort
+    // dropdown and the Settings screen are two doors onto one preference, not two settings.
+    // Collected rather than read once, so a change made in Settings reaches this screen.
+    private val sort = settings.dexSort.map(::dexSortFromWireName)
 
     val uiState: StateFlow<DexGridUiState> = dexGridUiState(
         species = repository.speciesSummaries(),
@@ -65,7 +74,7 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
      * to (D32). This is also why [onClearFilters] does not touch it.
      */
     fun onSort(value: DexSort) {
-        sort.value = value
+        settings.setDexSort(value.wireName)
     }
 
     fun onClearFilters() {
@@ -74,7 +83,7 @@ class DexGridViewModel(repository: DexRepository) : ViewModel() {
 
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
-            initializer { DexGridViewModel(container.dexRepository) }
+            initializer { DexGridViewModel(container.dexRepository, container.settings) }
         }
     }
 }
