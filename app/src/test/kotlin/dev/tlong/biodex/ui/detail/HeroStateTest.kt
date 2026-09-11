@@ -18,7 +18,8 @@ class HeroStateTest {
         caught: Boolean = true,
         phase: ImageLoadPhase = ImageLoadPhase.LOADED,
         online: Boolean = true,
-    ) = heroVisual(imageUrl, caught, phase, online)
+        ownPhotoModel: String? = null,
+    ) = heroVisual(imageUrl, caught, phase, online, ownPhotoModel)
 
     @Test
     fun `an uncaught species is withheld - silhouette, whatever the network is doing (M05)`() {
@@ -35,6 +36,22 @@ class HeroStateTest {
     @Test
     fun `a caught species with a loaded image shows the reference photo (M04)`() {
         assertEquals(HeroVisual.Reference(url), hero())
+    }
+
+    @Test
+    fun `a caught species that prefers its own photo leads with it, whatever the reference is doing (M46)`() {
+        for (phase in ImageLoadPhase.entries) {
+            assertEquals(HeroVisual.OwnPhoto("thumbnails/a.jpg"), hero(phase = phase, ownPhotoModel = "thumbnails/a.jpg"))
+        }
+        assertEquals(HeroVisual.OwnPhoto("thumbnails/a.jpg"), hero(imageUrl = null, ownPhotoModel = "thumbnails/a.jpg"))
+    }
+
+    @Test
+    fun `an uncaught species is withheld even with a stale thumbnail on offer (M05 over M46)`() {
+        assertEquals(
+            HeroVisual.Silhouette(SilhouetteReason.NOT_CAUGHT),
+            hero(caught = false, ownPhotoModel = "thumbnails/stale.jpg"),
+        )
     }
 
     @Test
