@@ -171,8 +171,9 @@ fun SpeciesCell(
     val dimmed = tileDrawsDimmed(tileState)
     // §5.3.1. The *chrome* is decided before and independently of any picture, which is what
     // makes the offline fallback keep saying "caught". The pictures are walked in D39's
-    // order, advancing one place on each load failure until the list runs out.
-    val sources = remember(species.imageUrl, species.thumbPath, species.caught) {
+    // order (or M46's, when the entry prefers its own photo), advancing one place on each
+    // load failure until the list runs out.
+    val sources = remember(species.imageUrl, species.thumbPath, species.caught, species.preferOwnPhoto) {
         tileImageSources(species)
     }
     var failedCount by remember(sources) { mutableStateOf(0) }
