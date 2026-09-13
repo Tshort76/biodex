@@ -6,9 +6,6 @@
          un-cached reference image say "connect to load it" rather than "could not be loaded".
          A normal permission: granted at install, no runtime prompt. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- M13/D56: lets a MediaStore photo keep its GPS tags when the app reads EXIF. Asked
-         for at runtime the first time the picker opens; denial costs only the location. -->
-    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <application
         android:name=".App"

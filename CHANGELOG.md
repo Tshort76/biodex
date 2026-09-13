@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v20.1 — 2026-09-13
+
+- **Removed** — the media-location permission added in v20. On the phone it raised the full "access photos and videos" prompt, and the photo picker refused to hand over the unredacted file anyway, so the app is back to asking for nothing. Typing the place still works; a photo's GPS will arrive only once the picker's own location switch rolls out. (`D56` revised, `D57`, `R3`)
+
 ## v20 — 2026-09-12
 
 - **Changed** — search forgives a typo. Case, accents, hyphens and spaces no longer matter, and a query of five or more characters may be a letter or two off ("westrn", "screechowl", "kenicottii" all find the Western Screech-Owl). Short queries stay exact. (`M14` revised, `D54`)

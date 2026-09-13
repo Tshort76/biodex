@@ -1,8 +1,6 @@
 package dev.tlong.biodex.ui.register
 
 import android.content.Intent
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -109,16 +107,6 @@ fun RegisterRoute(
         )
     }
 
-    // D56. `ACCESS_MEDIA_LOCATION` is a runtime permission, asked for the first time the
-    // picker is opened rather than at launch, and the picker opens whatever the answer is:
-    // a refusal costs the photo's GPS tags and nothing else.
-    val pickAfterPermission = {
-        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-    }
-    val mediaLocation = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { _: Boolean -> pickAfterPermission() }
-
     // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
     // system camera app takes the photograph, so this app declares no CAMERA permission and
     // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
@@ -167,13 +155,7 @@ fun RegisterRoute(
         onQueryChange = viewModel::onQueryChange,
         onSelectSpecies = viewModel::onSelectSpecies,
         onPickPhoto = {
-            val granted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED
-            if (granted) {
-                pickAfterPermission()
-            } else {
-                mediaLocation.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
-            }
+            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
         onPlaceChange = viewModel::onPlaceChange,
         onTakePhoto = {
