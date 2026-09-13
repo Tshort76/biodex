@@ -151,7 +151,7 @@ fun EntryDetailRoute(
                     whereAndWhen = state.captures.firstOrNull()?.let {
                         listOfNotNull(
                             formatCaughtDate(it.takenAt),
-                            it.locationLabel,
+                            sightingPlace(it),
                         ).joinToString(" · ")
                     },
                 ),
@@ -379,6 +379,10 @@ private fun DetailBody(
             onOpenPhoto = onOpenPhoto,
             onAddPhoto = { onRegister(summary.id) },
         )
+        // D56. The when-and-where of every catch, kept on the row and so untouched by what
+        // happens to the photo afterwards. Newest first; the strip above stays in its order.
+        SectionHeader("Sightings (${captures.size}) · when and where")
+        SightingsList(rows = sightingRows(captures))
     }
 
     if (!summary.caught) {
@@ -452,6 +456,46 @@ private fun NearestLink(onClick: () -> Unit) {
         )
         Box(modifier = Modifier.weight(1f))
         Text(text = "\u203A", color = colors.faint)
+    }
+}
+
+@Composable
+private fun SightingsList(rows: List<SightingRow>) {
+    val colors = DexTheme.colors
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+    ) {
+        rows.forEach { row ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.codeBg)
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+            ) {
+                Text(
+                    text = if (row.hasPhoto) "📷" else "🍃",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = row.whenText,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        color = colors.fg,
+                    )
+                    Text(
+                        text = row.whereText ?: "Place not recorded",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (row.whereText != null) colors.muted else colors.faint,
+                    )
+                }
+            }
+        }
     }
 }
 

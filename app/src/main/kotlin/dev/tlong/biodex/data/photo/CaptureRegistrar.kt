@@ -2,6 +2,9 @@ package dev.tlong.biodex.data.photo
 
 import dev.tlong.biodex.domain.Capture
 import java.util.UUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The core loop's write path (M09–M13, S04, S07), orchestrating [PhotoGateway] and
@@ -20,6 +23,8 @@ class CaptureRegistrar(
     private val now: () -> Long = System::currentTimeMillis,
     /** S03, default off. Slice 8's settings toggle replaces this lambda; nothing else changes. */
     private val keepLocalCopy: () -> Boolean = { false },
+    /** D56. Names a coordinate pair when the user typed no place; [PlaceNamer.None] is fine. */
+    private val places: PlaceNamer = PlaceNamer.None,
 ) {
 
     sealed interface RegisterResult {
@@ -78,7 +83,7 @@ class CaptureRegistrar(
                 takenAt = takenAtOrFallback(facts, registeredAt),
                 lat = facts.lat,
                 lng = facts.lng,
-                locationLabel = locationLabel,
+                locationLabel = resolveLocationLabel(locationLabel, facts),
                 note = note,
                 createdAt = registeredAt,
             ),
@@ -86,6 +91,28 @@ class CaptureRegistrar(
         )
         store.applyRegistration(plan)
         return RegisterResult.Registered(speciesId, captureId, plan.isFirst)
+    }
+
+    /**
+     * D56. The user's own words win; a photo that still carries GPS is named only when they
+     * typed nothing, and a failure to name it leaves the label null — the coordinates are on
+     * the row either way, and the screen prints those when there is no label.
+     *
+     * The geocoder is a blocking call into a network service, and `register` is launched from
+     * the main thread, so it runs on IO with a short ceiling: a slow or absent backend costs
+     * the label, never the reveal.
+     */
+    private suspend fun resolveLocationLabel(typed: String?, facts: ExifFacts): String? {
+        if (typed != null) return typed
+        val lat = facts.lat ?: return null
+        val lng = facts.lng ?: return null
+        return withContext(Dispatchers.IO) {
+            withTimeoutOrNull(PLACE_NAME_TIMEOUT_MS) { places.nameFor(lat, lng) }
+        }
+    }
+
+    private companion object {
+        const val PLACE_NAME_TIMEOUT_MS = 3_000L
     }
 
     /**

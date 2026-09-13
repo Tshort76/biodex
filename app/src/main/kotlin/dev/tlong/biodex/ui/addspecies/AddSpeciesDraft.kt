@@ -29,6 +29,8 @@ data class AddSpeciesDraft(
     val backfillSpeciesId: String? = null,
     /** A lookup the detail screen already ran, so the card does not repeat it. */
     val prefetched: LookupOutcome? = null,
+    /** D56: the place typed on the Register screen, written onto the capture the card creates. */
+    val place: String? = null,
 ) {
     val isBackfill: Boolean get() = backfillSpeciesId != null
 }
@@ -43,9 +45,10 @@ class AddSpeciesDraftHolder(private val newId: () -> String = { UUID.randomUUID(
         photoSource: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
         backfillSpeciesId: String? = null,
         prefetched: LookupOutcome? = null,
+        place: String? = null,
     ): String {
         val draft = AddSpeciesDraft(
-            newId(), typedName, photoUri, photoSource, backfillSpeciesId, prefetched,
+            newId(), typedName, photoUri, photoSource, backfillSpeciesId, prefetched, place,
         )
         drafts[draft.id] = draft
         return draft.id

@@ -1,6 +1,8 @@
 package dev.tlong.biodex.ui.register
 
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -39,6 +41,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -81,6 +84,7 @@ fun RegisterRoute(
         photoUri: String,
         photoSource: PhotoSourceKind,
         prefetched: LookupOutcome?,
+        place: String?,
     ) -> Unit,
 ) {
     val context = LocalContext.current
@@ -104,6 +108,16 @@ fun RegisterRoute(
             PickedPhoto(uri = uri.toString(), displayName = gateway.displayName(uri.toString())),
         )
     }
+
+    // D56. `ACCESS_MEDIA_LOCATION` is a runtime permission, asked for the first time the
+    // picker is opened rather than at launch, and the picker opens whatever the answer is:
+    // a refusal costs the photo's GPS tags and nothing else.
+    val pickAfterPermission = {
+        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+    val mediaLocation = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { _: Boolean -> pickAfterPermission() }
 
     // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
     // system camera app takes the photograph, so this app declares no CAMERA permission and
@@ -139,6 +153,7 @@ fun RegisterRoute(
                         event.photoUri,
                         event.photoSource,
                         event.prefetched,
+                        event.place,
                     )
 
                 RegisterEvent.PhotoUnreadable -> Unit
@@ -152,10 +167,15 @@ fun RegisterRoute(
         onQueryChange = viewModel::onQueryChange,
         onSelectSpecies = viewModel::onSelectSpecies,
         onPickPhoto = {
-            picker.launch(
-                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-            )
+            val granted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                pickAfterPermission()
+            } else {
+                mediaLocation.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
+            }
         },
+        onPlaceChange = viewModel::onPlaceChange,
         onTakePhoto = {
             val uri = container.photoGateway.newCameraCaptureUri()
             if (uri != null) {
@@ -194,6 +214,7 @@ fun RegisterScreen(
     onQueryChange: (String) -> Unit,
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
+    onPlaceChange: (String) -> Unit = {},
     onTakePhoto: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
@@ -294,6 +315,9 @@ fun RegisterScreen(
                     onPickPhoto = onPickPhoto,
                     onTakePhoto = onTakePhoto,
                 )
+                // D56. One optional line, because the photo usually arrives with its location
+                // stripped (R3) and this is the only other way the place can be known.
+                PlaceField(place = state.place, onPlaceChange = onPlaceChange)
 
                 // M31/M38. Hidden entirely for a kingdom with no provider; present but
                 // disabled with the reason inline when something the user can act on is in
@@ -437,6 +461,43 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+                cursorBrush = SolidColor(colors.accent),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/**
+ * D56. Where the catch happened, in the user's own words. Kept to the search field's shape so
+ * the bottom bar reads as one form rather than a stack of unrelated widgets.
+ */
+@Composable
+private fun PlaceField(place: String, onPlaceChange: (String) -> Unit) {
+    val colors = DexTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.codeBg)
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+    ) {
+        Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
+        Box(modifier = Modifier.weight(1f)) {
+            if (place.isEmpty()) {
+                Text(
+                    text = "Where was this? (optional)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = place,
+                onValueChange = onPlaceChange,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
                 cursorBrush = SolidColor(colors.accent),
@@ -614,6 +675,13 @@ internal fun PrimaryCta(
     }
 }
 
+/**
+ * The secondary action under [PrimaryCta]. Outlined rather than filled so it never competes
+ * with Register, but **live and dead look different** (D55): enabled it is accent on the soft
+ * accent ground with an accent border, and only when it is waiting for a name or a photo does
+ * it fall back to faint text on a hairline. The owner read the old always-faint version as a
+ * disabled button, and tapped it expecting nothing.
+ */
 @Composable
 private fun GhostCta(
     label: String,
@@ -627,14 +695,18 @@ private fun GhostCta(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, colors.rule, RoundedCornerShape(12.dp))
+            .background(if (enabled) colors.accentSoft else Color.Transparent)
+            .border(1.dp, if (enabled) colors.accent else colors.rule, RoundedCornerShape(12.dp))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 12.dp),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = colors.faint,
+            // One size in both states, so the bar does not shift when the photo lands (D53).
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = if (enabled) FontWeight.Bold else FontWeight.Normal,
+            ),
+            color = if (enabled) colors.accent else colors.faint,
         )
     }
 }

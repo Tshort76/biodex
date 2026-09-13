@@ -47,6 +47,8 @@ class AddSpeciesRegistrar(
         ecosystemIds: List<String>,
         photoUri: String?,
         userEditedFields: List<String> = emptyList(),
+        /** D56: the place typed on the Register screen, kept on the capture like any other. */
+        locationLabel: String? = null,
     ): CreateResult {
         // 11.1's write-path invariants — kingdom paired with class, uses plant-only, no note
         // without a use, no Duke's credit without Duke's data — are applied here and not only
@@ -70,7 +72,7 @@ class AddSpeciesRegistrar(
         // plant's capture is simply one with no photo, exactly as the Register screen writes.
         if (photoUri != null) {
             val kept = photoUri.takeIf { keepsOwnPhoto(normalized.kingdom) }
-            val registered = captures.register(record.id, kept)
+            val registered = captures.register(record.id, kept, locationLabel = locationLabel)
             if (registered is CaptureRegistrar.RegisterResult.ThumbnailFailed) {
                 store.deleteUserSpecies(record.id)
                 return CreateResult.PhotoUnreadable

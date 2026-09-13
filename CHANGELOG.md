@@ -6,6 +6,12 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v20 — 2026-09-12
+
+- **Changed** — search forgives a typo. Case, accents, hyphens and spaces no longer matter, and a query of five or more characters may be a letter or two off ("westrn", "screechowl", "kenicottii" all find the Western Screech-Owl). Short queries stay exact. (`M14` revised, `D54`)
+- **Fixed** — the "Add … as your own species" button no longer looks disabled when it is not: it is drawn in accent once it has a name and a photo, and stays faint only while it is waiting for one of them. (`M08` revised, `D55`)
+- **Added** — every entry lists its sightings under the photo strip, newest first: the date, the time of day and the place. The Register screen gains an optional "Where was this?" line, carried into the add-your-own flow too; a photo that still carries GPS is used, with the place named through the phone's geocoder when nothing was typed and shown as coordinates when that fails. The app asks for the media-location permission the first time the picker opens. All of it lives on the capture row, so deleting the photograph from the gallery afterwards changes nothing. (`M13` revised, `D56`, `R3` mitigated)
+
 ## v19.2 — 2026-09-11
 
 - **Fixed** — an uncaught species' page no longer glitches as it loads. It used to open as a hard dark silhouette captioned *Loading reference photo…*, then swap to the pale dimmed photo while the caption vanished and pulled the whole page up a line. The placeholder is now drawn at the weight the picture arrives at, and an uncaught hero stays silent while it loads. A caught entry still says it is loading. (`D52` revised, `D53`)

@@ -1,7 +1,9 @@
 package dev.tlong.biodex.data.photo
 
 import android.content.ContentValues
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -57,10 +59,11 @@ class AndroidPhotoGateway(
     override fun persistedGrantCount(): Int = resolver.persistedUriPermissions.size
 
     override fun readExif(uri: String): ExifFacts = try {
-        resolver.openInputStream(Uri.parse(uri))?.use { stream ->
+        openForExif(Uri.parse(uri))?.use { stream ->
             val exif = ExifInterface(stream)
-            // Usually null: the system picker redacts GPS (risk R3). Ordinary, not an error.
+            // Often null: the system picker redacts GPS (risk R3). Ordinary, not an error.
             val latLng = exif.latLong
+            Log.i(TAG, "EXIF for $uri: gps=${latLng != null}")
             ExifFacts(
                 takenAt = parseExifDateTime(
                     exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
@@ -73,6 +76,34 @@ class AndroidPhotoGateway(
     } catch (e: Exception) {
         Log.i(TAG, "No EXIF readable from $uri: ${e.message}")
         ExifFacts.None
+    }
+
+    /**
+     * D56. The media store strips GPS from every photo it serves unless the caller holds
+     * `ACCESS_MEDIA_LOCATION` *and* asks for the original through `setRequireOriginal`. Both
+     * are tried here; either failing — permission not granted, a URI the store will not serve
+     * unredacted, an authority that is not the media store at all — falls back to the plain
+     * stream, which still carries the date. Which branch fired is logged so a phone test can
+     * tell them apart.
+     */
+    private fun openForExif(uri: Uri): java.io.InputStream? {
+        val granted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (granted && uri.authority == MediaStore.AUTHORITY) {
+            try {
+                val original = MediaStore.setRequireOriginal(uri)
+                val stream = resolver.openInputStream(original)
+                if (stream != null) {
+                    Log.i(TAG, "EXIF read with requireOriginal for $uri")
+                    return stream
+                }
+            } catch (e: Exception) {
+                Log.i(TAG, "requireOriginal refused for $uri: ${e.message}")
+            }
+        } else {
+            Log.i(TAG, "EXIF read without requireOriginal (granted=$granted) for $uri")
+        }
+        return resolver.openInputStream(uri)
     }
 
     override fun writeThumbnail(captureId: String, uri: String): String? = try {

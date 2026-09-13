@@ -5,6 +5,7 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SearchMatch
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.Flow
@@ -126,13 +127,14 @@ data class DexGridUiState(
     val showUseChips: Boolean get() = plants.total > 0
 }
 
-/** Case-insensitive substring over common and scientific name (M14). */
-internal fun matchesQuery(species: SpeciesSummary, query: String): Boolean {
-    val q = query.trim()
-    if (q.isEmpty()) return true
-    return species.commonName.contains(q, ignoreCase = true) ||
-        species.scientificName?.contains(q, ignoreCase = true) == true
-}
+/**
+ * Name search over common and scientific name (M14, D54). Folded and forgiving rather than a
+ * plain substring: case, accents and punctuation are ignored, and a query of five or more
+ * characters may be a letter or two off — see [SearchMatch] for the exact budget.
+ */
+internal fun matchesQuery(species: SpeciesSummary, query: String): Boolean =
+    SearchMatch.matches(species.commonName, query) ||
+        species.scientificName?.let { SearchMatch.matches(it, query) } == true
 
 internal fun matchesFilters(species: SpeciesSummary, filters: DexGridFilters): Boolean {
     val caughtOk = when (filters.caught) {

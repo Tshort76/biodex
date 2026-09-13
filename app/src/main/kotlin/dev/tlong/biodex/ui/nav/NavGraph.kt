@@ -129,12 +129,13 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 // `prefetched` is null on the typed-name path and carries the GBIF lookup an
                 // identification already ran, so a candidate that is not in the catalogue
                 // opens the same confirmation card rather than a second one (M33).
-                onAddOwnSpecies = { typedName, photoUri, photoSource, prefetched ->
+                onAddOwnSpecies = { typedName, photoUri, photoSource, prefetched, place ->
                     val draftId = container.addSpeciesDrafts.put(
                         typedName = typedName,
                         photoUri = photoUri,
                         photoSource = photoSource,
                         prefetched = prefetched,
+                        place = place,
                     )
                     navController.navigate(ConfirmSpecies(draftId))
                 },

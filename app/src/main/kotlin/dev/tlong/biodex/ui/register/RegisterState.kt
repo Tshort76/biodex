@@ -9,6 +9,7 @@ import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.grid.matchesQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Frame 3 of `mockup.html` (M07). Like the grid and the detail screen, the whole composition
@@ -46,6 +47,8 @@ sealed interface RegisterEvent {
         val photoUri: String,
         val photoSource: PhotoSourceKind,
         val prefetched: LookupOutcome? = null,
+        /** D56: what the user typed under "Where?", carried to the capture the card writes. */
+        val place: String? = null,
     ) : RegisterEvent
 }
 
@@ -54,6 +57,12 @@ data class RegisterUiState(
     val results: List<SpeciesSummary> = emptyList(),
     val selected: SpeciesSummary? = null,
     val photo: PickedPhoto? = null,
+    /**
+     * D56. Where the catch happened, in the user's words. Optional: a photo that still carries
+     * GPS names its own place, and this field is the answer for the far more common photo that
+     * does not — the system picker strips location from most of what it hands over (R3).
+     */
+    val place: String = "",
     val registering: Boolean = false,
     val error: String? = null,
     /** 4.4: shown only when the persisted-grant count is actually near Android's cap. */
@@ -182,6 +191,7 @@ fun registerUiState(
     registering: Flow<Boolean>,
     error: Flow<String?>,
     preselectedSpeciesId: String? = null,
+    place: Flow<String> = flowOf(""),
 ): Flow<RegisterUiState> =
     combine(species, query, selectedSpeciesId, photo, registering) { all, q, id, pic, busy ->
         val results = registerResults(all, q)
@@ -198,3 +208,7 @@ fun registerUiState(
                 ?.takeIf { it >= 0 },
         )
     }.combine(error) { state, message -> state.copy(error = message) }
+        .combine(place) { state, where -> state.copy(place = where) }
+
+/** D56: the typed place, trimmed, or null when nothing was typed — never an empty label. */
+internal fun placeLabelOrNull(place: String): String? = place.trim().takeIf { it.isNotEmpty() }

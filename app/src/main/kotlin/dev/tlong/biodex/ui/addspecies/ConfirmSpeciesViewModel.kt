@@ -125,6 +125,7 @@ class ConfirmSpeciesViewModel(
                 fields = fields,
                 ecosystemIds = emptyList(),
                 photoUri = photoForCapture(draft, fields.kingdom),
+                locationLabel = draft.place,
             )
         ) {
             is AddSpeciesRegistrar.CreateResult.Created -> {
@@ -255,6 +256,7 @@ class ConfirmSpeciesViewModel(
                     ecosystemIds = card.selectedEcosystemIds.toList(),
                     photoUri = photoForCapture(draft, card.fields.kingdom),
                     userEditedFields = edits.editedFields.toList(),
+                    locationLabel = draft.place,
                 )
             ) {
                 is AddSpeciesRegistrar.CreateResult.Created -> {

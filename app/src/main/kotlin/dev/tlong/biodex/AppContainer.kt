@@ -21,6 +21,7 @@ import dev.tlong.biodex.data.net.OkHttpJsonFetcher
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.net.WikipediaClient
 import dev.tlong.biodex.data.photo.AndroidPhotoGateway
+import dev.tlong.biodex.data.photo.AndroidPlaceNamer
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
@@ -75,6 +76,7 @@ class AppContainer(val appContext: Context) {
             store = dexRepository,
             photos = photoGateway,
             keepLocalCopy = settings::keepLocalCopyNow,
+            places = AndroidPlaceNamer(appContext),
         )
     }
 

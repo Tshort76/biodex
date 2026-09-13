@@ -29,6 +29,53 @@ class CaptureRegistrarTest {
     // -- Registration --------------------------------------------------------
 
     @Test
+    fun `the typed place wins, GPS is named only when nothing was typed (D56)`() = runBlocking {
+        var asked = 0
+        val naming = CaptureRegistrar(
+            store = store,
+            photos = photos,
+            newCaptureId = { "cap-${++ids}" },
+            now = { clock },
+            places = { _, _ -> asked++; "Point Reyes, CA" },
+        )
+        photos.exif = ExifFacts(takenAt = 42L, lat = 38.07, lng = -122.8)
+
+        val typed = naming.register("owl", "content://photos/1", locationLabel = "Bear Valley")
+            as CaptureRegistrar.RegisterResult.Registered
+        assertEquals("Bear Valley", store.captures.getValue(typed.captureId).locationLabel)
+        assertEquals("the geocoder is not consulted over the user's words", 0, asked)
+
+        val named = naming.register("owl", "content://photos/2")
+            as CaptureRegistrar.RegisterResult.Registered
+        assertEquals("Point Reyes, CA", store.captures.getValue(named.captureId).locationLabel)
+        assertEquals(38.07, store.captures.getValue(named.captureId).lat!!, 0.0001)
+
+        photos.exif = ExifFacts.None
+        val bare = naming.register("owl", "content://photos/3")
+            as CaptureRegistrar.RegisterResult.Registered
+        assertNull(store.captures.getValue(bare.captureId).locationLabel)
+        assertEquals("no coordinates, nothing to name", 1, asked)
+    }
+
+    @Test
+    fun `a geocoder that fails leaves the label null and the coordinates intact (D56)`() =
+        runBlocking {
+            val failing = CaptureRegistrar(
+                store = store,
+                photos = photos,
+                newCaptureId = { "cap-${++ids}" },
+                now = { clock },
+                places = { _, _ -> null },
+            )
+            photos.exif = ExifFacts(takenAt = 42L, lat = 38.07, lng = -122.8)
+            val r = failing.register("owl", "content://photos/1")
+                as CaptureRegistrar.RegisterResult.Registered
+            val row = store.captures.getValue(r.captureId)
+            assertNull(row.locationLabel)
+            assertEquals(-122.8, row.lng!!, 0.0001)
+        }
+
+    @Test
     fun `the first capture unlocks the species and becomes its favorite`() = runBlocking {
         val result = registrar.register("owl", "content://photos/1")
 

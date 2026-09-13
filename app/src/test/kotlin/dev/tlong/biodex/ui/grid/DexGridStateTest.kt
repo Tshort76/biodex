@@ -142,6 +142,16 @@ class DexGridStateTest {
     }
 
     @Test
+    fun `search forgives a mistyped letter and ignores hyphens (D54)`() {
+        query.value = "westrn"
+        assertEquals(3, names().size)
+        query.value = "screechowl"
+        assertEquals(listOf("Western Screech-Owl"), names())
+        query.value = "kenicottii"
+        assertEquals(listOf("Western Screech-Owl"), names())
+    }
+
+    @Test
     fun `clearing the search restores the whole catalogue`() {
         query.value = "western"
         assertEquals(3, state().species.size)

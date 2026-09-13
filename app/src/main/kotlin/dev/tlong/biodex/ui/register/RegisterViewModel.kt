@@ -55,6 +55,7 @@ class RegisterViewModel(
     private val query = MutableStateFlow("")
     private val selectedSpeciesId = MutableStateFlow(preselectedSpeciesId)
     private val photo = MutableStateFlow<PickedPhoto?>(null)
+    private val place = MutableStateFlow("")
     private val registering = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
@@ -90,6 +91,7 @@ class RegisterViewModel(
             registering = registering,
             error = error,
             preselectedSpeciesId = preselectedSpeciesId,
+            place = place,
         ),
         _grantWarning,
         identification,
@@ -115,6 +117,10 @@ class RegisterViewModel(
 
     fun onQueryChange(value: String) {
         query.value = value
+    }
+
+    fun onPlaceChange(value: String) {
+        place.value = value
     }
 
     fun onSelectSpecies(speciesId: String) {
@@ -260,7 +266,15 @@ class RegisterViewModel(
      */
     private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?) {
         val picked = photo.value ?: return
-        events.send(RegisterEvent.AddOwnSpecies(typedName, picked.uri, picked.source, prefetched))
+        events.send(
+            RegisterEvent.AddOwnSpecies(
+                typedName,
+                picked.uri,
+                picked.source,
+                prefetched,
+                place = placeLabelOrNull(place.value),
+            ),
+        )
     }
 
     fun onRegister() {
@@ -288,7 +302,12 @@ class RegisterViewModel(
                 else -> picked.uri
             }
 
-            when (val result = registrar.register(speciesId, registerUri)) {
+            val result = registrar.register(
+                speciesId,
+                registerUri,
+                locationLabel = placeLabelOrNull(place.value),
+            )
+            when (result) {
                 is CaptureRegistrar.RegisterResult.Registered -> {
                     if (picked != null && shouldDeleteCacheFile(picked.source)) {
                         withContext(Dispatchers.IO) { photos.sweepCameraCache() }

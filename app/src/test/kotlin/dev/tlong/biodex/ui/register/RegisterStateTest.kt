@@ -167,7 +167,7 @@ class RegisterStateTest {
         )
         assertNull(
             "a query that hides the species leaves nothing to scroll to",
-            fullState(query = "Species 42", preselectedSpeciesId = "s-137").preselectedIndex,
+            fullState(query = "Heron", preselectedSpeciesId = "s-137").preselectedIndex,
         )
     }
 
