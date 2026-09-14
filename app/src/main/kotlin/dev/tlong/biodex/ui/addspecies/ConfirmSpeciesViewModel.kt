@@ -17,7 +17,6 @@ import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.TaxClass
@@ -110,21 +109,14 @@ class ConfirmSpeciesViewModel(
         publish()
     }
 
-    /**
-     * M20's offline path: one write, no card, no waiting.
-     *
-     * Offline there is no lookup and so no kingdom, which means M41 cannot fire here: the
-     * photo is kept. If the later backfill resolves the species as a plant, that entry keeps a
-     * photograph the online path would not have given it — a known corner, not worth a
-     * deletion path that runs long after the user has forgotten the photo.
-     */
+    /** M20's offline path: one write, no card, no waiting. The photo is kept, as everywhere. */
     private suspend fun createOfflinePending(draft: AddSpeciesDraft) {
         val fields = SpeciesFields(commonName = draft.typedName)
         when (
             val result = registrar.create(
                 fields = fields,
                 ecosystemIds = emptyList(),
-                photoUri = photoForCapture(draft, fields.kingdom),
+                photoUri = photoForCapture(draft),
                 locationLabel = draft.place,
             )
         ) {
@@ -186,19 +178,16 @@ class ConfirmSpeciesViewModel(
     }
 
     /**
-     * M27's mis-resolved-kingdom escape hatch. Switching resets the class to that kingdom's
-     * default (11.4) and locks the **kingdom** only: the class stays open so a later backfill
-     * that finally reads GBIF's plant class can still fill in a real growth form.
+     * M27's mis-resolved-kingdom escape hatch, between the two kingdoms the app keeps (it was
+     * animal↔plant until D59). Switching resets the class to that kingdom's default (11.4)
+     * and locks the **kingdom** only: the class stays open so a later backfill can still fill
+     * in a real growth form.
      */
     fun onToggleKingdom() {
         val current = (_uiState.value as? ConfirmSpeciesUiState.Card)?.fields ?: return
-        val kingdom = if (current.kingdom == Kingdom.PLANT) Kingdom.ANIMAL else Kingdom.PLANT
+        val kingdom = if (current.kingdom == Kingdom.FUNGUS) Kingdom.ANIMAL else Kingdom.FUNGUS
         onEditField(SpeciesField.KINGDOM) {
-            it.copy(
-                kingdom = kingdom,
-                taxClass = TaxClass.defaultFor(kingdom),
-                silhouetteResOverride = null,
-            )
+            it.copy(kingdom = kingdom, taxClass = TaxClass.defaultFor(kingdom))
         }
     }
 
@@ -209,25 +198,10 @@ class ConfirmSpeciesViewModel(
      */
     fun onSelectTaxClass(taxClass: TaxClass) {
         onEditField(SpeciesField.TAX_CLASS) {
-            it.copy(
-                kingdom = taxClass.kingdom,
-                taxClass = taxClass,
-                silhouetteResOverride = if (taxClass == it.taxClass) it.silhouetteResOverride else null,
-            )
+            it.copy(kingdom = taxClass.kingdom, taxClass = taxClass)
         }
         edits = edits.copy(editedFields = edits.editedFields + SpeciesField.KINGDOM)
         publish()
-    }
-
-    /** Either use toggle. Both halves live in one field, so touching either locks both (M21). */
-    fun onToggleUse(use: PlantUse) {
-        onEditField(SpeciesField.USES) {
-            it.copy(uses = if (use in it.uses) it.uses - use else it.uses + use)
-        }
-    }
-
-    fun onEditUsesNote(text: String) {
-        onEditField(SpeciesField.USES_NOTE) { it.copy(usesNote = text.ifBlank { null }) }
     }
 
     fun onAccept() {
@@ -254,7 +228,7 @@ class ConfirmSpeciesViewModel(
                 val result = registrar.create(
                     fields = card.fields,
                     ecosystemIds = card.selectedEcosystemIds.toList(),
-                    photoUri = photoForCapture(draft, card.fields.kingdom),
+                    photoUri = photoForCapture(draft),
                     userEditedFields = edits.editedFields.toList(),
                     locationLabel = draft.place,
                 )
@@ -275,17 +249,13 @@ class ConfirmSpeciesViewModel(
     }
 
     /**
-     * D26, moved here from the Register screen because this is the first place that knows the
-     * kingdom. A camera shot is still sitting in the app's cache: a kingdom that keeps its
-     * photo gets it promoted into the gallery now, so the capture references a real gallery
-     * item rather than a file the next cold start sweeps away.
-     *
-     * Dropping a plant's photo is *not* done here — the registrar does it, so the rule holds
-     * for every caller. All this decides is whether the file needs a home first.
+     * D26. A camera shot is still sitting in the app's cache: it is promoted into the gallery
+     * now, so the capture references a real gallery item rather than a file the next cold
+     * start sweeps away. All this decides is whether the file needs a home first.
      */
-    private suspend fun photoForCapture(draft: AddSpeciesDraft, kingdom: Kingdom): String? {
+    private suspend fun photoForCapture(draft: AddSpeciesDraft): String? {
         val uri = draft.photoUri ?: return null
-        if (!shouldPromoteToGallery(draft.photoSource, kingdom)) return uri
+        if (!shouldPromoteToGallery(draft.photoSource)) return uri
         return withContext(Dispatchers.IO) {
             photos.promoteToGallery(uri, "BioDex.jpg")
         } ?: uri

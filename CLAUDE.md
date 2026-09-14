@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 224 animals, 80 plants, 30 fungi. Species start as silhouettes and unlock when the user registers a photo.
+A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships one curated region — the Pacific USA BioDex: 224 animals and 30 fungi. (Plants were a kingdom from v4 to v20 and were removed at the owner's request — `ARCHITECTURE.md` §12.2, `DESIGN.md` D59; do not bring them back.) Species start as silhouettes and unlock when the user registers a photo.
 
 `README.md` is written for the user; `docs/BUILD.md` covers setup and signing, and `make` is the entry point for every routine build command.
 
@@ -41,7 +41,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
-Counts as of the last commit: **524 JVM, 43 instrumented, 18 Python.**
+Counts as of the last commit: **385 JVM, 42 instrumented, 18 Python.**
 
 ## The design registers — the convention to respect
 
@@ -84,22 +84,23 @@ fun dexGridUiState(species: Flow<…>, …, filters: Flow<DexGridFilters>): Flow
 val uiState: StateFlow<DexGridUiState> = dexGridUiState(…).stateIn(viewModelScope, …)
 ```
 
-**Invariants belong at the one door into the store, not on the screen.** `AddSpeciesRegistrar` enforces rules like M41 (a plant keeps no photograph of its own) because it is the single write path and is JVM-testable; the ViewModel keeps only the side effects it alone can perform, such as promoting a camera shot to the gallery once the kingdom is known.
+**Invariants belong at the one door into the store, not on the screen.** `AddSpeciesRegistrar` enforces rules like the kingdom/class pairing and the no-uses rule for a user-added species because it is the single write path and is JVM-testable; the ViewModel keeps only the side effects it alone can perform, such as promoting a camera shot to the gallery once the kingdom is known.
 
-**Photos are referenced, never copied** (except the opt-in "keep a local copy" setting). The app stores a URI and a small thumbnail. A deleted gallery photo is an expected state with its own UI, not an error.
+**Photos are referenced, never copied** (except the opt-in "keep a local copy" setting), and every kingdom keeps its photograph. The app stores a URI and a small thumbnail. A deleted gallery photo is an expected state with its own UI, not an error.
 
 **Room migrations are hand-written with `exportSchema` on.** There is no `fallbackToDestructiveMigration` and there must not be — this database holds a collection that cannot be re-earned.
 
 ## The catalogue
 
-`app/src/main/assets/catalogue/pacific.json` is **generated and committed**, so no build touches the network. It is built by `tools/catalogue/build_catalogue.py` from four hand-authored inputs (`region.json` plus `curated_animals/plants/fungi.json`) joined against GBIF, Wikipedia, Wikimedia Commons and Dr. Duke's (CC0, plants only — there is no Duke's data behind a fungus by construction).
+`app/src/main/assets/catalogue/pacific.json` is **generated and committed**, so no build touches the network. It is built by `tools/catalogue/build_catalogue.py` from three hand-authored inputs (`region.json` plus `curated_animals.json` and `curated_fungi.json`) joined against GBIF, Wikipedia and Wikimedia Commons.
 
-Two rules the build **enforces rather than trusts**, and both should stay that way:
+Rules the build **enforces rather than trusts**, and they should stay that way:
 
-- Every plant with a `Poison` record in Duke's must carry a `Caution:` sentence, or the build fails naming the species. This is what keeps the cautioned set decided by a public dataset rather than by whoever wrote the entry. Trimming an entry's note can therefore fail the build legitimately — restore a short caution rather than deleting the rule.
-- A GBIF synonym is accepted only if it keeps the accepted name's specific epithet. Without it, GBIF offers Port Orford cedar as a synonym of coast redwood.
+- An animal entry whose GBIF match is not in Animalia fails the build — a curator typo must not ship.
+- A fungus carries no use tag, ever; its note is a `Caution:` sentence or nothing; and no fungal text may claim edibility (M35). The build refuses a row that breaks any of these rather than dropping the claim quietly.
+- `uses` is `edible` or empty. (`medicinal` and the Dr. Duke's join behind it left with the plants in v21.)
 
-The four input files are split so a plant edit, a fungus edit and an animal edit never touch the same file. Edit them with **surgical string replacements** — a full `json.dump` rewrite reformats the whole file and buries a 3-line change in a 300-line diff. Use `ensure_ascii=False` when matching text, since the files store `—` and `'` raw.
+The input files are split so a fungus edit and an animal edit never touch the same file. Edit them with **surgical string replacements** — a full `json.dump` rewrite reformats the whole file and buries a 3-line change in a 300-line diff. Use `ensure_ascii=False` when matching text, since the files store `—` and `'` raw.
 
 ## Tone of the product
 
@@ -107,7 +108,7 @@ This is a collecting game, not a field guide. The user has corrected this twice:
 
 ## Secrets and signing
 
-- **The Pl@ntNet API key never enters the repo, a commit, chat, or the APK.** The repository is public and a key compiled into an APK is extractable. It lives only in the app's private settings on the phone. Do not dump `shared_prefs` via `run-as` in a way that would print it.
+- **No API key exists any more** — Pl@ntNet identification was removed in v21 and `AppSettings` deletes the old `plantnet_api_key` preference by name on first launch. The rule that produced it stands: the repository is public, so nothing secret ever enters the repo, a commit, chat, or the APK, and `shared_prefs` is never dumped via `run-as` in a way that would print one.
 - The release keystore and `keystore.properties` live outside the repository and are git-ignored — see README, "Building a release APK". Never echo the store or key password into a transcript. A clone without `keystore.properties` still builds; it just produces an unsigned release APK.
 - R8 is deliberately off for release; the comment in `app/build.gradle.kts` explains why (silent runtime failures in serialization paths).
 

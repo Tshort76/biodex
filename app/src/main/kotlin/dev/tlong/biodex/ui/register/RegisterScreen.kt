@@ -54,7 +54,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
-import dev.tlong.biodex.data.identify.ResolvedCandidate
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.Kingdom
@@ -70,9 +69,9 @@ import kotlinx.coroutines.flow.first
  * Frame 3 of `mockup.html` (M07, M08, M10, S06). Species-first: search the catalogue offline,
  * attach one photo — from the system picker or the in-app camera (M40) — and register.
  *
- * The camera and the Identify action are new; everything above them is unchanged. A photo is
- * still one photo, still optional for the kingdoms that keep none (M41), and the typed-name
- * path is byte-for-byte what it always was.
+ * A photo is one photo, from the gallery, the Files picker (D58) or the camera, and every
+ * kingdom keeps it. (Pl@ntNet identification and the photoless plant catch lived here from
+ * v6 to v20; both left with the plants, D59.)
  */
 @Composable
 fun RegisterRoute(
@@ -194,9 +193,6 @@ fun RegisterRoute(
         },
         onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
-        onIdentify = viewModel::onIdentify,
-        onPickCandidate = viewModel::onPickCandidate,
-        onDismissCandidates = viewModel::onDismissIdentification,
         onAddOwnSpecies = viewModel::onAddOwnTyped,
     )
 }
@@ -228,9 +224,6 @@ fun RegisterScreen(
     onPickFromFiles: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
-    onIdentify: () -> Unit = {},
-    onPickCandidate: (ResolvedCandidate) -> Unit = {},
-    onDismissCandidates: () -> Unit = {},
     onAddOwnSpecies: () -> Unit,
 ) {
     val colors = DexTheme.colors
@@ -249,19 +242,6 @@ fun RegisterScreen(
         // the top edge, so the rows above it show it is a list position, not the list's start.
         listState.scrollToItem(preselectedIndex, -viewport / 3)
         scrolledToPreselection = true
-    }
-
-    // The candidate panel is item 0 of the same list the catalogue rows are in, and a
-    // LazyColumn keeps its scroll anchored to the item already at the top. So inserting the
-    // panel above that item pushes it *out of the viewport*: the request runs, the panel is
-    // composed, and the screen appears not to react at all. Found on the phone, and invisible
-    // to the JVM tests, which assert the state and never lay anything out.
-    //
-    // Keyed on the panel's presence rather than on the state itself, so re-ranking candidates
-    // does not yank a list the user has started scrolling through.
-    val panelShowing = state.identification !is IdentificationState.Idle
-    LaunchedEffect(panelShowing) {
-        if (panelShowing) listState.animateScrollToItem(0)
     }
 
     Scaffold(
@@ -330,18 +310,7 @@ fun RegisterScreen(
                 // stripped (R3) and this is the only other way the place can be known.
                 PlaceField(place = state.place, onPlaceChange = onPlaceChange)
 
-                // M31/M38. Hidden entirely for a kingdom with no provider; present but
-                // disabled with the reason inline when something the user can act on is in
-                // the way. S06's Lens share stays below it either way — it is still the right
-                // tool when the service has nothing (S12).
-                if (state.identifyVisible) {
-                    IdentifyButton(
-                        label = state.identifyLabel,
-                        disabledReason = state.identifyDisabledReason,
-                        onClick = onIdentify,
-                    )
-                }
-
+                // S06. Lens is the one "what is this?" tool the app offers (S12).
                 state.photo?.let { picked ->
                     Text(
                         text = "Not sure what it is? Open photo in Google Lens ↗",
@@ -353,15 +322,6 @@ fun RegisterScreen(
                             .background(colors.accentSoft)
                             .clickable { onOpenLens(picked.uri) }
                             .padding(horizontal = 12.dp, vertical = 9.dp),
-                    )
-                }
-
-                // §5.2 rule 10: said before the user registers, not discovered afterwards.
-                state.photoNotKeptWarning?.let { text ->
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.muted,
                     )
                 }
 
@@ -416,15 +376,6 @@ fun RegisterScreen(
                 .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // §5.2 rule 1: the panel sits above the catalogue list, inside the scrolling
-            // region, so the pinned search, photo row and buttons of D18 are untouched.
-            candidatePanel(
-                identification = state.identification,
-                selectedSpeciesId = state.selected?.id,
-                onPickCandidate = onPickCandidate,
-                onDismiss = onDismissCandidates,
-            )
-
             if (state.noResults) {
                 item(key = "no-results") {
                     Text(

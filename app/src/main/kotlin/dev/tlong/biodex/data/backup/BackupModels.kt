@@ -66,13 +66,12 @@ data class BackupSpecies(
     val userEditedFields: List<String> = emptyList(),
     val ecosystemIds: List<String> = emptyList(),
     // The uses block (11.1). Every field defaults, so a v3 archive — written before plants
-    // existed — still parses and restores as the animal it always was.
+    // existed — still parses and restores as the animal it always was. An archive written
+    // between v6 and v20 may carry `kingdom: "plant"` and the three Duke's fields; the
+    // kingdom is what `planImport` skips on, and the Duke's fields parse and are ignored.
     val kingdom: String = "animal",
     val uses: List<String> = emptyList(),
     val usesNote: String? = null,
-    val medicinalActivities: List<String> = emptyList(),
-    val medicinalRecordCount: Int = 0,
-    val usesAttribution: String? = null,
     // D36's path, five fields rather than a nested object so an older archive — which has
     // none of them — still parses field by field into the same defaults a user-added
     // species has before its backfill.

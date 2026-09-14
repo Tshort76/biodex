@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v21 — 2026-09-13
+
+- **Removed** — plants. The 80 curated plants, every plant you added yourself, their uses and Duke's data, and the Pl@ntNet identification button and API key are gone; the app is an animal-and-fungus dex. **Upgrading deletes every plant entry and capture on the phone** — that was the request. The Food source filter stays for the animals that carry it, fungal cautions stay, and a backup from before v21 restores everything except its plants (the import says how many it skipped). Every kingdom keeps its own photograph again. (`D59`; M22–M27, M30, M35, M42, S10, S15 revised; M31–M34, M36–M39, M41, S13, C09, C10, C12 struck)
+
 ## v20.2 — 2026-09-13
 
 - **Added** — a 📁 button beside the camera on the Register screen opens the phone's Files picker. A photo chosen that way arrives with its GPS intact, so the sighting's place is filled in and named ("San Diego, California") with nothing typed. The first tap asks for the media-location permission (Android words it as access to photos and videos); saying no still opens the picker, just without the place. The gallery picker stays the default and never asks. (`M13` revised, `D57` revised, `D58`, `R3`)

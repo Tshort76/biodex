@@ -1,8 +1,5 @@
 package dev.tlong.biodex.data.net
 
-import dev.tlong.biodex.data.catalogue.DukeIndex
-import dev.tlong.biodex.data.catalogue.RealDukeAsset
-
 /**
  * Every fixture under `test/resources/net/` is a **real captured response**, fetched from the
  * live API on 2026-09-01 and pretty-printed so it stays diffable — GBIF's match and vernacular
@@ -16,12 +13,6 @@ internal object Fixtures {
         ) { "missing fixture net/$name" }
         return stream.use { it.readBytes().decodeToString() }
     }
-
-    /**
-     * The **shipped** Duke's asset, not a copy of it — see `RealDukeAsset` for why the tests
-     * read the real file rather than a fixture that can silently drift away from it.
-     */
-    fun dukeIndex(): DukeIndex = RealDukeAsset.index()
 }
 
 /** A [JsonFetcher] that answers from a fixed URL→result map; anything else is a hard failure. */

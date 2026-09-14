@@ -2,8 +2,8 @@ package dev.tlong.biodex.data.repo
 
 import dev.tlong.biodex.data.backup.BackupSpecies
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesFields
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import org.junit.Assert.assertEquals
@@ -19,16 +19,13 @@ import org.junit.Test
  */
 class UserSpeciesMappersTest {
 
-    private val elderberry = SpeciesFields(
-        commonName = "Blue Elderberry",
-        scientificName = "Sambucus cerulea",
-        kingdom = Kingdom.PLANT,
-        taxClass = TaxClass.SHRUB,
-        uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
-        usesNote = "Berries, late summer — cook them. Caution: raw berries are toxic.",
-        medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
-        medicinalRecordCount = 58,
-        usesAttribution = "Dr. Duke's Databases · USDA ARS · CC0",
+    private val flyAgaric = SpeciesFields(
+        commonName = "Fly Agaric",
+        scientificName = "Amanita muscaria",
+        kingdom = Kingdom.FUNGUS,
+        taxClass = TaxClass.MUSHROOM,
+        uses = setOf(SpeciesUse.EDIBLE),
+        usesNote = "Caution: hallucinogenic and toxic raw.",
     )
 
     private fun record(fields: SpeciesFields) = UserSpeciesRecord(
@@ -40,42 +37,25 @@ class UserSpeciesMappersTest {
     )
 
     @Test
-    fun `a plant survives the round trip with every column it went in with`() {
-        val out = record(elderberry).toEntity().toUserRecord().fields
+    fun `a species survives the round trip with every column it went in with`() {
+        val out = record(flyAgaric).toEntity().toUserRecord().fields
 
-        assertEquals(elderberry.kingdom, out.kingdom)
-        assertEquals(elderberry.taxClass, out.taxClass)
-        assertEquals(elderberry.uses, out.uses)
-        assertEquals(elderberry.usesNote, out.usesNote)
-        assertEquals(elderberry.medicinalActivities, out.medicinalActivities)
-        assertEquals(elderberry.medicinalRecordCount, out.medicinalRecordCount)
-        assertEquals(elderberry.usesAttribution, out.usesAttribution)
+        assertEquals(flyAgaric.kingdom, out.kingdom)
+        assertEquals(flyAgaric.taxClass, out.taxClass)
+        assertEquals(flyAgaric.uses, out.uses)
+        assertEquals(flyAgaric.usesNote, out.usesNote)
+        assertEquals("sil_mushroom", out.silhouetteRes)
     }
 
     @Test
     fun `writing the same record twice changes nothing, which is the bug this pins`() {
-        // The failure was silent: `toEntity` defaulted the plant columns, so the second write
+        // The failure was silent: `toEntity` defaulted the uses columns, so the second write
         // of an unchanged record emptied the uses of a species that had them.
-        val once = record(elderberry).toEntity().toUserRecord()
+        val once = record(flyAgaric).toEntity().toUserRecord()
         val twice = once.toEntity().toUserRecord()
 
         assertEquals(once, twice)
-        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), twice.fields.uses)
-    }
-
-    @Test
-    fun `the conifer pick survives, and is dropped when the form stops being a tree`() {
-        val fir = elderberry.copy(
-            commonName = "Douglas-fir",
-            taxClass = TaxClass.TREE,
-            silhouetteResOverride = "sil_tree_conifer",
-        )
-
-        assertEquals("sil_tree_conifer", record(fir).toEntity().toUserRecord().fields.silhouetteRes)
-        assertEquals(
-            "sil_shrub",
-            record(fir.copy(taxClass = TaxClass.SHRUB)).toEntity().toUserRecord().fields.silhouetteRes,
-        )
+        assertEquals(setOf(SpeciesUse.EDIBLE), twice.fields.uses)
     }
 
     // -----------------------------------------------------------------------
@@ -88,10 +68,10 @@ class UserSpeciesMappersTest {
         id = "user-1",
         source = "user",
         dexNumber = 9001,
-        commonName = "Bracken",
-        taxClass = "fern",
-        silhouetteRes = "sil_fern",
-        kingdom = "plant",
+        commonName = "Fly Agaric",
+        taxClass = "mushroom",
+        silhouetteRes = "sil_mushroom",
+        kingdom = "fungus",
         uses = uses,
         usesNote = usesNote,
     )
@@ -100,27 +80,32 @@ class UserSpeciesMappersTest {
     fun `a restored caution survives with no use tags`() {
         val entity = archived(
             uses = emptyList(),
-            usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+            usesNote = "Caution: hallucinogenic and toxic raw.",
         ).toEntity("pacific")
 
-        assertEquals(
-            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-            entity.usesNote,
-        )
+        assertEquals("Caution: hallucinogenic and toxic raw.", entity.usesNote)
         assertTrue(entity.uses.isEmpty())
     }
 
     @Test
     fun `a restored note with no caution and no tags is still dropped`() {
-        assertNull(archived(uses = emptyList(), usesNote = "Fiddleheads in spring.").toEntity("pacific").usesNote)
+        assertNull(archived(uses = emptyList(), usesNote = "Under birches in autumn.").toEntity("pacific").usesNote)
     }
 
     @Test
     fun `a restored note keeps its whole text while the species is tagged`() {
-        val whole = "Fiddleheads in spring. Caution: documented but carcinogenic."
+        val whole = "Under birches in autumn. Caution: hallucinogenic and toxic raw."
         val entity = archived(uses = listOf("edible"), usesNote = whole).toEntity("pacific")
 
         assertEquals(whole, entity.usesNote)
         assertEquals(listOf("edible"), entity.uses)
+    }
+
+    @Test
+    fun `a stored medicinal tag reads back as no use at all`() {
+        // D59: `medicinal` was Duke's-derived and left with the plants. A row that still
+        // carries the word is dropped by the closed vocabulary, never guessed at.
+        val entity = archived(uses = listOf("medicinal"), usesNote = null).toEntity("pacific")
+        assertTrue(entity.uses.isEmpty())
     }
 }

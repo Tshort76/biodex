@@ -144,14 +144,11 @@ class StatsStateTest {
         assertEquals(1, state.classes.first { it.taxClass == TaxClass.BIRD }.meter.caught)
     }
 
-    // --- the third kingdom (DESIGN-identification.md 8.1) ---------------------------
+    // --- the second kingdom (D27) ----------------------------------------------------
     //
-    // These build the `DexProgress` by hand instead of going through `progressOf`.
-    // `DexProgressMath.compute` does not populate `DexProgress.fungi` or
-    // `EcosystemProgress.fungi` yet — both fields exist with a `Meter(0, 0, 0)` default and
-    // nothing passes them — and `domain/` is not this change's to edit. So what is under
-    // test here is what this file owns: given a progress carrying a fungal meter, the Stats
-    // state renders three kingdoms rather than two.
+    // These build the `DexProgress` by hand instead of going through `progressOf`, so what
+    // is under test is what this file owns: given a progress carrying a fungal meter, the
+    // Stats state renders two kingdoms rather than one.
 
     private fun withFungi(
         species: List<SpeciesSummary>,
@@ -165,27 +162,26 @@ class StatsStateTest {
     }
 
     @Test
-    fun `a region with fungi shows a third kingdom and never blends the fractions`() {
-        val species = listOf(summary("owl", caughtAt = 1L), summary("fir", taxClass = TaxClass.TREE))
+    fun `a region with fungi shows a second kingdom and never blends the fractions`() {
+        val species = listOf(summary("owl", caughtAt = 1L), summary("heron"))
         val state = buildStatsUiState(withFungi(species, Meter(2, 30, 1)), species)
 
-        assertTrue(state.showPlants)
         assertTrue(state.showFungi)
         assertTrue(state.multipleKingdoms)
-        // D13: three separate life lists. Nothing on the screen adds 1/1, 0/1 and 2/30 up.
+        // D13: two separate life lists. Nothing on the screen adds 1/2 and 2/30 up.
         assertEquals(1, state.overall.caught)
         assertEquals(30, state.fungi.total)
-        assertEquals("By ecosystem · animals / plants / fungi", ecosystemHeader(state))
+        assertEquals("By ecosystem · animals / fungi", ecosystemHeader(state))
         // The percentage is dropped the moment there is more than one kingdom to blend.
         assertTrue(summaryLine(state).none { it == '%' })
     }
 
     @Test
-    fun `the summary line counts user-added species from all three kingdoms`() {
+    fun `the summary line counts user-added species from both kingdoms`() {
         val species = listOf(
             summary("owl", caughtAt = 1L),
             summary("thrush", source = SpeciesSource.USER, caughtAt = 2L),
-            summary("fir", taxClass = TaxClass.TREE, source = SpeciesSource.USER, caughtAt = 3L),
+            summary("jay", source = SpeciesSource.USER, caughtAt = 3L),
         )
         val state = buildStatsUiState(withFungi(species, Meter(0, 30, 2)), species)
 
@@ -194,31 +190,19 @@ class StatsStateTest {
     }
 
     @Test
-    fun `class rows group into three kingdoms`() {
+    fun `class rows group into two kingdoms`() {
         val species = listOf(
             summary("owl", caughtAt = 1L),
-            summary("fir", taxClass = TaxClass.TREE),
             summary("chanterelle", taxClass = TaxClass.MUSHROOM, caughtAt = 4L),
             summary("conk", taxClass = TaxClass.BRACKET),
         )
         val state = buildStatsUiState(withFungi(species, Meter(1, 2)), species)
 
         assertEquals(listOf("Birds"), state.animalClasses.map { it.label })
-        assertEquals(listOf("Trees"), state.plantClasses.map { it.label })
         assertEquals(listOf("Mushrooms", "Brackets"), state.fungusClasses.map { it.label })
         // Every class the catalogue can hold has a label, or a fungal group would render a
         // bar with an empty name.
         assertTrue(TaxClass.entries.none { classLabel(it).isBlank() })
-    }
-
-    @Test
-    fun `a catalogue with no fungi renders exactly as the two-kingdom screen did`() {
-        val species = listOf(summary("owl", caughtAt = 1L), summary("fir", taxClass = TaxClass.TREE))
-        val state = buildStatsUiState(progressOf(species), species)
-
-        assertFalse(state.showFungi)
-        assertTrue(state.fungusClasses.isEmpty())
-        assertEquals("By ecosystem · animals / plants", ecosystemHeader(state))
     }
 
     @Test

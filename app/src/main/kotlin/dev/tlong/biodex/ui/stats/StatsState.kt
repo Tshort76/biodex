@@ -23,9 +23,8 @@ import kotlinx.coroutines.flow.combine
 
 data class StatsUiState(
     val regionLabel: String = "",
-    /** The animal meter. It heads the screen beside [plants] and [fungi]. */
+    /** The animal meter. It heads the screen beside [fungi]. */
     val overall: Meter = Meter(0, 0, 0),
-    val plants: Meter = Meter(0, 0, 0),
     val fungi: Meter = Meter(0, 0, 0),
     val ecosystems: List<EcosystemProgress> = emptyList(),
     val classes: List<ClassRow> = emptyList(),
@@ -38,20 +37,10 @@ data class StatsUiState(
     val percentCaught: Int
         get() = if (overall.total == 0) 0 else overall.caught * 100 / overall.total
 
-    /** M29: the header's plant pill, on the same rule as the grid's. */
-    val showPlantPill: Boolean get() = plants.total > 0
-
     /**
-     * The switch between the shipped one-kingdom screen and M26's two-kingdom one. While
-     * a region has no plants in it — which is every install until slice 10's asset lands —
-     * every plant element would read `0/0`, so the screen renders exactly as it shipped.
-     */
-    val showPlants: Boolean get() = plants.total > 0
-
-    /**
-     * The same rule again for the third kingdom, and it has to be its own flag rather than
-     * a count of non-empty meters: a region may carry plants and no fungi (every install
-     * on catalogue v2), and the two-up layout is still right there.
+     * The switch between the shipped one-kingdom screen and M26's two-kingdom one (M29). While
+     * a region has no fungi in it, every fungal element would read `0/0`, so the screen
+     * renders exactly as it first shipped.
      */
     val showFungi: Boolean get() = fungi.total > 0
 
@@ -60,10 +49,10 @@ data class StatsUiState(
      * where the question is "one fraction or several" rather than "which kingdom" — the
      * headline card, the class grouping and the percent line.
      */
-    val multipleKingdoms: Boolean get() = showPlants || showFungi
+    val multipleKingdoms: Boolean get() = showFungi
 
     /** How many caught species are the user's own, across every kingdom (D29, 11.4). */
-    val userAdded: Int get() = overall.userAdded + plants.userAdded + fungi.userAdded
+    val userAdded: Int get() = overall.userAdded + fungi.userAdded
 
     /**
      * 11.4's "By class" groups. `perClass` carries only classes the catalogue actually has,
@@ -71,9 +60,6 @@ data class StatsUiState(
      */
     val animalClasses: List<ClassRow>
         get() = classes.filter { it.taxClass.kingdom == Kingdom.ANIMAL }
-
-    val plantClasses: List<ClassRow>
-        get() = classes.filter { it.taxClass.kingdom == Kingdom.PLANT }
 
     val fungusClasses: List<ClassRow>
         get() = classes.filter { it.taxClass.kingdom == Kingdom.FUNGUS }
@@ -114,7 +100,6 @@ fun buildStatsUiState(
     return StatsUiState(
         regionLabel = progress.regionName,
         overall = progress.animals,
-        plants = progress.plants,
         fungi = progress.fungi,
         ecosystems = progress.perEcosystem,
         classes = progress.perClass.map { (taxClass, meter) ->
@@ -149,10 +134,6 @@ fun classLabel(taxClass: TaxClass): String = when (taxClass) {
     TaxClass.FISH -> "Fish"
     TaxClass.INSECT -> "Insects"
     TaxClass.OTHER_INVERTEBRATE -> "Other invertebrates"
-    TaxClass.TREE -> "Trees"
-    TaxClass.SHRUB -> "Shrubs"
-    TaxClass.HERB -> "Herbs"
-    TaxClass.FERN -> "Ferns"
     TaxClass.MUSHROOM -> "Mushrooms"
     TaxClass.BRACKET -> "Brackets"
     TaxClass.OTHER_FUNGUS -> "Other fungi"

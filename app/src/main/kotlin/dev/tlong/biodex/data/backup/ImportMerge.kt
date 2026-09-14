@@ -86,6 +86,12 @@ data class ImportReport(
     val thumbnailsRestored: Int = 0,
     /** Curated species the archive references that this install does not have. */
     val unknownCuratedSpecies: List<String> = emptyList(),
+    /**
+     * D59: user-added plants in an archive written before the plants left. Never restored —
+     * `Kingdom.PLANT` is gone, and a row that came back under the enum's fallback would be an
+     * animal numbered like a plant. Their captures count under [capturesWithoutSpecies].
+     */
+    val plantSpeciesSkipped: Int = 0,
 )
 
 fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
@@ -93,9 +99,17 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
     val speciesToInsert = mutableListOf<BackupSpecies>()
     val memberships = mutableMapOf<String, List<String>>()
     val unknownCurated = mutableListOf<String>()
+    var plantsSkipped = 0
 
     manifest.species.forEach { species ->
         if (local.speciesSources.containsKey(species.id)) return@forEach
+        // Checked on the raw wire strings, before any enum sees them: `Kingdom.fromWireName`
+        // would answer `ANIMAL` for "plant", and `TaxClass.fromWireName` "other_invertebrate"
+        // for "tree", and the row would be created as neither thing it was (D59).
+        if (isRetiredPlant(species.kingdom, species.taxClass)) {
+            plantsSkipped++
+            return@forEach
+        }
         if (SpeciesSource.fromWireName(species.source) == SpeciesSource.USER) {
             val dexNumber = nextFreeUserDexNumber(assignedDexNumbers)
             assignedDexNumbers += dexNumber
@@ -202,6 +216,7 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
             photosRestored = capturesToInsert.count { it.photoEntry != null },
             thumbnailsRestored = capturesToInsert.count { it.thumbEntry != null },
             unknownCuratedSpecies = unknownCurated,
+            plantSpeciesSkipped = plantsSkipped,
         ),
     )
 }
@@ -250,3 +265,10 @@ private fun nextFreeUserDexNumber(taken: Set<Int>): Int {
     while (candidate in taken) candidate++
     return candidate
 }
+
+/** The v6–v20 plant vocabulary, as the archive spells it (D59). */
+internal fun isRetiredPlant(kingdom: String?, taxClass: String?): Boolean =
+    kingdom?.trim()?.lowercase() == "plant" ||
+        taxClass?.trim()?.lowercase() in RETIRED_PLANT_CLASSES
+
+private val RETIRED_PLANT_CLASSES = setOf("tree", "shrub", "herb", "fern")

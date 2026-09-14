@@ -116,14 +116,6 @@ fun StatsScreen(
                 modifier = Modifier.padding(bottom = 4.dp),
             ) {
                 ProgressPill(caught = state.overall.caught, total = state.overall.total)
-                if (state.showPlantPill) {
-                    ProgressPill(
-                        caught = state.plants.caught,
-                        total = state.plants.total,
-                        color = colors.ok,
-                        glyph = "\uD83C\uDF3F",
-                    )
-                }
                 if (state.showFungi) {
                     ProgressPill(
                         caught = state.fungi.caught,
@@ -142,21 +134,14 @@ fun StatsScreen(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     state.ecosystems.forEach { progress ->
-                        when {
-                            state.showFungi -> EcosystemMeterTriple(
+                        if (state.showFungi) {
+                            EcosystemMeterPair(
                                 label = progress.ecosystem.name,
                                 animals = progress.animals,
-                                plants = progress.plants,
                                 fungi = progress.fungi,
                             )
-
-                            state.showPlants -> EcosystemMeterPair(
-                                label = progress.ecosystem.name,
-                                animals = progress.animals,
-                                plants = progress.plants,
-                            )
-
-                            else -> EcosystemMeter(
+                        } else {
+                            EcosystemMeter(
                                 label = progress.ecosystem.name,
                                 meter = progress.animals,
                             )
@@ -175,11 +160,9 @@ fun StatsScreen(
                     }
                 }
             } else {
-                // 11.4's groups, now three. A group whose list is empty draws no sub-header,
-                // so a region with only one kingdom in it never shows a heading over nothing
-                // — which is also what keeps this correct on a catalogue with no fungi.
+                // 11.4's groups. A group whose list is empty draws no sub-header, so a region
+                // with only one kingdom in it never shows a heading over nothing.
                 ClassGroup("Animals", state.animalClasses, colors.accent)
-                ClassGroup("Plants", state.plantClasses, colors.ok)
                 ClassGroup("Fungi", state.fungusClasses, colors.warn)
             }
 
@@ -232,11 +215,9 @@ private fun OverallMeter(state: StatsUiState) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         // Only the kingdoms the region actually has get a block, so a catalogue with no
-        // fungi renders exactly the two-up card it shipped with and one with no plants
-        // never draws "Plants 0 / 0" beside the mushrooms.
+        // fungi never draws "Fungi 0 / 0" beside the animals.
         val blocks = buildList {
             add(Triple("Animals", state.overall, colors.accent))
-            if (state.showPlants) add(Triple("Plants", state.plants, colors.ok))
             if (state.showFungi) add(Triple("Fungi", state.fungi, colors.warn))
         }
         if (blocks.size > 1) {
@@ -343,65 +324,6 @@ private fun KingdomBlock(
     }
 }
 
-/**
- * `.brow.eco.three` — one ecosystem, all three kingdoms. Three thin stacked bars and one
- * value cell reading `12/24 · 2/15 · 1/9`, on D13's rule: an ecosystem row answers "what is
- * left to find here", and 12 of 24 animals, 2 of 15 plants and 1 of 9 fungi are three
- * different errands that must never blend into one bar.
- *
- * It lives here rather than beside `EcosystemMeterPair` in `ui/common` because it is the
- * Stats screen's alone, and it takes the *kingdom identity* colours — accent, ok, warn —
- * rather than the pair's `warn` for animals. With three kingdoms sharing a row, `warn`
- * cannot mean animals here and fungi in the class bars two sections down; the colour has to
- * name the kingdom or it names nothing.
- */
-@Composable
-private fun EcosystemMeterTriple(
-    label: String,
-    animals: dev.tlong.biodex.domain.Meter,
-    plants: dev.tlong.biodex.domain.Meter,
-    fungi: dev.tlong.biodex.domain.Meter,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DexTheme.colors
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-            color = colors.muted,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(88.dp),
-        )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            modifier = Modifier.weight(1f),
-        ) {
-            MeterBar(animals.fraction, colors.accent, Modifier.fillMaxWidth(), height = 4)
-            MeterBar(plants.fraction, colors.ok, Modifier.fillMaxWidth(), height = 4)
-            MeterBar(fungi.fraction, colors.warn, Modifier.fillMaxWidth(), height = 4)
-        }
-        Text(
-            text = "${animals.caught}/${animals.total} · ${plants.caught}/${plants.total} · " +
-                "${fungi.caught}/${fungi.total}",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = "tnum",
-            ),
-            color = colors.fg,
-            textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            maxLines = 1,
-            // Wide enough for `12/24 · 2/15 · 1/9`; the pair's 74dp is not.
-            modifier = Modifier.width(104.dp),
-        )
-    }
-}
-
 /** One group of class bars under its sub-header; nothing at all when the group is empty. */
 @Composable
 private fun ClassGroup(
@@ -418,13 +340,10 @@ private fun ClassGroup(
 
 /**
  * The section header over the ecosystem meters, naming the kingdoms whose bars are stacked
- * in each row so the `12/24 · 2/15 · 1/9` cell can be read without counting bars.
+ * in each row so the `12/24 · 1/9` cell can be read without counting bars.
  */
-internal fun ecosystemHeader(state: StatsUiState): String = when {
-    state.showFungi -> "By ecosystem · animals / plants / fungi"
-    state.showPlants -> "By ecosystem · animals / plants"
-    else -> "By ecosystem"
-}
+internal fun ecosystemHeader(state: StatsUiState): String =
+    if (state.showFungi) "By ecosystem · animals / fungi" else "By ecosystem"
 
 /**
  * The mockup's `39% caught · 3 of your own · last new catch Aug 30, 2026`. Each clause

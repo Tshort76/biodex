@@ -147,41 +147,6 @@ class AndroidPhotoGateway(
         null
     }
 
-    /**
-     * M36's re-encode. It shares `writeThumbnail`'s decode-with-a-target-size shape because
-     * that is the shape that never allocates the full-resolution bitmap — a 50 MP phone photo
-     * decoded whole is an out-of-memory kill on the one screen where the user is standing in
-     * front of the plant.
-     */
-    override fun readForUpload(uri: String): ByteArray? = try {
-        val source = ImageDecoder.createSource(resolver, Uri.parse(uri))
-        val bitmap = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-            decoder.isMutableRequired = false
-            val longEdge = maxOf(info.size.width, info.size.height)
-            if (longEdge > UPLOAD_LONG_EDGE_PX) {
-                val scale = UPLOAD_LONG_EDGE_PX.toFloat() / longEdge
-                decoder.setTargetSize(
-                    (info.size.width * scale).toInt().coerceAtLeast(1),
-                    (info.size.height * scale).toInt().coerceAtLeast(1),
-                )
-            }
-        }
-        val out = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, UPLOAD_JPEG_QUALITY, out)
-        bitmap.recycle()
-        out.toByteArray()
-    } catch (e: Exception) {
-        Log.w(TAG, "Upload copy failed for $uri: ${e.message}")
-        null
-    }
-
-    // -----------------------------------------------------------------------
-    // The in-app camera (M40). None of this is verified on a phone: whether a
-    // given camera app honours a FileProvider EXTRA_OUTPUT is the one claim of
-    // §6.6 that documentation cannot settle, because camera apps vary.
-    // -----------------------------------------------------------------------
-
     override fun newCameraCaptureUri(): String? = try {
         val target = File(context.cacheDir, cameraCacheRelativePath(UUID.randomUUID().toString()))
         target.parentFile?.mkdirs()

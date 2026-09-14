@@ -50,18 +50,19 @@ fun EcosystemMeter(
 ) = MeterRow(label, meter, DexTheme.colors.warn, modifier)
 
 /**
- * `.brow.eco.two` — one ecosystem, both kingdoms. Two thin stacked bars (animal `warn`,
- * plant `ok`) and one value cell reading `12/24 · 2/15`.
+ * `.brow.eco.two` — one ecosystem, both kingdoms. Two thin stacked bars in the kingdom
+ * identity colours (animal `accent`, fungus `warn`, the same pair the class bars use) and
+ * one value cell reading `12/24 · 1/9`.
  *
  * The two kingdoms are never blended into one bar, here least of all: an ecosystem row is
  * the answer to "what is left to find here", and 12 of 24 animals is a different errand
- * from 2 of 15 plants (D13).
+ * from 1 of 9 fungi (D13).
  */
 @Composable
 fun EcosystemMeterPair(
     label: String,
     animals: Meter,
-    plants: Meter,
+    fungi: Meter,
     modifier: Modifier = Modifier,
 ) {
     val colors = DexTheme.colors
@@ -84,19 +85,19 @@ fun EcosystemMeterPair(
         ) {
             MeterBar(
                 fraction = animals.fraction,
-                fill = colors.warn,
+                fill = colors.accent,
                 height = 5,
                 modifier = Modifier.fillMaxWidth(),
             )
             MeterBar(
-                fraction = plants.fraction,
-                fill = colors.ok,
+                fraction = fungi.fraction,
+                fill = colors.warn,
                 height = 5,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         Text(
-            text = "${animals.caught}/${animals.total} · ${plants.caught}/${plants.total}",
+            text = "${animals.caught}/${animals.total} · ${fungi.caught}/${fungi.total}",
             style = MaterialTheme.typography.labelSmall.copy(
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -113,7 +114,7 @@ fun EcosystemMeterPair(
 
 /**
  * `.brow` — one taxonomic class's progress. [fill] is `accent` for an animal class and `ok`
- * for a plant one (`.brow.plant`), which is the same colour language the two progress pills
+ * for a fungal one (`.brow.plant` in the mockup), which is the same colour language the two progress pills
  * and the two overall meters use.
  */
 @Composable

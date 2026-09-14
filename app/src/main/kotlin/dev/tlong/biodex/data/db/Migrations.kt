@@ -136,3 +136,34 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("ALTER TABLE `entries` ADD COLUMN `preferOwnPhoto` INTEGER NOT NULL DEFAULT 0")
     }
 }
+
+/**
+ * D59: plants leave the app, and every plant row leaves the database with them — the
+ * curated 80 and any species the user added under that kingdom, with their entries, captures
+ * and ecosystem links. The owner asked for exactly this ("including any entries for them
+ * that I have added"), which is the one reason a migration here deletes rows at all.
+ *
+ * Why a migration and not the catalogue reconciler: the reconciler keeps a caught species
+ * whatever the asset says (3.3), it never names a user-added one, and it runs *after* the
+ * first reads. `Kingdom.PLANT` is gone from the enum, and `Kingdom.fromWireName` maps an
+ * unknown value to `ANIMAL`, so a surviving `plant` row would render as animal `#2001`. A
+ * migration runs at open, before any query maps a row, which closes that door.
+ *
+ * Foreign keys are off while Room migrates (it turns them on in `onOpen`, afterwards), so
+ * `ON DELETE CASCADE` does nothing here and the dependents are deleted by hand, children
+ * first. The statements live in [PURGE_PLANTS_SQL] so a dry run against a copy of the
+ * database can execute exactly what the phone will. The schema is unchanged: `6.json` is
+ * `5.json` at a new version.
+ */
+val PURGE_PLANTS_SQL: List<String> = listOf(
+    "DELETE FROM `captures` WHERE `speciesId` IN (SELECT `id` FROM `species` WHERE `kingdom` = 'plant')",
+    "DELETE FROM `entries` WHERE `speciesId` IN (SELECT `id` FROM `species` WHERE `kingdom` = 'plant')",
+    "DELETE FROM `species_ecosystems` WHERE `speciesId` IN (SELECT `id` FROM `species` WHERE `kingdom` = 'plant')",
+    "DELETE FROM `species` WHERE `kingdom` = 'plant'",
+)
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        PURGE_PLANTS_SQL.forEach(db::execSQL)
+    }
+}

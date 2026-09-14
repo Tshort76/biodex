@@ -1,7 +1,6 @@
 package dev.tlong.biodex.data.repo
 
 import dev.tlong.biodex.data.photo.CaptureRegistrar
-import dev.tlong.biodex.data.photo.keepsOwnPhoto
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.UserSpeciesRecord
@@ -64,15 +63,11 @@ class AddSpeciesRegistrar(
         )
         store.upsertUserSpecies(record, ecosystemIds)
 
-        // M41 applies to a species the user adds exactly as it applies to a catalogue one: a
-        // plant keeps no photograph, and its tile shows the reference image the lookup found.
-        // The gate lives here rather than only on the card for the same reason the
-        // normalization above does — this is the one door into the store.
-        // The capture row is still written — a user species is caught by definition, and a
-        // plant's capture is simply one with no photo, exactly as the Register screen writes.
+        // A user species is caught by definition, so the capture row is written here too —
+        // this is the one door into the store, which is also why the normalization above
+        // lives here rather than only on the card.
         if (photoUri != null) {
-            val kept = photoUri.takeIf { keepsOwnPhoto(normalized.kingdom) }
-            val registered = captures.register(record.id, kept, locationLabel = locationLabel)
+            val registered = captures.register(record.id, photoUri, locationLabel = locationLabel)
             if (registered is CaptureRegistrar.RegisterResult.ThumbnailFailed) {
                 store.deleteUserSpecies(record.id)
                 return CreateResult.PhotoUnreadable

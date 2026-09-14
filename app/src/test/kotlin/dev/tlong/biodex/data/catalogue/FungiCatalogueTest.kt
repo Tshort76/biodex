@@ -51,12 +51,9 @@ class FungiCatalogueTest {
     }
 
     @Test
-    fun `no fungus carries a use tag, a note beyond its caution, or a Duke's field`() {
+    fun `no fungus carries a use tag or a note beyond its caution`() {
         fungi.forEach { row ->
             assertEquals("${row.id} carries a use tag", emptyList<String>(), row.uses)
-            assertEquals(emptyList<String>(), row.medicinalActivities)
-            assertEquals(0, row.medicinalRecordCount)
-            assertEquals(null, row.usesAttribution)
             // Most fungi carry no note at all now — the same as an animal. A note is
             // written only when the species itself is dangerous, and when there is one it
             // is the caution alone: a fungus has no use for the body of a note to describe,
@@ -127,14 +124,12 @@ class FungiCatalogueTest {
     }
 
     @Test
-    fun `the three kingdoms stay in their own dex-number blocks`() {
+    fun `the two kingdoms stay in their own dex-number blocks`() {
         val stored = store()
         val animals = stored.filter { it.kingdom == Kingdom.ANIMAL }.map { it.dexNumber }
-        val plants = stored.filter { it.kingdom == Kingdom.PLANT }.map { it.dexNumber }
         val fungal = stored.filter { it.kingdom == Kingdom.FUNGUS }.map { it.dexNumber }
 
-        assertTrue(animals.max() < plants.min())
-        assertTrue(plants.max() < fungal.min())
+        assertTrue(animals.max() < fungal.min())
         // The unique (regionId, dexNumber) index is what would fail the whole import if two
         // kingdoms ever overlapped, so the gap is the assertion, not the exact bases.
         assertEquals(stored.size, stored.map { it.dexNumber }.distinct().size)

@@ -194,28 +194,23 @@ class AppDatabaseTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun plantRoundTripsKingdomUsesAndDukeColumnsThroughSqlite() = runBlocking {
-        val elder = species("elder", 2047).copy(
-            taxClass = TaxClass.SHRUB,
-            kingdom = Kingdom.PLANT,
-            uses = listOf("edible", "medicinal"),
-            usesNote = "Berries, late summer. Caution: raw berries are toxic.",
-            medicinalActivities = listOf("astringent", "diuretic"),
-            medicinalRecordCount = 60,
-            usesAttribution = "Dr. Duke's · USDA ARS · CC0",
+    fun fungusRoundTripsKingdomUsesAndNoteThroughSqlite() = runBlocking {
+        val agaric = species("agaric", 4007).copy(
+            taxClass = TaxClass.MUSHROOM,
+            kingdom = Kingdom.FUNGUS,
+            uses = listOf("edible"),
+            usesNote = "Under birches. Caution: hallucinogenic and toxic raw.",
         )
-        db.speciesDao().upsertAll(listOf(species("heron", 3), elder))
+        db.speciesDao().upsertAll(listOf(species("heron", 3), agaric))
 
-        val stored = db.speciesDao().speciesOnceById("elder")!!
-        assertEquals(Kingdom.PLANT, stored.kingdom)
-        assertEquals(listOf("edible", "medicinal"), stored.uses)
-        assertEquals(listOf("astringent", "diuretic"), stored.medicinalActivities)
-        assertEquals(60, stored.medicinalRecordCount)
-        assertEquals("Dr. Duke's · USDA ARS · CC0", stored.usesAttribution)
+        val stored = db.speciesDao().speciesOnceById("agaric")!!
+        assertEquals(Kingdom.FUNGUS, stored.kingdom)
+        assertEquals(listOf("edible"), stored.uses)
+        assertEquals("Under birches. Caution: hallucinogenic and toxic raw.", stored.usesNote)
 
-        // One sortable column still orders the whole grid: animals, then plants.
+        // One sortable column still orders the whole grid: animals, then fungi.
         assertEquals(
-            listOf("heron", "elder"),
+            listOf("heron", "agaric"),
             db.speciesDao().speciesOnce("pacific").map { it.id },
         )
 

@@ -40,18 +40,16 @@ class AnimalFoodSourceTest {
     }
 
     @Test
-    fun `the medicinal tag stays plant-only, because Duke's is a plant database`() {
-        val medicinal = animals.filter { "medicinal" in it.uses }.map { it.commonName }
-        assertEquals(emptyList<String>(), medicinal)
-        assertTrue(animals.all { it.medicinalRecordCount == 0 })
+    fun `edible is the only use the asset knows (D59)`() {
+        // `medicinal` was Duke's-derived and left with the plants; nothing writes it now.
+        assertTrue(animals.all { it.uses.all { use -> use == "edible" } })
     }
 
     @Test
-    fun `a tagged animal carries the tag and nothing else - no note, no Duke's credit`() {
+    fun `a tagged animal carries the tag and nothing else - no note`() {
         for (animal in animals.filter { "edible" in it.uses }) {
             assertEquals(animal.commonName, "animal", animal.kingdom)
             assertEquals(animal.commonName, null, animal.usesNote)
-            assertEquals(animal.commonName, null, animal.usesAttribution)
         }
     }
 
@@ -59,7 +57,7 @@ class AnimalFoodSourceTest {
     fun `an untagged animal is left exactly as it was`() {
         for (animal in animals.filter { "edible" !in it.uses }) {
             assertTrue(animal.commonName, animal.uses.isEmpty())
-            assertEquals(animal.commonName, null, animal.usesAttribution)
+            assertEquals(animal.commonName, null, animal.usesNote)
         }
     }
 }

@@ -4,7 +4,7 @@ import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.keptUsesNote
@@ -132,10 +132,9 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
     val (resolvedKingdom, resolvedClass) = pairKingdomAndClass(kingdom, taxClass)
     // `uses` is a closed vocabulary: an unrecognised value is dropped rather than stored,
     // because a filter chip that can never match is worse than a missing tag.
-    val resolvedUses = PlantUse.setFromWireNames(uses)
+    val resolvedUses = SpeciesUse.setFromWireNames(uses)
         .sortedBy { it.ordinal }
         .map { it.wireName }
-    val hasDukeRecord = medicinalRecordCount > 0 || medicinalActivities.isNotEmpty()
     return SpeciesEntity(
         id = id,
         regionId = regionId,
@@ -159,12 +158,7 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
         // survives with no tags at all (11.1, and `keptUsesNote` for why). A recorded toxicity
         // is a fact about the species rather than a qualifier on a use somebody claimed, and
         // dropping it here is what made the pipeline's poison rule exempt untagged species.
-        usesNote = keptUsesNote(usesNote, PlantUse.setFromWireNames(resolvedUses)),
-        medicinalActivities = medicinalActivities,
-        medicinalRecordCount = medicinalRecordCount,
-        // The credit line belongs to Duke's data. Without the data it is a claim about a
-        // source that contributed nothing, so it goes.
-        usesAttribution = usesAttribution?.takeIf { hasDukeRecord },
+        usesNote = keptUsesNote(usesNote, SpeciesUse.setFromWireNames(resolvedUses)),
         // D34. Overwritten wholesale like every other curated field, so a rebuilt catalogue
         // corrects a range the same way it corrects a habitat paragraph.
         rangeCells = rangeCells,
@@ -184,7 +178,7 @@ internal fun CatalogueSpecies.toEntity(regionId: String): SpeciesEntity {
  * registrar and the backup import can all reach the same rule.
  *
  * The declared kingdom wins. A class that does not belong to it — `tree` on an animal, or
- * `bird` on a plant — is replaced by that kingdom's default class. The pipeline validates
+ * `bird` on a fungus — is replaced by that kingdom's default class. The pipeline validates
  * the pairing before shipping an asset, so reaching this is a curator typo; the response is
  * to lose one species' growth form, never to reject the row and leave a gap in the dex.
  */

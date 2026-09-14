@@ -9,7 +9,7 @@ import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
@@ -225,112 +225,51 @@ class UserSpeciesRoomTest {
 
     /**
      * The regression test for the mapper bug slice 12 was handed: `toEntity` used to default
-     * every plant column and derive the kingdom from the class, so a second write of a
-     * user-added plant silently emptied its uses. Nothing failed when it happened — the row
-     * simply came back without them — which is why this walks a real save, a real read and a
-     * real re-save rather than checking one mapper in isolation.
+     * every uses column and derive the kingdom from the class, so a second write of a
+     * user-added species silently emptied its uses. Nothing failed when it happened — the
+     * row simply came back without them — which is why this walks a real save, a real read
+     * and a real re-save rather than checking one mapper in isolation.
      */
     @Test
-    fun aPlantSurvivesBeingWrittenReadAndWrittenAgain() = runBlocking {
-        val elderberry = SpeciesFields(
-            commonName = "Blue Elderberry",
-            scientificName = "Sambucus cerulea",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.SHRUB,
-            uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
-            usesNote = "Berries, late summer — cook them. Caution: raw berries are toxic.",
-            medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
-            medicinalRecordCount = 60,
-            usesAttribution = "Dr. Duke's Databases · USDA ARS · CC0",
+    fun aFungusSurvivesBeingWrittenReadAndWrittenAgain() = runBlocking {
+        val agaric = SpeciesFields(
+            commonName = "Fly Agaric",
+            scientificName = "Amanita muscaria",
+            kingdom = Kingdom.FUNGUS,
+            taxClass = TaxClass.MUSHROOM,
+            uses = setOf(SpeciesUse.EDIBLE),
+            usesNote = "Under birches. Caution: hallucinogenic and toxic raw.",
         )
-        repository.upsertUserSpecies(record("user-1", 9001, elderberry), listOf("riparian-wetland"))
+        repository.upsertUserSpecies(record("user-1", 9001, agaric), listOf("coastal-rainforest"))
 
         val readBack = repository.userSpecies("user-1")!!
-        assertEquals(Kingdom.PLANT, readBack.fields.kingdom)
-        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), readBack.fields.uses)
-        assertEquals(60, readBack.fields.medicinalRecordCount)
+        assertEquals(Kingdom.FUNGUS, readBack.fields.kingdom)
+        assertEquals(setOf(SpeciesUse.EDIBLE), readBack.fields.uses)
 
         // The re-upsert is the one that used to lose everything.
         repository.upsertUserSpecies(readBack, null)
 
         val again = repository.userSpecies("user-1")!!
-        assertEquals(Kingdom.PLANT, again.fields.kingdom)
-        assertEquals(TaxClass.SHRUB, again.fields.taxClass)
-        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), again.fields.uses)
-        assertEquals(elderberry.usesNote, again.fields.usesNote)
-        assertEquals(listOf("Diaphoretic", "Diuretic", "Laxative"), again.fields.medicinalActivities)
-        assertEquals(60, again.fields.medicinalRecordCount)
-        assertEquals("Dr. Duke's Databases · USDA ARS · CC0", again.fields.usesAttribution)
-        assertEquals("sil_shrub", again.fields.silhouetteRes)
-    }
-
-    @Test
-    fun aBackfilledPlantKeepsItsUsesThroughEveryLaterBackfill() = runBlocking {
-        val registrar = AddSpeciesRegistrar(
-            store = repository,
-            captures = throwingRegistrar(),
-            newSpeciesId = { "user-1" },
-        )
-        repository.upsertUserSpecies(
-            record("user-1", 9001, SpeciesFields(commonName = "Blue Elderberry"), pending = true),
-            emptyList(),
-        )
-
-        registrar.backfill(
-            speciesId = "user-1",
-            lookup = LookupFields(
-                scientificName = "Sambucus cerulea",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-                uses = setOf(PlantUse.MEDICINAL),
-                medicinalRecordCount = 60,
-            ),
-            edits = AddSpeciesRegistrar.FieldEdits(
-                values = SpeciesFields(
-                    commonName = "Blue Elderberry",
-                    kingdom = Kingdom.PLANT,
-                    taxClass = TaxClass.SHRUB,
-                    uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
-                    usesNote = "Berries only, cooked. Caution: not raw.",
-                ),
-                fields = listOf(SpeciesField.USES, SpeciesField.USES_NOTE),
-            ),
-        )
-        registrar.backfill(
-            speciesId = "user-1",
-            lookup = LookupFields(
-                scientificName = "Sambucus cerulea",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-                uses = setOf(PlantUse.MEDICINAL),
-                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-                medicinalRecordCount = 61,
-            ),
-        )
-
-        val stored = repository.userSpecies("user-1")!!
-        assertTrue(SpeciesField.USES in stored.userEditedFields)
-        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), stored.fields.uses)
-        assertEquals("Berries only, cooked. Caution: not raw.", stored.fields.usesNote)
-        // Duke's columns are the source's, not the user's, so they track the newest lookup.
-        assertEquals(61, stored.fields.medicinalRecordCount)
-        assertFalse(stored.detailsPending)
+        assertEquals(Kingdom.FUNGUS, again.fields.kingdom)
+        assertEquals(TaxClass.MUSHROOM, again.fields.taxClass)
+        assertEquals(setOf(SpeciesUse.EDIBLE), again.fields.uses)
+        assertEquals(agaric.usesNote, again.fields.usesNote)
+        assertEquals("sil_mushroom", again.fields.silhouetteRes)
     }
 
     /**
-     * The safety exception, through a real database: a plant nobody tagged still comes back
-     * carrying the toxicity Duke's recorded for it. This is the row the warning has to reach —
-     * the one opened months after the session where the confirm card's warning was on screen.
+     * D59, through a real database: a user-added species carries no use and no note, whatever
+     * the caller handed the registrar — the one door into the store clears both.
      */
     @Test
-    fun anUntaggedPlantKeepsItsCautionAcrossSessions() = runBlocking {
-        val bracken = SpeciesFields(
-            commonName = "Bracken",
-            scientificName = "Pteridium aquilinum",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.FERN,
-            uses = emptySet(),
-            usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
+    fun aUserAddedSpeciesCarriesNoUseAndNoNote() = runBlocking {
+        val agaric = SpeciesFields(
+            commonName = "Fly Agaric",
+            scientificName = "Amanita muscaria",
+            kingdom = Kingdom.FUNGUS,
+            taxClass = TaxClass.MUSHROOM,
+            uses = setOf(SpeciesUse.EDIBLE),
+            usesNote = "Caution: hallucinogenic and toxic raw.",
         )
         val registrar = AddSpeciesRegistrar(
             store = repository,
@@ -338,18 +277,11 @@ class UserSpeciesRoomTest {
             newSpeciesId = { "user-1" },
         )
 
-        registrar.create(bracken, emptyList(), photoUri = null)
+        registrar.create(agaric, emptyList(), photoUri = null)
 
         val stored = repository.userSpecies("user-1")!!
         assertTrue(stored.fields.uses.isEmpty())
-        assertEquals(
-            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-            stored.fields.usesNote,
-        )
-
-        // …and a later re-write of that row does not quietly lose it either.
-        repository.upsertUserSpecies(stored, null)
-        assertEquals(stored.fields.usesNote, repository.userSpecies("user-1")!!.fields.usesNote)
+        assertNull(stored.fields.usesNote)
     }
 
     @Test
@@ -373,7 +305,6 @@ class UserSpeciesRoomTest {
                 localCopyPath: String?,
             ) = dev.tlong.biodex.data.photo.PhotoRef.Revoked
             override fun displayName(uri: String): String? = null
-            override fun readForUpload(uri: String): ByteArray? = null
             override fun newCameraCaptureUri(): String? = null
             override fun promoteToGallery(cacheUri: String, displayName: String): String? = null
             override fun sweepCameraCache() = Unit

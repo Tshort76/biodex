@@ -5,7 +5,7 @@ import dev.tlong.biodex.data.photo.FakeCaptureStore
 import dev.tlong.biodex.data.photo.FakePhotoGateway
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.TaxClass
@@ -96,46 +96,15 @@ class AddSpeciesRegistrarTest {
     }
 
     @Test
-    fun `a plant the user adds keeps no photograph, but is still caught (M41)`() = runBlocking {
-        val nettle = SpeciesFields(
-            commonName = "Stinging Nettle",
-            scientificName = "Urtica dioica",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.HERB,
-        )
+    fun `every kingdom the user adds keeps its photograph`() = runBlocking {
+        // The plant exception (M41) left with the plants (D59): a fungus is registered exactly
+        // like an animal, photo and thumbnail included.
+        registrar.create(thrush, emptyList(), "content://photo/1")
+        registrar.create(chanterelle, emptyList(), "content://photo/2")
 
-        val result = registrar.create(nettle, emptyList(), "content://photo/1")
-
-        val created = result as AddSpeciesRegistrar.CreateResult.Created
-        val capture = captureStore.captures.values.single()
-        assertEquals(created.speciesId, capture.speciesId)
-        assertTrue("a user-added species is caught by definition", captureStore.entries.isNotEmpty())
-        assertNull("M41: a plant's photo is not carried into the capture", capture.photoUri)
-        assertNull(capture.thumbPath)
-    }
-
-    @Test
-    fun `an animal the user adds still keeps its photograph`() = runBlocking {
-        val result = registrar.create(thrush, emptyList(), "content://photo/1")
-
-        val capture = captureStore.captures.values.single()
-        assertEquals("content://photo/1", capture.photoUri)
-        assertTrue(result is AddSpeciesRegistrar.CreateResult.Created)
-    }
-
-    @Test
-    fun `an unreadable photo cannot fail a plant, because no photo is read`() = runBlocking {
-        gateway.thumbnailWorks = false
-        val nettle = SpeciesFields(
-            commonName = "Stinging Nettle",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.HERB,
-        )
-
-        val result = registrar.create(nettle, emptyList(), "content://photo/1")
-
-        assertTrue(result is AddSpeciesRegistrar.CreateResult.Created)
-        assertEquals(1, store.species.size)
+        val uris = captureStore.captures.values.map { it.photoUri }.toSet()
+        assertEquals(setOf("content://photo/1", "content://photo/2"), uris)
+        assertTrue(captureStore.captures.values.all { it.thumbPath != null })
     }
 
     @Test
@@ -283,135 +252,56 @@ class AddSpeciesRegistrarTest {
     }
 
     // -----------------------------------------------------------------------
-    // User-added plants (slice 12).
+    // User-added fungi: the second kingdom goes through the same door.
     // -----------------------------------------------------------------------
 
-    private val elderberry = SpeciesFields(
-        commonName = "Blue Elderberry",
-        scientificName = "Sambucus cerulea",
-        kingdom = Kingdom.PLANT,
-        taxClass = TaxClass.SHRUB,
-        uses = setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL),
-        usesNote = "Berries, late summer — cook them. Caution: raw berries are toxic.",
-        medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative"),
-        medicinalRecordCount = 60,
-        usesAttribution = "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0",
+    private val chanterelle = SpeciesFields(
+        commonName = "Golden Chanterelle",
+        scientificName = "Cantharellus formosus",
+        kingdom = Kingdom.FUNGUS,
+        taxClass = TaxClass.MUSHROOM,
     )
 
     @Test
-    fun `accepting a plant card writes the kingdom, the form, the uses and no call`() = runBlocking {
+    fun `accepting a fungus card writes the kingdom and the form, and nothing it must not`() = runBlocking {
+        // A use tag and a note are curated fields (D48); no source pre-fills them for a
+        // user-added species any more (D59), so the door drops whatever the card carried.
         val created = registrar.create(
-            fields = elderberry,
-            ecosystemIds = listOf("riparian-wetland"),
+            fields = chanterelle.copy(
+                uses = setOf(SpeciesUse.EDIBLE),
+                usesNote = "Caution: only with a confident identification.",
+            ),
+            ecosystemIds = listOf("coastal-rainforest"),
             photoUri = "content://photo/1",
         ) as AddSpeciesRegistrar.CreateResult.Created
 
         val fields = store.species.getValue(created.speciesId).fields
-        assertEquals(Kingdom.PLANT, fields.kingdom)
-        assertEquals(TaxClass.SHRUB, fields.taxClass)
-        assertEquals(setOf(PlantUse.EDIBLE, PlantUse.MEDICINAL), fields.uses)
-        assertTrue(fields.usesNote!!.contains("Caution:"))
-        assertEquals(60, fields.medicinalRecordCount)
-    }
-
-    @Test
-    fun `an untagged plant keeps its caution and loses the rest of the note`() = runBlocking {
-        val created = registrar.create(
-            fields = elderberry.copy(uses = emptySet()),
-            ecosystemIds = emptyList(),
-            photoUri = "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
-
-        // The part-and-season half describes a use nothing is tagged with; the caution is a
-        // fact about the species and outlives the tags entirely.
-        assertEquals(
-            "Caution: raw berries are toxic.",
-            store.species.getValue(created.speciesId).fields.usesNote,
-        )
-    }
-
-    @Test
-    fun `an untagged plant with a plain note is saved without it`() = runBlocking {
-        val created = registrar.create(
-            fields = elderberry.copy(uses = emptySet(), usesNote = "Berries, late summer."),
-            ecosystemIds = emptyList(),
-            photoUri = "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
-
-        assertNull(store.species.getValue(created.speciesId).fields.usesNote)
+        assertEquals(Kingdom.FUNGUS, fields.kingdom)
+        assertEquals(TaxClass.MUSHROOM, fields.taxClass)
+        assertEquals("sil_mushroom", fields.silhouetteRes)
+        assertEquals(emptySet<SpeciesUse>(), fields.uses)
+        assertNull(fields.usesNote)
     }
 
     @Test
     fun `a mis-resolved kingdom toggled on the card writes that kingdom's default class`() = runBlocking {
-        // GBIF read it as an animal; the user said plant. The class it came with is an animal's
-        // and must not survive the correction.
+        // GBIF read it as an animal; the user said fungus. The class it came with is an
+        // animal's and must not survive the correction.
         val created = registrar.create(
-            fields = SpeciesFields(
-                commonName = "Salal",
-                scientificName = "Gaultheria shallon",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.BIRD,
-            ),
+            fields = chanterelle.copy(taxClass = TaxClass.BIRD),
             ecosystemIds = emptyList(),
             photoUri = "content://photo/1",
         ) as AddSpeciesRegistrar.CreateResult.Created
 
         val fields = store.species.getValue(created.speciesId).fields
-        assertEquals(Kingdom.PLANT, fields.kingdom)
-        assertEquals(TaxClass.HERB, fields.taxClass)
+        assertEquals(Kingdom.FUNGUS, fields.kingdom)
+        assertEquals(TaxClass.OTHER_FUNGUS, fields.taxClass)
     }
 
     @Test
-    fun `a hand-edited note survives a re-backfill while the tags keep tracking Duke's`() = runBlocking {
+    fun `a fungus backfilled onto a pending animal stops being an animal`() = runBlocking {
         val created = registrar.create(
-            SpeciesFields(commonName = "Blue Elderberry"),
-            emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
-
-        // The user accepts the card, writing their own note over the pre-filled caution.
-        registrar.backfill(
-            speciesId = created.speciesId,
-            lookup = LookupFields(
-                scientificName = "Sambucus cerulea",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-                uses = setOf(PlantUse.MEDICINAL),
-                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-                medicinalRecordCount = 60,
-            ),
-            edits = AddSpeciesRegistrar.FieldEdits(
-                values = elderberry.copy(usesNote = "Berries only, and cook them. Caution: not raw."),
-                fields = listOf(SpeciesField.USES_NOTE),
-            ),
-        )
-
-        // Months later, the index has been regenerated and the backfill runs again.
-        val second = registrar.backfill(
-            speciesId = created.speciesId,
-            lookup = LookupFields(
-                scientificName = "Sambucus cerulea",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-                uses = setOf(PlantUse.MEDICINAL),
-                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-                medicinalActivities = listOf("Diaphoretic", "Diuretic", "Laxative", "Emetic"),
-                medicinalRecordCount = 61,
-            ),
-        )!!
-
-        assertEquals("Berries only, and cook them. Caution: not raw.", second.fields.usesNote)
-        assertTrue(SpeciesField.USES_NOTE in second.userEditedFields)
-        // The tags and the source columns were never claimed, so they follow the newest lookup.
-        assertEquals(setOf(PlantUse.MEDICINAL), second.fields.uses)
-        assertEquals(61, second.fields.medicinalRecordCount)
-        assertEquals(4, second.fields.medicinalActivities.size)
-    }
-
-    @Test
-    fun `a plant backfilled onto a pending animal stops being an animal`() = runBlocking {
-        val created = registrar.create(
-            SpeciesFields(commonName = "Pacific Rhododendron"),
+            SpeciesFields(commonName = "Golden Chanterelle"),
             emptyList(),
             "content://photo/1",
         ) as AddSpeciesRegistrar.CreateResult.Created
@@ -422,16 +312,15 @@ class AddSpeciesRegistrarTest {
         val updated = registrar.backfill(
             speciesId = created.speciesId,
             lookup = LookupFields(
-                scientificName = "Rhododendron macrophyllum",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-                uses = emptySet(),
+                scientificName = "Cantharellus formosus",
+                kingdom = Kingdom.FUNGUS,
+                taxClass = TaxClass.MUSHROOM,
             ),
         )!!
 
-        assertEquals(Kingdom.PLANT, updated.fields.kingdom)
-        assertEquals(TaxClass.SHRUB, updated.fields.taxClass)
-        assertEquals("sil_shrub", updated.fields.silhouetteRes)
+        assertEquals(Kingdom.FUNGUS, updated.fields.kingdom)
+        assertEquals(TaxClass.MUSHROOM, updated.fields.taxClass)
+        assertEquals("sil_mushroom", updated.fields.silhouetteRes)
     }
 
     // -----------------------------------------------------------------------

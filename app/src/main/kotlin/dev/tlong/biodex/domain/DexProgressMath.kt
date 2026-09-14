@@ -92,7 +92,6 @@ object DexProgressMath {
             EcosystemProgress(
                 ecosystem = ecosystem,
                 animals = kingdomMeter(Kingdom.ANIMAL),
-                plants = kingdomMeter(Kingdom.PLANT),
                 fungi = kingdomMeter(Kingdom.FUNGUS),
             )
         }
@@ -101,7 +100,6 @@ object DexProgressMath {
             regionId = regionId,
             regionName = regionName,
             animals = meterFor(Kingdom.ANIMAL),
-            plants = meterFor(Kingdom.PLANT),
             perClass = perClass,
             perEcosystem = perEcosystem,
             // Defaulted rather than required, so a caller that predates the third kingdom

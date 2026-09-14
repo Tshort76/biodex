@@ -1,10 +1,6 @@
 package dev.tlong.biodex.data.settings
 
 import android.content.Context
-import dev.tlong.biodex.data.identify.DEFAULT_MONTHLY_IDENTIFICATION_CAP
-import dev.tlong.biodex.data.identify.IdentificationCount
-import dev.tlong.biodex.data.identify.currentMonthKey
-import dev.tlong.biodex.data.identify.identificationsUsed
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,15 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
  * [keepLocalCopyNow] is what `AppContainer` hands `CaptureRegistrar`, and it reads the
  * preference on every call rather than closing over a value — a registration that happens
  * after the user flips the switch must see the new setting, not the one that was true when
- * the container was built. [plantNetKeyNow] is read the same way for the same reason.
+ * the container was built.
  *
- * **The Pl@ntNet key lives here and nowhere else** (M39, D24). This repository is public, and
- * ARCHITECTURE.md 5.4 records the `local.properties → BuildConfig` plumbing that once carried
- * the Xeno-canto key: a build-time key is one careless `git add` from being published, so the
- * only way a key enters this app is the user pasting it into Settings, into app-private
- * storage. Encrypting it at rest is deliberately not done — it is the same protection the
- * persisted photo grants get on the same single-user phone, and the threat a key faces here is
- * the repository, not the device.
+ * **No API key lives anywhere any more** (D59). The Pl@ntNet key did live here, and nowhere
+ * else, from v6 to v20 (M39, D24), for the reason that still stands: this repository is
+ * public, and a build-time key is one careless `git add` from being published. The old
+ * preference is removed by name on first construction below, never read.
  */
 class AppSettings(context: Context) {
 
@@ -42,64 +35,24 @@ class AppSettings(context: Context) {
         _keepLocalCopy.value = enabled
     }
 
-    // -----------------------------------------------------------------------
-    // Identification (M37, M39).
-    // -----------------------------------------------------------------------
-
-    private val _plantNetKey = MutableStateFlow(plantNetKeyNow())
-
-    /** Null until the user pastes one; the feature ships dark until they do (R16). */
-    val plantNetKey: StateFlow<String?> = _plantNetKey.asStateFlow()
-
-    fun plantNetKeyNow(): String? =
-        prefs.getString(KEY_PLANTNET_KEY, null)?.trim()?.takeIf { it.isNotEmpty() }
-
-    fun setPlantNetKey(value: String?) {
-        val cleaned = value?.trim()?.takeIf { it.isNotEmpty() }
-        prefs.edit().apply {
-            if (cleaned == null) remove(KEY_PLANTNET_KEY) else putString(KEY_PLANTNET_KEY, cleaned)
-        }.apply()
-        _plantNetKey.value = cleaned
-    }
-
-    private val _identificationsUsed = MutableStateFlow(identificationsUsedNow())
-
-    val identificationsUsed: StateFlow<Int> = _identificationsUsed.asStateFlow()
-
     /**
-     * The month's count, rolled over on read. Nothing runs while the app is closed, so the
-     * turn of the month is noticed the first time anything asks (M37).
+     * D59. Pl@ntNet identification is gone, and so is its key. The four preferences it kept
+     * are removed by name on first construction — the key was a secret the user pasted in,
+     * and a secret with no reader left has no business surviving in `shared_prefs`. Never
+     * read, never logged: `remove` is the only call.
      */
-    fun identificationsUsedNow(nowMillis: Long = System.currentTimeMillis()): Int =
-        identificationsUsed(storedCount(), currentMonthKey(nowMillis))
-
-    fun identificationCapNow(): Int =
-        prefs.getInt(KEY_IDENTIFICATION_CAP, DEFAULT_MONTHLY_IDENTIFICATION_CAP)
-
-    fun setIdentificationCap(cap: Int) {
-        prefs.edit().putInt(KEY_IDENTIFICATION_CAP, cap.coerceAtLeast(0)).apply()
-        _identificationsUsed.value = identificationsUsedNow()
-    }
-
-    /**
-     * Counted on a **successful upload**, not on a press: an attempt that never reached the
-     * service has not spent anything, and charging the user's cap for the app's own failure to
-     * connect is the kind of quiet unfairness a hard cap makes expensive.
-     */
-    fun recordIdentification(nowMillis: Long = System.currentTimeMillis()) {
-        val month = currentMonthKey(nowMillis)
-        val used = identificationsUsed(storedCount(), month) + 1
+    private fun forgetIdentificationPrefs() {
         prefs.edit()
-            .putString(KEY_IDENTIFICATION_MONTH, month)
-            .putInt(KEY_IDENTIFICATION_USED, used)
+            .remove(RETIRED_KEY_PLANTNET)
+            .remove(RETIRED_KEY_IDENTIFICATION_MONTH)
+            .remove(RETIRED_KEY_IDENTIFICATION_USED)
+            .remove(RETIRED_KEY_IDENTIFICATION_CAP)
             .apply()
-        _identificationsUsed.value = used
     }
 
-    private fun storedCount() = IdentificationCount(
-        month = prefs.getString(KEY_IDENTIFICATION_MONTH, "").orEmpty(),
-        used = prefs.getInt(KEY_IDENTIFICATION_USED, 0),
-    )
+    init {
+        forgetIdentificationPrefs()
+    }
 
     // -----------------------------------------------------------------------
     // The grid's order (D47). Stored as the sort's wire name; this class deliberately does
@@ -130,9 +83,10 @@ class AppSettings(context: Context) {
         /** Default off: linking, not storing, is the point (DESIGN.md D6/S03). */
         const val KEY_KEEP_LOCAL_COPY = "keep_local_copy"
 
-        const val KEY_PLANTNET_KEY = "plantnet_api_key"
-        const val KEY_IDENTIFICATION_MONTH = "identification_month"
-        const val KEY_IDENTIFICATION_USED = "identification_used"
-        const val KEY_IDENTIFICATION_CAP = "identification_cap"
+        // v6–v20's identification preferences, kept only so they can be removed (D59).
+        private const val RETIRED_KEY_PLANTNET = "plantnet_api_key"
+        private const val RETIRED_KEY_IDENTIFICATION_MONTH = "identification_month"
+        private const val RETIRED_KEY_IDENTIFICATION_USED = "identification_used"
+        private const val RETIRED_KEY_IDENTIFICATION_CAP = "identification_cap"
     }
 }

@@ -27,10 +27,10 @@ data class SpeciesEntity(
     @PrimaryKey val id: String,
     val regionId: String,
     /**
-     * Curated animals 1–120, curated plants 2001–2080, user-added 9001 upward — see
-     * `storedDexNumber`, `PLANT_DEX_NUMBER_BASE` and `USER_DEX_NUMBER_BASE`. One sortable
+     * Curated animals 1–224, curated fungi 4001–4030, user-added 9001 upward — see
+     * `storedDexNumber`, `FUNGUS_DEX_NUMBER_BASE` and `USER_DEX_NUMBER_BASE`. One sortable
      * column orders the whole grid, and `(regionId, dexNumber)` is unique, which is exactly
-     * why the plants need a stored range of their own.
+     * why each kingdom needs a stored range of its own. (2001–2080 held the plants, D59.)
      */
     val dexNumber: Int,
     val source: SpeciesSource,
@@ -51,19 +51,20 @@ data class SpeciesEntity(
     /** M21: field names the user hand-edited; always empty for curated species in v1. */
     val userEditedFields: List<String> = emptyList(),
 
-    // The uses block (D14/D15). Kept together and every column defaulted, because the
-    // medicinal half is sourced data whose shape follows Dr. Duke's rather than this app:
-    // adding one more nullable column here later costs a field and a default, nothing more.
+    // The uses block (D14/D15, D48).
 
-    /** JSON array of `edible` | `medicinal`. Empty for every animal. */
+    /** JSON array; `edible` is the only value written since D59. Empty for every fungus. */
     val uses: List<String> = emptyList(),
-    /** The curated part-and-season note with any `Caution:` sentence; null unless `uses` is non-empty. */
+    /** A note with any `Caution:` sentence; null unless `uses` is non-empty or it is a caution. */
     val usesNote: String? = null,
-    /** Up to eight Duke's activity names, most-cited first; empty when Duke's has nothing. */
+    /**
+     * Retired with the plants (D59): the three Dr. Duke's columns. Every row holds the
+     * default. They stay on the table because SQLite has no `DROP COLUMN` at minSdk and a
+     * recreate of the species table, with its four dependents, buys nothing a default does
+     * not; nothing reads or writes them any more.
+     */
     val medicinalActivities: List<String> = emptyList(),
-    /** Duke's record count; 0 for animals and for plants with no record. */
     val medicinalRecordCount: Int = 0,
-    /** The Duke's credit line, non-null exactly when the two columns above are populated. */
     val usesAttribution: String? = null,
 
     /**

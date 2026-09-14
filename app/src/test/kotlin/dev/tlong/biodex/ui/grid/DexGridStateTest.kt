@@ -97,7 +97,6 @@ class DexGridStateTest {
         regionId = "pacific",
         regionName = "Pacific USA",
         animals = Meter(caught = 1, total = 120, userAdded = 1),
-        plants = Meter(0, 0, 0),
         perClass = emptyList(),
         perEcosystem = emptyList(),
     )
@@ -290,10 +289,26 @@ class DexGridStateTest {
         // The name comes from the `regions` table now, not from title-casing the id (11.1).
         assertEquals("Pacific USA", s.regionLabel)
         assertEquals(Meter(caught = 1, total = 120, userAdded = 1), s.animals)
-        // No plants in the catalogue yet, so the header shows one pill, not two.
-        assertEquals(Meter(0, 0, 0), s.plants)
-        assertFalse(s.showPlantPill)
+        // No fungi in this fixture, so the header shows one pill, not two.
+        assertEquals(Meter(0, 0, 0), s.fungi)
+        assertFalse(s.showFungiPill)
         assertFalse(s.loading)
+    }
+
+    @Test
+    fun `the use chips follow the tagged species, not a kingdom (D48, D59)`() {
+        // The regression this pins: the row was gated on the plant meter, so removing the
+        // plants would have hidden the animal Food source filter on the day they left.
+        assertFalse(state().showUseChips)
+        speciesFlow.value = catalogue + userAdded + species(
+            121,
+            "Roosevelt Elk",
+            TaxClass.MAMMAL,
+            listOf("coastal-rainforest"),
+        ).copy(uses = setOf(dev.tlong.biodex.domain.SpeciesUse.EDIBLE))
+        assertTrue(state().showUseChips)
+        filters.value = DexGridFilters(use = dev.tlong.biodex.domain.SpeciesUse.EDIBLE)
+        assertEquals(listOf("Roosevelt Elk"), names())
     }
 
     @Test

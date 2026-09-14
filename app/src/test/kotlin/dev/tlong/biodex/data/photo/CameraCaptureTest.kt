@@ -1,6 +1,5 @@
 package dev.tlong.biodex.data.photo
 
-import dev.tlong.biodex.domain.Kingdom
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -8,34 +7,23 @@ import org.junit.Test
 
 /**
  * D26's rules. The camera itself cannot be tested without a phone; what *can* be pinned is the
- * decision that makes capture-to-cache worth choosing at all — that a plant's photograph never
- * reaches the gallery, and that a camera shot's cache file is always swept afterwards.
+ * decision that makes capture-to-cache worth choosing at all — that a camera shot's cache file
+ * is always swept afterwards, and only a cache file is ever promoted.
  */
 class CameraCaptureTest {
 
     @Test
-    fun `a plant keeps no photograph of the user's own`() {
-        assertFalse(keepsOwnPhoto(Kingdom.PLANT))
-        assertTrue(keepsOwnPhoto(Kingdom.ANIMAL))
-        // The user asked for pictures of their mushrooms specifically (§5.3).
-        assertTrue(keepsOwnPhoto(Kingdom.FUNGUS))
-    }
-
-    @Test
-    fun `a plant's camera shot is never promoted into the gallery`() {
-        // This is the property that decided capture-to-cache over capture-to-gallery. Under
-        // the other design the app would have to *delete* it from the gallery afterwards,
-        // which on API 29+ can prompt the user for a photo they never wanted saved.
-        assertFalse(shouldPromoteToGallery(PhotoSourceKind.CAMERA_CACHE, Kingdom.PLANT))
-        assertTrue(shouldPromoteToGallery(PhotoSourceKind.CAMERA_CACHE, Kingdom.ANIMAL))
-        assertTrue(shouldPromoteToGallery(PhotoSourceKind.CAMERA_CACHE, Kingdom.FUNGUS))
+    fun `a camera shot is promoted into the gallery, whatever the kingdom`() {
+        // This is the property that decided capture-to-cache over capture-to-gallery: the
+        // file has no home until registration decides it. (Until D59 a plant's was never
+        // promoted at all; every kingdom keeps its photograph now.)
+        assertTrue(shouldPromoteToGallery(PhotoSourceKind.CAMERA_CACHE))
     }
 
     @Test
     fun `a photo the user picked from the gallery is never promoted`() {
         // It is already where it belongs; inserting a second copy would duplicate it.
-        assertFalse(shouldPromoteToGallery(PhotoSourceKind.GALLERY_PICKER, Kingdom.ANIMAL))
-        assertFalse(shouldPromoteToGallery(PhotoSourceKind.GALLERY_PICKER, Kingdom.PLANT))
+        assertFalse(shouldPromoteToGallery(PhotoSourceKind.GALLERY_PICKER))
     }
 
     @Test

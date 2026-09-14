@@ -281,16 +281,15 @@ private fun DetailBody(
         Text(
             text = summary.displayNumber,
             style = MaterialTheme.typography.labelMedium,
-            // `.pnum` — the P-number is the kingdom mark (M26), and the mockup gives it the
-            // plant colour so a glance at the header says which list this entry is on.
-            color = if (summary.kingdom == Kingdom.PLANT) colors.ok else colors.faint,
+            // `.pnum` — the number is the kingdom mark (M26): `#` animal, `F` fungus, `U` own.
+            color = colors.faint,
         )
     }
-    // Frame 7's `.sci` reads "Sambucus cerulea · shrub": a plant's growth form is not
-    // guessable from its silhouette the way a bird's class is, so the plant detail names it.
+    // Frame 7's `.sci` reads "Amanita muscaria · mushroom": a fungus's growth form is not
+    // guessable from its silhouette the way a bird's class is, so the fungal detail names it.
     summary.scientificName?.let { name ->
         ScientificName(
-            if (summary.kingdom == Kingdom.PLANT) "$name · ${summary.taxClass.wireName}" else name,
+            if (summary.kingdom == Kingdom.FUNGUS) "$name · ${summary.taxClass.wireName}" else name,
         )
     }
 
@@ -359,7 +358,7 @@ private fun DetailBody(
         },
     )
 
-    // A plant's uses stand between Habitat and the photo strip (M24, D15); an animal, and a
+    // A species' uses stand between Habitat and the photo strip (M24, D15); a species with nothing to say, and a
     // plant with nothing documented, gets nothing here and goes straight to the photo strip.
     state.uses?.let { UsesSection(content = it, modifier = Modifier.padding(top = 2.dp)) }
 

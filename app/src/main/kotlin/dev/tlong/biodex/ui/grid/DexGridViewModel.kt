@@ -8,7 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -56,7 +56,7 @@ class DexGridViewModel(
         it.copy(caught = if (it.caught == value) CaughtFilter.ALL else value)
     }
 
-    fun onUseFilter(value: PlantUse) = filters.update {
+    fun onUseFilter(value: SpeciesUse) = filters.update {
         it.copy(use = if (it.use == value) null else value)
     }
 

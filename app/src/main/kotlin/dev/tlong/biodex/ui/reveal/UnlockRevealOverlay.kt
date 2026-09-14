@@ -117,7 +117,7 @@ data class RevealContent(
 
 /**
  * S10's counter. Each kingdom is its own life list (D13), so "47 / 120" alone would leave
- * the user working out which one just moved — the label says it: "4 / 80 plants".
+ * the user working out which one just moved — the label says it: "4 / 30 fungi".
  */
 internal fun revealCounterLabel(
     content: RevealContent,
@@ -131,7 +131,6 @@ internal fun revealCounterLabel(
 ): String {
     val noun = when (content.kingdom) {
         Kingdom.ANIMAL -> "animals"
-        Kingdom.PLANT -> "plants"
         Kingdom.FUNGUS -> "fungi"
     }
     val shown = if (showNewValue) content.caughtCount else (content.caughtCount - 1).coerceAtLeast(0)

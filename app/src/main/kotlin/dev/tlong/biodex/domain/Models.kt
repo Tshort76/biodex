@@ -7,12 +7,16 @@ package dev.tlong.biodex.domain
  */
 
 /**
- * The two kingdoms BioDex counts separately (DESIGN.md D12). Never null on a species row:
- * a details-pending user-added species is an animal until a backfill says otherwise.
+ * The two kingdoms BioDex counts separately (DESIGN.md D12, D27). Never null on a species
+ * row: a details-pending user-added species is an animal until a backfill says otherwise.
+ *
+ * `plant` was a member from v4 to v20 and is gone (D59): the importer never writes it, the
+ * 5→6 migration deletes every row that carried it, and the backup import skips one. An
+ * unknown wire name still falls back to `ANIMAL` below, which is why all three of those
+ * doors have to hold.
  */
 enum class Kingdom(val wireName: String) {
     ANIMAL("animal"),
-    PLANT("plant"),
     FUNGUS("fungus"),
     ;
 
@@ -27,12 +31,12 @@ enum class Kingdom(val wireName: String) {
 
 /**
  * DESIGN.md §2: bird / mammal / reptile / amphibian / fish / insect / other invertebrate,
- * plus the four plant growth forms of D12.
+ * plus the three fungal growth forms of D27.
  *
  * Every member carries its [kingdom], and `kingdom == taxClass.kingdom` is an invariant the
  * importer, the registrar and the backup import all enforce. `TaxClass.entries.filter` on it
  * is how a chip row or a picker gets its list — nothing iterates `entries` raw any more, or a
- * user-added sparrow would be offered "tree".
+ * user-added sparrow would be offered "mushroom".
  */
 enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
     BIRD("bird", Kingdom.ANIMAL),
@@ -42,12 +46,8 @@ enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
     FISH("fish", Kingdom.ANIMAL),
     INSECT("insect", Kingdom.ANIMAL),
     OTHER_INVERTEBRATE("other_invertebrate", Kingdom.ANIMAL),
-    TREE("tree", Kingdom.PLANT),
-    SHRUB("shrub", Kingdom.PLANT),
-    HERB("herb", Kingdom.PLANT),
-    FERN("fern", Kingdom.PLANT),
-    // Growth form, not taxonomy — the same editorial choice D12 made for plants. A forager
-    // recognises a shelf fungus on a trunk before they can name its order.
+    // Growth form, not taxonomy — an editorial choice (D13, D27). A forager recognises a
+    // shelf fungus on a trunk before they can name its order.
     MUSHROOM("mushroom", Kingdom.FUNGUS),
     BRACKET("bracket", Kingdom.FUNGUS),
     OTHER_FUNGUS("other_fungus", Kingdom.FUNGUS),
@@ -63,7 +63,6 @@ enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
         /** The class a species falls back to when only its kingdom is known. */
         fun defaultFor(kingdom: Kingdom): TaxClass = when (kingdom) {
             Kingdom.ANIMAL -> OTHER_INVERTEBRATE
-            Kingdom.PLANT -> HERB
             Kingdom.FUNGUS -> OTHER_FUNGUS
         }
 
@@ -72,22 +71,22 @@ enum class TaxClass(val wireName: String, val kingdom: Kingdom) {
 }
 
 /**
- * A documented use of a plant (D14). `EDIBLE` is curated; `MEDICINAL` is derived from Dr.
- * Duke's ethnobotanical database at build time and stored, so the filter stays a plain
- * membership test rather than a join.
+ * A documented use of a species (D14, D48): the curated *Food source* tag, stored as
+ * `edible` so the filter stays a plain membership test. It was `SpeciesUse` with a second,
+ * Duke's-derived `MEDICINAL` member until the plants left (D59); a stored `medicinal` now
+ * reads as no use at all.
  */
-enum class PlantUse(val wireName: String) {
+enum class SpeciesUse(val wireName: String) {
     EDIBLE("edible"),
-    MEDICINAL("medicinal"),
     ;
 
     companion object {
         private val byWireName = entries.associateBy { it.wireName }
 
         /** Null for an unrecognised value: an unknown use is dropped, never guessed at. */
-        fun fromWireName(value: String?): PlantUse? = byWireName[value?.trim()?.lowercase()]
+        fun fromWireName(value: String?): SpeciesUse? = byWireName[value?.trim()?.lowercase()]
 
-        fun setFromWireNames(values: Collection<String>): Set<PlantUse> =
+        fun setFromWireNames(values: Collection<String>): Set<SpeciesUse> =
             values.mapNotNull { fromWireName(it) }.toSet()
     }
 }
@@ -107,19 +106,17 @@ enum class SpeciesSource(val wireName: String) {
 
 /**
  * One sortable integer column orders the whole grid (ARCHITECTURE.md 3.1, 11.1): curated
- * animals 1–224, curated plants 2001–2080, user-added 9001 upward. Presentation subtracts
- * the base and renders `#021`, `P012` or `U01`.
+ * animals 1–224, curated fungi 4001–4030, user-added 9001 upward. Presentation subtracts
+ * the base and renders `#021`, `F007` or `U01`.
  *
  * The bases are wide apart on purpose. A catalogue that grows — it went from 120 animals
- * to 224 (D50) — must not
- * walk into the plant range, and the unique `(regionId, dexNumber)` index is what would
- * fail the whole import if it did.
+ * to 224 (D50) — must not walk into the next range, and the unique `(regionId, dexNumber)`
+ * index is what would fail the whole import if it did. The 2001–2080 block held the plants
+ * until D59 and stays empty.
  */
 const val USER_DEX_NUMBER_BASE = 9000
 
-const val PLANT_DEX_NUMBER_BASE = 2000
-
-/** Fungi sit between the plants and the user block, leaving each kingdom room to grow. */
+/** Fungi sit above the animals and below the user block, leaving each room to grow. */
 const val FUNGUS_DEX_NUMBER_BASE = 4000
 
 /**
@@ -129,11 +126,10 @@ const val FUNGUS_DEX_NUMBER_BASE = 4000
  */
 fun storedDexNumber(kingdom: Kingdom, dexNumber: Int): Int = when (kingdom) {
     Kingdom.ANIMAL -> dexNumber
-    Kingdom.PLANT -> PLANT_DEX_NUMBER_BASE + dexNumber
     Kingdom.FUNGUS -> FUNGUS_DEX_NUMBER_BASE + dexNumber
 }
 
-/** `#021` animal, `P012` plant, `F007` fungus, `U01` user-added (M02). */
+/** `#021` animal, `F007` fungus, `U01` user-added (M02). */
 fun displayDexNumber(dexNumber: Int, source: SpeciesSource, kingdom: Kingdom): String =
     when (source) {
         SpeciesSource.USER ->
@@ -141,9 +137,6 @@ fun displayDexNumber(dexNumber: Int, source: SpeciesSource, kingdom: Kingdom): S
 
         SpeciesSource.CURATED -> when (kingdom) {
             Kingdom.ANIMAL -> "#" + dexNumber.toString().padStart(3, '0')
-            Kingdom.PLANT ->
-                "P" + (dexNumber - PLANT_DEX_NUMBER_BASE).toString().padStart(3, '0')
-
             Kingdom.FUNGUS ->
                 "F" + (dexNumber - FUNGUS_DEX_NUMBER_BASE).toString().padStart(3, '0')
         }
@@ -190,10 +183,9 @@ data class Capture(
     val id: String,
     val speciesId: String,
     /**
-     * Null for a plant registered from M41 onward: its photograph existed to identify it and
-     * is not kept, so there is no gallery reference and no persistable grant. Plant captures
-     * made before that change keep theirs — the migration relaxed the column and touched no
-     * row.
+     * Null for a capture registered without a photograph: no gallery reference and no
+     * persistable grant. The column was relaxed for the v6–v20 plant catch (M41, struck by
+     * D59), and the photoless state is general now.
      */
     val photoUri: String?,
     /** Null exactly when [photoUri] is: the tile shows the species' reference image instead. */
@@ -231,8 +223,8 @@ data class SpeciesSummary(
     val scientificName: String?,
     val taxClass: TaxClass,
     val kingdom: Kingdom,
-    /** Empty for every animal, and for a plant with no documented use (D14). */
-    val uses: Set<PlantUse> = emptySet(),
+    /** `EDIBLE` for the game animals D48 names; empty otherwise, and for every fungus (M35). */
+    val uses: Set<SpeciesUse> = emptySet(),
     val silhouetteRes: String,
     val ecosystemIds: List<String>,
     val caughtAt: Long?,
@@ -306,17 +298,8 @@ data class SpeciesDetail(
     val imageUrl: String?,
     val infoUrl: String?,
     val imageAttribution: String?,
-    /** The curated part-and-season note, with any `Caution:` sentence. Null when no uses. */
+    /** The curated note, with any `Caution:` sentence. Null when there is nothing to say. */
     val usesNote: String? = null,
-    /**
-     * The sourced half of a plant's uses, kept apart from the curated half all the way down
-     * because the two carry different confidence and the screen says which is which (M24).
-     * Up to eight Duke's activity names, most-cited first; empty when Duke's has nothing.
-     */
-    val medicinalActivities: List<String> = emptyList(),
-    val medicinalRecordCount: Int = 0,
-    /** The Duke's credit line, non-null exactly when the two fields above are populated. */
-    val usesAttribution: String? = null,
     val userEditedFields: List<String>,
     /** D34: the cells this species shades on the range map. Empty means no map is drawn. */
     val rangeCells: List<Int> = emptyList(),
@@ -381,39 +364,36 @@ data class Meter(
 data class EcosystemProgress(
     val ecosystem: Ecosystem,
     val animals: Meter,
-    val plants: Meter = Meter(0, 0, 0),
     val fungi: Meter = Meter(0, 0, 0),
 )
 
 /**
  * Derived, never stored (DESIGN.md §2 "Dex"). Shared by the grid header and Stats (6.3).
  *
- * Each kingdom has its own meter and they never mix (D13): 47/120 animals, 3/80 plants and
- * 0/30 fungi are separate life lists that happen to share a region, and a single blended
- * fraction would hide which of them the user is actually working on.
+ * Each kingdom has its own meter and they never mix (D13): 47/224 animals and 0/30 fungi
+ * are separate life lists that happen to share a region, and a single blended fraction
+ * would hide which of them the user is actually working on.
  */
 data class DexProgress(
     val regionId: String,
     /** Read from the `regions` table, so no screen has to guess a label from an id. */
     val regionName: String,
     val animals: Meter,
-    val plants: Meter,
     val perClass: List<Pair<TaxClass, Meter>>,
     val perEcosystem: List<EcosystemProgress>,
     val fungi: Meter = Meter(0, 0, 0),
 ) {
     /** Every kingdom together — what "is there anything to show yet" asks. */
-    val totalSpecies: Int get() = animals.total + plants.total + fungi.total
-    val caughtCount: Int get() = animals.caught + plants.caught + fungi.caught
-    val userAddedCount: Int get() = animals.userAdded + plants.userAdded + fungi.userAdded
+    val totalSpecies: Int get() = animals.total + fungi.total
+    val caughtCount: Int get() = animals.caught + fungi.caught
+    val userAddedCount: Int get() = animals.userAdded + fungi.userAdded
 
     fun meterFor(kingdom: Kingdom): Meter = when (kingdom) {
         Kingdom.ANIMAL -> animals
-        Kingdom.PLANT -> plants
         Kingdom.FUNGUS -> fungi
     }
 
     companion object {
-        val Empty = DexProgress("", "", Meter(0, 0, 0), Meter(0, 0, 0), emptyList(), emptyList())
+        val Empty = DexProgress("", "", Meter(0, 0, 0), emptyList(), emptyList())
     }
 }

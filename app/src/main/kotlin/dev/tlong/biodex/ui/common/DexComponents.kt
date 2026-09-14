@@ -69,7 +69,7 @@ fun RegionPill(text: String, modifier: Modifier = Modifier) {
 /**
  * `.appbar .prog` — `47/120` on accentSoft, tabular so it does not jitter.
  *
- * Two of these sit side by side once a region has plants (M29), which is why the colour is a
+ * Two of these sit side by side once a region has fungi (M29), which is why the colour is a
  * parameter and the slash has no spaces around it: the animal pill is accent, the plant pill
  * is `ok` with a leaf, and the pair has to fit beside the title on a phone.
  */

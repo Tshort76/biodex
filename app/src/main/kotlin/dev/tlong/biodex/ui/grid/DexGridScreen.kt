@@ -51,7 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Meter
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -101,7 +101,7 @@ fun DexGridScreen(
     state: DexGridUiState,
     onQueryChange: (String) -> Unit,
     onCaughtFilter: (CaughtFilter) -> Unit,
-    onUseFilter: (PlantUse) -> Unit,
+    onUseFilter: (SpeciesUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
     onSort: (DexSort) -> Unit,
@@ -126,7 +126,6 @@ fun DexGridScreen(
             GridAppBar(
                 regionLabel = state.regionLabel,
                 animals = state.animals,
-                plants = state.plants.takeIf { state.showPlantPill },
                 fungi = state.fungi.takeIf { state.showFungiPill },
                 onRegister = onRegister,
                 onOpenNearest = onOpenNearest,
@@ -174,7 +173,6 @@ fun DexGridScreen(
 private fun GridAppBar(
     regionLabel: String,
     animals: Meter,
-    plants: Meter?,
     fungi: Meter?,
     onRegister: () -> Unit,
     onOpenNearest: () -> Unit,
@@ -201,14 +199,6 @@ private fun GridAppBar(
         if (regionLabel.isNotEmpty()) RegionPill(regionLabel)
         Box(modifier = Modifier.weight(1f))
         ProgressPill(caught = animals.caught, total = animals.total)
-        plants?.let {
-            ProgressPill(
-                caught = it.caught,
-                total = it.total,
-                color = DexTheme.colors.ok,
-                glyph = "\uD83C\uDF3F",
-            )
-        }
         fungi?.let {
             ProgressPill(
                 caught = it.caught,
@@ -384,7 +374,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 private fun FilterRow(
     state: DexGridUiState,
     onCaughtFilter: (CaughtFilter) -> Unit,
-    onUseFilter: (PlantUse) -> Unit,
+    onUseFilter: (SpeciesUse) -> Unit,
     onClassFilter: (TaxClass) -> Unit,
     onEcosystemFilter: (String) -> Unit,
     onSort: (DexSort) -> Unit,
@@ -445,7 +435,7 @@ private fun FilterRow(
                     label = "Uses",
                     clearLabel = "Any use",
                     selectedLabel = state.filters.use?.let(::useChipLabel),
-                    options = PlantUse.entries.map { useChipLabel(it) to it },
+                    options = SpeciesUse.entries.map { useChipLabel(it) to it },
                     onSelect = onUseFilter,
                 )
             }

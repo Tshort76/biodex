@@ -6,12 +6,11 @@
 Standard library only, and no network: GBIF and Wikipedia are stubbed, because
 what is under test is the rule the pipeline applies to whatever they return.
 
-The rules worth a test here are the ones no dataset stands behind. Dr. Duke's
-decides which *plant* carries a caution, and the plant path's checks are
-exercised against the real thing by re-running the build. For fungi there is no
-source at all — no medicinal join, no `Poison` record — so `uses: []` and the
-caution are enforced by code, and code that enforces a safety rule should be
-the kind you can watch fail.
+The rules worth a test here are the ones no dataset stands behind. No source
+decides a fungal caution — there is no medicinal join and no `Poison` record
+(the Dr. Duke's join left with the plants, D59) — so `uses: []` and the caution
+are enforced by code, and code that enforces a safety rule should be the kind
+you can watch fail.
 """
 
 from __future__ import annotations
@@ -65,9 +64,9 @@ class FungusBuilderTest(unittest.TestCase):
     def test_a_fungus_carries_no_use_and_no_dukes_field(self):
         record = self.build()
         self.assertEqual([], record["uses"])
-        self.assertEqual([], record["medicinalActivities"])
-        self.assertEqual(0, record["medicinalRecordCount"])
-        self.assertIsNone(record["usesAttribution"])
+        # The three Duke's keys are not written at all since D59, for any kingdom.
+        for gone in ("medicinalActivities", "medicinalRecordCount", "usesAttribution"):
+            self.assertNotIn(gone, record)
         self.assertEqual("fungus", record["kingdom"])
         self.assertEqual("sil_mushroom", record["silhouetteRes"])
 
@@ -129,8 +128,7 @@ class FungusValidationTest(unittest.TestCase):
             "ecosystemIds": ["coastal-rainforest"], "habitatText": "In duff.",
             "description": "A fungus.", "imageUrl": "u", "infoUrl": "u",
             "imageAttribution": "a", "silhouetteRes": "sil_mushroom", "uses": [],
-            "usesNote": "Caution: poisonous.", "medicinalActivities": [],
-            "medicinalRecordCount": 0, "usesAttribution": None, "provenance": {},
+            "usesNote": "Caution: poisonous.", "provenance": {},
         }
         species.update(overrides)
         catalogue = {"species": [species], "ecosystems": []}

@@ -78,7 +78,7 @@ class DexProgressMathTest {
             regionName = "Pacific USA",
             species = listOf(
                 curated("heron", TaxClass.BIRD, caught = true),
-                curated("fir", TaxClass.TREE, caught = false),
+                curated("owl", TaxClass.BIRD, caught = false),
                 curated("chanterelle", TaxClass.MUSHROOM, caught = true),
                 curated("conk", TaxClass.BRACKET, caught = false),
             ),
@@ -90,8 +90,7 @@ class DexProgressMathTest {
         )
 
         assertEquals(Meter(caught = 1, total = 2, userAdded = 0), progress.fungi)
-        assertEquals(Meter(caught = 1, total = 1, userAdded = 0), progress.animals)
-        assertEquals(Meter(caught = 0, total = 1, userAdded = 0), progress.plants)
+        assertEquals(Meter(caught = 1, total = 2, userAdded = 0), progress.animals)
         assertEquals(4, progress.totalSpecies)
 
         val rainforest = progress.perEcosystem.single { it.ecosystem.id == "coastal-rainforest" }
@@ -236,27 +235,27 @@ class DexProgressMathTest {
 
         assertEquals(0, progress.totalSpecies)
         assertEquals(0f, progress.animals.fraction, 0f)
-        assertEquals(0f, progress.plants.fraction, 0f)
+        assertEquals(0f, progress.fungi.fraction, 0f)
     }
 
     @Test
-    fun `display numbers render curated animals, curated plants and user-added differently`() {
+    fun `display numbers render curated animals, curated fungi and user-added differently`() {
         assertEquals("#021", displayDexNumber(21, SpeciesSource.CURATED, Kingdom.ANIMAL))
         assertEquals("#120", displayDexNumber(120, SpeciesSource.CURATED, Kingdom.ANIMAL))
-        assertEquals("P001", displayDexNumber(2001, SpeciesSource.CURATED, Kingdom.PLANT))
-        assertEquals("P080", displayDexNumber(2080, SpeciesSource.CURATED, Kingdom.PLANT))
+        assertEquals("F001", displayDexNumber(4001, SpeciesSource.CURATED, Kingdom.FUNGUS))
+        assertEquals("F030", displayDexNumber(4030, SpeciesSource.CURATED, Kingdom.FUNGUS))
         assertEquals("U01", displayDexNumber(9001, SpeciesSource.USER, Kingdom.ANIMAL))
-        assertEquals("U12", displayDexNumber(9012, SpeciesSource.USER, Kingdom.PLANT))
+        assertEquals("U12", displayDexNumber(9012, SpeciesSource.USER, Kingdom.FUNGUS))
     }
 
     @Test
     fun `the stored number applies the kingdom's base to the asset's per-kingdom number`() {
         assertEquals(47, storedDexNumber(Kingdom.ANIMAL, 47))
-        assertEquals(2047, storedDexNumber(Kingdom.PLANT, 47))
+        assertEquals(4007, storedDexNumber(Kingdom.FUNGUS, 7))
         // The round trip is what keeps the grid's order and the cell's label consistent.
         assertEquals(
-            "P047",
-            displayDexNumber(storedDexNumber(Kingdom.PLANT, 47), SpeciesSource.CURATED, Kingdom.PLANT),
+            "F007",
+            displayDexNumber(storedDexNumber(Kingdom.FUNGUS, 7), SpeciesSource.CURATED, Kingdom.FUNGUS),
         )
     }
 
@@ -266,7 +265,7 @@ class DexProgressMathTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `plants do not touch the animal meter`() {
+    fun `fungi do not touch the animal meter`() {
         val animalsOnly = listOf(
             curated("heron", TaxClass.BIRD, caught = true),
             curated("owl", TaxClass.BIRD, caught = false),
@@ -275,7 +274,7 @@ class DexProgressMathTest {
         val memberships = listOf(
             MembershipRow("heron", "riparian-wetland"),
             MembershipRow("owl", "riparian-wetland"),
-            MembershipRow("elder", "riparian-wetland"),
+            MembershipRow("chanterelle", "riparian-wetland"),
         )
         val before = DexProgressMath.compute(
             regionId = "pacific",
@@ -288,8 +287,8 @@ class DexProgressMathTest {
             regionId = "pacific",
             regionName = "Pacific USA",
             species = animalsOnly + listOf(
-                curated("elder", TaxClass.SHRUB, caught = true),
-                curated("fir", TaxClass.TREE, caught = false),
+                curated("chanterelle", TaxClass.MUSHROOM, caught = true),
+                curated("conk", TaxClass.BRACKET, caught = false),
             ),
             memberships = memberships,
             ecosystems = ecosystems,
@@ -300,7 +299,7 @@ class DexProgressMathTest {
             before.perEcosystem.map { it.animals },
             after.perEcosystem.map { it.animals },
         )
-        assertEquals(Meter(1, 2, 0), after.plants)
+        assertEquals(Meter(1, 2, 0), after.fungi)
     }
 
     @Test
@@ -311,48 +310,48 @@ class DexProgressMathTest {
             species = listOf(
                 curated("heron", TaxClass.BIRD, caught = true),
                 curated("owl", TaxClass.BIRD, caught = false),
-                curated("elder", TaxClass.SHRUB, caught = true),
-                curated("fir", TaxClass.TREE, caught = false),
-                curated("nettle", TaxClass.HERB, caught = false),
+                curated("chanterelle", TaxClass.MUSHROOM, caught = true),
+                curated("conk", TaxClass.BRACKET, caught = false),
+                curated("puffball", TaxClass.OTHER_FUNGUS, caught = false),
                 user("user-bird", TaxClass.BIRD),
-                user("user-shrub", TaxClass.SHRUB),
+                user("user-mushroom", TaxClass.MUSHROOM),
             ),
             memberships = emptyList(),
             ecosystems = emptyList(),
         )
 
         assertEquals(Meter(caught = 2, total = 3, userAdded = 1), progress.animals)
-        assertEquals(Meter(caught = 2, total = 4, userAdded = 1), progress.plants)
+        assertEquals(Meter(caught = 2, total = 4, userAdded = 1), progress.fungi)
         // One number, both kingdoms — the "2 of your own" line (D29).
         assertEquals(2, progress.userAddedCount)
         assertEquals(7, progress.totalSpecies)
     }
 
     @Test
-    fun `an ecosystem row counts its plants beside its animals, never mixed in`() {
+    fun `an ecosystem row counts its fungi beside its animals, never mixed in`() {
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
             species = listOf(
                 curated("heron", TaxClass.BIRD, caught = true),
                 curated("owl", TaxClass.BIRD, caught = false),
-                curated("elder", TaxClass.SHRUB, caught = true),
-                user("user-fern", TaxClass.FERN),
+                curated("chanterelle", TaxClass.MUSHROOM, caught = true),
+                user("user-conk", TaxClass.BRACKET),
             ),
             memberships = listOf(
                 MembershipRow("heron", "riparian-wetland"),
                 MembershipRow("owl", "riparian-wetland"),
-                MembershipRow("elder", "riparian-wetland"),
-                MembershipRow("user-fern", "riparian-wetland"),
+                MembershipRow("chanterelle", "riparian-wetland"),
+                MembershipRow("user-conk", "riparian-wetland"),
             ),
             ecosystems = ecosystems,
         )
 
         val wetland = progress.perEcosystem.single { it.ecosystem.id == "riparian-wetland" }
         assertEquals(Meter(caught = 1, total = 2, userAdded = 0), wetland.animals)
-        // The user's fern joins the elder in the plant fraction (D29); it stays out of the
-        // animal one, which is the "never mixed in" half of this test.
-        assertEquals(Meter(caught = 2, total = 2, userAdded = 1), wetland.plants)
+        // The user's conk joins the chanterelle in the fungal fraction (D29); it stays out
+        // of the animal one, which is the "never mixed in" half of this test.
+        assertEquals(Meter(caught = 2, total = 2, userAdded = 1), wetland.fungi)
     }
 
     @Test

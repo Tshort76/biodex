@@ -40,7 +40,6 @@ import dev.tlong.biodex.data.net.MatchKind
 import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.TaxClass
@@ -48,7 +47,6 @@ import dev.tlong.biodex.domain.defaultSilhouetteFor
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
-import dev.tlong.biodex.ui.common.USES_DISCLAIMER
 import dev.tlong.biodex.ui.register.PrimaryCta
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
@@ -93,8 +91,6 @@ fun ConfirmSpeciesRoute(
         onEditField = viewModel::onEditField,
         onToggleKingdom = viewModel::onToggleKingdom,
         onSelectTaxClass = viewModel::onSelectTaxClass,
-        onToggleUse = viewModel::onToggleUse,
-        onEditUsesNote = viewModel::onEditUsesNote,
         onAccept = viewModel::onAccept,
     )
 }
@@ -110,8 +106,6 @@ fun ConfirmSpeciesScreen(
     onEditField: (String, (SpeciesFields) -> SpeciesFields) -> Unit,
     onToggleKingdom: () -> Unit,
     onSelectTaxClass: (TaxClass) -> Unit,
-    onToggleUse: (PlantUse) -> Unit,
-    onEditUsesNote: (String) -> Unit,
     onAccept: () -> Unit,
 ) {
     val colors = DexTheme.colors
@@ -165,8 +159,6 @@ fun ConfirmSpeciesScreen(
                     onEditField = onEditField,
                     onToggleKingdom = onToggleKingdom,
                     onSelectTaxClass = onSelectTaxClass,
-                    onToggleUse = onToggleUse,
-                    onEditUsesNote = onEditUsesNote,
                     onAccept = onAccept,
                 )
             }
@@ -184,8 +176,6 @@ private fun CardBody(
     onEditField: (String, (SpeciesFields) -> SpeciesFields) -> Unit,
     onToggleKingdom: () -> Unit,
     onSelectTaxClass: (TaxClass) -> Unit,
-    onToggleUse: (PlantUse) -> Unit,
-    onEditUsesNote: (String) -> Unit,
     onAccept: () -> Unit,
 ) {
     val colors = DexTheme.colors
@@ -272,18 +262,14 @@ private fun CardBody(
     }
 
     // M19/M27: the growth form is a pick on the card, not something hidden behind "edit by
-    // hand" — for a plant it is one of the fields the card exists to ask about. An animal keeps
-    // slice 7's card exactly, with its class picker still inside the hand-edit block.
-    if (state.isPlant || state.handEditing) {
+    // hand" — for a fungus it is one of the fields the card exists to ask about (D27). An
+    // animal keeps slice 7's card exactly, with its class picker inside the hand-edit block.
+    if (state.isFungus || state.handEditing) {
         KindSection(
             state = state,
             onToggleKingdom = onToggleKingdom,
             onSelectTaxClass = onSelectTaxClass,
         )
-    }
-
-    if (state.isPlant) {
-        UsesEditor(state = state, onToggleUse = onToggleUse, onEditUsesNote = onEditUsesNote)
     }
 
     SectionHeader("Ecosystems · your pick")
@@ -329,14 +315,6 @@ private fun CardBody(
                 .clip(RoundedCornerShape(8.dp))
                 .background(colors.stopSoft)
                 .padding(10.dp),
-        )
-    }
-
-    state.photoNotKeptWarning?.let { message ->
-        Text(
-            text = message,
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.faint,
         )
     }
 
@@ -395,8 +373,7 @@ private fun CandidateRow(
             .padding(10.dp),
     ) {
         SilhouetteIcon(
-            silhouetteRes = candidate.silhouetteResOverride
-                ?: defaultSilhouetteFor(candidate.taxClass),
+            silhouetteRes = defaultSilhouetteFor(candidate.taxClass),
             taxClass = candidate.taxClass,
             size = 26.dp,
         )
@@ -534,11 +511,11 @@ private fun KindSection(
 ) {
     val colors = DexTheme.colors
     EditableSectionHeader(
-        label = if (state.isPlant) "Growth form · your pick" else "Kingdom and class",
+        label = if (state.isFungus) "Growth form · your pick" else "Kingdom and class",
         edited = state.isEdited(SpeciesField.TAX_CLASS) || state.isEdited(SpeciesField.KINGDOM),
-        action = (if (state.isPlant) "not a plant?" else "a plant?") to onToggleKingdom,
+        action = (if (state.isFungus) "not a fungus?" else "a fungus?") to onToggleKingdom,
     )
-    if (state.isPlant) {
+    if (state.isFungus) {
         Text(
             text = "GBIF names the species; how it grows is a judgment call it cannot make, so " +
                 "this one is yours.",
@@ -550,97 +527,6 @@ private fun KindSection(
         offered = state.offeredClasses,
         selected = state.fields.taxClass,
         onSelect = onSelectTaxClass,
-    )
-}
-
-/**
- * The uses editor (M27) — a plant's half of the card; an animal's card has nothing here.
- *
- * The medicinal toggle is defaulted from the bundled Duke's index and the caution sentence is
- * pre-filled from a `Poison` record, but **edible is never defaulted on**: Duke's holds almost
- * no food records, so an edible claim could only come from this app, and D14 and M30 are what
- * stop it doing that. Both toggles stay the user's to set.
- */
-@Composable
-private fun UsesEditor(
-    state: ConfirmSpeciesUiState.Card,
-    onToggleUse: (PlantUse) -> Unit,
-    onEditUsesNote: (String) -> Unit,
-) {
-    val colors = DexTheme.colors
-    EditableSectionHeader(
-        label = "Uses",
-        edited = state.isEdited(SpeciesField.USES) || state.isEdited(SpeciesField.USES_NOTE),
-        action = null,
-    )
-    androidx.compose.foundation.layout.FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        PlantUse.entries.forEach { use ->
-            val on = state.hasUse(use)
-            val tint = if (use == PlantUse.EDIBLE) colors.ok else colors.accent
-            Text(
-                text = if (on) "${use.label} ✓" else use.label,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
-                color = if (on) tint else colors.muted,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(if (on) colors.accentSoft else colors.card)
-                    .border(1.dp, if (on) tint else colors.rule, RoundedCornerShape(999.dp))
-                    .clickable { onToggleUse(use) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-            )
-        }
-    }
-
-    Text(
-        text = state.dukeLabel,
-        style = MaterialTheme.typography.labelSmall,
-        color = colors.muted,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.codeBg)
-            .padding(10.dp),
-    )
-
-    state.noteCaution?.let { caution ->
-        Text(
-            text = "⚠ $caution",
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.stop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(colors.stopSoft)
-                .padding(10.dp),
-        )
-    }
-    if (state.noteEditable) {
-        FieldEditor(
-            value = state.fields.usesNote.orEmpty(),
-            placeholder = "Which part, when — and any caution",
-            onValueChange = onEditUsesNote,
-        )
-    } else {
-        Text(
-            text = if (state.noteCaution != null) {
-                "The caution above is saved whether or not you tag a use. Tag one to add a " +
-                    "note of your own."
-            } else {
-                "Tag a use to add a note."
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.faint,
-        )
-    }
-
-    Text(
-        text = USES_DISCLAIMER,
-        style = MaterialTheme.typography.labelSmall,
-        color = colors.faint,
     )
 }
 
@@ -729,8 +615,6 @@ private fun PreviewConfirmCard() {
             onEditField = { _, _ -> },
             onToggleKingdom = {},
             onSelectTaxClass = {},
-            onToggleUse = {},
-            onEditUsesNote = {},
             onAccept = {},
         )
     }
@@ -758,8 +642,6 @@ private fun previewCard() = ConfirmSpeciesUiState.Card(
     ),
     editedFields = emptySet(),
     habitatSource = "wikipedia:section:Distribution and habitat",
-    duke = null,
-    dukeConsulted = false,
     lookupFailed = false,
     noMatch = false,
     ecosystems = listOf(
@@ -771,10 +653,3 @@ private fun previewCard() = ConfirmSpeciesUiState.Card(
     handEditing = false,
     saving = false,
 )
-
-/** The chip words for the two use tags; the enum's wire names are storage, not copy. */
-private val PlantUse.label: String
-    get() = when (this) {
-        PlantUse.EDIBLE -> "Food source"
-        PlantUse.MEDICINAL -> "Medicinal"
-    }

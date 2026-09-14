@@ -1,7 +1,7 @@
 package dev.tlong.biodex.ui.detail
 
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
@@ -94,7 +94,6 @@ class EntryDetailStateTest {
                 regionId = "pacific",
                 regionName = "Pacific USA",
                 animals = dev.tlong.biodex.domain.Meter(caught = 1, total = 120),
-                plants = dev.tlong.biodex.domain.Meter(0, 0),
                 perClass = emptyList(),
                 perEcosystem = emptyList(),
             ),
@@ -104,31 +103,31 @@ class EntryDetailStateTest {
     }
 
     @Test
-    fun `a plant's reveal counts the plant meter, not both lists added together`() {
-        val elder = detail(listOf("riparian-wetland")).let {
+    fun `a fungus's reveal counts the fungi meter, not both lists added together`() {
+        val agaric = detail(listOf("coastal-rainforest")).let {
             it.copy(
                 summary = it.summary.copy(
-                    id = "blue-elderberry",
-                    kingdom = Kingdom.PLANT,
-                    taxClass = TaxClass.SHRUB,
+                    id = "fly-agaric",
+                    kingdom = Kingdom.FUNGUS,
+                    taxClass = TaxClass.MUSHROOM,
                 ),
             )
         }
         val s = state(
-            elder,
+            agaric,
             progress = dev.tlong.biodex.domain.DexProgress(
                 regionId = "pacific",
                 regionName = "Pacific USA",
-                animals = dev.tlong.biodex.domain.Meter(caught = 47, total = 120),
-                plants = dev.tlong.biodex.domain.Meter(caught = 4, total = 80),
+                animals = dev.tlong.biodex.domain.Meter(caught = 47, total = 224),
                 perClass = emptyList(),
                 perEcosystem = emptyList(),
+                fungi = dev.tlong.biodex.domain.Meter(caught = 4, total = 30),
             ),
         )
 
-        // S10: "4 / 80 plants". 51 / 200 would be a number the user never sees anywhere else.
+        // S10: "4 / 30 fungi". 51 / 254 would be a number the user never sees anywhere else.
         assertEquals(4, s.caughtCount)
-        assertEquals(80, s.totalCount)
+        assertEquals(30, s.totalCount)
     }
 
     @Test
@@ -199,17 +198,15 @@ class EntryDetailStateTest {
                 summary = it.summary.copy(
                     kingdom = Kingdom.ANIMAL,
                     taxClass = TaxClass.BIRD,
-                    uses = setOf(PlantUse.EDIBLE),
+                    uses = setOf(SpeciesUse.EDIBLE),
                 ),
             )
         }
         val uses = state(goose).uses
         assertTrue("a tagged animal must show the tag", uses != null)
-        assertEquals(setOf(PlantUse.EDIBLE), uses!!.uses)
-        // No note and no Duke's line: the catalogue refuses to write either for an animal.
+        assertEquals(setOf(SpeciesUse.EDIBLE), uses!!.uses)
+        // No note: the catalogue refuses to write one for an animal.
         assertNull(uses.usesNote)
-        assertEquals(0, uses.medicinalRecordCount)
-        assertNull(uses.usesAttribution)
     }
 
     // -----------------------------------------------------------------------

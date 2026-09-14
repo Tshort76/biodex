@@ -22,7 +22,7 @@ class TileStateTest {
     private fun species(
         caught: Boolean,
         thumbPath: String?,
-        kingdom: Kingdom = Kingdom.PLANT,
+        kingdom: Kingdom = Kingdom.FUNGUS,
         imageUrl: String? = ORIGINAL,
         preferOwnPhoto: Boolean = false,
     ) = SpeciesSummary(
@@ -33,9 +33,9 @@ class TileStateTest {
         detailsPending = false,
         commonName = "Oregon Grape",
         scientificName = "Mahonia aquifolium",
-        taxClass = if (kingdom == Kingdom.PLANT) TaxClass.SHRUB else TaxClass.BIRD,
+        taxClass = if (kingdom == Kingdom.FUNGUS) TaxClass.MUSHROOM else TaxClass.BIRD,
         kingdom = kingdom,
-        silhouetteRes = "sil_shrub",
+        silhouetteRes = "sil_mushroom",
         ecosystemIds = emptyList(),
         caughtAt = if (caught) 1L else null,
         thumbPath = thumbPath,

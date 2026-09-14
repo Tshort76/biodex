@@ -47,7 +47,7 @@ data class EntryDetailUiState(
     val favoriteCaptureId: String? get() = captures.firstOrNull()?.id
 
     /**
-     * The plant-only uses section (M24). Null for an animal, and null for a plant
+     * The uses section (M24, D48). Null for a species
      * with **nothing to say** — no use tags and no caution — in which case habitat is followed
      * straight by the photo strip and nothing is drawn, not an empty section.
      *
@@ -64,22 +64,15 @@ data class EntryDetailUiState(
     val uses: UsesContent?
         get() {
             val species = detail ?: return null
-            // Every kingdom reaches here now. It used to be plants only, which meant every
-            // fungal caution ever written was invisible: thirty of them, enforced by a build
-            // rule, reviewed by hand, and never once drawn on a screen. A fungus reaches here
-            // on a caution alone — it has no tags and no Duke's data by construction — so the
-            // section it gets is the one sentence and nothing else. D48 lets an animal in on
-            // the edible tag, and the guard below is what keeps the other 97 animals out: no
-            // tag and no caution is still no section.
+            // Every kingdom reaches here. It used to be plants only, which meant every fungal
+            // caution ever written was invisible: thirty of them, reviewed by hand, and never
+            // once drawn on a screen. A fungus reaches here on a caution alone — it has no tags
+            // by construction — so the section it gets is the one sentence and nothing else.
+            // D48 lets an animal in on the edible tag, and the guard below is what keeps the
+            // other animals out: no tag and no caution is still no section.
             val (_, caution) = UsesNote.cautionSplit(species.usesNote)
             if (species.summary.uses.isEmpty() && caution == null) return null
-            return UsesContent(
-                uses = species.summary.uses,
-                usesNote = species.usesNote,
-                medicinalActivities = species.medicinalActivities,
-                medicinalRecordCount = species.medicinalRecordCount,
-                usesAttribution = species.usesAttribution,
-            )
+            return UsesContent(uses = species.summary.uses, usesNote = species.usesNote)
         }
 }
 
@@ -102,7 +95,7 @@ fun entryDetailUiState(
             detail = species,
             ecosystemNames = ecosystemNamesFor(species, ecos),
             captures = caps,
-            // S10's reveal counts the species' own kingdom — "4 / 80 plants", never the
+            // S10's reveal counts the species' own kingdom — "4 / 30 fungi", never the
             // two lists added together. Slice 11 adds the label; the number is right from
             // the moment plants exist, which is what stops the reveal reading 1/200 for
             // the hours between slice 10's asset and slice 11's UI.

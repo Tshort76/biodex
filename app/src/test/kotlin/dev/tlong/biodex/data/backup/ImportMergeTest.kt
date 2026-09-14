@@ -221,6 +221,29 @@ class ImportMergeTest {
     }
 
     @Test
+    fun `a plant from an older archive is skipped, and its captures with it`() {
+        // D59. `Kingdom.PLANT` is gone; restored under the enum's fallback the row would be
+        // an animal with a plant's number. The archive spells the kingdom and the class the
+        // old way, and either word alone is enough to refuse the row.
+        val byKingdom = userSpecies("user-1", 1001).copy(kingdom = "plant", taxClass = "shrub")
+        val byClassAlone = userSpecies("user-2", 1002).copy(taxClass = "fern")
+        val plan = planImport(
+            manifest(
+                species = listOf(byKingdom, byClassAlone, userSpecies("user-3", 1003)),
+                entries = listOf(BackupEntry("user-1", 10L, null)),
+                captures = listOf(archivedCapture("cap1", speciesId = "user-1")),
+            ),
+            freshInstall,
+        )
+
+        assertEquals(listOf("user-3"), plan.speciesToInsert.map { it.id })
+        assertEquals(2, plan.report.plantSpeciesSkipped)
+        assertEquals(1, plan.report.capturesWithoutSpecies)
+        assertTrue(plan.capturesToInsert.isEmpty())
+        assertTrue(plan.entriesToWrite.isEmpty())
+    }
+
+    @Test
     fun `restored user species are renumbered onto the current base, in manifest order`() {
         val plan = planImport(
             manifest(species = listOf(userSpecies("user-1", 1001), userSpecies("user-2", 1002))),

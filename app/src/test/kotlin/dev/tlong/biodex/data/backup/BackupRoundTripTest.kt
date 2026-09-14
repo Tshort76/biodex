@@ -253,39 +253,36 @@ class BackupRoundTripTest {
 
     // -----------------------------------------------------------------------
     // The BioDex manifest fields (11.1). An archive outlives the app that wrote it, so
-    // both directions matter: a plant must survive the round trip, and a v3 archive
-    // written before plants existed must still open.
+    // both directions matter: a fungus must survive the round trip with its kingdom, and
+    // a v3 archive written before the second kingdom existed must still open.
     // -----------------------------------------------------------------------
 
     @Test
-    fun `a plant round-trips with its kingdom, uses, note and Duke's columns`() = runBlocking {
-        val elder = BackupSpecies(
+    fun `a fungus round-trips with its kingdom, uses and note`() = runBlocking {
+        val agaric = BackupSpecies(
             id = "user-2",
             source = "user",
             dexNumber = 9002,
-            commonName = "Blue Elderberry",
-            taxClass = "shrub",
-            silhouetteRes = "sil_shrub",
-            kingdom = "plant",
-            uses = listOf("edible", "medicinal"),
-            usesNote = "Berries, late summer. Caution: raw berries are toxic.",
-            medicinalActivities = listOf("astringent", "diuretic"),
-            medicinalRecordCount = 60,
-            usesAttribution = "Dr. Duke's · USDA ARS · CC0",
+            commonName = "Fly Agaric",
+            taxClass = "mushroom",
+            silhouetteRes = "sil_mushroom",
+            kingdom = "fungus",
+            uses = listOf("edible"),
+            usesNote = "Under birches. Caution: hallucinogenic and toxic raw.",
         )
-        // An export with nothing caught writes no archive at all, so the plant needs a
+        // An export with nothing caught writes no archive at all, so the species needs a
         // capture behind it — which is also the only way a user-added species exists.
-        val photo = capture("plant-shot", speciesId = "user-2")
+        val photo = capture("agaric-shot", speciesId = "user-2")
         val gateway = FakeBackupGateway(
-            ownedFiles = mutableMapOf("thumbnails/plant-shot.jpg" to "thumb".toByteArray()),
+            ownedFiles = mutableMapOf("thumbnails/agaric-shot.jpg" to "thumb".toByteArray()),
             gallery = mutableMapOf(photo.photoUri!! to "full".toByteArray()),
-            refs = mutableMapOf("plant-shot" to PhotoRef.Available(photo.photoUri!!)),
+            refs = mutableMapOf("agaric-shot" to PhotoRef.Available(photo.photoUri!!)),
         )
         val store = FakeBackupStore(
             snapshot = BackupSnapshot(
                 regionId = "pacific",
-                species = listOf(owl, elder),
-                entries = listOf(BackupEntry("user-2", 100L, "plant-shot")),
+                species = listOf(owl, agaric),
+                entries = listOf(BackupEntry("user-2", 100L, "agaric-shot")),
                 captures = listOf(photo),
             ),
         )
@@ -295,12 +292,9 @@ class BackupRoundTripTest {
             .species.single { it.id == "user-2" }
 
         assertEquals("BioDex", manifestOf(gateway.archives.values.single()).app)
-        assertEquals("plant", restored.kingdom)
-        assertEquals(listOf("edible", "medicinal"), restored.uses)
-        assertEquals("Berries, late summer. Caution: raw berries are toxic.", restored.usesNote)
-        assertEquals(listOf("astringent", "diuretic"), restored.medicinalActivities)
-        assertEquals(60, restored.medicinalRecordCount)
-        assertEquals("Dr. Duke's · USDA ARS · CC0", restored.usesAttribution)
+        assertEquals("fungus", restored.kingdom)
+        assertEquals(listOf("edible"), restored.uses)
+        assertEquals("Under birches. Caution: hallucinogenic and toxic raw.", restored.usesNote)
     }
 
     @Test
@@ -322,10 +316,8 @@ class BackupRoundTripTest {
         assertEquals("animal", species.kingdom)
         assertTrue(species.uses.isEmpty())
         assertNull(species.usesNote)
-        assertEquals(0, species.medicinalRecordCount)
-        assertNull(species.usesAttribution)
 
-        // And its 1001 is re-based, because that number now sits among the plants.
+        // And its 1001 is re-based onto the user block.
         val plan = planImport(manifest, LocalSnapshot())
         assertEquals(9001, plan.speciesToInsert.single().dexNumber)
     }

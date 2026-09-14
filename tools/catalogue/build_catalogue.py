@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
 """Build the bundled Pacific USA catalogue asset from the curated species lists.
 
-Reads four hand-authored inputs — `region.json` (header + the seven ecosystems),
-`curated_animals.json` (120 animals), `curated_plants.json` (80 plants) and
-`curated_fungi.json` (30 fungi) — enriches each entry from GBIF,
-Wikipedia/Wikimedia Commons and Dr. Duke's ethnobotanical database (plants
-only), and writes `app/src/main/assets/catalogue/pacific.json` in the shape
-ARCHITECTURE.md sections 3.2 and 11.1 specify, plus `duke_ethnobot.json` beside
-it.
+Reads three hand-authored inputs — `region.json` (header + the seven ecosystems),
+`curated_animals.json` (224 animals) and `curated_fungi.json` (30 fungi) —
+enriches each entry from GBIF and Wikipedia/Wikimedia Commons, and writes
+`app/src/main/assets/catalogue/pacific.json` in the shape ARCHITECTURE.md
+sections 3.2 and 11.1 specify.
 
-Dr. Duke's is ethnobotanical and has no fungal records at all, so the fungi half
-of the build has no medicinal join and — the part that matters — no `Poison`
-record to make a caution mandatory. Every fungal caution is the curator's own
-sentence, checked by nothing, and the build enforces what it can instead: a
-fungus carries no use tag, ever, and its note must be a `Caution:` sentence that
-makes no claim about edibility. See DESIGN-identification.md 8.1 / M35 / S15.
+Plants left the catalogue in v8 (DESIGN.md D59, ARCHITECTURE.md 12.2), and the
+Dr. Duke's ethnobotanical join went with them. No dataset decides a fungal
+caution: every one is the curator's own sentence, checked by nothing, and the
+build enforces what it can instead — a fungus carries no use tag, ever, and its
+note must be a `Caution:` sentence that makes no claim about edibility (M35).
 
 Usage:
     python3 build_catalogue.py                       # default --out path
     python3 build_catalogue.py --out /some/where.json
     python3 build_catalogue.py --refresh             # ignore the cache
-    python3 build_catalogue.py --plants /tmp/x.json  # swap an input file
-    python3 build_catalogue.py --fungi /tmp/f.json   # ditto for the fungi
+    python3 build_catalogue.py --fungi /tmp/f.json   # swap an input file
 
 Standard library only (no `requests` on this machine).  Every HTTP response is
 cached under `cache/`, so a re-run makes zero requests.
@@ -51,25 +47,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CACHE_DIR = HERE / "cache"
-DUKE_CACHE_DIR = CACHE_DIR / "duke"
 ASSET_DIR = HERE / ".." / ".." / "app" / "src" / "main" / "assets" / "catalogue"
 DEFAULT_OUT = ASSET_DIR / "pacific.json"
 
 USER_AGENT = "BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)"
 
-# Dr. Duke's Phytochemical and Ethnobotanical Databases (USDA ARS), CC0.
-# The data.gov and Ag Data Commons landing pages 403 a plain fetch; the figshare
-# API resolves the real download URL, so that is the route the script takes.
-DUKE_ARTICLE_API = "https://api.figshare.com/v2/articles/24660351/files"
-DUKE_ZIP_NAME = "Duke-Source-CSV.zip"
-DUKE_ETHNOBOT_CSV = "ETHNOBOT.csv"
-DUKE_ATTRIBUTION = "Dr. Duke's Phytochemical and Ethnobotanical Databases · USDA ARS · CC0"
-
-# 11.2: the one rule the pipeline and the app's DukeIndex both implement.
-MEDICINAL_ACTIVITY_THRESHOLD = 3
-MEDICINAL_ACTIVITY_CAP = 8
-
-PLANT_CLASSES = ("tree", "shrub", "herb", "fern")
 FUNGUS_CLASSES = ("mushroom", "bracket", "other_fungus")
 USES_NOTE_MAX_CHARS = 240
 
@@ -91,10 +73,9 @@ EDIBILITY_RE = re.compile(
     re.I,
 )
 
-# `collect_uses_review`'s section filter for fungi. A mushroom article keeps what
-# a caution has to be written from under "Toxicity", "Similar species" and
-# "Identification" rather than under "Uses", so the plant word list would walk
-# straight past it.
+# `collect_uses_review`'s section filter. A mushroom article keeps what a caution
+# has to be written from under "Toxicity", "Similar species" and "Identification"
+# rather than under "Uses", so the generic word list would walk straight past it.
 FUNGI_REVIEW_WORDS = (
     "toxic", "poison", "similar", "look-alike", "lookalike", "confus",
     "identif", "edib", "safety", "uses",
@@ -188,8 +169,8 @@ def fetch_json(url: str, *, refresh: bool = False, delay: float = 0.0):
 def fetch_bytes(url: str, dest: Path, *, refresh: bool = False) -> bytes:
     """GET `url` as bytes into `dest`, reusing the file on a re-run.
 
-    Used for the one large binary the pipeline needs (Duke's 5.8 MB zip), which
-    the sha1-keyed JSON cache is the wrong shape for.
+    Used for the large binaries the pipeline needs (the Natural Earth land zip),
+    which the sha1-keyed JSON cache is the wrong shape for.
     """
     global HTTP_REQUESTS, CACHE_HITS
     if dest.exists() and not refresh:
@@ -252,64 +233,6 @@ def tax_class_for(gbif_class: str | None, phylum: str | None = None) -> str:
     if (phylum or "").strip().lower() == "chordata":
         return "fish"
     return "other_invertebrate"
-
-
-def gbif_synonyms(usage_key, accepted_name, refresh: bool):
-    """The accepted taxon's synonyms that keep its specific epithet.
-
-    R15: Duke's keys on genus and species strings from its own era, so an
-    accepted name GBIF has since moved (Oregon grape *Berberis* / *Mahonia*,
-    crabapple *Pyrus* / *Malus*, yerba buena *Satureja* / *Micromeria*) misses
-    on the first try. This is one extra cached request per plant.
-
-    **Only same-epithet synonyms are returned, and that filter is the whole
-    safety story here.** GBIF's synonym list also carries taxa its backbone has
-    lumped, and those are different plants: it offers *Chamaecyparis lawsoniana*
-    (Port Orford cedar) for coast redwood, *Platanus occidentalis* (the eastern
-    sycamore) for the California one, and *Quercus lyrata* for valley oak.
-    Joining Duke's on any of those would attach one plant's traditional uses to
-    another and read perfectly plausibly. A genuine nomenclatural synonym almost
-    always keeps the epithet when the genus moves, so the epithet is the check;
-    the gender variants Latin allows (*Oplopanax horridus* / *horridum*) fall
-    outside it and are what the curator's `dukeName` pin exists for.
-    """
-    if not usage_key:
-        return []
-    url = f"https://api.gbif.org/v1/species/{usage_key}/synonyms?limit=100"
-    payload = fetch_json(url, refresh=refresh, delay=DELAY_GBIF)[0] or {}
-    names = []
-    for result in payload.get("results", []):
-        # On a synonym record GBIF's classification fields (kingdom..species)
-        # describe the ACCEPTED taxon, not the synonym — reading `species` here
-        # returns the accepted name every time. The synonym's own name is
-        # `canonicalName`.
-        name = result.get("canonicalName") or result.get("scientificName")
-        if not name:
-            continue
-        parts = name.split()
-        if len(parts) >= 2:
-            binomial = f"{parts[0]} {parts[1]}"
-            if binomial not in names:
-                names.append(binomial)
-    epithet = (accepted_name or "").split()[-1].lower() if accepted_name else None
-    if epithet:
-        names = [n for n in names if n.split()[1].lower() == epithet]
-    return names
-
-
-def plant_silhouette(plant_class: str, gbif_class, gbif_order) -> str:
-    """The one automated decision that leans on GBIF's plant taxonomy (R10).
-
-    GBIF is inconsistent about conifers — sometimes class Pinopsida, sometimes
-    only order Pinales — so both are checked and broadleaf is the fallback.
-    """
-    if plant_class != "tree":
-        return f"sil_{plant_class}"
-    if (gbif_class or "").strip().lower() == "pinopsida":
-        return "sil_tree_conifer"
-    if (gbif_order or "").strip().lower() == "pinales":
-        return "sil_tree_conifer"
-    return "sil_tree_broadleaf"
 
 
 # --------------------------------------------------------------------------
@@ -784,135 +707,6 @@ def strip_html(value: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# Dr. Duke's ethnobotanical database (CC0)
-# --------------------------------------------------------------------------
-
-def duke_binomial(name: str) -> str:
-    """Normalise a name to the `genus species` key the Duke's index uses.
-
-    Lower-cased and whitespace-collapsed, per R15; anything stranger than that
-    is handled by the curator's `dukeName` pin rather than by more heuristics.
-    """
-    parts = re.sub(r"\s+", " ", (name or "").strip()).split(" ")
-    if len(parts) < 2:
-        return ""
-    return f"{parts[0].lower()} {parts[1].lower()}"
-
-
-def download_duke(refresh: bool) -> bytes:
-    """Fetch Duke-Source-CSV.zip, resolving the URL through the figshare API."""
-    zip_path = DUKE_CACHE_DIR / DUKE_ZIP_NAME
-    if zip_path.exists() and not refresh:
-        return fetch_bytes("", zip_path, refresh=False)
-    listing = fetch_json(DUKE_ARTICLE_API, refresh=refresh, delay=DELAY_GBIF)[0] or []
-    download_url = None
-    for item in listing:
-        if item.get("name") == DUKE_ZIP_NAME:
-            download_url = item.get("download_url")
-            break
-    if not download_url:
-        raise SystemExit(
-            f"figshare article listing did not name {DUKE_ZIP_NAME}; "
-            f"check {DUKE_ARTICLE_API} by hand"
-        )
-    return fetch_bytes(download_url, zip_path, refresh=refresh)
-
-
-def build_duke_index(refresh: bool):
-    """`{"genus species": {"a": [activities], "n": count, "p": poison}}`.
-
-    `n` and `a` both EXCLUDE `Poison` records — `n` is `medicinalRecordCount`
-    and `a` is `medicinalActivities`, so the bundled asset and the pipeline's
-    own numbers are the same numbers. `p` is the poison flag the caution rule
-    and the confirm card read.
-    """
-    data = download_duke(refresh)
-    with zipfile.ZipFile(io.BytesIO(data)) as archive:
-        raw = archive.read(DUKE_ETHNOBOT_CSV)
-    text = raw.decode("utf-8-sig", errors="replace")
-    rows = csv.DictReader(io.StringIO(text))
-
-    activities = defaultdict(list)
-    poison = set()
-    total_rows = 0
-    for row in rows:
-        total_rows += 1
-        key = duke_binomial(f"{row.get('GENUS', '')} {row.get('SPECIES', '')}")
-        if not key:
-            continue
-        activity = re.sub(r"\s+", " ", (row.get("ACTIVITY") or "").strip())
-        if not activity:
-            continue
-        if activity.lower() == "poison":
-            poison.add(key)
-            continue
-        activities[key].append(activity)
-
-    index = {}
-    for key in set(activities) | poison:
-        counts = Counter(activities.get(key, []))
-        index[key] = {
-            "a": [name.title() for name, _ in counts.most_common(MEDICINAL_ACTIVITY_CAP)],
-            "n": sum(counts.values()),
-            "p": key in poison,
-            # Not written to the asset — the medicinal rule counts distinct
-            # activities, and the report shows both numbers.
-            "_distinct": len(counts),
-        }
-    return index, total_rows
-
-
-def duke_lookup(index, accepted: str, synonyms, pinned):
-    """First hit wins: accepted name, then each GBIF synonym, then the pin.
-
-    Returns `(record, provenance)` where provenance is one of `duke:accepted`,
-    `duke:synonym:<Name>`, `duke:pinned:<Name>` or `duke:none`.
-    """
-    key = duke_binomial(accepted)
-    if key in index:
-        return index[key], "duke:accepted"
-    for synonym in synonyms:
-        key = duke_binomial(synonym)
-        if key in index:
-            return index[key], f"duke:synonym:{synonym}"
-    if pinned:
-        key = duke_binomial(pinned)
-        if key in index:
-            return index[key], f"duke:pinned:{pinned}"
-    return None, "duke:none"
-
-
-def write_duke_asset(index, path: Path):
-    """The bundled lookup table the app's DukeIndex reads (11.3).
-
-    Shape, frozen here because slice 12 parses it:
-
-        {"format": "biodex-duke-1", "source": ..., "license": "CC0",
-         "taxa": {"genus species": {"a": ["Astringent", ...], "n": 105, "p": true}}}
-
-    Activity names are stored inline rather than through a string table: the
-    whole file lands near 1.1 MB either way, and an inline map is what a
-    twelve-taxon test fixture can be cut out of by hand.
-    """
-    taxa = {}
-    for key, record in sorted(index.items()):
-        taxa[key] = {"a": record["a"], "n": record["n"], "p": record["p"]}
-    document = {
-        "format": "biodex-duke-1",
-        "source": "Dr. Duke's Phytochemical and Ethnobotanical Databases, USDA ARS",
-        "license": "CC0",
-        "attribution": DUKE_ATTRIBUTION,
-        "note": "n and a exclude Poison records; p is true when any Poison record exists.",
-        "taxa": taxa,
-    }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
-        json.dump(document, fh, ensure_ascii=False, separators=(",", ":"))
-        fh.write("\n")
-    return path.stat().st_size
-
-
-# --------------------------------------------------------------------------
 # Assembly
 # --------------------------------------------------------------------------
 
@@ -933,9 +727,9 @@ def collect_uses_review(title, sections, refresh, common, uses_review, words=USE
     the asset's `provenance.uses` is always "curated" for the edible half
     (11.3 step 3). Nothing here is copied into the catalogue.
 
-    `words` selects which section titles count. Plants want the uses sections;
-    fungi want toxicity, similar species and identification, which is where the
-    material for a caution actually lives (FUNGI_REVIEW_WORDS).
+    `words` selects which section titles count. Fungi want toxicity, similar
+    species and identification, which is where the material for a caution
+    actually lives (FUNGI_REVIEW_WORDS).
     """
     for section in sections:
         line = (section.get("line") or "").strip()
@@ -954,7 +748,7 @@ def fetch_wikipedia(
 ):
     """The Wikipedia/Commons half of a record, shared by all three kingdoms.
 
-    `uses_review` is the curator aid the plant and fungus paths pass: when a list
+    `uses_review` is the curator aid the fungus path passes: when a list
     is given, any section whose title matches `review_words` is stripped and
     appended for review. Nothing it collects ever reaches the asset (11.3 step 3).
     """
@@ -1105,17 +899,11 @@ def build_species(entry, ecosystem_ids, refresh, report):
         "silhouetteRes": f"sil_{tax_class}",
         # D48: an animal carries the edible tag when the curator marked it
         # `foodSource` — game and the shellfish and insects that are eaten. It is
-        # the tag and nothing else: the medicinal half stays plant-only, because
-        # Duke's is a plant database, and no note is written, because a season and
-        # a bag limit are a regulator's answer and change every year.
+        # the tag and nothing else: no note is written, because a season and a
+        # bag limit are a regulator's answer and change every year.
         "kingdom": "animal",
         "uses": ["edible"] if entry.get("foodSource") else [],
         "usesNote": None,
-        "medicinalActivities": [],
-        "medicinalRecordCount": 0,
-        # None even when tagged: this field credits *Duke's*, and the screen renders
-        # it as "Medicinal: <attribution>".
-        "usesAttribution": None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(accepted_usage_key(match), refresh),
         # D36: the taxonomic path, for the hop count on Nearest Five.
@@ -1171,7 +959,7 @@ def has_caution(note) -> bool:
 def kept_uses_note(note, uses):
     """The app's `keptUsesNote` (domain/UserSpecies.kt), in Python.
 
-    A tagged plant keeps its note whole. An untagged one keeps the `Caution:`
+    A tagged species keeps its note whole. An untagged one keeps the `Caution:`
     sentence and nothing else — the rest of a note describes a use no longer
     claimed, but a warning outlives the tags it arrived with. Slice 12 made this
     the rule on the user-added write path, on backup restore and in the curated
@@ -1184,142 +972,6 @@ def kept_uses_note(note, uses):
     if uses:
         return text
     return caution_split(text)[1]
-
-
-def build_plant(entry, ecosystem_ids, duke_index, refresh, report, uses_review):
-    common = entry["commonName"]
-    curated_sci = entry["scientificName"]
-    plant_class = entry.get("plantClass")
-    slug = slugify(common)
-    prov = {}
-    warnings = []
-
-    if plant_class not in PLANT_CLASSES:
-        raise SystemExit(f"{common}: plantClass must be one of {PLANT_CLASSES}, got {plant_class!r}")
-
-    # --- GBIF -------------------------------------------------------------
-    match = gbif_match(curated_sci, refresh) or {}
-    accepted = match.get("species") or match.get("canonicalName") or curated_sci
-    match_type = match.get("matchType", "NONE")
-    confidence = match.get("confidence", 0)
-    rank = match.get("rank")
-    gbif_class = match.get("class")
-    gbif_order = match.get("order")
-    gbif_kingdom = match.get("kingdom")
-    # A SYNONYM match resolves to the accepted taxon, which is the one that
-    # has synonyms and the one that has occurrence records.
-    usage_key = accepted_usage_key(match)
-
-    if (gbif_kingdom or "").strip().lower() != "plantae":
-        raise SystemExit(
-            f"{common}: declared a plant but GBIF matched '{accepted}' in "
-            f"kingdom {gbif_kingdom or 'NONE'}"
-        )
-    prov["kingdom"] = f"gbif:kingdom:{gbif_kingdom}"
-    prov["scientificName"] = "gbif"
-    prov["taxClass"] = "curated"  # growth form is editorial judgment (D13)
-
-    if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
-        warnings.append(
-            f"GBIF {match_type}/{confidence}%/{match.get('status')} "
-            f"curated='{curated_sci}' accepted='{accepted}'"
-        )
-    if rank and rank != "SPECIES":
-        warnings.append(f"GBIF rank is {rank}, not SPECIES")
-    if plant_class == "fern" and (gbif_class or "").strip().lower() != "polypodiopsida":
-        warnings.append(f"plantClass is fern but GBIF class is {gbif_class or 'NONE'}")
-
-    silhouette = plant_silhouette(plant_class, gbif_class, gbif_order)
-    prov["silhouetteRes"] = f"gbif:class:{gbif_class}/order:{gbif_order}"
-
-    # --- Duke's -----------------------------------------------------------
-    synonyms = gbif_synonyms(usage_key, accepted, refresh)
-    record, duke_prov = duke_lookup(duke_index, accepted, synonyms, entry.get("dukeName"))
-    prov["duke"] = duke_prov
-
-    activities = record["a"] if record else []
-    record_count = record["n"] if record else 0
-    distinct = record["_distinct"] if record else 0
-    poison = bool(record and record["p"])
-
-    medicinal = distinct >= MEDICINAL_ACTIVITY_THRESHOLD
-    override_medicinal = (entry.get("overrides") or {}).get("medicinal")
-    if override_medicinal is not None:
-        medicinal = bool(override_medicinal)
-        medicinal_prov = "override"
-    else:
-        medicinal_prov = duke_prov
-
-    if not record:
-        report["duke_no_record"].append(f"{common} ({accepted})")
-    elif duke_prov.startswith("duke:synonym") or duke_prov.startswith("duke:pinned"):
-        report["duke_indirect"].append(f"{common} ({accepted}) matched via {duke_prov}")
-    if poison:
-        report["duke_poison"].append(f"{common} ({accepted})")
-
-    edible = bool(entry.get("edible"))
-    uses = (["edible"] if edible else []) + (["medicinal"] if medicinal else [])
-    # The two tags have different provenance and the asset says which is which
-    # (D14): edible is the curator's, medicinal is Duke's or an explicit pin.
-    prov["uses"] = {"edible": "curated", "medicinal": medicinal_prov}
-
-    uses_note = entry.get("usesNote")
-
-    # --- Wikipedia (and the curator's uses-review aid) ----------------------
-    wiki = fetch_wikipedia(entry, accepted, common, refresh, report, prov, warnings, uses_review)
-
-    record_out = {
-        "id": slug,
-        "dexNumber": entry["dexNumber"],
-        "commonName": common,
-        "scientificName": accepted,
-        "taxClass": plant_class,
-        "kingdom": "plant",
-        "ecosystemIds": entry["ecosystemIds"],
-        "habitatText": wiki["habitatText"],
-        "description": wiki["description"],
-        "imageUrl": wiki["imageUrl"],
-        "infoUrl": wiki["infoUrl"],
-        "imageAttribution": wiki["imageAttribution"],
-        "silhouetteRes": silhouette,
-        "uses": uses,
-        "usesNote": kept_uses_note(uses_note, uses),
-        # These three come straight from the Duke's hit, tag or no tag: they are
-        # what the source recorded, and the `medicinal` tag is a rule applied on
-        # top of them rather than a filter over them.
-        "medicinalActivities": activities,
-        "medicinalRecordCount": record_count,
-        "usesAttribution": DUKE_ATTRIBUTION if activities else None,
-        # D34: where GBIF holds records of this species, as grid cells.
-        "rangeCells": range_cells(usage_key, refresh),
-        # D36: the taxonomic path, for the hop count on Nearest Five.
-        "lineage": lineage(match),
-        "provenance": prov,
-        # Pipeline-internal, stripped before the asset is written.
-        "_poison": poison,
-        "_dukeMatchedName": (
-            accepted if duke_prov == "duke:accepted"
-            else duke_prov.split(":", 2)[2] if record else None
-        ),
-        "_dukeDistinct": distinct,
-        "_dukeRecordCount": record_count,
-        "_curatedNote": uses_note,
-    }
-
-    for field, value in (entry.get("overrides") or {}).items():
-        if field == "medicinal":
-            continue  # already folded into the uses tag above
-        record_out[field] = value
-        prov[field] = "override"
-
-    for warn in warnings:
-        report["gbif_warnings"].append(f"P{entry['dexNumber']:03d} {common}: {warn}")
-
-    unknown_eco = [e for e in entry["ecosystemIds"] if e not in ecosystem_ids]
-    if unknown_eco:
-        raise SystemExit(f"{common}: undeclared ecosystemIds {unknown_eco}")
-
-    return record_out
 
 
 def drop_edibility_sentences(text, dropped):
@@ -1349,12 +1001,11 @@ def drop_edibility_sentences(text, dropped):
 
 
 def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
-    """One fungal record. The plant builder minus Dr. Duke's, plus two guards.
+    """One fungal record. The animal builder plus a caution and two guards.
 
-    Duke's is ethnobotanical: it has no fungal taxa, so there is no medicinal
-    join, no activities, no record count — and no `Poison` row to make a caution
-    mandatory the way 11.3 does for plants. The two guards stand in for what the
-    source cannot do here:
+    No dataset sources a fungal caution or makes one mandatory, so the curator's
+    sentence is checked by nothing. The two guards stand in for what no source
+    can do here:
 
       1. A fungus carries `uses: []` unconditionally. Not "usually empty" —
          there is no input, no override and no derivation that can put a tag on
@@ -1400,14 +1051,13 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
         )
     prov["kingdom"] = f"gbif:kingdom:{gbif_kingdom}"
     prov["scientificName"] = "gbif"
-    # Growth form, like the plant classes, is editorial judgment (D13): GBIF's
+    # Growth form is editorial judgment (D13): GBIF's
     # orders cut across cap-and-stem and shelf, so the curator names it.
     prov["taxClass"] = "curated"
     prov["silhouetteRes"] = "curated"
     # Written out rather than left absent, so a reader of the asset can see that
     # the empty uses list is a rule and not a species that happened to miss one.
     prov["uses"] = "none:fungi-carry-no-uses"
-    prov["duke"] = "duke:not-applicable:no-fungal-taxa"
 
     if match_type != "EXACT" or confidence < 95 or match.get("status") not in (None, "ACCEPTED"):
         warnings.append(
@@ -1455,9 +1105,6 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
         # app applies on import — so what is written here is what will render.
         "uses": [],
         "usesNote": kept_uses_note(uses_note, []),
-        "medicinalActivities": [],
-        "medicinalRecordCount": 0,
-        "usesAttribution": None,
         # D34: where GBIF holds records of this species, as grid cells.
         "rangeCells": range_cells(accepted_usage_key(match), refresh),
         # D36: the taxonomic path, for the hop count on Nearest Five.
@@ -1475,9 +1122,8 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
     # The assertion the whole builder exists to make, taken after the overrides
     # so nothing applied last can undo it. A plain `assert` would vanish under
     # `python3 -O`, and this one is a safety rule rather than a sanity check.
-    if record_out["uses"] or record_out["medicinalActivities"] \
-            or record_out["medicinalRecordCount"] or record_out["usesAttribution"]:
-        raise SystemExit(f"{common}: a fungus ended the build carrying a use or a Duke's field")
+    if record_out["uses"]:
+        raise SystemExit(f"{common}: a fungus ended the build carrying a use")
     if EDIBILITY_RE.search(record_out["usesNote"] or ""):
         raise SystemExit(
             f"{common}: the caution uses an edibility word. The app makes no edibility "
@@ -1496,34 +1142,25 @@ def build_fungus(entry, ecosystem_ids, refresh, report, caution_review):
 
 
 ANIMAL_CLASSES = {"bird", "mammal", "reptile", "amphibian", "fish", "insect", "other_invertebrate"}
-PLANT_SILHOUETTES = {
-    "shrub": {"sil_shrub"},
-    "herb": {"sil_herb"},
-    "fern": {"sil_fern"},
-    "tree": {"sil_tree_conifer", "sil_tree_broadleaf"},
-}
 
 
 def validate(catalogue, ecosystem_ids, internals, expected_counts):
     """Everything section 11.3 says must hold before the asset is written.
 
     `internals` maps a species id to the pipeline-only facts the asset does not
-    carry — chiefly whether Duke's records the species as a poison, which is
-    what makes the caution set a decision of the source rather than of whoever
-    wrote the notes.
+    carry — the curator's note as written, before `kept_uses_note` trimmed it.
     """
     species = catalogue["species"]
     problems = []
 
     animals = [s for s in species if s["kingdom"] == "animal"]
-    plants = [s for s in species if s["kingdom"] == "plant"]
     fungi = [s for s in species if s["kingdom"] == "fungus"]
     # The counts come from the curated inputs rather than from literals here. The check
     # this is: every species the curator listed reached the asset, and the numbering is a
     # gapless 1..N per kingdom. Hardcoding the totals meant every expansion failed the
     # build on its own success, which teaches whoever hits it to edit the guard — and a
     # guard nobody trusts catches nothing.
-    for kingdom, built_species in (("animal", animals), ("plant", plants), ("fungus", fungi)):
+    for kingdom, built_species in (("animal", animals), ("fungus", fungi)):
         wanted = expected_counts.get(kingdom, 0)
         if len(built_species) != wanted:
             problems.append(
@@ -1555,67 +1192,23 @@ def validate(catalogue, ecosystem_ids, internals, expected_counts):
         for eco in s["ecosystemIds"]:
             if eco not in ecosystem_ids:
                 problems.append(f"{sid}: undeclared ecosystem {eco}")
-        if set(s["uses"]) - {"edible", "medicinal"}:
-            problems.append(f"{sid}: uses outside {{edible, medicinal}}: {s['uses']}")
+        if set(s["uses"]) - {"edible"}:
+            problems.append(f"{sid}: uses outside {{edible}}: {s['uses']}")
         if not s["uses"] and s["usesNote"] and not has_caution(s["usesNote"]):
             problems.append(f"{sid}: usesNote with no use tag and no Caution: sentence")
-        if not s["medicinalActivities"] and s["usesAttribution"]:
-            problems.append(f"{sid}: usesAttribution set with no Duke's activities")
+        for gone in ("medicinalActivities", "medicinalRecordCount", "usesAttribution"):
+            if gone in s:
+                problems.append(f"{sid}: carries {gone}, a Duke's field that left with the plants")
 
         if s["kingdom"] == "animal":
             if s["taxClass"] not in ANIMAL_CLASSES:
                 problems.append(f"{sid}: bad animal taxClass {s['taxClass']}")
             elif s["silhouetteRes"] != f"sil_{s['taxClass']}":
                 problems.append(f"{sid}: silhouetteRes does not match taxClass")
-            # D48: an animal may carry the edible tag and nothing else. The medicinal
-            # half stays plant-only (Duke's is a plant database), and no note is
+            # D48: an animal may carry the edible tag and nothing else; no note is
             # written, because a season and a bag limit go stale within the year.
-            if set(s["uses"]) - {"edible"}:
-                problems.append(f"{sid}: an animal carries a use other than edible")
-            if s["usesNote"] or s["medicinalActivities"] \
-                    or s["medicinalRecordCount"] or s["usesAttribution"]:
-                problems.append(f"{sid}: an animal carries a note or a Duke's field")
-        elif s["kingdom"] == "plant":
-            if s["taxClass"] not in PLANT_CLASSES:
-                problems.append(f"{sid}: bad plant taxClass {s['taxClass']}")
-            elif s["silhouetteRes"] not in PLANT_SILHOUETTES[s["taxClass"]]:
-                problems.append(
-                    f"{sid}: silhouetteRes {s['silhouetteRes']} does not match "
-                    f"plant class {s['taxClass']}"
-                )
-            internal = internals.get(sid, {})
-            edible = "edible" in s["uses"]
-            medicinal = "medicinal" in s["uses"]
-            if edible and not s["usesNote"]:
-                problems.append(f"{sid}: edible but no usesNote naming the part and the season")
-            if s["usesNote"] and len(s["usesNote"]) > USES_NOTE_MAX_CHARS:
-                problems.append(
-                    f"{sid}: usesNote is {len(s['usesNote'])} characters, over {USES_NOTE_MAX_CHARS}"
-                )
-            if s["provenance"].get("uses", {}).get("medicinal") != "override":
-                if medicinal != (len(s["medicinalActivities"]) >= MEDICINAL_ACTIVITY_THRESHOLD):
-                    problems.append(
-                        f"{sid}: medicinal={medicinal} disagrees with "
-                        f"{len(s['medicinalActivities'])} Duke's activities"
-                    )
-            # The poison rule (11.3), unconditional: a Duke's `Poison` record makes
-            # a `Caution:` sentence mandatory whether or not the species carries a
-            # use tag, so the cautioned set is decided by the source rather than by
-            # whoever wrote the notes. An untagged species keeps the caution alone.
-            if internal.get("poison") and not has_caution(s["usesNote"]):
-                problems.append(
-                    f"{sid}: Duke's records a Poison for this species but its "
-                    f"usesNote has no 'Caution:' sentence"
-                )
-            # A curator note on an untagged species is reduced to its caution, so
-            # anything else written there would be silently discarded.
-            curated = internal.get("curatedNote")
-            if not s["uses"] and curated and caution_split(curated)[0]:
-                problems.append(
-                    f"{sid}: usesNote on a species with no use tag must be a "
-                    f"'Caution:' sentence only — the rest describes a use it does "
-                    f"not claim and is dropped on import"
-                )
+            if s["usesNote"]:
+                problems.append(f"{sid}: an animal carries a note")
         elif s["kingdom"] == "fungus":
             internal = internals.get(sid, {})
             if s["taxClass"] not in FUNGUS_CLASSES:
@@ -1625,9 +1218,8 @@ def validate(catalogue, ecosystem_ids, internals, expected_counts):
             # M35, checked again on the finished asset rather than only inside the
             # builder: this is the assertion a reviewer can run against a file
             # somebody hand-edited, which is the failure the builder cannot see.
-            if s["uses"] or s["medicinalActivities"] or s["medicinalRecordCount"] \
-                    or s["usesAttribution"]:
-                problems.append(f"{sid}: a fungus carries a use tag or a Duke's field")
+            if s["uses"]:
+                problems.append(f"{sid}: a fungus carries a use tag")
             # A fungus used to be *required* to carry a caution, harmless ones
             # included. That rule wrote a warning onto the turkey tail and the
             # puffball, and what it produced was not safety but noise: thirty
@@ -1660,31 +1252,9 @@ def validate(catalogue, ecosystem_ids, internals, expected_counts):
     return problems
 
 
-def validate_duke_asset(path, species, internals):
-    """The bundled Duke's table parses and holds every plant that had a hit."""
-    problems = []
-    try:
-        with path.open(encoding="utf-8") as fh:
-            document = json.load(fh)
-    except Exception as exc:
-        return [f"{path.name}: does not parse ({type(exc).__name__}: {exc})"]
-    taxa = document.get("taxa") or {}
-    if not taxa:
-        problems.append(f"{path.name}: no taxa")
-    for s in species:
-        if s["kingdom"] != "plant":
-            continue
-        internal = internals.get(s["id"], {})
-        matched = internal.get("dukeMatchedName")
-        if matched and duke_binomial(matched) not in taxa:
-            problems.append(f"{path.name}: missing {matched}, which {s['id']} joined on")
-    return problems
-
-
-def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
+def write_report(catalogue, report, path, internals):
     species = catalogue["species"]
     animals = [s for s in species if s["kingdom"] == "animal"]
-    plants = [s for s in species if s["kingdom"] == "plant"]
     fungi = [s for s in species if s["kingdom"] == "fungus"]
     lines = []
     add = lines.append
@@ -1706,46 +1276,28 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
         add(f"  infoUrl              {sum(1 for s in group if s['infoUrl'])}/{total}")
         add("")
 
-    add(f"COVERAGE  (lede fallback across all three kingdoms: {len(report['lede_fallback'])})")
+    add(f"COVERAGE  (lede fallback across both kingdoms: {len(report['lede_fallback'])})")
     add("")
     coverage("ANIMALS", animals)
-    coverage("PLANTS", plants)
     coverage("FUNGI", fungi)
 
     add("CLASS DISTRIBUTION")
-    for kingdom, group in (("animal", animals), ("plant", plants), ("fungus", fungi)):
+    for kingdom, group in (("animal", animals), ("fungus", fungi)):
         add(f"  {kingdom}")
         for cls, n in sorted(Counter(s["taxClass"] for s in group).items(), key=lambda kv: -kv[1]):
             add(f"    {cls:20s} {n}")
     add("")
 
-    add("USES (plants only)")
-    edible = [s for s in plants if "edible" in s["uses"]]
-    medicinal = [s for s in plants if "medicinal" in s["uses"]]
-    both = [s for s in plants if len(s["uses"]) == 2]
-    add(f"  edible                {len(edible)}/{len(plants)}   (curated)")
-    add(f"  medicinal             {len(medicinal)}/{len(plants)}   "
-        f"(derived: >= {MEDICINAL_ACTIVITY_THRESHOLD} distinct non-Poison Duke's activities)")
-    add(f"  both                  {len(both)}")
-    add(f"  no use tag            {sum(1 for s in plants if not s['uses'])}")
-    add(f"  carrying a Caution:   {sum(1 for s in plants if has_caution(s['usesNote']))}")
-    add("")
-    add(f"DUKE'S SOURCE  ETHNOBOT.csv rows parsed: {duke_rows}; "
-        f"duke_ethnobot.json: {duke_bytes / 1e6:.2f} MB")
-    add("")
-
     add("ECOSYSTEM DISTRIBUTION (a species counts in each of its ecosystems)")
-    animal_eco, plant_eco, fungus_eco = Counter(), Counter(), Counter()
+    animal_eco, fungus_eco = Counter(), Counter()
     for s in animals:
         animal_eco.update(s["ecosystemIds"])
-    for s in plants:
-        plant_eco.update(s["ecosystemIds"])
     for s in fungi:
         fungus_eco.update(s["ecosystemIds"])
     for eco in catalogue["ecosystems"]:
         add(
             f"  {eco['name']:30s} {animal_eco[eco['id']]:3d} animals  "
-            f"{plant_eco[eco['id']]:3d} plants  {fungus_eco[eco['id']]:3d} fungi"
+            f"{fungus_eco[eco['id']]:3d} fungi"
         )
     add("")
 
@@ -1790,36 +1342,9 @@ def write_report(catalogue, report, path, internals, duke_rows, duke_bytes):
     add("")
 
     block("GBIF MATCHES NEEDING CURATOR REVIEW", report["gbif_warnings"])
-    block(
-        "DUKE'S — DERIVED MEDICINAL SET",
-        [
-            f"{s['commonName']} ({s['scientificName']}): {internals[s['id']]['distinct']} activities, "
-            f"{s['medicinalRecordCount']} records — {', '.join(s['medicinalActivities'][:4])}"
-            for s in medicinal
-        ],
-    )
-    block("DUKE'S — MATCHED THROUGH A SYNONYM OR A PIN", report["duke_indirect"])
-    block("DUKE'S — NO RECORD (an ordinary outcome, not a failure)", report["duke_no_record"])
-    block("DUKE'S — POISON RECORDED (each must carry a Caution: sentence)", report["duke_poison"])
-    block(
-        "DUKE'S POISON, CAUTION ONLY — no use tag, so the note is the warning alone",
-        [
-            f"{s['commonName']} ({s['scientificName']})"
-            for s in plants
-            if internals[s["id"]]["poison"] and not s["uses"]
-        ],
-    )
-    block(
-        "PLANTS BELOW THE MEDICINAL THRESHOLD BUT WITH A DUKE'S RECORD",
-        [
-            f"{s['commonName']}: {internals[s['id']]['distinct']} activities"
-            for s in plants
-            if "medicinal" not in s["uses"] and internals[s["id"]]["recordCount"]
-        ],
-    )
-    add("FUNGI — EVERY CAUTION BELOW IS UNSOURCED (DESIGN-identification.md R20)")
-    add("  Dr. Duke's has no fungal taxa, so no dataset decided which of these species")
-    add("  needs a warning or what it should say. Nothing downstream checks this text.")
+    add("FUNGI — EVERY CAUTION BELOW IS UNSOURCED")
+    add("  No dataset decided which of these species needs a warning or what it should")
+    add("  say. Nothing downstream checks this text.")
     add("  It is the deliverable of the fungi slice, and it is read by a human or by")
     add("  nobody. Read every line.")
     add("")
@@ -1847,9 +1372,7 @@ def main():
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="path of the generated pacific.json")
     ap.add_argument("--region", default=str(HERE / "region.json"))
     ap.add_argument("--animals", default=str(HERE / "curated_animals.json"))
-    ap.add_argument("--plants", default=str(HERE / "curated_plants.json"))
     ap.add_argument("--fungi", default=str(HERE / "curated_fungi.json"))
-    ap.add_argument("--duke-out", default=None, help="path of the generated duke_ethnobot.json")
     ap.add_argument("--refresh", action="store_true", help="ignore the cache and re-fetch everything")
     ap.add_argument("--only", type=int, default=0, help="build only the first N of each kingdom")
     args = ap.parse_args()
@@ -1858,25 +1381,20 @@ def main():
         region = json.load(fh)
     with open(args.animals, encoding="utf-8") as fh:
         animals_input = json.load(fh)
-    with open(args.plants, encoding="utf-8") as fh:
-        plants_input = json.load(fh)
     with open(args.fungi, encoding="utf-8") as fh:
         fungi_input = json.load(fh)
 
     ecosystems = region["ecosystems"]
     ecosystem_ids = {e["id"] for e in ecosystems}
     animal_entries = animals_input["species"]
-    plant_entries = plants_input["species"]
     fungus_entries = fungi_input["species"]
     # What the curator asked for, which is what `validate` holds the asset to.
     expected_counts = {
         "animal": len(animal_entries),
-        "plant": len(plant_entries),
         "fungus": len(fungus_entries),
     }
     if args.only:
         animal_entries = animal_entries[: args.only]
-        plant_entries = plant_entries[: args.only]
         fungus_entries = fungus_entries[: args.only]
 
     report = defaultdict(list)
@@ -1887,23 +1405,6 @@ def main():
         print(f"[animal {i:3d}/{len(animal_entries)}] {entry['commonName']}", flush=True)
         try:
             built.append(build_species(entry, ecosystem_ids, args.refresh, report))
-        except SystemExit:
-            raise
-        except Exception as exc:
-            failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
-            print(f"    !! FAILED: {exc}", file=sys.stderr)
-
-    print("\nbuilding the Duke's ethnobotanical index…", flush=True)
-    duke_index, duke_rows = build_duke_index(args.refresh)
-    print(f"  {len(duke_index)} taxa from {duke_rows} ETHNOBOT rows", flush=True)
-
-    uses_review = []
-    for i, entry in enumerate(plant_entries, 1):
-        print(f"[plant  {i:3d}/{len(plant_entries)}] {entry['commonName']}", flush=True)
-        try:
-            built.append(
-                build_plant(entry, ecosystem_ids, duke_index, args.refresh, report, uses_review)
-            )
         except SystemExit:
             raise
         except Exception as exc:
@@ -1923,19 +1424,15 @@ def main():
             failures.append(f"{entry['commonName']}: {type(exc).__name__}: {exc}")
             print(f"    !! FAILED: {exc}", file=sys.stderr)
 
-    # Kingdom then dex number: the asset reads animals 1..120, then plants 1..80,
-    # then fungi 1..30, and the importer applies the per-kingdom base (11.1).
-    kingdom_order = {"animal": 0, "plant": 1, "fungus": 2}
+    # Kingdom then dex number: the asset reads animals 1..224, then fungi 1..30,
+    # and the importer applies the per-kingdom base (11.1).
+    kingdom_order = {"animal": 0, "fungus": 1}
     built.sort(key=lambda s: (kingdom_order[s["kingdom"]], s["dexNumber"]))
 
     # Lift the pipeline-only facts out of the records before anything is written.
     internals = {}
     for record in built:
         internals[record["id"]] = {
-            "poison": record.pop("_poison", False),
-            "distinct": record.pop("_dukeDistinct", 0),
-            "recordCount": record.pop("_dukeRecordCount", 0),
-            "dukeMatchedName": record.pop("_dukeMatchedName", None),
             "curatedNote": record.pop("_curatedNote", None),
             "edibilityDropped": record.pop("_edibilityDropped", 0),
         }
@@ -1954,15 +1451,7 @@ def main():
     }
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    review_path = CACHE_DIR / "plant_uses_review.txt"
-    review_path.write_text(
-        "Wikipedia uses/culinary/edibility/medicinal section text, for CHECKING the\n"
-        "hand-written usesNote in curated_plants.json. Never copied into the asset.\n\n"
-        + "\n".join(uses_review),
-        encoding="utf-8",
-    )
-    # The fungal twin, and the more important of the two: it is where a caution is
-    # written FROM, because nothing else sources one.
+    # Where a caution is written FROM, because nothing else sources one.
     caution_path = CACHE_DIR / "fungi_caution_review.txt"
     caution_path.write_text(
         "Wikipedia toxicity / similar-species / identification section text, for\n"
@@ -1973,12 +1462,8 @@ def main():
     )
 
     out = Path(args.out).resolve()
-    duke_out = Path(args.duke_out) if args.duke_out else out.parent / "duke_ethnobot.json"
-    duke_bytes = write_duke_asset(duke_index, duke_out)
 
-    report_text = write_report(
-        catalogue, report, CACHE_DIR / "report.txt", internals, duke_rows, duke_bytes
-    )
+    report_text = write_report(catalogue, report, CACHE_DIR / "report.txt", internals)
     print("\n" + report_text)
 
     if failures:
@@ -1989,7 +1474,6 @@ def main():
 
     if not args.only:
         problems = validate(catalogue, ecosystem_ids, internals, expected_counts)
-        problems += validate_duke_asset(duke_out, built, internals)
         if problems:
             print("VALIDATION FAILED:", file=sys.stderr)
             for p in problems:
@@ -2025,9 +1509,7 @@ def main():
         json.dump(catalogue, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     print(f"\nwrote {out} ({len(built)} species)")
-    print(f"wrote {duke_out} ({duke_bytes / 1e6:.2f} MB)")
     print(f"report: {CACHE_DIR / 'report.txt'}")
-    print(f"uses review: {review_path}")
     print(f"caution review: {caution_path}")
     return 0
 

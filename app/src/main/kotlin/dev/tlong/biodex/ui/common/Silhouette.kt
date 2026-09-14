@@ -33,16 +33,8 @@ object Silhouettes {
         TaxClass.FISH to R.drawable.sil_fish,
         TaxClass.INSECT to R.drawable.sil_insect,
         TaxClass.OTHER_INVERTEBRATE to R.drawable.sil_other_invertebrate,
-        // The class fallback for a tree is the broadleaf shape; the conifer one is chosen
-        // per species by the pipeline, which writes `sil_tree_conifer` into the asset's
-        // `silhouetteRes` and reaches this map only when that name fails to resolve (11.4).
-        TaxClass.TREE to R.drawable.sil_tree_broadleaf,
-        TaxClass.SHRUB to R.drawable.sil_shrub,
-        TaxClass.HERB to R.drawable.sil_herb,
-        TaxClass.FERN to R.drawable.sil_fern,
-        // The three fungal growth forms. Unlike the trees, no fungal class picks between
-        // two shapes per species, so the pipeline writes `sil_<taxClass>` and this map and
-        // that string always agree.
+        // The three fungal growth forms. The pipeline writes `sil_<taxClass>`, so this map
+        // and that string always agree.
         TaxClass.MUSHROOM to R.drawable.sil_mushroom,
         TaxClass.BRACKET to R.drawable.sil_bracket,
         TaxClass.OTHER_FUNGUS to R.drawable.sil_other_fungus,

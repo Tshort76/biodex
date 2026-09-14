@@ -4,7 +4,7 @@ import dev.tlong.biodex.domain.DexProgress
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Meter
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SearchMatch
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -29,7 +29,7 @@ enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT }
  *
  * [NAME] is the default (D42): the dex is a list you look things up in, and 230 species is
  * past the point where scanning for a name in catalogue order is pleasant. [DEX_NUMBER] is
- * the catalogue's own order — animals, plants, fungi — for anyone who wants the game's
+ * the catalogue's own order — animals, then fungi — for anyone who wants the game's
  * numbering back.
  */
 enum class DexSort(val wireName: String) {
@@ -64,7 +64,7 @@ data class DexGridFilters(
     /** M23's kingdom chips. Null is "both", which is what the `All` chip restores. */
     val kingdom: Kingdom? = null,
     /** M23's use chips. Since D48 an animal can carry the edible tag; a fungus never does. */
-    val use: PlantUse? = null,
+    val use: SpeciesUse? = null,
     val taxClass: TaxClass? = null,
     val ecosystemId: String? = null,
 ) {
@@ -81,7 +81,6 @@ data class DexGridUiState(
     val regionLabel: String = "",
     /** One pill per kingdom. A kingdom with nothing in it hides rather than reading `0/0`. */
     val animals: Meter = Meter(0, 0, 0),
-    val plants: Meter = Meter(0, 0, 0),
     val fungi: Meter = Meter(0, 0, 0),
     val query: String = "",
     val filters: DexGridFilters = DexGridFilters(),
@@ -92,7 +91,7 @@ data class DexGridUiState(
     /**
      * The classes the region actually holds, from the same `perClass` breakdown Stats reads
      * (6.3) — which carries a class only when some species has it. It is what stops the chip
-     * row offering Trees / Shrubs / Herbs / Ferns against a catalogue with no plants in it.
+     * row offering Mushrooms / Brackets against a catalogue with no fungi in it.
      */
     val availableClasses: Set<TaxClass> = emptySet(),
     /** True only before the catalogue import has produced anything to show (3.3). */
@@ -100,10 +99,7 @@ data class DexGridUiState(
 ) {
     val isFiltered: Boolean get() = query.isNotBlank() || !filters.isEmpty
 
-    /** M29: a plant pill on a dex with no plants in it would only ever read `0/0`. */
-    val showPlantPill: Boolean get() = plants.total > 0
-
-    /** The same rule for fungi, which arrived as a kingdom before they arrived in the asset. */
+    /** M29: a fungi pill on a dex with no fungi in it would only ever read `0/0`. */
     val showFungiPill: Boolean get() = fungi.total > 0
 
     /**
@@ -123,8 +119,12 @@ data class DexGridUiState(
      */
     val showKingdomChips: Boolean get() = availableKingdoms.size > 1
 
-    /** The use chips describe plants, so they follow the plants rather than the kingdoms. */
-    val showUseChips: Boolean get() = plants.total > 0
+    /**
+     * The use chips follow the tagged species, not a kingdom: D48's Food source filter is
+     * an animal filter now that the plants are gone (D59), and gating it on the plant meter
+     * — as it was — would have hidden it the day they left.
+     */
+    val showUseChips: Boolean get() = species.any { it.uses.isNotEmpty() }
 }
 
 /**
@@ -177,7 +177,7 @@ fun classChips(
  *
  * Dex order is the grid's default order (M01, revised by D32): user-added species trail the
  * catalogue because their dex numbers start above
- * [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE], with the plants between the two (M02).
+ * [dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE], with the fungi between the two (M02).
  *
  * Name order is case-insensitive, because the name on a user-added species is whatever the
  * user typed — "oak titmouse" and "California thrasher" are both real rows in this dex, and a
@@ -222,7 +222,6 @@ fun dexGridUiState(
         DexGridUiState(
             regionLabel = reads.progress.regionName,
             animals = reads.progress.animals,
-            plants = reads.progress.plants,
             fungi = reads.progress.fungi,
             query = reads.query,
             filters = reads.filters,
@@ -244,15 +243,13 @@ private data class GridReads(
 )
 
 /**
- * The use chips of M23. Adjectives, because they describe the plant rather than count it.
+ * The use chip of M23. An adjective, because it describes the species rather than counts it.
  *
- * A use chip narrows the grid to plants and the game animals D48 tagged. Fungi carry no uses
- * at all, by design and not by omission (there is no Duke's data behind a mushroom, so any use
- * claim would be the curator's alone), and Medicinal stays plant-only for the same reason.
+ * It narrows the grid to the game animals D48 tagged. Fungi carry no uses at all, by design
+ * and not by omission (M35: any use claim would be the curator's alone).
  */
-fun useChipLabel(use: PlantUse): String = when (use) {
-    PlantUse.EDIBLE -> "Food source"
-    PlantUse.MEDICINAL -> "Medicinal"
+fun useChipLabel(use: SpeciesUse): String = when (use) {
+    SpeciesUse.EDIBLE -> "Food source"
 }
 
 /** The label the class chips show; the mockup uses the plural common word, not the enum. */
@@ -264,10 +261,6 @@ fun TaxClass.chipLabel(): String = when (this) {
     TaxClass.FISH -> "Fish"
     TaxClass.INSECT -> "Insects"
     TaxClass.OTHER_INVERTEBRATE -> "Invertebrates"
-    TaxClass.TREE -> "Trees"
-    TaxClass.SHRUB -> "Shrubs"
-    TaxClass.HERB -> "Herbs"
-    TaxClass.FERN -> "Ferns"
     TaxClass.MUSHROOM -> "Mushrooms"
     TaxClass.BRACKET -> "Brackets"
     TaxClass.OTHER_FUNGUS -> "Other fungi"

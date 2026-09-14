@@ -21,8 +21,8 @@ data class AddSpeciesDraft(
     val photoUri: String? = null,
     /**
      * Where [photoUri] came from. It travels because a camera shot is still sitting in the
-     * app's cache at this point: whether it is promoted into the gallery or swept away is a
-     * decision only the confirm card can make, since only it knows the kingdom (M41).
+     * app's cache at this point: it is promoted into the gallery only when the card is
+     * accepted, and swept either way (D26).
      */
     val photoSource: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
     /** Set when this draft is M20's backfill of an existing details-pending species. */

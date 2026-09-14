@@ -51,19 +51,6 @@ interface PhotoGateway {
     /** Best-effort display name for the picked file, for the Register screen's photo row. */
     fun displayName(uri: String): String?
 
-    /**
-     * M36. The bytes an identification uploads: a JPEG **re-encoded from a decoded bitmap** at
-     * [UPLOAD_LONG_EDGE_PX] on the long edge, or null when the photo could not be decoded.
-     *
-     * The re-encode is not an optimisation, it is the privacy mechanism. This app reads EXIF
-     * GPS a few lines up (`readExif`), and a photo's coordinates are the user's home or a
-     * favourite patch; decoding to a bitmap and compressing it again produces a file with no
-     * EXIF at all, so **the thing that shrinks the photo is the thing that strips its
-     * metadata**. The original file's bytes are never read into a request, which is why this
-     * returns bytes rather than a path a caller could stream instead.
-     */
-    fun readForUpload(uri: String): ByteArray?
-
     // -----------------------------------------------------------------------
     // The in-app camera (M40, D26). Three calls, and all three are cache
     // bookkeeping rather than camera code: the system camera app takes the
@@ -97,7 +84,6 @@ interface PhotoGateway {
  * enough for a classifier to work on a leaf or a flower while keeping the upload small enough
  * to finish on a phone signal in the field.
  */
-const val UPLOAD_LONG_EDGE_PX = 1_024
 
 /** High enough that re-compression does not cost the classifier detail it needs. */
 const val UPLOAD_JPEG_QUALITY = 85

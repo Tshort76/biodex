@@ -27,7 +27,7 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Entry
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Lineage
-import dev.tlong.biodex.domain.PlantUse
+import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.RangeGrid
 import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.SpeciesDetail
@@ -128,9 +128,6 @@ class DexRepository(
                     infoUrl = it.infoUrl,
                     imageAttribution = it.imageAttribution,
                     usesNote = it.usesNote,
-                    medicinalActivities = it.medicinalActivities,
-                    medicinalRecordCount = it.medicinalRecordCount,
-                    usesAttribution = it.usesAttribution,
                     userEditedFields = it.userEditedFields,
                     rangeCells = it.rangeCells,
                 )
@@ -347,9 +344,6 @@ internal fun SpeciesEntity.toBackup(ecosystemIds: List<String>) = BackupSpecies(
     kingdom = kingdom.wireName,
     uses = uses,
     usesNote = usesNote,
-    medicinalActivities = medicinalActivities,
-    medicinalRecordCount = medicinalRecordCount,
-    usesAttribution = usesAttribution,
     lineageKingdom = lineageKingdom,
     lineagePhylum = lineagePhylum,
     lineageClass = lineageClass,
@@ -381,12 +375,7 @@ internal fun BackupSpecies.toEntity(regionId: String) = SpeciesEntity(
     // A note with no use behind it is dropped, so a hand-edited archive cannot produce a
     // species whose note has nowhere to render — but a `Caution:` sentence survives with no
     // tags, because a restore must not be the step that quietly loses a recorded toxicity.
-    usesNote = keptUsesNote(usesNote, PlantUse.setFromWireNames(restoredUses)),
-    medicinalActivities = medicinalActivities,
-    medicinalRecordCount = medicinalRecordCount,
-    usesAttribution = usesAttribution?.takeIf {
-        medicinalRecordCount > 0 || medicinalActivities.isNotEmpty()
-    },
+    usesNote = keptUsesNote(usesNote, SpeciesUse.setFromWireNames(restoredUses)),
     // D36. Restored as written: an archive is the only record of a user-added species'
     // classification, and dropping it here would leave every restored species outside the
     // hop count until it happened to be opened online again.
@@ -402,7 +391,7 @@ private val BackupSpecies.paired get() = pairKingdomAndClass(kingdom, taxClass)
 private val BackupSpecies.pairedKingdom get() = paired.first
 private val BackupSpecies.pairedClass get() = paired.second
 private val BackupSpecies.restoredUses
-    get() = PlantUse.setFromWireNames(uses).sortedBy { it.ordinal }.map { it.wireName }
+    get() = SpeciesUse.setFromWireNames(uses).sortedBy { it.ordinal }.map { it.wireName }
 
 /**
  * The two halves of the user-added row's round trip, and the one place a field can go missing
@@ -430,14 +419,8 @@ internal fun SpeciesEntity.toUserRecord() = UserSpeciesRecord(
         imageUrl = imageUrl,
         imageAttribution = imageAttribution,
         infoUrl = infoUrl,
-        uses = PlantUse.setFromWireNames(uses),
+        uses = SpeciesUse.setFromWireNames(uses),
         usesNote = usesNote,
-        medicinalActivities = medicinalActivities,
-        medicinalRecordCount = medicinalRecordCount,
-        usesAttribution = usesAttribution,
-        // The stored string is the only record of the conifer/broadleaf pick, and it is read
-        // back only while the class is still `TREE` — the getter enforces that.
-        silhouetteResOverride = silhouetteRes,
         lineage = Lineage(
             kingdom = lineageKingdom,
             phylum = lineagePhylum,
@@ -468,9 +451,6 @@ internal fun UserSpeciesRecord.toEntity() = SpeciesEntity(
     kingdom = fields.kingdom,
     uses = fields.uses.sortedBy { it.ordinal }.map { it.wireName },
     usesNote = fields.usesNote,
-    medicinalActivities = fields.medicinalActivities,
-    medicinalRecordCount = fields.medicinalRecordCount,
-    usesAttribution = fields.usesAttribution,
     lineageKingdom = fields.lineage.kingdom,
     lineagePhylum = fields.lineage.phylum,
     lineageClass = fields.lineage.taxonClass,
@@ -516,7 +496,7 @@ internal fun assembleSummaries(
             scientificName = row.scientificName,
             taxClass = row.taxClass,
             kingdom = row.kingdom,
-            uses = PlantUse.setFromWireNames(row.uses),
+            uses = SpeciesUse.setFromWireNames(row.uses),
             silhouetteRes = row.silhouetteRes,
             ecosystemIds = ecosystemsBySpecies[row.id].orEmpty(),
             caughtAt = status?.caughtAt,

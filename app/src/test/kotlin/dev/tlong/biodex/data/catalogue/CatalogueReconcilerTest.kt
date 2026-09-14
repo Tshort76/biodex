@@ -26,9 +26,6 @@ class CatalogueReconcilerTest {
         kingdom: String = "animal",
         uses: List<String> = emptyList(),
         usesNote: String? = null,
-        medicinalActivities: List<String> = emptyList(),
-        medicinalRecordCount: Int = 0,
-        usesAttribution: String? = null,
     ) = CatalogueSpecies(
         id = id,
         dexNumber = dexNumber,
@@ -40,9 +37,6 @@ class CatalogueReconcilerTest {
         silhouetteRes = silhouetteRes,
         uses = uses,
         usesNote = usesNote,
-        medicinalActivities = medicinalActivities,
-        medicinalRecordCount = medicinalRecordCount,
-        usesAttribution = usesAttribution,
     )
 
     private fun document(
@@ -238,16 +232,16 @@ class CatalogueReconcilerTest {
             document(
                 species = listOf(
                     assetSpecies("heron", dexNumber = 3),
-                    assetSpecies("elder", dexNumber = 47, taxClass = "shrub", kingdom = "plant"),
+                    assetSpecies("agaric", dexNumber = 7, taxClass = "mushroom", kingdom = "fungus"),
                 ),
             ),
             existing = emptyList(),
         )
 
         val byId = plan.speciesUpserts.associateBy { it.id }
-        // The asset numbers each kingdom from 1 so the curator never types 2047.
+        // The asset numbers each kingdom from 1 so the curator never types 4007.
         assertEquals(3, byId.getValue("heron").dexNumber)
-        assertEquals(2047, byId.getValue("elder").dexNumber)
+        assertEquals(4007, byId.getValue("agaric").dexNumber)
     }
 
     @Test
@@ -255,11 +249,11 @@ class CatalogueReconcilerTest {
         val plan = CatalogueReconciler.plan(
             document(
                 species = listOf(
-                    assetSpecies("elder", taxClass = "shrub", kingdom = "plant"),
+                    assetSpecies("agaric", taxClass = "mushroom", kingdom = "fungus"),
                     // A curator typo: the pipeline would have caught this, so reaching it
                     // means the asset shipped wrong.
-                    assetSpecies("mixed", taxClass = "tree", kingdom = "animal"),
-                    assetSpecies("mixed-2", taxClass = "bird", kingdom = "plant"),
+                    assetSpecies("mixed", taxClass = "bracket", kingdom = "animal"),
+                    assetSpecies("mixed-2", taxClass = "bird", kingdom = "fungus"),
                 ),
             ),
             existing = emptyList(),
@@ -271,50 +265,38 @@ class CatalogueReconcilerTest {
         // species loses its growth form, rather than the whole import failing.
         assertEquals(Kingdom.ANIMAL, byId.getValue("mixed").kingdom)
         assertEquals(TaxClass.OTHER_INVERTEBRATE, byId.getValue("mixed").taxClass)
-        assertEquals(Kingdom.PLANT, byId.getValue("mixed-2").kingdom)
-        assertEquals(TaxClass.HERB, byId.getValue("mixed-2").taxClass)
+        assertEquals(Kingdom.FUNGUS, byId.getValue("mixed-2").kingdom)
+        assertEquals(TaxClass.OTHER_FUNGUS, byId.getValue("mixed-2").taxClass)
     }
 
     @Test
-    fun `uses, the note and the Duke's columns come through, and inconsistent ones do not`() {
+    fun `uses and the note come through, and inconsistent ones do not`() {
         val plan = CatalogueReconciler.plan(
             document(
                 species = listOf(
                     assetSpecies(
-                        "elder",
-                        taxClass = "shrub",
-                        kingdom = "plant",
+                        "elk",
+                        taxClass = "mammal",
                         uses = listOf("edible", "medicinal", "delicious"),
-                        usesNote = "Berries, late summer. Caution: raw berries are toxic.",
-                        medicinalActivities = listOf("astringent", "diuretic"),
-                        medicinalRecordCount = 60,
-                        usesAttribution = "Duke's · CC0",
+                        usesNote = "Hunted in autumn. Caution: check the season.",
                     ),
-                    // A note with no use behind it, and a credit line with no data behind it.
-                    assetSpecies(
-                        "fir",
-                        taxClass = "tree",
-                        kingdom = "plant",
-                        usesNote = "Orphaned note.",
-                        usesAttribution = "Duke's · CC0",
-                    ),
+                    // A note with no use behind it.
+                    assetSpecies("fir-tit", usesNote = "Orphaned note."),
                 ),
             ),
             existing = emptyList(),
         )
 
         val byId = plan.speciesUpserts.associateBy { it.id }
-        val elder = byId.getValue("elder")
-        // "delicious" is not a use this app knows; a chip that can never match is dropped.
-        assertEquals(listOf("edible", "medicinal"), elder.uses)
-        assertEquals(60, elder.medicinalRecordCount)
-        assertEquals(listOf("astringent", "diuretic"), elder.medicinalActivities)
-        assertEquals("Duke's · CC0", elder.usesAttribution)
+        val elk = byId.getValue("elk")
+        // "delicious" is not a use this app knows, and neither is "medicinal" since D59; a
+        // chip that can never match is dropped.
+        assertEquals(listOf("edible"), elk.uses)
+        assertEquals("Hunted in autumn. Caution: check the season.", elk.usesNote)
 
-        val fir = byId.getValue("fir")
-        assertTrue(fir.uses.isEmpty())
-        assertNull(fir.usesNote)
-        assertNull(fir.usesAttribution)
+        val tit = byId.getValue("fir-tit")
+        assertTrue(tit.uses.isEmpty())
+        assertNull(tit.usesNote)
     }
 
     @Test
@@ -322,23 +304,23 @@ class CatalogueReconcilerTest {
         val plan = CatalogueReconciler.plan(
             document(
                 species = listOf(
-                    // Western Wild Ginger's shape: Duke's derives no use tag for it, and its
-                    // caution names aristolochic acid — a nephrotoxin and a carcinogen. There
-                    // is no reading of this app's safety story where that is dead data.
+                    // Every cautioned fungus has this shape (M35): no use tag, and a caution
+                    // that is safety information about the species. There is no reading of
+                    // this app's safety story where that is dead data.
                     assetSpecies(
-                        "wild-ginger",
-                        taxClass = "herb",
-                        kingdom = "plant",
+                        "death-cap",
+                        taxClass = "mushroom",
+                        kingdom = "fungus",
                         uses = emptyList(),
-                        usesNote = "Caution: contains aristolochic acid, a known kidney toxin " +
-                            "and carcinogen; do not ingest.",
+                        usesNote = "Caution: deadly; responsible for most fatal mushroom " +
+                            "poisonings.",
                     ),
                     assetSpecies(
-                        "cypress",
-                        taxClass = "tree",
-                        kingdom = "plant",
+                        "jack-o-lantern",
+                        taxClass = "mushroom",
+                        kingdom = "fungus",
                         uses = emptyList(),
-                        usesNote = "Foliage in winter. Caution: recorded as poisonous.",
+                        usesNote = "Glows faintly at night. Caution: recorded as poisonous.",
                     ),
                 ),
             ),
@@ -347,13 +329,12 @@ class CatalogueReconcilerTest {
 
         val byId = plan.speciesUpserts.associateBy { it.id }
         assertEquals(
-            "Caution: contains aristolochic acid, a known kidney toxin and carcinogen; " +
-                "do not ingest.",
-            byId.getValue("wild-ginger").usesNote,
+            "Caution: deadly; responsible for most fatal mushroom poisonings.",
+            byId.getValue("death-cap").usesNote,
         )
-        // Only the caution survives the missing tag; the part-and-season half describes a use
+        // Only the caution survives the missing tag; the rest of the note describes a use
         // nothing claims, so it goes the way "Orphaned note." above does.
-        assertEquals("Caution: recorded as poisonous.", byId.getValue("cypress").usesNote)
+        assertEquals("Caution: recorded as poisonous.", byId.getValue("jack-o-lantern").usesNote)
     }
 
     @Test

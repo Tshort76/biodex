@@ -8,11 +8,11 @@ import dev.tlong.biodex.domain.Kingdom
  *
  * **The camera writes to app cache and the photo is promoted at registration.** The
  * alternative, writing straight into the gallery through a `MediaStore` `EXTRA_OUTPUT`, has
- * one fatal property for this app: a plant's photograph is not kept (M41), so a shot the user
- * took only to identify a plant would land in their gallery and the app would then have to
- * delete it — which on API 29+ can prompt them. Capturing to cache means a plant's photo never
- * touches the gallery at all, which is the property the design asks for, and it means one
- * camera path rather than one per kingdom.
+ * one fatal property: a shot the user abandons — back out of the Register screen, or a
+ * confirm card never accepted — would already be in their gallery, and the app would then
+ * have to delete it, which on API 29+ can prompt them. (When plants kept no photograph, M41,
+ * every plant shot was that case.) Capturing to cache means nothing touches the gallery
+ * until registration decides it should, and it means one camera path for every kingdom.
  *
  * **No `CAMERA` permission is declared, and that is deliberate.** Verified against the
  * `MediaStore.ACTION_IMAGE_CAPTURE` reference: an app that *declares* `CAMERA` without holding
@@ -29,22 +29,14 @@ fun cameraCaptureFileName(id: String): String = "$id.jpg"
 fun cameraCacheRelativePath(id: String): String = "$CAMERA_CACHE_DIR/${cameraCaptureFileName(id)}"
 
 /**
- * Which kingdoms keep the user's own photograph (M41).
- *
- * A plant does not: its photo exists to identify it, and its tile is the species' reference
- * image instead (D25). Animals and fungi do, exactly as today — the user wanted pictures of
- * their mushrooms, and an animal was never in question.
- */
-fun keepsOwnPhoto(kingdom: Kingdom): Boolean = kingdom != Kingdom.PLANT
-
-/**
  * Whether a camera shot needs promoting into the gallery before registration.
  *
- * Only a *cache* photo can be promoted, and only for a kingdom that keeps photos. A gallery
- * photo the user picked is already where it belongs, and a plant's is about to be deleted.
+ * Only a *cache* photo can be promoted: a gallery photo the user picked is already where it
+ * belongs. Every kingdom keeps its photograph now — the plant exception (M41, `keepsOwnPhoto`)
+ * left with the plants (D59).
  */
-fun shouldPromoteToGallery(source: PhotoSourceKind, kingdom: Kingdom): Boolean =
-    source == PhotoSourceKind.CAMERA_CACHE && keepsOwnPhoto(kingdom)
+fun shouldPromoteToGallery(source: PhotoSourceKind): Boolean =
+    source == PhotoSourceKind.CAMERA_CACHE
 
 /**
  * Whether the cache file should be swept once the screen is done with it — which is *always*

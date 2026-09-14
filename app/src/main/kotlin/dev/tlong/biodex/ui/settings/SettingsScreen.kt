@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
-import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.DexFilterChip
@@ -94,10 +93,6 @@ fun SettingsRoute(
         onImport = { archivePicker.launch(ARCHIVE_MIME_TYPES) },
         onClearCaches = viewModel::clearReferenceCaches,
         onOpenLicenses = onOpenLicenses,
-        onPlantNetKey = viewModel::setPlantNetKey,
-        onOpenUrl = { url ->
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        },
     )
 }
 
@@ -163,8 +158,6 @@ fun SettingsScreen(
     onImport: () -> Unit,
     onClearCaches: () -> Unit,
     onOpenLicenses: () -> Unit,
-    onPlantNetKey: (String) -> Unit = {},
-    onOpenUrl: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     var confirmClear by remember { mutableStateOf(false) }
@@ -355,55 +348,15 @@ fun SettingsScreen(
                 )
             }
 
-            // M31/M36/M37/M39. The key, what the cap has left, and — said here rather than
-            // only in `licenses.md` — exactly what leaves the phone when the button is pressed.
-            SectionHeader("Identification")
-            SettingCard {
-                Text(
-                    text = IDENTIFICATION_KEY_TEXT,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.muted,
-                )
-                Box(modifier = Modifier.height(10.dp))
-                KeyField(
-                    value = state.plantNetKey,
-                    onValueChange = onPlantNetKey,
-                    placeholder = "Paste your Pl@ntNet API key",
-                )
-                Text(
-                    text = "Get a key at my.plantnet.org ↗",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.accent,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .clickable { onOpenUrl(PlantNetIdentifier.KEY_SIGNUP_URL) },
-                )
-                Text(
-                    text = state.identificationLine,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (state.identificationCapReached) colors.warn else colors.faint,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-                Text(
-                    text = IDENTIFICATION_PRIVACY_TEXT,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colors.muted,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-
             SectionHeader("About")
             SettingCard {
                 Text(
-                    // §7's redline. The old sentence said photographs never leave the device,
-                    // which stopped being true the moment Identify existed; saying so here,
-                    // where a user looks for what the app does, is the point of the redline.
+                    // §7's redline, true again since D59: nothing the user photographs
+                    // leaves the phone.
                     text = "BioDex 1.0 — Pacific USA BioDex, a personal life list of the " +
-                        "region's animals, plants and fungi. Species text and images come from " +
-                        "Wikipedia and Wikimedia Commons, and names from GBIF. Identification " +
-                        "suggestions, when you ask for them, come from Pl@ntNet; only the " +
-                        "photo you press Identify on is sent, reduced and without location " +
-                        "data.",
+                        "region's animals and fungi. Species text and images come from " +
+                        "Wikipedia and Wikimedia Commons, and names from GBIF. Your photos " +
+                        "never leave the phone.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )
@@ -422,64 +375,6 @@ fun SettingsScreen(
             }
 
             Box(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-/**
- * The key field, masked by default with a reveal toggle.
- *
- * An earlier version showed the key in full, on the reasoning that a masked field the user
- * cannot check against the one they were emailed turns a typo into a mystery. That reasoning
- * is sound and is why the toggle exists rather than a permanently masked field — but it is
- * not a reason to leave a credential legible by default on a screen the user might hand
- * across, screenshot, or screen-share. Masked is the safe default; Show is one tap away.
- */
-@Composable
-private fun KeyField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
-    val colors = DexTheme.colors
-    // Not `rememberSaveable`: a revealed key must not survive into saved instance state,
-    // and the field re-masking after a rotation is the right way to fail.
-    var revealed by remember { mutableStateOf(false) }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.codeBg)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            if (value.isEmpty()) {
-                Text(
-                    text = placeholder,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.faint,
-                )
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
-                cursorBrush = SolidColor(colors.accent),
-                visualTransformation = if (revealed) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (value.isNotEmpty()) {
-            Text(
-                text = if (revealed) "Hide" else "Show",
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.accent,
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .clickable { revealed = !revealed },
-            )
         }
     }
 }

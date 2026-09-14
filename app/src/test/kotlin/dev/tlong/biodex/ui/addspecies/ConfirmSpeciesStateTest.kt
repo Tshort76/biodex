@@ -1,13 +1,11 @@
 package dev.tlong.biodex.ui.addspecies
 
-import dev.tlong.biodex.data.catalogue.DukeRecord
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.MatchKind
 import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
-import dev.tlong.biodex.domain.PlantUse
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
@@ -15,7 +13,6 @@ import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -256,185 +253,70 @@ class ConfirmSpeciesStateTest {
         assertFalse(state.isEdited(SpeciesField.DESCRIPTION))
     }
 
+
     // -----------------------------------------------------------------------
-    // The plant card (M19/M27): a growth-form pick and a uses editor where an
-    // animal's call row is.
+    // The fungus card (M19/M27): the same card, with a growth-form pick from
+    // the fungal classes only.
     // -----------------------------------------------------------------------
 
-    private val madrone = SpeciesCandidate(
-        scientificName = "Arbutus menziesii",
-        commonName = "Pacific Madrone",
-        kingdom = Kingdom.PLANT,
-        taxClass = TaxClass.TREE,
-        silhouetteResOverride = "sil_tree_broadleaf",
+    private val flyAgaric = SpeciesCandidate(
+        scientificName = "Amanita muscaria",
+        commonName = "Fly Agaric",
+        kingdom = Kingdom.FUNGUS,
+        taxClass = TaxClass.OTHER_FUNGUS,
         matchKind = MatchKind.EXACT,
     )
 
-    private fun plantDetails(
-        uses: Set<PlantUse> = setOf(PlantUse.MEDICINAL),
-        usesNote: String? = null,
-        duke: DukeRecord? = DukeRecord(listOf("Astringent", "Diuretic", "Vulnerary"), 27, false),
-    ) = CandidateDetails(
+    private fun fungusDetails() = CandidateDetails(
         fields = LookupFields(
-            scientificName = "Arbutus menziesii",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.TREE,
-            silhouetteResOverride = "sil_tree_broadleaf",
-            habitatText = "Dry, open slopes and bluffs near the coast.",
-            uses = uses,
-            usesNote = usesNote,
-            medicinalActivities = duke?.activities.orEmpty(),
-            medicinalRecordCount = duke?.recordCount ?: 0,
-            usesAttribution = duke?.let { "Dr. Duke's · USDA ARS · CC0" },
+            scientificName = "Amanita muscaria",
+            kingdom = Kingdom.FUNGUS,
+            taxClass = TaxClass.MUSHROOM,
+            habitatText = "Under birch and conifers, autumn.",
         ),
-        duke = duke,
-        dukeConsulted = true,
-    )
-
-    private fun plantCard(
-        details: CandidateDetails = plantDetails(),
-        edits: ConfirmCardEdits = ConfirmCardEdits(),
-    ) = card(
-        outcome = LookupOutcome.Resolved(listOf(madrone), 0, details),
-        details = details,
-        edits = edits,
     )
 
     @Test
-    fun `a plant card shows the kingdom beside the class and offers only plant forms`() {
-        val state = plantCard()
+    fun `a fungus card shows the kingdom beside the class and offers only fungal forms`() {
+        val state = card(
+            outcome = LookupOutcome.Resolved(listOf(flyAgaric), 0, fungusDetails()),
+            details = fungusDetails(),
+        )
 
-        assertTrue(state.isPlant)
-        assertEquals("Arbutus menziesii · plant · tree", state.identityLine)
-        assertEquals(TaxClass.of(Kingdom.PLANT), state.offeredClasses)
-        assertFalse("never offer 'bird' for a madrone", TaxClass.BIRD in state.offeredClasses)
+        assertTrue(state.isFungus)
+        assertEquals("Amanita muscaria · fungus · mushroom", state.identityLine)
+        assertEquals(TaxClass.of(Kingdom.FUNGUS), state.offeredClasses)
+        assertFalse("never offer 'bird' for a mushroom", TaxClass.BIRD in state.offeredClasses)
+        assertEquals("sil_mushroom", state.fields.silhouetteRes)
     }
 
     @Test
-    fun `the medicinal toggle defaults on for a species over the threshold`() {
-        val state = plantCard()
-
-        assertTrue(state.hasUse(PlantUse.MEDICINAL))
-        // Edible is never defaulted on: the app does not assert edibility (D14, M30).
-        assertFalse(state.hasUse(PlantUse.EDIBLE))
-        assertEquals(
-            "Duke's records 27 traditional uses: Astringent, Diuretic, Vulnerary",
-            state.dukeLabel,
-        )
-    }
-
-    @Test
-    fun `a species under the threshold opens with the toggle off`() {
-        val grape = plantCard(
-            details = plantDetails(
-                uses = emptySet(),
-                duke = DukeRecord(listOf("Astringent", "Laxative"), 4, false),
-            ),
-        )
-
-        assertFalse(grape.hasUse(PlantUse.MEDICINAL))
-        assertTrue("the record is still shown, read-only", grape.dukeLabel.contains("4"))
-    }
-
-    @Test
-    fun `no Duke's record says so plainly, and tags nothing`() {
-        val state = plantCard(details = plantDetails(uses = emptySet(), duke = null))
-
-        assertEquals("No Duke's record for this species", state.dukeLabel)
-        assertTrue(state.uses.isEmpty())
-        assertNull(state.fields.usesAttribution)
-    }
-
-    @Test
-    fun `a poison record pre-fills the caution and the card renders it as a caution`() {
-        val state = plantCard(
-            details = plantDetails(
-                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-                duke = DukeRecord(listOf("Diaphoretic", "Diuretic", "Laxative"), 60, true),
-            ),
-        )
-
-        assertTrue(state.poisonRecorded)
-        assertEquals(
-            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-            state.noteCaution,
-        )
-        assertEquals("", state.noteBody)
-    }
-
-    @Test
-    fun `an untagged poisonous plant keeps its caution`() {
-        val state = plantCard(
-            details = plantDetails(
-                uses = emptySet(),
-                usesNote = "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-                duke = DukeRecord(listOf("Diuretic"), 6, true),
-            ),
-        )
-
-        // Bracken is the shape: one Duke's activity, so no medicinal tag, but a Poison record.
-        // The warning has to outlive the tag it arrived without, or the app is telling someone
-        // nothing about a plant a source calls poisonous.
-        assertTrue(state.uses.isEmpty())
-        assertTrue(state.poisonRecorded)
-        assertEquals(
-            "Caution: recorded as poisonous in Duke's ethnobotanical database.",
-            state.fields.usesNote,
-        )
-        assertEquals(state.fields.usesNote, state.noteCaution)
-        assertFalse("nothing to type into until a tag exists", state.noteEditable)
-    }
-
-    @Test
-    fun `toggling a use on the card claims it, and the note comes with it`() {
-        val state = plantCard(
-            edits = ConfirmCardEdits(
-                values = SpeciesFields(
-                    commonName = "Pacific Madrone",
-                    kingdom = Kingdom.PLANT,
-                    taxClass = TaxClass.TREE,
-                    uses = setOf(PlantUse.EDIBLE),
-                    usesNote = "Berries in autumn — mealy but edible.",
-                ),
-                editedFields = setOf(SpeciesField.USES, SpeciesField.USES_NOTE),
-            ),
-        )
-
-        assertEquals(setOf(PlantUse.EDIBLE), state.uses)
-        assertEquals("Berries in autumn — mealy but edible.", state.fields.usesNote)
-        assertTrue(state.isEdited(SpeciesField.USES))
-    }
-
-    @Test
-    fun `a plain note typed with no use tag cannot be saved, so the field is not offered`() {
-        val state = plantCard(
-            details = plantDetails(uses = emptySet(), duke = null),
-            edits = ConfirmCardEdits(
-                values = SpeciesFields(
-                    commonName = "Pacific Madrone",
-                    kingdom = Kingdom.PLANT,
-                    taxClass = TaxClass.TREE,
-                    usesNote = "Berries in autumn.",
-                ),
-                editedFields = setOf(SpeciesField.USES_NOTE),
-            ),
-        )
-
-        // A description with no tag has nowhere to render, so the screen hides the editor
-        // rather than showing a field that swallows every keystroke.
-        assertTrue(state.uses.isEmpty())
-        assertNull(state.fields.usesNote)
-        assertFalse(state.noteEditable)
-    }
-
-    @Test
-    fun `an animal card offers no uses editor`() {
+    fun `an animal card offers only animal forms`() {
         val state = card()
 
-        assertFalse(state.isPlant)
-        assertTrue(state.uses.isEmpty())
-        assertEquals("Duke's index not consulted", state.dukeLabel)
-        assertFalse(state.poisonRecorded)
+        assertFalse(state.isFungus)
+        assertEquals(TaxClass.of(Kingdom.ANIMAL), state.offeredClasses)
+    }
+
+    @Test
+    fun `toggling the kingdom on the card takes the class with it and keeps the photo`() {
+        // GBIF said bird; the user says fungus. The class resets to that kingdom's default
+        // (11.4), and the photo stays — every kingdom keeps its photograph (D59).
+        val state = card(
+            edits = ConfirmCardEdits(
+                values = SpeciesFields(
+                    commonName = "Varied Thrush",
+                    kingdom = Kingdom.FUNGUS,
+                    taxClass = TaxClass.OTHER_FUNGUS,
+                ),
+                editedFields = setOf(SpeciesField.KINGDOM),
+            ),
+        )
+
+        assertTrue(state.isFungus)
+        assertEquals(TaxClass.OTHER_FUNGUS, state.fields.taxClass)
+        assertTrue(state.isEdited(SpeciesField.KINGDOM))
+        assertTrue(state.hasPhoto)
     }
 
     @Test
@@ -444,34 +326,4 @@ class ConfirmSpeciesStateTest {
         assertEquals("Varied Thrush", state.fields.commonName)
         assertTrue(state.candidates.isEmpty())
     }
-    // -----------------------------------------------------------------------
-    // M41: the photo a plant will not keep.
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `a plant card warns that the photo is not kept`() {
-        val plant = card(edits = ConfirmCardEdits(values = SpeciesFields(
-            commonName = "Salal",
-            kingdom = Kingdom.PLANT,
-            taxClass = TaxClass.SHRUB,
-        ), editedFields = setOf(SpeciesField.KINGDOM)))
-
-        assertNotNull(plant.photoNotKeptWarning)
-    }
-
-    @Test
-    fun `an animal card does not, and neither does a plant with no photo`() {
-        assertNull(card().photoNotKeptWarning)
-
-        val noPhoto = card(
-            draft = draft.copy(photoUri = null),
-            edits = ConfirmCardEdits(values = SpeciesFields(
-                commonName = "Salal",
-                kingdom = Kingdom.PLANT,
-                taxClass = TaxClass.SHRUB,
-            ), editedFields = setOf(SpeciesField.KINGDOM)),
-        )
-        assertNull(noPhoto.photoNotKeptWarning)
-    }
-
 }

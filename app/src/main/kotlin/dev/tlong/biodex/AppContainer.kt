@@ -7,14 +7,9 @@ import dev.tlong.biodex.data.backup.BackupGateway
 import dev.tlong.biodex.data.backup.BackupService
 import dev.tlong.biodex.data.catalogue.AndroidAssetReader
 import dev.tlong.biodex.data.catalogue.CatalogueImporter
-import dev.tlong.biodex.data.catalogue.DukeIndex
 import dev.tlong.biodex.data.catalogue.ImportOutcome
 import dev.tlong.biodex.data.catalogue.RoomCatalogueStore
 import dev.tlong.biodex.data.db.AppDatabase
-import dev.tlong.biodex.data.identify.CandidateResolver
-import dev.tlong.biodex.data.identify.IdentifierRegistry
-import dev.tlong.biodex.data.identify.OkHttpIdentifyTransport
-import dev.tlong.biodex.data.identify.PlantNetIdentifier
 import dev.tlong.biodex.data.net.GbifClient
 import dev.tlong.biodex.data.net.JsonFetcher
 import dev.tlong.biodex.data.net.OkHttpJsonFetcher
@@ -124,49 +119,11 @@ class AppContainer(val appContext: Context) {
     /** The one platform seam of the network layer; everything above it is testable Kotlin. */
     private val jsonFetcher: JsonFetcher by lazy { OkHttpJsonFetcher(httpClient) }
 
-    /**
-     * The bundled Duke's index (11.2). It parses on first use and only a plant confirmation
-     * card ever asks, so a session that never adds a plant never pays for it — and it needs an
-     * `AssetReader`, which is the one thing in the lookup path that cannot be built without a
-     * `Context`. That is why 11.6's "no new wiring" note does not hold for slice 12.
-     */
-    private val dukeIndex: DukeIndex by lazy { DukeIndex(AndroidAssetReader(appContext)) }
-
     val speciesLookupRepository: SpeciesLookupRepository by lazy {
         SpeciesLookupRepository(
             gbif = GbifClient(jsonFetcher),
             wikipedia = WikipediaClient(jsonFetcher),
-            duke = dukeIndex,
         )
-    }
-
-    // -----------------------------------------------------------------------
-    // Identification (M31–M39). One provider, one key, one path (D19).
-    // -----------------------------------------------------------------------
-
-    /**
-     * The registry the Register screen asks whether a kingdom can be identified at all.
-     *
-     * **`PLANT` is the only entry, and that is the feature's shape rather than an oversight**
-     * (D19): Pl@ntNet does not identify fungi, no animal provider has been chosen, and the
-     * missing entries are what hide the Identify button for those kingdoms (§5.1). Adding one
-     * later is one more line here (S14).
-     */
-    val identifiers: IdentifierRegistry by lazy {
-        IdentifierRegistry(
-            mapOf(
-                Kingdom.PLANT to PlantNetIdentifier(
-                    transport = OkHttpIdentifyTransport(httpClient),
-                    // Read on every call, never captured: a key pasted into Settings has to
-                    // work on the next press of the button, not the next process (D24).
-                    apiKey = settings::plantNetKeyNow,
-                ),
-            ),
-        )
-    }
-
-    val candidateResolver: CandidateResolver by lazy {
-        CandidateResolver(GbifClient(jsonFetcher))
     }
 
     /** 6.1's Register→Confirm hand-off. In memory: a draft's whole life is two screens. */

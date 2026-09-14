@@ -61,9 +61,6 @@ data class CatalogueSpecies(
     // here beyond the field itself.
     val uses: List<String> = emptyList(),
     val usesNote: String? = null,
-    val medicinalActivities: List<String> = emptyList(),
-    val medicinalRecordCount: Int = 0,
-    val usesAttribution: String? = null,
     /**
      * D34: the grid cells to shade on this species' map, indexed
      * `row * rangeGridWidth + column` over the region's grid. Empty is a real answer — GBIF
