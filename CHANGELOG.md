@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v20.2 — 2026-09-13
+
+- **Added** — a 📁 button beside the camera on the Register screen opens the phone's Files picker. A photo chosen that way arrives with its GPS intact, so the sighting's place is filled in and named ("San Diego, California") with nothing typed. The first tap asks for the media-location permission (Android words it as access to photos and videos); saying no still opens the picker, just without the place. The gallery picker stays the default and never asks. (`M13` revised, `D57` revised, `D58`, `R3`)
+
 ## v20.1 — 2026-09-13
 
 - **Removed** — the media-location permission added in v20. On the phone it raised the full "access photos and videos" prompt, and the photo picker refused to hand over the unredacted file anyway, so the app is back to asking for nothing. Typing the place still works; a photo's GPS will arrive only once the picker's own location switch rolls out. (`D56` revised, `D57`, `R3`)

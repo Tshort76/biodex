@@ -1,6 +1,8 @@
 package dev.tlong.biodex.ui.register
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -107,6 +109,26 @@ fun RegisterRoute(
         )
     }
 
+    // D58. The second way in: the system Files picker (`ACTION_OPEN_DOCUMENT`). Its document
+    // URIs come back with the EXIF intact — GPS included — once this app holds
+    // `ACCESS_MEDIA_LOCATION`, which the gallery picker's URIs never do (R3). The permission
+    // is asked for here and only here, and the picker opens whatever the answer is. Same
+    // grant, same PickedPhoto, same flow from here on; only the door differs.
+    val files = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val gateway = container.photoGateway
+        gateway.persistGrant(uri.toString())
+        viewModel.onPhotoPicked(
+            PickedPhoto(uri = uri.toString(), displayName = gateway.displayName(uri.toString())),
+        )
+    }
+    val openFiles = { files.launch(arrayOf("image/*")) }
+    val mediaLocation = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { _: Boolean -> openFiles() }
+
     // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
     // system camera app takes the photograph, so this app declares no CAMERA permission and
     // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
@@ -158,6 +180,11 @@ fun RegisterRoute(
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
         onPlaceChange = viewModel::onPlaceChange,
+        onPickFromFiles = {
+            val granted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
+            if (granted) openFiles() else mediaLocation.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
+        },
         onTakePhoto = {
             val uri = container.photoGateway.newCameraCaptureUri()
             if (uri != null) {
@@ -198,6 +225,7 @@ fun RegisterScreen(
     onPickPhoto: () -> Unit,
     onPlaceChange: (String) -> Unit = {},
     onTakePhoto: () -> Unit = {},
+    onPickFromFiles: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
     onIdentify: () -> Unit = {},
@@ -285,7 +313,7 @@ fun RegisterScreen(
                     .padding(top = 10.dp, bottom = 12.dp),
             ) {
                 Text(
-                    text = "PHOTO · GALLERY OR CAMERA",
+                    text = "PHOTO · GALLERY, FILES OR CAMERA",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
@@ -296,6 +324,7 @@ fun RegisterScreen(
                     photo = state.photo,
                     onPickPhoto = onPickPhoto,
                     onTakePhoto = onTakePhoto,
+                    onPickFromFiles = onPickFromFiles,
                 )
                 // D56. One optional line, because the photo usually arrives with its location
                 // stripped (R3) and this is the only other way the place can be known.
@@ -567,6 +596,7 @@ private fun PhotoAttachRow(
     photo: PickedPhoto?,
     onPickPhoto: () -> Unit,
     onTakePhoto: () -> Unit,
+    onPickFromFiles: () -> Unit,
 ) {
     val colors = DexTheme.colors
     Row(
@@ -610,7 +640,8 @@ private fun PhotoAttachRow(
                 text = if (photo == null) {
                     // The system picker needs an explicit Done tap after a photo is
                     // highlighted, which is Android's behaviour and not obvious the first time.
-                    "Pick one and tap Done. Linked, never copied — only a thumbnail is kept."
+                    // D58: the gallery strips where a photo was taken; the Files picker keeps it.
+                    "Pick one and tap Done. 📁 browses this phone's files and keeps the photo's place."
                 } else {
                     "Change photo"
                 },
@@ -619,7 +650,17 @@ private fun PhotoAttachRow(
             )
         }
         // M40. Its own tap target rather than a second row: the camera is the other way to
-        // get the same one photo, not a separate step.
+        // get the same one photo, not a separate step. D58: the Files picker is the third,
+        // for a photo whose place should come along with it — the one way GPS survives.
+        Text(
+            text = "📁",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(colors.accentSoft)
+                .clickable(onClick = onPickFromFiles)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
         Text(
             text = "📷",
             style = MaterialTheme.typography.titleLarge,

@@ -57,12 +57,16 @@ class AndroidPhotoGateway(
     override fun persistedGrantCount(): Int = resolver.persistedUriPermissions.size
 
     override fun readExif(uri: String): ExifFacts = try {
-        resolver.openInputStream(Uri.parse(uri))?.use { stream ->
+        val parsed = Uri.parse(uri)
+        resolver.openInputStream(parsed)?.use { stream ->
             val exif = ExifInterface(stream)
-            // Null for every picker photo: the picker redacts GPS and refuses
-            // `setRequireOriginal` outright (R3, D57). Ordinary, not an error.
+            // Null for every gallery-picker photo: the picker redacts GPS and refuses
+            // `setRequireOriginal` outright (R3, D57). Present for a Files-picker document
+            // (`com.android.providers.media.documents`) once `ACCESS_MEDIA_LOCATION` is
+            // granted — the plain stream then carries the EXIF intact (D58). Null again if
+            // it was refused. Ordinary either way.
             val latLng = exif.latLong
-            Log.i(TAG, "EXIF for $uri: gps=${latLng != null}")
+            Log.i(TAG, "EXIF for $uri: authority=${parsed.authority} gps=${latLng != null}")
             ExifFacts(
                 takenAt = parseExifDateTime(
                     exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
