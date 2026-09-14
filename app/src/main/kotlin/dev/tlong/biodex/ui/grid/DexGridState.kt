@@ -96,6 +96,12 @@ data class DexGridUiState(
     val availableClasses: Set<TaxClass> = emptySet(),
     /** True only before the catalogue import has produced anything to show (3.3). */
     val loading: Boolean = true,
+    /**
+     * Whether any species in the region — not just the ones the current filter shows —
+     * carries a use tag. Read from the unfiltered list, so the Food source chip stays put
+     * while the user narrows to a class none of the tagged species belong to.
+     */
+    val hasTaggedSpecies: Boolean = false,
 ) {
     val isFiltered: Boolean get() = query.isNotBlank() || !filters.isEmpty
 
@@ -124,7 +130,7 @@ data class DexGridUiState(
      * an animal filter now that the plants are gone (D59), and gating it on the plant meter
      * — as it was — would have hidden it the day they left.
      */
-    val showUseChips: Boolean get() = species.any { it.uses.isNotEmpty() }
+    val showUseChips: Boolean get() = hasTaggedSpecies
 }
 
 /**
@@ -230,6 +236,7 @@ fun dexGridUiState(
             sort = order,
             availableClasses = reads.progress.perClass.map { it.first }.toSet(),
             loading = reads.species.isEmpty() && reads.progress.totalSpecies == 0,
+            hasTaggedSpecies = reads.species.any { it.uses.isNotEmpty() },
         )
     }
 

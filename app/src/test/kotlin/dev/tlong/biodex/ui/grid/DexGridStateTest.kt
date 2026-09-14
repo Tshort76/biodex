@@ -307,6 +307,10 @@ class DexGridStateTest {
             listOf("coastal-rainforest"),
         ).copy(uses = setOf(dev.tlong.biodex.domain.SpeciesUse.EDIBLE))
         assertTrue(state().showUseChips)
+        // And the chip reads the whole region, not the filtered page: narrowing to a class
+        // with no tagged species must not make the Food source filter vanish mid-browse.
+        filters.value = DexGridFilters(taxClass = TaxClass.BIRD)
+        assertTrue(state().showUseChips)
         filters.value = DexGridFilters(use = dev.tlong.biodex.domain.SpeciesUse.EDIBLE)
         assertEquals(listOf("Roosevelt Elk"), names())
     }

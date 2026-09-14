@@ -158,6 +158,23 @@ class MigrationSchemaTest {
         assertEquals("INTEGER", field.getValue("affinity").jsonPrimitive.content)
     }
 
+    /**
+     * MIGRATION_5_6 is a data purge, not a shape change (D59): the three retired Duke's
+     * columns stay on the table with their defaults. So v6 must be v5 under a new number —
+     * anything else means an entity changed without a matching ALTER.
+     */
+    @Test
+    fun `MIGRATION_5_6 changes no shape — v6 is v5 at a new version`() {
+        val dir = "schemas/dev.tlong.biodex.data.db.AppDatabase"
+        val v6 = File("$dir/6.json")
+        assertTrue("schema v6 has not been exported — run assembleDebug", v6.exists())
+        fun shape(f: File) = Json.parseToJsonElement(f.readText())
+            .jsonObject.getValue("database").jsonObject
+            .filterKeys { it != "version" && it != "identityHash" }
+
+        assertEquals(shape(File("$dir/5.json")), shape(v6))
+    }
+
     @Test
     fun `the speciesId index survives the table recreate`() {
         // Dropping the table drops its indices, so the migration recreates this one by hand.
