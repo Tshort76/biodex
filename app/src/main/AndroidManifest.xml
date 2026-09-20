@@ -6,11 +6,17 @@
          un-cached reference image say "connect to load it" rather than "could not be loaded".
          A normal permission: granted at install, no runtime prompt. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- M13/D58: lets a photo opened through the Files picker keep its GPS tags when the app
-         reads EXIF. Asked for at runtime only when the Files button is tapped, never for the
-         gallery picker (whose URIs are redacted regardless, D57); a refusal costs only the
+    <!-- M13/D58/D63: lets the app read a photo's GPS tags — through the Files picker (D58),
+         and through the media-store original behind a gallery-picker id (D63). Asked for at
+         runtime on the Files button and on the first gallery tap; a refusal costs only the
          location. The prompt Android shows for it is the full photos-and-videos one. -->
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+    <!-- D63: the photo-library permission (and Android 14's partial-access flavour), asked for
+         on the first gallery tap. It is what lets the app read the media-store original behind
+         a picker URI, which is the only copy that still carries the photo's GPS. The picker
+         itself never needs it; the place does. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 
     <application
         android:name=".App"

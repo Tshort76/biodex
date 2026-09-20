@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -56,6 +57,8 @@ import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
+import dev.tlong.biodex.data.photo.hasPhotoLibraryAccess
+import dev.tlong.biodex.data.photo.photoLibraryPermissions
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -128,6 +131,27 @@ fun RegisterRoute(
         ActivityResultContracts.RequestPermission(),
     ) { _: Boolean -> openFiles() }
 
+    // D63. The gallery picker's own stream is redacted, but with the photo-library permission
+    // the gateway reads the media-store original behind the picker id, GPS and all. Asked for
+    // on the first gallery tap; the picker opens whatever the answer. If the photo on screen
+    // was picked before the grant, it is re-read once the grant lands.
+    var libraryAccess by remember { mutableStateOf(hasPhotoLibraryAccess(context)) }
+    val openPicker = {
+        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+    val libraryThenPick = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { _: Map<String, Boolean> ->
+        libraryAccess = hasPhotoLibraryAccess(context)
+        openPicker()
+    }
+    val libraryThenReread = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { _: Map<String, Boolean> ->
+        libraryAccess = hasPhotoLibraryAccess(context)
+        if (libraryAccess) state.photo?.let(viewModel::onPhotoPicked)
+    }
+
     // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
     // system camera app takes the photograph, so this app declares no CAMERA permission and
     // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
@@ -176,9 +200,12 @@ fun RegisterRoute(
         onQueryChange = viewModel::onQueryChange,
         onSelectSpecies = viewModel::onSelectSpecies,
         onPickPhoto = {
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            if (libraryAccess) openPicker() else libraryThenPick.launch(photoLibraryPermissions())
         },
         onPlaceChange = viewModel::onPlaceChange,
+        onGrantPhotoAccess = if (libraryAccess) null else {
+            { libraryThenReread.launch(photoLibraryPermissions()) }
+        },
         onPickFromFiles = {
             val granted = context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
@@ -220,6 +247,8 @@ fun RegisterScreen(
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
     onPlaceChange: (String) -> Unit = {},
+    /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
+    onGrantPhotoAccess: (() -> Unit)? = null,
     onTakePhoto: () -> Unit = {},
     onPickFromFiles: () -> Unit = {},
     onOpenLens: (String) -> Unit,
@@ -309,7 +338,15 @@ fun RegisterScreen(
                 // D56, required since D60. The photo usually arrives with its location stripped
                 // (R3), and a sighting with no place is not one, so this line is the answer
                 // unless the photo carried its own.
-                PlaceField(place = state.place, hint = state.placeHint, onPlaceChange = onPlaceChange)
+                PlaceField(
+                    place = state.place,
+                    hint = state.placeHint,
+                    onPlaceChange = onPlaceChange,
+                    // D63: offered only when a picked photo came back without its place and
+                    // the permission that would recover it is not yet held.
+                    onGrantPhotoAccess = onGrantPhotoAccess
+                        ?.takeIf { state.photo != null && state.placeHint == PlaceHint.REQUIRED },
+                )
 
                 // S06. Lens is the one "what is this?" tool the app offers (S12).
                 state.photo?.let { picked ->
@@ -438,7 +475,12 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
  * the bottom bar reads as one form rather than a stack of unrelated widgets.
  */
 @Composable
-private fun PlaceField(place: String, hint: PlaceHint, onPlaceChange: (String) -> Unit) {
+private fun PlaceField(
+    place: String,
+    hint: PlaceHint,
+    onPlaceChange: (String) -> Unit,
+    onGrantPhotoAccess: (() -> Unit)? = null,
+) {
     val colors = DexTheme.colors
     Column {
         Row(
@@ -477,6 +519,16 @@ private fun PlaceField(place: String, hint: PlaceHint, onPlaceChange: (String) -
                 style = MaterialTheme.typography.labelSmall,
                 color = if (hint == PlaceHint.FROM_PHOTO) colors.accent else colors.faint,
                 modifier = Modifier.padding(start = 12.dp, top = 4.dp),
+            )
+        }
+        onGrantPhotoAccess?.let { grant ->
+            Text(
+                text = "Allow photo access to read the place from your photos →",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.accent,
+                modifier = Modifier
+                    .padding(start = 12.dp, top = 4.dp)
+                    .clickable(onClick = grant),
             )
         }
     }
@@ -604,8 +656,8 @@ private fun PhotoAttachRow(
                 text = if (photo == null) {
                     // The system picker needs an explicit Done tap after a photo is
                     // highlighted, which is Android's behaviour and not obvious the first time.
-                    // D58: the gallery strips where a photo was taken; the Files picker keeps it.
-                    "Pick one and tap Done. 📁 browses this phone's files and keeps the photo's place."
+                    // D63: with photo access allowed, the gallery's photos keep their place too.
+                    "Pick one and tap Done — the place comes with it. 📁 browses this phone's files."
                 } else {
                     "Change photo"
                 },

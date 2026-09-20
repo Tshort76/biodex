@@ -1,14 +1,19 @@
 package dev.tlong.biodex.data.photo
 
+import android.Manifest
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayOutputStream
@@ -56,17 +61,38 @@ class AndroidPhotoGateway(
 
     override fun persistedGrantCount(): Int = resolver.persistedUriPermissions.size
 
-    override fun readExif(uri: String): ExifFacts = try {
+    /**
+     * D63. The picker's stream is redacted, so for a local photo the original is read first —
+     * the media-store row behind the picker id, opened with `setRequireOriginal`, which the
+     * store honours once the app holds the photo-library permission. Any refusal (no
+     * permission, a cloud item, a row that is gone) falls back to the picker's own stream, and
+     * the answer is whichever read carried the coordinates.
+     */
+    override fun readExif(uri: String): ExifFacts {
         val parsed = Uri.parse(uri)
-        resolver.openInputStream(parsed)?.use { stream ->
+        val fromOriginal = originalFor(parsed)?.let { readExifFrom(it, "original") }
+        if (fromOriginal?.lat != null) return fromOriginal
+        val fromStream = readExifFrom(parsed, parsed.authority ?: "?")
+        return fromOriginal?.copy(lat = fromStream.lat, lng = fromStream.lng) ?: fromStream
+    }
+
+    /** The unredacted media-store URI behind a picker URI, or null when there is none to try. */
+    private fun originalFor(picker: Uri): Uri? {
+        val id = mediaStoreIdFromPickerUri(picker.toString()) ?: return null
+        if (!hasPhotoLibraryAccess(context)) return null
+        return MediaStore.setRequireOriginal(
+            ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id),
+        )
+    }
+
+    private fun readExifFrom(uri: Uri, label: String): ExifFacts = try {
+        resolver.openInputStream(uri)?.use { stream ->
             val exif = ExifInterface(stream)
-            // Null for every gallery-picker photo: the picker redacts GPS and refuses
-            // `setRequireOriginal` outright (R3, D57). Present for a Files-picker document
-            // (`com.android.providers.media.documents`) once `ACCESS_MEDIA_LOCATION` is
-            // granted — the plain stream then carries the EXIF intact (D58). Null again if
-            // it was refused. Ordinary either way.
+            // Null for a gallery-picker stream: the picker redacts GPS (R3, D57). Present for a
+            // Files-picker document (D58) or the media-store original (D63) once the
+            // permissions are held.
             val latLng = exif.latLong
-            Log.i(TAG, "EXIF for $uri: authority=${parsed.authority} gps=${latLng != null}")
+            Log.i(TAG, "EXIF via $label for $uri: gps=${latLng != null}")
             ExifFacts(
                 takenAt = parseExifDateTime(
                     exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
@@ -77,7 +103,7 @@ class AndroidPhotoGateway(
             )
         } ?: ExifFacts.None
     } catch (e: Exception) {
-        Log.i(TAG, "No EXIF readable from $uri: ${e.message}")
+        Log.i(TAG, "No EXIF readable via $label from $uri: ${e.message}")
         ExifFacts.None
     }
 
@@ -199,3 +225,26 @@ class AndroidPhotoGateway(
         const val GALLERY_SUBDIRECTORY = "Pictures/BioDex"
     }
 }
+
+/**
+ * D63. Whether the media store will hand this app an unredacted original: the library
+ * permission (or, from Android 14, the "selected photos" partial grant) plus the media-location
+ * permission. Both are asked for on the first gallery tap.
+ */
+fun hasPhotoLibraryAccess(context: Context): Boolean {
+    fun held(permission: String) =
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    val library = held(Manifest.permission.READ_MEDIA_IMAGES) ||
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            held(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED))
+    return library && held(Manifest.permission.ACCESS_MEDIA_LOCATION)
+}
+
+/** The permissions the gallery tap asks for (D63), in the order Android lists them. */
+fun photoLibraryPermissions(): Array<String> = buildList {
+    add(Manifest.permission.READ_MEDIA_IMAGES)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+    }
+    add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+}.toTypedArray()

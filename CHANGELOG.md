@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22.1 — 2026-09-20
+
+- **Changed** — a photo picked from the gallery now fills in its own place. The first time you tap the gallery row the app asks for photo access (choose **Allow all**); from then on the place is read from the photo's original and the "Where was this?" line is optional again. If you said no, a line under the field offers to ask again. Locations that Google Photos only *estimated* are not in the file and still need typing. (`M13` revised, `D57` superseded for local photos, `D63`)
+
 ## v22 — 2026-09-20
 
 - **Changed** — a capture needs a place. If the photo carries no GPS (the gallery picker strips it), the "Where was this?" line is required and the Register button waits for it; a photo from the Files picker or the camera that does carry GPS fills it in and the field says "Place read from the photo ✓". Nothing is written without one or the other. (`M13` revised, `D60`)
