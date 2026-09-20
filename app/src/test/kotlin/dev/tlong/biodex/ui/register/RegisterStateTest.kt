@@ -50,7 +50,7 @@ class RegisterStateTest {
         photo: PickedPhoto? = null,
         registering: Boolean = false,
         error: String? = null,
-        place: String = "",
+        placePrompt: PlacePrompt? = null,
     ) = runBlocking {
         registerUiState(
             species = MutableStateFlow(catalogue),
@@ -59,7 +59,7 @@ class RegisterStateTest {
             photo = MutableStateFlow(photo),
             registering = MutableStateFlow(registering),
             error = MutableStateFlow(error),
-            place = MutableStateFlow(place),
+            placePrompt = MutableStateFlow(placePrompt),
         ).first()
     }
 
@@ -91,32 +91,27 @@ class RegisterStateTest {
     }
 
     @Test
-    fun `registering needs a place - from the photo or typed (D60)`() {
+    fun `a stripped photo still lights the button - the tap asks for the place (D64)`() {
         val owl = "western-screech-owl"
-        assertFalse(
-            "a stripped photo and nothing typed is not a sighting",
-            state(selectedId = owl, photo = stripped).canRegister,
-        )
-        assertFalse(
-            "whitespace is not a place",
-            state(selectedId = owl, photo = stripped, place = "   ").canRegister,
-        )
-        assertTrue(state(selectedId = owl, photo = stripped, place = "Bear Valley").canRegister)
-        assertTrue("GPS on the photo is enough", state(selectedId = owl, photo = photo).canRegister)
-        assertFalse(
-            "the button waits while the EXIF is still being read",
-            state(selectedId = owl, photo = stripped.copy(hasLocation = null)).canRegister,
-        )
+        val s = state(selectedId = owl, photo = stripped)
+        assertTrue("the button is live", s.canRegister)
+        assertTrue("and the tap will prompt", s.needsPlacePrompt)
+        assertFalse(s.placeFromPhoto)
+
+        val located = state(selectedId = owl, photo = photo)
+        assertTrue(located.canRegister)
+        assertFalse("GPS on the photo means no prompt", located.needsPlacePrompt)
+        assertTrue(located.placeFromPhoto)
+
+        val reading = state(selectedId = owl, photo = stripped.copy(hasLocation = null))
+        assertFalse("the button waits while the EXIF is still being read", reading.canRegister)
+        assertFalse("and never prompts for a photo that may yet answer", reading.needsPlacePrompt)
     }
 
     @Test
-    fun `the place field says whether the photo answered it (D60)`() {
-        assertEquals(PlaceHint.REQUIRED, state().placeHint)
-        assertEquals(PlaceHint.REQUIRED, state(photo = stripped).placeHint)
-        assertEquals(PlaceHint.READING, state(photo = stripped.copy(hasLocation = null)).placeHint)
-        assertEquals(PlaceHint.FROM_PHOTO, state(photo = photo).placeHint)
-        assertTrue(PlaceHint.REQUIRED.placeholder.contains("required"))
-        assertTrue(PlaceHint.FROM_PHOTO.placeholder.contains("optional"))
+    fun `the prompt is state, not a field (D64)`() {
+        assertNull(state(photo = stripped).placePrompt)
+        assertEquals(PlacePrompt.REGISTER, state(placePrompt = PlacePrompt.REGISTER).placePrompt)
     }
 
     @Test
@@ -236,16 +231,15 @@ class RegisterStateTest {
         assertFalse("a name with no photo is not enough", state(query = "Varied Thrush").canAddOwn)
         assertFalse("a photo with no name is not enough", state(photo = photo).canAddOwn)
         assertTrue(state(query = "Varied Thrush", photo = photo).canAddOwn)
-        // D60 holds on this path too: the card writes a capture, and a capture needs a place.
-        assertFalse(state(query = "Varied Thrush", photo = stripped).canAddOwn)
-        assertTrue(state(query = "Varied Thrush", photo = stripped, place = "Bear Valley").canAddOwn)
+        // D64: a stripped photo still lights the button; the tap prompts for the place.
+        assertTrue(state(query = "Varied Thrush", photo = stripped).canAddOwn)
+        assertFalse(state(query = "Varied Thrush", photo = stripped.copy(hasLocation = null)).canAddOwn)
     }
 
     @Test
     fun `the button says which half is still missing`() {
         assertTrue(state().addOwnLabel.contains("Type a name"))
         assertTrue(state(query = "Varied Thrush").addOwnLabel.contains("Attach a photo"))
-        assertTrue(state(query = "Varied Thrush", photo = stripped).addOwnLabel.contains("Say where"))
         assertEquals(
             "Add \u201CVaried Thrush\u201D as your own species \uFF0B",
             state(query = "Varied Thrush", photo = photo).addOwnLabel,

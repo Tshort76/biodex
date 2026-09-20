@@ -61,12 +61,11 @@ data class RegisterUiState(
     val selected: SpeciesSummary? = null,
     val photo: PickedPhoto? = null,
     /**
-     * D56, required since D60. Where the catch happened, in the user's words. A photo that
-     * still carries GPS names its own place; this field is the answer for the far more common
-     * photo that does not — the system picker strips location from most of what it hands over
-     * (R3) — and one of the two must hold before anything is written.
+     * D64. The "Where was this?" prompt, raised only when the Register (or add-your-own) tap
+     * finds a photo with no coordinates. Null when nothing is being asked. The place is never a
+     * field on the screen itself — the photo answers the question for most catches (D63).
      */
-    val place: String = "",
+    val placePrompt: PlacePrompt? = null,
     val registering: Boolean = false,
     val error: String? = null,
     /** 4.4: shown only when the persisted-grant count is actually near Android's cap. */
@@ -79,33 +78,24 @@ data class RegisterUiState(
      */
     val preselectedIndex: Int? = null,
 ) {
-    /**
-     * D60: a sighting is a time and a place, so the place is satisfied either by the photo's
-     * own coordinates or by what the user typed. The same rule is enforced at the door in
-     * `CaptureRegistrar`; this copy exists so the button can explain itself.
-     */
-    val placeSatisfied: Boolean
-        get() = placeLabelOrNull(place) != null || photo?.hasLocation == true
+    /** D63: the photo carried its own coordinates, so no prompt will be raised. */
+    val placeFromPhoto: Boolean get() = photo?.hasLocation == true
 
     /**
-     * The line under the place field. It changes with the photo rather than the typing: once a
-     * photo carries its own coordinates the field is genuinely optional again.
+     * D60/D64: the tap must ask for a place before writing. True once the EXIF read has
+     * finished and found nothing; while the read is still running the button waits (below), so
+     * the prompt is never raised for a photo that was about to answer for itself.
      */
-    val placeHint: PlaceHint
-        get() = when {
-            photo == null -> PlaceHint.REQUIRED
-            photo.hasLocation == null -> PlaceHint.READING
-            photo.hasLocation -> PlaceHint.FROM_PHOTO
-            else -> PlaceHint.REQUIRED
-        }
+    val needsPlacePrompt: Boolean get() = photo?.hasLocation == false
 
     /**
      * Every kingdom needs a photograph: for an animal or a fungus the photograph *is* the
      * catch (M07) — though it can be unlinked afterwards and the sighting kept (D61). The
-     * plant exception (M41) left with the plants (D59). And every capture needs a place (D60).
+     * plant exception (M41) left with the plants (D59). The place (D60) is not a condition
+     * here: the tap asks for it when the photo has none (D64).
      */
     val canRegister: Boolean
-        get() = selected != null && !registering && photo != null && placeSatisfied
+        get() = selected != null && !registering && photo?.hasLocation != null
 
     /**
      * M08's affordance. The name is not in the catalogue, so "Add your own species" is the
@@ -122,13 +112,12 @@ data class RegisterUiState(
      * what it still wants rather than disappearing.
      */
     val canAddOwn: Boolean
-        get() = query.isNotBlank() && photo != null && placeSatisfied && !registering
+        get() = query.isNotBlank() && photo?.hasLocation != null && !registering
 
     val addOwnLabel: String
         get() = when {
             query.isBlank() -> "Not in the list? Type a name to add your own species ＋"
             photo == null -> "Attach a photo to add “${query.trim()}” as your own species ＋"
-            !placeSatisfied -> "Say where to add “${query.trim()}” as your own species ＋"
             else -> "Add “${query.trim()}” as your own species ＋"
         }
 }
@@ -154,7 +143,7 @@ fun registerUiState(
     registering: Flow<Boolean>,
     error: Flow<String?>,
     preselectedSpeciesId: String? = null,
-    place: Flow<String> = flowOf(""),
+    placePrompt: Flow<PlacePrompt?> = flowOf(null),
 ): Flow<RegisterUiState> =
     combine(species, query, selectedSpeciesId, photo, registering) { all, q, id, pic, busy ->
         val results = registerResults(all, q)
@@ -171,19 +160,10 @@ fun registerUiState(
                 ?.takeIf { it >= 0 },
         )
     }.combine(error) { state, message -> state.copy(error = message) }
-        .combine(place) { state, where -> state.copy(place = where) }
+        .combine(placePrompt) { state, prompt -> state.copy(placePrompt = prompt) }
 
-/** D60: what the place field says under itself, decided by the photo, not the typing. */
-enum class PlaceHint(val placeholder: String, val note: String?) {
-    /** No photo yet, or a photo with no coordinates: the field is the only place there is. */
-    REQUIRED("Where was this? (required)", null),
-
-    /** The EXIF read is still running; a beat at most. */
-    READING("Where was this?", "Checking the photo for its location…"),
-
-    /** The photo carries GPS: typing is optional and, if done, wins (D56). */
-    FROM_PHOTO("Where was this? (optional)", "Place read from the photo ✓"),
-}
+/** D64: which tap raised the "Where was this?" prompt, so the answer resumes the right one. */
+enum class PlacePrompt { REGISTER, ADD_OWN }
 
 /** D56: the typed place, trimmed, or null when nothing was typed — never an empty label. */
 internal fun placeLabelOrNull(place: String): String? = place.trim().takeIf { it.isNotEmpty() }

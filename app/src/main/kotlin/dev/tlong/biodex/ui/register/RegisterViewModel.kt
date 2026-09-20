@@ -40,7 +40,7 @@ class RegisterViewModel(
     private val query = MutableStateFlow("")
     private val selectedSpeciesId = MutableStateFlow(preselectedSpeciesId)
     private val photo = MutableStateFlow<PickedPhoto?>(null)
-    private val place = MutableStateFlow("")
+    private val placePrompt = MutableStateFlow<PlacePrompt?>(null)
     private val registering = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
@@ -58,7 +58,7 @@ class RegisterViewModel(
             registering = registering,
             error = error,
             preselectedSpeciesId = preselectedSpeciesId,
-            place = place,
+            placePrompt = placePrompt,
         ),
         _grantWarning,
     ) { state, warning ->
@@ -74,8 +74,24 @@ class RegisterViewModel(
         query.value = value
     }
 
-    fun onPlaceChange(value: String) {
-        place.value = value
+    /**
+     * D64. The prompt's answer: a typed place resumes whichever tap raised it; a dismissal
+     * just closes it and the screen is as it was.
+     */
+    fun onPlaceEntered(place: String) {
+        val label = placeLabelOrNull(place) ?: return
+        val prompt = placePrompt.value ?: return
+        placePrompt.value = null
+        when (prompt) {
+            PlacePrompt.REGISTER -> register(label)
+            PlacePrompt.ADD_OWN -> viewModelScope.launch {
+                sendAddOwn(typedName = query.value.trim(), prefetched = null, place = label)
+            }
+        }
+    }
+
+    fun onPlacePromptDismissed() {
+        placePrompt.value = null
     }
 
     fun onSelectSpecies(speciesId: String) {
@@ -103,10 +119,18 @@ class RegisterViewModel(
         }
     }
 
-    /** M08's typed path, unchanged in behaviour and routed through the same hand-off. */
+    /**
+     * M08's typed path, routed through the same hand-off. D64: a photo with no coordinates
+     * raises the place prompt first, and the answer lands in [onPlaceEntered].
+     */
     fun onAddOwnTyped() {
-        if (!uiState.value.canAddOwn) return
-        viewModelScope.launch { sendAddOwn(typedName = query.value.trim(), prefetched = null) }
+        val state = uiState.value
+        if (!state.canAddOwn) return
+        if (state.needsPlacePrompt) {
+            placePrompt.value = PlacePrompt.ADD_OWN
+            return
+        }
+        viewModelScope.launch { sendAddOwn(typedName = query.value.trim(), prefetched = null, place = null) }
     }
 
     /**
@@ -119,7 +143,7 @@ class RegisterViewModel(
      * sweeps the cache either way. The draft holder is in memory, so a draft and its cache
      * file die together on process death; nothing dangles.
      */
-    private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?) {
+    private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?, place: String?) {
         val picked = photo.value ?: return
         events.send(
             RegisterEvent.AddOwnSpecies(
@@ -127,12 +151,26 @@ class RegisterViewModel(
                 picked.uri,
                 picked.source,
                 prefetched,
-                place = placeLabelOrNull(place.value),
+                place = place,
             ),
         )
     }
 
+    /**
+     * D64. The Register tap: a photo that carries its own coordinates registers at once; one
+     * that does not raises the "Where was this?" prompt and waits for [onPlaceEntered].
+     */
     fun onRegister() {
+        val state = uiState.value
+        if (!state.canRegister) return
+        if (state.needsPlacePrompt) {
+            placePrompt.value = PlacePrompt.REGISTER
+            return
+        }
+        register(locationLabel = null)
+    }
+
+    private fun register(locationLabel: String?) {
         val speciesId = selectedSpeciesId.value ?: return
         val picked = photo.value ?: return
         if (registering.value) return
@@ -151,7 +189,7 @@ class RegisterViewModel(
             val result = registrar.register(
                 speciesId,
                 registerUri,
-                locationLabel = placeLabelOrNull(place.value),
+                locationLabel = locationLabel,
                 // D60: the place gate above read the cache file; the door reads the same one.
                 exifUri = picked.uri.takeIf { it != registerUri },
             )
@@ -169,11 +207,11 @@ class RegisterViewModel(
                     events.send(RegisterEvent.PhotoUnreadable)
                 }
 
-                // The button is disabled until `placeSatisfied`, so this is belt to that braces:
-                // the door's own rule (D60), said on the screen.
+                // The tap prompts before it gets here, so this is belt to that braces: the
+                // door's own rule (D60), and the prompt is raised again rather than an error
+                // shown.
                 CaptureRegistrar.RegisterResult.PlaceMissing -> {
-                    error.value = "Where was this? Type the place — the photo carries no " +
-                        "location. Nothing was saved."
+                    placePrompt.value = PlacePrompt.REGISTER
                 }
             }
             registering.value = false

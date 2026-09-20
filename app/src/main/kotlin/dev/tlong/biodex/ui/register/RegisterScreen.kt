@@ -28,9 +28,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -202,7 +204,8 @@ fun RegisterRoute(
         onPickPhoto = {
             if (libraryAccess) openPicker() else libraryThenPick.launch(photoLibraryPermissions())
         },
-        onPlaceChange = viewModel::onPlaceChange,
+        onPlaceEntered = viewModel::onPlaceEntered,
+        onPlacePromptDismissed = viewModel::onPlacePromptDismissed,
         onGrantPhotoAccess = if (libraryAccess) null else {
             { libraryThenReread.launch(photoLibraryPermissions()) }
         },
@@ -246,7 +249,9 @@ fun RegisterScreen(
     onQueryChange: (String) -> Unit,
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
-    onPlaceChange: (String) -> Unit = {},
+    /** D64: the "Where was this?" prompt's two exits. */
+    onPlaceEntered: (String) -> Unit = {},
+    onPlacePromptDismissed: () -> Unit = {},
     /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
     onGrantPhotoAccess: (() -> Unit)? = null,
     onTakePhoto: () -> Unit = {},
@@ -271,6 +276,10 @@ fun RegisterScreen(
         // the top edge, so the rows above it show it is a list position, not the list's start.
         listState.scrollToItem(preselectedIndex, -viewport / 3)
         scrolledToPreselection = true
+    }
+
+    if (state.placePrompt != null) {
+        PlacePromptDialog(onPlaceEntered = onPlaceEntered, onDismiss = onPlacePromptDismissed)
     }
 
     Scaffold(
@@ -335,18 +344,27 @@ fun RegisterScreen(
                     onTakePhoto = onTakePhoto,
                     onPickFromFiles = onPickFromFiles,
                 )
-                // D56, required since D60. The photo usually arrives with its location stripped
-                // (R3), and a sighting with no place is not one, so this line is the answer
-                // unless the photo carried its own.
-                PlaceField(
-                    place = state.place,
-                    hint = state.placeHint,
-                    onPlaceChange = onPlaceChange,
-                    // D63: offered only when a picked photo came back without its place and
-                    // the permission that would recover it is not yet held.
-                    onGrantPhotoAccess = onGrantPhotoAccess
-                        ?.takeIf { state.photo != null && state.placeHint == PlaceHint.REQUIRED },
-                )
+                // D64. Nothing about the place lives on this screen: the photo answers for
+                // itself (one quiet line says so), and a photo that cannot is asked about when
+                // Register is tapped. The one exception is the offer to grant photo access,
+                // shown only when a picked photo came back placeless without it (D63).
+                if (state.placeFromPhoto) {
+                    Text(
+                        text = "📍 Place read from the photo",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.accent,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                } else if (state.needsPlacePrompt && onGrantPhotoAccess != null) {
+                    Text(
+                        text = "Allow photo access to read the place from your photos →",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.accent,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .clickable(onClick = onGrantPhotoAccess),
+                    )
+                }
 
                 // S06. Lens is the one "what is this?" tool the app offers (S12).
                 state.photo?.let { picked ->
@@ -471,67 +489,80 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 /**
- * D56. Where the catch happened, in the user's own words. Kept to the search field's shape so
- * the bottom bar reads as one form rather than a stack of unrelated widgets.
+ * D64. Raised by the Register (or add-your-own) tap when the photo carries no coordinates,
+ * and only then. Material's dialog, as in Settings (D49): the confirm side says what it does
+ * and is dark until something is typed; Cancel returns to the screen exactly as it was.
  */
 @Composable
-private fun PlaceField(
-    place: String,
-    hint: PlaceHint,
-    onPlaceChange: (String) -> Unit,
-    onGrantPhotoAccess: (() -> Unit)? = null,
+private fun PlacePromptDialog(
+    onPlaceEntered: (String) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.codeBg)
-                .padding(horizontal = 12.dp, vertical = 9.dp),
-        ) {
-            Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
-            Box(modifier = Modifier.weight(1f)) {
-                if (place.isEmpty()) {
-                    Text(
-                        text = hint.placeholder,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.faint,
-                    )
+    var place by rememberSaveable { mutableStateOf("") }
+    val ready = place.isNotBlank()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.card,
+        title = {
+            Text(
+                text = "Where was this?",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = colors.fg,
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "The photo carries no location, and a sighting needs one.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.muted,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.codeBg)
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
+                ) {
+                    Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (place.isEmpty()) {
+                            Text(
+                                text = "e.g. Bear Valley, Point Reyes",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.faint,
+                            )
+                        }
+                        BasicTextField(
+                            value = place,
+                            onValueChange = { place = it },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+                            cursorBrush = SolidColor(colors.accent),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
-                BasicTextField(
-                    value = place,
-                    onValueChange = onPlaceChange,
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
-                    cursorBrush = SolidColor(colors.accent),
-                    modifier = Modifier.fillMaxWidth(),
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onPlaceEntered(place) }, enabled = ready) {
+                Text(
+                    text = "Register",
+                    color = if (ready) colors.accent else colors.faint,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
-        }
-        // D60. Said once, under the field, and only when there is something to say: the photo is
-        // being read, or it answered the question itself.
-        hint.note?.let { note ->
-            Text(
-                text = note,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (hint == PlaceHint.FROM_PHOTO) colors.accent else colors.faint,
-                modifier = Modifier.padding(start = 12.dp, top = 4.dp),
-            )
-        }
-        onGrantPhotoAccess?.let { grant ->
-            Text(
-                text = "Allow photo access to read the place from your photos →",
-                style = MaterialTheme.typography.labelSmall,
-                color = colors.accent,
-                modifier = Modifier
-                    .padding(start = 12.dp, top = 4.dp)
-                    .clickable(onClick = grant),
-            )
-        }
-    }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel", color = colors.muted)
+            }
+        },
+    )
 }
 
 @Composable

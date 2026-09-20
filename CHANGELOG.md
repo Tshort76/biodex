@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22.2 — 2026-09-20
+
+- **Changed** — the "Where was this?" line is gone from the Register screen. When the photo carries its location the screen says so in one small line; when it does not, tapping Register asks for the place in a small prompt — type it to continue, or Cancel to go back. Add-your-own works the same way. (`M13`, `D60` revised, `D64`)
+
 ## v22.1 — 2026-09-20
 
 - **Changed** — a photo picked from the gallery now fills in its own place. The first time you tap the gallery row the app asks for photo access (choose **Allow all**); from then on the place is read from the photo's original and the "Where was this?" line is optional again. If you said no, a line under the field offers to ask again. Locations that Google Photos only *estimated* are not in the file and still need typing. (`M13` revised, `D57` superseded for local photos, `D63`)
