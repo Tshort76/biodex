@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -45,6 +46,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.NO_OWN_PHOTO_MARK
@@ -166,41 +168,47 @@ fun UnlockRevealOverlay(
     val counter = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        // A beat before anything moves. The silhouette is what the user has been looking at
-        // on the grid for weeks, so the reveal is worth more if it starts from that.
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        delay(HOLD_MS)
-        // D62: the ball. Linear on the way in — the shell applies its own ease so the halves
-        // arrive with a click rather than a drift — then the click itself, then the rock.
-        close.animateTo(1f, tween(durationMillis = CLOSE_MS, easing = LinearEasing))
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        wobble.animateTo(1f, tween(durationMillis = WOBBLE_MS, easing = LinearEasing))
-        launch {
-            burst.animateTo(1f, tween(durationMillis = BURST_MS, easing = LinearOutSlowInEasing))
+        // D65. The owner's phone runs with the developer option "Animator duration scale"
+        // off, which Compose honours by finishing every animation on its first frame — so the
+        // reveal, ball and all, was a still card. This is the one screen where the motion is
+        // the content rather than chrome, so it runs at its own speed whatever the system says.
+        withContext(FullSpeedMotion) {
+            // A beat before anything moves. The silhouette is what the user has been looking at
+            // on the grid for weeks, so the reveal is worth more if it starts from that.
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            delay(HOLD_MS)
+            // D62: the ball. Linear on the way in — the shell applies its own ease so the halves
+            // arrive with a click rather than a drift — then the click itself, then the rock.
+            close.animateTo(1f, tween(durationMillis = CLOSE_MS, easing = LinearEasing))
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            wobble.animateTo(1f, tween(durationMillis = WOBBLE_MS, easing = LinearEasing))
+            launch {
+                burst.animateTo(1f, tween(durationMillis = BURST_MS, easing = LinearOutSlowInEasing))
+            }
+            // The confetti is linear: the arc is in the maths, and easing the clock would make
+            // gravity look wrong.
+            launch {
+                confetti.animateTo(1f, tween(durationMillis = CONFETTI_MS, easing = LinearEasing))
+            }
+            // One slow turn of the ring across the whole reveal.
+            launch {
+                ring.animateTo(
+                    1f,
+                    tween(
+                        durationMillis = (REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS).toInt(),
+                        easing = LinearEasing,
+                    ),
+                )
+            }
+            resolve.animateTo(1f, tween(durationMillis = CROSSFADE_MS, easing = FastOutSlowInEasing))
+            naming.animateTo(1f, tween(durationMillis = TEXT_MS, easing = LinearOutSlowInEasing))
+            // The second tick lands on the number, which is the sentence the screen is here to
+            // say: you have one more than you had.
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            counter.animateTo(1f, tween(durationMillis = COUNTER_MS, easing = FastOutSlowInEasing))
+            delay(REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS - CROSSFADE_MS - TEXT_MS - COUNTER_MS)
+            onDismiss()
         }
-        // The confetti is linear: the arc is in the maths, and easing the clock would make
-        // gravity look wrong.
-        launch {
-            confetti.animateTo(1f, tween(durationMillis = CONFETTI_MS, easing = LinearEasing))
-        }
-        // One slow turn of the ring across the whole reveal.
-        launch {
-            ring.animateTo(
-                1f,
-                tween(
-                    durationMillis = (REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS).toInt(),
-                    easing = LinearEasing,
-                ),
-            )
-        }
-        resolve.animateTo(1f, tween(durationMillis = CROSSFADE_MS, easing = FastOutSlowInEasing))
-        naming.animateTo(1f, tween(durationMillis = TEXT_MS, easing = LinearOutSlowInEasing))
-        // The second tick lands on the number, which is the sentence the screen is here to
-        // say: you have one more than you had.
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        counter.animateTo(1f, tween(durationMillis = COUNTER_MS, easing = FastOutSlowInEasing))
-        delay(REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS - CROSSFADE_MS - TEXT_MS - COUNTER_MS)
-        onDismiss()
     }
 
     val progress = resolve.value
@@ -387,6 +395,15 @@ fun UnlockRevealOverlay(
         // Above everything, so the pieces cross the naming lines on their way down.
         ConfettiBurst(progress = confetti.value, originY = WASH_CENTRE_Y)
     }
+}
+
+/**
+ * D65. A coroutine context element that pins the animation clock to real time, overriding the
+ * system "Animator duration scale" (0 on the owner's phone, which makes every Compose animation
+ * finish on its first frame). Scoped to the reveal's own timeline and nothing else.
+ */
+private val FullSpeedMotion = object : MotionDurationScale {
+    override val scaleFactor: Float get() = 1f
 }
 
 /** Where the halo sits as a fraction of the screen: the wash and the confetti centre on it. */
