@@ -41,4 +41,7 @@ interface CaptureStore {
 
     /** D61. Nulls the reference, the thumbnail and any local copy; every other column stays. */
     suspend fun clearCaptureReference(captureId: String)
+
+    /** D67. Writes coordinates, and a label only where the row had none. */
+    suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan)
 }

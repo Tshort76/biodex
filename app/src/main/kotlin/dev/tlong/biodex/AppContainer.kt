@@ -17,6 +17,8 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.net.WikipediaClient
 import dev.tlong.biodex.data.photo.AndroidPhotoGateway
 import dev.tlong.biodex.data.photo.AndroidPlaceNamer
+import dev.tlong.biodex.data.photo.SightingPlaceSweep
+import dev.tlong.biodex.data.photo.hasPhotoLibraryAccess
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
@@ -168,6 +170,12 @@ class AppContainer(val appContext: Context) {
             // D45: after the catalogue is settled, spell the user's own rows the way M45 spells
             // a new one. Idempotent, and a handful of rows, so it needs no flag to remember.
             UserNameSweep(database).run()
+            // D67: fill the place on sightings registered before the photo's original could be
+            // read. Only worth a pass once the library permission is held — without it every
+            // read would come back redacted, exactly as it did the first time.
+            if (hasPhotoLibraryAccess(appContext)) {
+                SightingPlaceSweep(dexRepository, photoGateway, AndroidPlaceNamer(appContext)).run()
+            }
         }
         // M40's sweep, hung off the same start hook rather than a second one. A camera shot
         // lives in `cacheDir/capture/` between the shutter and registration, so a Register

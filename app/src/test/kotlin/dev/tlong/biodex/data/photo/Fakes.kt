@@ -60,6 +60,15 @@ class FakeCaptureStore : CaptureStore {
             .copy(photoUri = null, thumbPath = null, localCopyPath = null)
     }
 
+    override suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan) {
+        val c = captures.getValue(plan.captureId)
+        captures[plan.captureId] = c.copy(
+            lat = plan.lat,
+            lng = plan.lng,
+            locationLabel = c.locationLabel ?: plan.locationLabel,
+        )
+    }
+
     /** What the grid would render for a species — the DAO's COALESCE, in Kotlin. */
     fun renderedThumbPath(speciesId: String): String? {
         val entry = entries[speciesId] ?: return null

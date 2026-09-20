@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22.5 — 2026-09-20
+
+- **Added** — sightings registered before the app could read a photo's location get it filled in: on each start the app re-reads every placeless sighting whose photo is still linked and writes the coordinates and a place name (a place you typed is kept). Re-linking a photo does the same for that sighting. Photos that were deleted from the phone after registering cannot be read and stay as they are. (`D67`)
+
 ## v22.4 — 2026-09-20
 
 - **Changed** — the ball on the unlock reveal wears a rainbow over its upper half instead of red, in the same colours as the ring and the confetti. (`D62` revised, `D66`)

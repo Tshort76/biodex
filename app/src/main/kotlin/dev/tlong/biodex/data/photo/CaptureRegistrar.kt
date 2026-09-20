@@ -241,6 +241,17 @@ class CaptureRegistrar(
         )
         store.updateCaptureReference(captureId, plan.newPhotoUri, thumbPath)
         plan.releaseUri?.let(photos::releaseGrant)
+        // D67: a sighting that never got its place can take it from the photo it is now
+        // linked to. A typed label stays; coordinates the row already has stay.
+        val facts = photos.readExif(newPhotoUri)
+        val label = if (capture.locationLabel == null && facts.lat != null && facts.lng != null) {
+            withContext(Dispatchers.IO) {
+                withTimeoutOrNull(PLACE_NAME_TIMEOUT_MS) { places.nameFor(facts.lat, facts.lng) }
+            }
+        } else {
+            null
+        }
+        planPlaceBackfill(capture, facts, label)?.let { store.applyPlaceBackfill(it) }
         return true
     }
 

@@ -19,6 +19,8 @@ import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
 import dev.tlong.biodex.data.photo.CaptureStore
+import dev.tlong.biodex.data.photo.PlaceBackfillPlan
+import dev.tlong.biodex.data.photo.PlaceBackfillStore
 import dev.tlong.biodex.data.photo.RegistrationPlan
 import dev.tlong.biodex.domain.Capture
 import dev.tlong.biodex.domain.DexProgress
@@ -55,7 +57,7 @@ const val DEFAULT_REGION_ID = "pacific"
 class DexRepository(
     private val db: AppDatabase,
     private val regionId: String = DEFAULT_REGION_ID,
-) : CaptureStore, UserSpeciesStore, BackupStore {
+) : CaptureStore, UserSpeciesStore, BackupStore, PlaceBackfillStore {
 
     private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
     private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
@@ -231,6 +233,15 @@ class DexRepository(
 
     override suspend fun clearCaptureReference(captureId: String) {
         db.captureDao().clearReference(captureId)
+    }
+
+    // D67's sweep.
+
+    override suspend fun placelessPhotographedCaptures(): List<Capture> =
+        db.captureDao().placelessPhotographed().map { it.toDomain() }
+
+    override suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan) {
+        db.captureDao().fillPlace(plan.captureId, plan.lat, plan.lng, plan.locationLabel)
     }
 
     // -----------------------------------------------------------------------

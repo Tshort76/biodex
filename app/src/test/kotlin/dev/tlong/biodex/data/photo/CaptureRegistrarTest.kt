@@ -320,6 +320,24 @@ class CaptureRegistrarTest {
         }
 
     @Test
+    fun `re-linking fills a place the sighting never had (D67)`() = runBlocking {
+        photos.exif = ExifFacts.None
+        val r = registrar.register("owl", "content://photos/old", locationLabel = null)
+        // The door refuses a placeless registration now, so seed the row the old way.
+        assertEquals(CaptureRegistrar.RegisterResult.PlaceMissing, r)
+        val placed = registrar.register("owl", "content://photos/old", locationLabel = "Typed")
+            as CaptureRegistrar.RegisterResult.Registered
+        store.captures[placed.captureId] = store.captures.getValue(placed.captureId).copy(locationLabel = null)
+
+        photos.exif = ExifFacts(lat = 38.0, lng = -122.8)
+        registrar.relink(placed.captureId, "content://photos/new")
+
+        val row = store.captures.getValue(placed.captureId)
+        assertEquals(38.0, row.lat!!, 0.0001)
+        assertEquals("content://photos/new", row.photoUri)
+    }
+
+    @Test
     fun `re-linking does not release a grant another capture still needs`() = runBlocking {
         val owl = (registrar.register("owl", "content://photos/shared")
             as CaptureRegistrar.RegisterResult.Registered).captureId
