@@ -6,7 +6,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -22,9 +24,11 @@ import kotlin.math.sin
  * opens on the photograph. Pure drawing over three clocks, so the overlay's timeline owns
  * every duration and this file owns only the geometry.
  *
- * The shape is the point and the colours are the app's: the muted `stop` red for the upper
- * half, the card white for the lower, the ink `fg` for the band and button rim. That reads as
- * the ball without borrowing anyone's trade dress, and it sits on both themes.
+ * The shape is the point and the colours are the app's: the upper half is a rainbow arc in
+ * the confetti palette (the same colours the ring turns through), the lower half the card
+ * white, the band and button rim the ink `fg`. That reads as the ball without borrowing
+ * anyone's trade dress — the owner asked for a rainbow rather than the red on purpose — and
+ * it sits on both themes.
  *
  * @param close 0 → 1: the two halves travel in from above and below and meet at the equator.
  * @param wobble 0 → 1: a decaying rock about the ball's base, played after the click.
@@ -50,13 +54,20 @@ fun PokeballShell(
         val alpha = (1f - open).coerceIn(0f, 1f)
 
         rotate(degrees = wobbleAngle(wobble), pivot = Offset(centre.x, centre.y + radius)) {
-            // Upper hemisphere.
+            // Upper hemisphere: a rainbow swept around the ball's centre, so its bands arch
+            // over the top like the real thing rather than striping across it.
             translate(top = -travel) {
-                drawHalf(centre, radius, upper = true, colour = colours.upper, alpha = alpha)
+                drawHalf(
+                    centre, radius, upper = true, alpha = alpha,
+                    brush = Brush.sweepGradient(
+                        colorStops = rainbowStops(colours.upperRainbow),
+                        center = centre,
+                    ),
+                )
             }
             // Lower hemisphere.
             translate(top = travel) {
-                drawHalf(centre, radius, upper = false, colour = colours.lower, alpha = alpha)
+                drawHalf(centre, radius, upper = false, alpha = alpha, brush = SolidColor(colours.lower))
             }
             // The band and the button only exist once the halves have met: they are what says
             // "closed", so they fade up over the last stretch of the approach.
@@ -85,14 +96,26 @@ fun PokeballShell(
 }
 
 data class PokeballColours(
-    val upper: Color,
+    /** The upper half's arc, first colour at the left horizon and last at the right. */
+    val upperRainbow: List<Color>,
     val lower: Color,
     val band: Color,
     val button: Color,
 )
 
+/**
+ * A sweep gradient runs clockwise from 3 o'clock, so the upper half of the ball is the second
+ * half of its turn (180°–360°). The colours are spread across that arc only; the lower half,
+ * which the clip never shows, is given the first colour so the seam at 3 o'clock is invisible.
+ */
+internal fun rainbowStops(colours: List<Color>): Array<Pair<Float, Color>> {
+    val last = colours.size - 1
+    val arc = colours.mapIndexed { i, colour -> (0.5f + 0.5f * i / last) to colour }
+    return (listOf(0f to colours.first(), 0.5f to colours.first()) + arc).toTypedArray()
+}
+
 /** Half a disc, clipped to the ball's own circle so the travelling half never shows a chord edge. */
-private fun DrawScope.drawHalf(centre: Offset, radius: Float, upper: Boolean, colour: Color, alpha: Float) {
+private fun DrawScope.drawHalf(centre: Offset, radius: Float, upper: Boolean, brush: Brush, alpha: Float) {
     val clip = Path().apply {
         val bounds = Rect(centre.x - radius, centre.y - radius, centre.x + radius, centre.y + radius)
         // Arc from the equator, through the top (upper) or the bottom (lower).
@@ -100,7 +123,7 @@ private fun DrawScope.drawHalf(centre: Offset, radius: Float, upper: Boolean, co
         close()
     }
     clipPath(clip) {
-        drawCircle(colour, radius = radius, center = centre, alpha = alpha)
+        drawCircle(brush, radius = radius, center = centre, alpha = alpha)
     }
 }
 

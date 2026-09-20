@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22.4 — 2026-09-20
+
+- **Changed** — the ball on the unlock reveal wears a rainbow over its upper half instead of red, in the same colours as the ring and the confetti. (`D62` revised, `D66`)
+
 ## v22.3 — 2026-09-20
 
 - **Fixed** — the unlock reveal now plays on a phone whose developer setting "Animator duration scale" is off. That setting made every step of the reveal finish instantly, so it had shown its last frame only — the photo and the rainbow ring — since it was first built. The reveal runs on its own clock now; the rest of the app still follows the setting. (`D65`)

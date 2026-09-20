@@ -23,4 +23,16 @@ class PokeballTest {
         val late = samples.drop(66).maxOf { abs(it) }
         assertTrue("the last rock is smaller than the first", late < early / 3f)
     }
+
+    @Test
+    fun `the rainbow spans the upper half of the sweep only (D66)`() {
+        val red = androidx.compose.ui.graphics.Color.Red
+        val green = androidx.compose.ui.graphics.Color.Green
+        val blue = androidx.compose.ui.graphics.Color.Blue
+        val stops = rainbowStops(listOf(red, green, blue))
+        assertEquals(listOf(0f, 0.5f, 0.5f, 0.75f, 1f), stops.map { it.first })
+        assertEquals("the hidden lower half wears the first colour", red, stops[0].second)
+        assertEquals("the left horizon starts the arc", red, stops[2].second)
+        assertEquals("the right horizon ends it", blue, stops.last().second)
+    }
 }
