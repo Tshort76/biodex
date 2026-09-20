@@ -118,6 +118,7 @@ class ConfirmSpeciesViewModel(
                 ecosystemIds = emptyList(),
                 photoUri = photoForCapture(draft),
                 locationLabel = draft.place,
+                exifUri = draft.photoUri,
             )
         ) {
             is AddSpeciesRegistrar.CreateResult.Created -> {
@@ -236,6 +237,8 @@ class ConfirmSpeciesViewModel(
                     photoUri = photoForCapture(draft),
                     userEditedFields = edits.editedFields.toList(),
                     locationLabel = draft.place,
+                    // D60: the Register screen's place gate read this file; the door reads it too.
+                    exifUri = draft.photoUri,
                 )
             ) {
                 is AddSpeciesRegistrar.CreateResult.Created -> {

@@ -152,6 +152,8 @@ class RegisterViewModel(
                 speciesId,
                 registerUri,
                 locationLabel = placeLabelOrNull(place.value),
+                // D60: the place gate above read the cache file; the door reads the same one.
+                exifUri = picked.uri.takeIf { it != registerUri },
             )
             when (result) {
                 is CaptureRegistrar.RegisterResult.Registered -> {

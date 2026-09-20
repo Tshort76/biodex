@@ -78,6 +78,22 @@ class CaptureRegistrarTest {
     }
 
     @Test
+    fun `a promoted camera shot reads its EXIF from the cache file it was promoted from (D60)`() =
+        runBlocking {
+            registrar.register(
+                "owl",
+                "content://media/external/images/promoted-1",
+                exifUri = "content://dev.tlong.biodex.files/capture/1.jpg",
+            )
+            assertEquals(listOf("content://dev.tlong.biodex.files/capture/1.jpg"), photos.exifReads)
+            assertEquals(
+                "the row still references the gallery copy",
+                "content://media/external/images/promoted-1",
+                store.captures.values.single().photoUri,
+            )
+        }
+
+    @Test
     fun `a grant another capture holds is not released when a place is missing (D60)`() = runBlocking {
         registrar.register("owl", "content://photos/shared")
         photos.released.clear()

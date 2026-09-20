@@ -155,10 +155,10 @@ enum class PhotoDisposition {
     MISSING_UNREADABLE,
 
     /**
-     * **There never was one** (M41) — a plant registered from this release onward. The fourth
-     * value exists because the other three all mean *something went wrong*, and describing a
-     * photoless plant with any of them would make every export of a plant-heavy dex report
-     * itself as incomplete. It is counted separately and never as a loss.
+     * **There is none, by choice** — the photo was unlinked and the sighting kept (D61; before
+     * v21, the photoless plant catch, M41). The fourth value exists because the other three all
+     * mean *something went wrong*, and describing a chosen absence with any of them would make
+     * the export report itself as incomplete. It is counted separately and never as a loss.
      */
     NONE,
 }

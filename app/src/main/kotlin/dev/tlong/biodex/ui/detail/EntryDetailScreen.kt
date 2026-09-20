@@ -139,8 +139,8 @@ fun EntryDetailRoute(
                     taxClass = detail.summary.taxClass,
                     kingdom = detail.summary.kingdom,
                     silhouetteRes = detail.summary.silhouetteRes,
-                    // M41: a photoless catch reveals into the species' own reference picture
-                    // rather than staying a silhouette, and says so with the leaf.
+                    // A photoless catch reveals into the species' own reference picture rather
+                    // than staying a silhouette, and says so with the leaf.
                     thumbnailModel = ownedFileModel(
                         container.appContext.filesDir,
                         state.captures.firstOrNull()?.thumbPath,

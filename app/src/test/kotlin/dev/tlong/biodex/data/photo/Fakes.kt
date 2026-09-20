@@ -99,7 +99,12 @@ class FakePhotoGateway(
 
     override fun persistedGrantCount(): Int = grantCount
 
-    override fun readExif(uri: String): ExifFacts = exif
+    val exifReads = mutableListOf<String>()
+
+    override fun readExif(uri: String): ExifFacts {
+        exifReads += uri
+        return exif
+    }
 
     override fun writeThumbnail(captureId: String, uri: String): String? =
         if (thumbnailWorks) {

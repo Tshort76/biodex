@@ -193,10 +193,9 @@ data class CaptureEntity(
     /**
      * The persisted gallery content URI, stored as `uri.toString()`.
      *
-     * **Null for a photoless capture** (M41): a plant registered from that change onward keeps
-     * no photograph of the user's own, so there is no reference and no persistable grant. Both
-     * columns were `NOT NULL` in schema v1 and were relaxed by `MIGRATION_1_2`, which touched
-     * no row — an existing plant capture keeps its photo, its viewer and its re-link.
+     * **Null for a photoless sighting** — one whose photo the user unlinked (D61), or, before
+     * v21, a plant catch (M41, struck): no reference and no persistable grant. Both columns
+     * were `NOT NULL` in schema v1 and were relaxed by `MIGRATION_1_2`, which touched no row.
      */
     val photoUri: String? = null,
     /** Relative to `filesDir`, e.g. `thumbnails/<id>.jpg` — relative so a restore resolves. */

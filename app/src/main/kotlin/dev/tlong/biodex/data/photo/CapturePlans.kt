@@ -82,7 +82,7 @@ fun planCaptureDeletion(
         deleteEntry = remaining == 0,
         clearFavorite = favoriteCaptureId == capture.id,
         filesToDelete = listOfNotNull(capture.thumbPath, capture.localCopyPath),
-        // M41's guard. A photoless capture took no grant, so there is none to release, and
+        // The photoless guard (D61). Such a capture holds no grant, so there is none to release, and
         // `uriReferenceCount` was never asked — the count query is keyed on a URI and a null
         // matches nothing in SQL, so a naive read of it would say "no other capture holds
         // this" and release something that was never taken.
@@ -135,8 +135,8 @@ fun planRelink(
 ): RelinkPlan = RelinkPlan(
     captureId = capture.id,
     newPhotoUri = newPhotoUri,
-    // A photoless capture cannot reach a re-link (the viewer never opens on one), but if it
-    // ever did there would be no old grant to hand back.
+    // A photoless capture (D61) is offered no re-link, but if one ever reached here there
+    // would be no old grant to hand back.
     releaseUri = capture.photoUri
         ?.takeIf { it != newPhotoUri && uriReferenceCount <= 1 },
 )

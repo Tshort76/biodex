@@ -21,14 +21,14 @@ enum class TileState {
     UNCAUGHT,
 
     /**
-     * Caught, with no photograph of the user's own (M41) — a plant from that release onward.
-     * On an `accentSoft` ground with an `accent` hairline border and a leaf glyph.
+     * Caught, with no photograph of the user's own — every photo unlinked (D61), or gone from
+     * the gallery. On an `accentSoft` ground with an `accent` hairline border and a leaf glyph.
      */
     CAUGHT_NO_OWN_PHOTO,
 
     /**
-     * Caught, with the user's own photograph on the entry: animals, fungi, and every plant
-     * registered before M41. The neutral card chrome it has always had.
+     * Caught, with the user's own photograph on the entry. The neutral card chrome it has
+     * always had.
      */
     CAUGHT_OWN_PHOTO,
 }

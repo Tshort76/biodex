@@ -55,10 +55,18 @@ class CaptureRegistrar(
         photoUri: String?,
         note: String? = null,
         locationLabel: String? = null,
+        /**
+         * D60. Where to read the EXIF from when it is not [photoUri]: a camera shot is promoted
+         * into the gallery a moment before this call, and the screen's "place read from the
+         * photo" answer came from the cache file, so the door reads the same bytes rather than
+         * trusting the media store to hand the coordinates back for the copy.
+         */
+        exifUri: String? = null,
     ): RegisterResult {
-        // M41. A photoless capture skips the grant, the EXIF read and the thumbnail entirely —
+        // A photoless registration skips the grant, the EXIF read and the thumbnail entirely —
         // there is nothing to take a grant on, nothing to read a date out of, and nothing to
-        // render. Its `takenAt` is the registration time, which is the honest answer.
+        // render. Its `takenAt` is the registration time, which is the honest answer. No screen
+        // takes this path since D59; the photoless shape a screen does produce is D61's unlink.
         if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel)
 
         val alreadyReferenced = store.captureCountForUri(photoUri) > 0
@@ -66,7 +74,7 @@ class CaptureRegistrar(
         // build the thumbnail, which is the durable artifact either way.
         val grantPersisted = photos.persistGrant(photoUri)
 
-        val facts = photos.readExif(photoUri)
+        val facts = photos.readExif(exifUri ?: photoUri)
         // D60. Checked before the thumbnail is written, so a refusal leaves no file behind.
         if (!hasPlace(locationLabel, facts)) {
             if (grantPersisted && !alreadyReferenced) photos.releaseGrant(photoUri)
@@ -136,9 +144,8 @@ class CaptureRegistrar(
         !typed.isNullOrBlank() || (facts.lat != null && facts.lng != null)
 
     /**
-     * A capture with no photograph (M41). Everything else about a catch is still recorded —
-     * the species, the date, the place, the note — which is what makes "seen again, here, on
-     * this date" mean something for a plant that will never carry a picture of its own.
+     * A capture with no photograph. Everything else about a catch is still recorded — the
+     * species, the date, the place, the note — the same row D61's unlink leaves behind.
      */
     private suspend fun registerWithoutPhoto(
         speciesId: String,

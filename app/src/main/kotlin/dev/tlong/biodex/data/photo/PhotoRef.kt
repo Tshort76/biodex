@@ -31,11 +31,12 @@ sealed interface PhotoRef {
     data class LocalCopy(val relativePath: String) : PhotoRef
 
     /**
-     * **There never was a photograph** (M41) — a plant registered from I5 onward. Distinct
-     * from [Revoked] in the one way that matters to the user: a revoked reference is a loss and
-     * offers a re-link, and this is not a loss at all. A capture in this state must never reach
-     * the photo viewer, must never be offered a re-link, and must never be counted as a missing
-     * photo in an export. There is nothing to re-link *to*.
+     * **There is no photograph, by choice** — the user unlinked it and kept the sighting (D61);
+     * before v21 this was also the photoless plant catch (M41, struck). Distinct from [Revoked]
+     * in the one way that matters to the user: a revoked reference is a loss and offers a
+     * re-link, and this is not a loss at all. The viewer opens on it so the sighting can be
+     * deleted, draws no frame, offers no re-link, and an export never counts it as a missing
+     * photo. There is nothing to re-link *to*.
      */
     data object None : PhotoRef
 
@@ -69,7 +70,7 @@ fun resolvePhotoRef(
     localCopyPath: String?,
     probe: (String) -> Throwable?,
 ): PhotoRef {
-    // M41's branch, and it comes first. A null URI is "there never was one", never "the grant
+    // D61's branch, and it comes first. A null URI is "there is none", never "the grant
     // is gone" — probing it would be probing nothing, and classifying the result as `Revoked`
     // would put a re-link offer on a capture with nothing to re-link.
     if (photoUri == null) return PhotoRef.None

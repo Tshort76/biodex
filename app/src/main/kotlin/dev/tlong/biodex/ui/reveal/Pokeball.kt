@@ -119,5 +119,6 @@ private fun easeIn(t: Float): Float = t * t
 
 private const val BAND_FRACTION = 0.13f
 private const val BUTTON_FRACTION = 0.22f
-private const val WOBBLE_DEGREES = 12f
+/** Ten, not more: the ball sits 14dp inside the halo's clip, and a steeper lean would cross it. */
+private const val WOBBLE_DEGREES = 10f
 private const val WOBBLE_ROCKS = 3

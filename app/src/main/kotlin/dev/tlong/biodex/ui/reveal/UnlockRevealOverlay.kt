@@ -107,7 +107,7 @@ data class RevealContent(
     val silhouetteRes: String,
     /**
      * What the silhouette crossfades into. Normally the new capture's own thumbnail; for a
-     * photoless plant (M41) it is the species' reference image, and null falls back to the
+     * photoless catch it is the species' reference image, and null falls back to the
      * silhouette either way.
      */
     val thumbnailModel: String?,
@@ -187,7 +187,10 @@ fun UnlockRevealOverlay(
         launch {
             ring.animateTo(
                 1f,
-                tween(durationMillis = (REVEAL_DURATION_MS - HOLD_MS).toInt(), easing = LinearEasing),
+                tween(
+                    durationMillis = (REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS).toInt(),
+                    easing = LinearEasing,
+                ),
             )
         }
         resolve.animateTo(1f, tween(durationMillis = CROSSFADE_MS, easing = FastOutSlowInEasing))

@@ -17,8 +17,8 @@ class PokeballTest {
     @Test
     fun `the rock leans both ways and dies away`() {
         val samples = (1..99).map { wobbleAngle(it / 100f) }
-        assertTrue("it leans one way", samples.any { it > 3f })
-        assertTrue("and the other", samples.any { it < -3f })
+        assertTrue("it leans one way", samples.any { it > 2f })
+        assertTrue("and the other", samples.any { it < -2f })
         val early = samples.take(33).maxOf { abs(it) }
         val late = samples.drop(66).maxOf { abs(it) }
         assertTrue("the last rock is smaller than the first", late < early / 3f)

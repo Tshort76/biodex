@@ -64,7 +64,7 @@ Relations in one line: Region 1—N Ecosystem; Region 1—N Species; Species N�
 | localCopyPath | file path? | Full-size copy, only when "keep a local copy" is on |
 | takenAt | datetime | From the photo's EXIF; falls back to registration time |
 | location | lat/lng? | From EXIF, if the platform supplied it (D57, D58) |
-| locationLabel | string? | User-typed or reverse-geocoded, e.g. "Point Reyes". One of `location` and `locationLabel` is always set (D60) |
+| locationLabel | string? | User-typed or reverse-geocoded, e.g. "Point Reyes". For a capture written since v22, one of `location` and `locationLabel` is always set (D60) |
 | note | string? | Free text |
 | isFirst | bool | Derived: the capture that unlocked the entry |
 

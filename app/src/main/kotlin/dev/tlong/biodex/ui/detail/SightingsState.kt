@@ -10,7 +10,7 @@ import kotlin.math.abs
 /**
  * D56. One line per capture, newest first, saying **when** and **where** — the record that
  * outlives the photograph. A capture keeps its `takenAt`, its coordinates and its label on the
- * row (M13), so deleting the photo from the gallery, or never having had one (M41), changes
+ * row (M13), so deleting the photo from the gallery, or unlinking it (D61), changes
  * nothing here. Pure, so the JVM suite can pin the wording.
  */
 data class SightingRow(

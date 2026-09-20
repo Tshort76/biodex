@@ -51,6 +51,8 @@ class AddSpeciesRegistrar(
         userEditedFields: List<String> = emptyList(),
         /** D56: the place typed on the Register screen, kept on the capture like any other. */
         locationLabel: String? = null,
+        /** D60: the pre-promotion camera file to read EXIF from, when [photoUri] is the copy. */
+        exifUri: String? = null,
     ): CreateResult {
         // 11.1's write-path invariants — kingdom paired with class, uses plant-only, no note
         // without a use, no Duke's credit without Duke's data — are applied here and not only
@@ -70,7 +72,7 @@ class AddSpeciesRegistrar(
         // this is the one door into the store, which is also why the normalization above
         // lives here rather than only on the card.
         if (photoUri != null) {
-            when (captures.register(record.id, photoUri, locationLabel = locationLabel)) {
+            when (captures.register(record.id, photoUri, locationLabel = locationLabel, exifUri = exifUri)) {
                 is CaptureRegistrar.RegisterResult.Registered -> Unit
                 is CaptureRegistrar.RegisterResult.ThumbnailFailed -> {
                     store.deleteUserSpecies(record.id)
