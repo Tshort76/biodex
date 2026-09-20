@@ -1,5 +1,6 @@
 package dev.tlong.biodex.data.photo
 
+import dev.tlong.biodex.domain.Capture
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -335,6 +336,20 @@ class CaptureRegistrarTest {
         val row = store.captures.getValue(placed.captureId)
         assertEquals(38.0, row.lat!!, 0.0001)
         assertEquals("content://photos/new", row.photoUri)
+    }
+
+    @Test
+    fun `the re-link's place plan is pure about what it writes (D67)`() {
+        fun row(label: String? = null, lat: Double? = null) = Capture(
+            id = "a", speciesId = "owl", photoUri = "content://p/a", thumbPath = "thumbnails/a.jpg",
+            takenAt = 1L, lat = lat, lng = lat?.let { -122.0 }, locationLabel = label, createdAt = 1L,
+        )
+        val facts = ExifFacts(lat = 1.0, lng = 2.0)
+        assertNull("already placed", planPlaceBackfill(row(lat = 5.0), facts, "x"))
+        assertNull("nothing read", planPlaceBackfill(row(), ExifFacts.None, "x"))
+        assertEquals("x", planPlaceBackfill(row(), facts, "x")!!.locationLabel)
+        assertNull("typed label kept", planPlaceBackfill(row(label = "Home"), facts, "x")!!.locationLabel)
+        assertNull("blank label counts as none", planPlaceBackfill(row(label = " "), facts, null)!!.locationLabel)
     }
 
     @Test

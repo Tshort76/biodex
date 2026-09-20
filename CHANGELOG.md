@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22.6 — 2026-09-20
+
+- **Removed** — the one-time place backfill, now that it has run. Re-linking a photo still fills that sighting's place. (`D67` revised)
+
 ## v22.5 — 2026-09-20
 
 - **Added** — sightings registered before the app could read a photo's location get it filled in once: on the first start with photo access, the app re-reads every placeless sighting whose photo is still linked and writes the coordinates and a place name (a place you typed is kept). Re-linking a photo does the same for that sighting. Photos that were deleted from the phone after registering cannot be read and stay as they are. (`D67`)

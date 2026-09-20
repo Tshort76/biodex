@@ -10,7 +10,6 @@ import dev.tlong.biodex.data.backup.LocalEntry
 import dev.tlong.biodex.data.backup.LocalSnapshot
 import dev.tlong.biodex.data.catalogue.pairKingdomAndClass
 import dev.tlong.biodex.data.db.AppDatabase
-import dev.tlong.biodex.data.db.MetaEntity
 import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
@@ -21,7 +20,6 @@ import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
 import dev.tlong.biodex.data.photo.CaptureStore
 import dev.tlong.biodex.data.photo.PlaceBackfillPlan
-import dev.tlong.biodex.data.photo.PlaceBackfillStore
 import dev.tlong.biodex.data.photo.RegistrationPlan
 import dev.tlong.biodex.domain.Capture
 import dev.tlong.biodex.domain.DexProgress
@@ -58,7 +56,7 @@ const val DEFAULT_REGION_ID = "pacific"
 class DexRepository(
     private val db: AppDatabase,
     private val regionId: String = DEFAULT_REGION_ID,
-) : CaptureStore, UserSpeciesStore, BackupStore, PlaceBackfillStore {
+) : CaptureStore, UserSpeciesStore, BackupStore {
 
     private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
     private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
@@ -236,20 +234,8 @@ class DexRepository(
         db.captureDao().clearReference(captureId)
     }
 
-    // D67's sweep.
-
-    override suspend fun placelessPhotographedCaptures(): List<Capture> =
-        db.captureDao().placelessPhotographed().map { it.toDomain() }
-
     override suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan) {
         db.captureDao().fillPlace(plan.captureId, plan.lat, plan.lng, plan.locationLabel)
-    }
-
-    override suspend fun placeBackfillDone(): Boolean =
-        db.metaDao().value(MetaEntity.KEY_PLACE_BACKFILL_DONE) == "1"
-
-    override suspend fun markPlaceBackfillDone() {
-        db.metaDao().put(MetaEntity(MetaEntity.KEY_PLACE_BACKFILL_DONE, "1"))
     }
 
     // -----------------------------------------------------------------------

@@ -188,10 +188,6 @@ interface CaptureDao {
     @Query("UPDATE captures SET photoUri = :photoUri, thumbPath = :thumbPath WHERE id = :captureId")
     suspend fun updateReference(captureId: String, photoUri: String, thumbPath: String)
 
-    /** D67: the sightings the place sweep can still fill — photo linked, no coordinates. */
-    @Query("SELECT * FROM captures WHERE photoUri IS NOT NULL AND (lat IS NULL OR lng IS NULL)")
-    suspend fun placelessPhotographed(): List<CaptureEntity>
-
     /** D67. `COALESCE` keeps a label the user typed; a null [label] changes nothing there. */
     @Query(
         "UPDATE captures SET lat = :lat, lng = :lng, " +

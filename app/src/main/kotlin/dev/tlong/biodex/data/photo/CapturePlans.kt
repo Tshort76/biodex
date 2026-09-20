@@ -142,6 +142,33 @@ fun planRelink(
 )
 
 /**
+ * D67. What a re-link writes about the place: the coordinates from the newly linked photo,
+ * and a label only when the row had none. Null when there is nothing to write — the row
+ * already has coordinates, or the read found none. A typed label is never overwritten, and a
+ * geocoder failure still writes the coordinates: the sighting row prints them when there is
+ * no name.
+ */
+data class PlaceBackfillPlan(
+    val captureId: String,
+    val lat: Double,
+    val lng: Double,
+    /** Null leaves the stored label alone — a typed place always wins (D56). */
+    val locationLabel: String?,
+)
+
+fun planPlaceBackfill(capture: Capture, facts: ExifFacts, geocodedLabel: String?): PlaceBackfillPlan? {
+    if (capture.lat != null && capture.lng != null) return null
+    val lat = facts.lat ?: return null
+    val lng = facts.lng ?: return null
+    return PlaceBackfillPlan(
+        captureId = capture.id,
+        lat = lat,
+        lng = lng,
+        locationLabel = if (capture.locationLabel.isNullOrBlank()) geocodedLabel else null,
+    )
+}
+
+/**
  * 4.4's cap, as the one number the UI reads. Nothing throttles registration — a personal life
  * list cannot reach 5,000 grants when every deletion releases one — but Settings shows this
  * and registration warns rather than failing silently if it ever gets close.
