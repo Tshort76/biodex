@@ -9,9 +9,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  * D67. Fills in the place on sightings registered before the app could read it. Every capture
  * from before D63 that still has its photo linked was stored with no coordinates — the picker
  * redacted them, and nothing has re-read the file since. Now that the media-store original is
- * reachable, this runs once per start after the catalogue import, re-reads the EXIF of each
- * placeless photographed capture, and writes what it finds. Idempotent: a capture the read
- * cannot place stays as it is and is tried again next start, which costs one stream open.
+ * reachable, this runs **once** — the first start on which the photo-library permission is
+ * held — re-reads the EXIF of each placeless photographed capture, and writes what it finds.
+ * Then it marks itself done: every capture since D60 has its place from the start, and what
+ * this run could not place (a photo gone from the device) will not read differently tomorrow.
+ * A re-link still fills its one row, so the door for the lost-grant cases stays open.
  *
  * The decision is [planPlaceBackfill]; this class is the read and the write around it.
  */
@@ -21,8 +23,9 @@ class SightingPlaceSweep(
     private val places: PlaceNamer = PlaceNamer.None,
 ) {
 
-    /** Returns how many sightings gained a place. */
-    suspend fun run(): Int {
+    /** Returns how many sightings gained a place, or null when the backfill had already run. */
+    suspend fun run(): Int? {
+        if (store.placeBackfillDone()) return null
         var filled = 0
         for (capture in store.placelessPhotographedCaptures()) {
             val uri = capture.photoUri ?: continue
@@ -38,6 +41,7 @@ class SightingPlaceSweep(
             store.applyPlaceBackfill(plan)
             filled++
         }
+        store.markPlaceBackfillDone()
         return filled
     }
 
@@ -51,6 +55,10 @@ interface PlaceBackfillStore {
     /** Captures with a photo still linked and no coordinates on the row. */
     suspend fun placelessPhotographedCaptures(): List<Capture>
     suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan)
+
+    /** The one-shot flag: true once a run with the permission held has completed. */
+    suspend fun placeBackfillDone(): Boolean
+    suspend fun markPlaceBackfillDone()
 }
 
 /** One row's fill: the coordinates, and a label only when the row had none. */

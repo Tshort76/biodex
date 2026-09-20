@@ -10,6 +10,7 @@ import dev.tlong.biodex.data.backup.LocalEntry
 import dev.tlong.biodex.data.backup.LocalSnapshot
 import dev.tlong.biodex.data.catalogue.pairKingdomAndClass
 import dev.tlong.biodex.data.db.AppDatabase
+import dev.tlong.biodex.data.db.MetaEntity
 import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
@@ -242,6 +243,13 @@ class DexRepository(
 
     override suspend fun applyPlaceBackfill(plan: PlaceBackfillPlan) {
         db.captureDao().fillPlace(plan.captureId, plan.lat, plan.lng, plan.locationLabel)
+    }
+
+    override suspend fun placeBackfillDone(): Boolean =
+        db.metaDao().value(MetaEntity.KEY_PLACE_BACKFILL_DONE) == "1"
+
+    override suspend fun markPlaceBackfillDone() {
+        db.metaDao().put(MetaEntity(MetaEntity.KEY_PLACE_BACKFILL_DONE, "1"))
     }
 
     // -----------------------------------------------------------------------

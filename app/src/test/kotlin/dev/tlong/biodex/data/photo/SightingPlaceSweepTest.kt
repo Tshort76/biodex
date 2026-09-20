@@ -34,6 +34,9 @@ class SightingPlaceSweepTest {
                 locationLabel = c.locationLabel ?: plan.locationLabel,
             )
         }
+        var done = false
+        override suspend fun placeBackfillDone() = done
+        override suspend fun markPlaceBackfillDone() { done = true }
     }
 
     @Test
@@ -48,7 +51,7 @@ class SightingPlaceSweepTest {
         assertEquals("Point Reyes, CA", store.captures.getValue("a").locationLabel)
         assertEquals("the typed place wins", "Bear Valley", store.captures.getValue("b").locationLabel)
         assertEquals(38.0, store.captures.getValue("b").lat!!, 0.0001)
-        assertEquals("the second run finds nothing", 0, sweep.run())
+        assertNull("the second run does not happen at all", sweep.run())
     }
 
     @Test
@@ -59,6 +62,8 @@ class SightingPlaceSweepTest {
             assertEquals(0, SightingPlaceSweep(store, photos).run())
             assertNull(store.captures.getValue("a").lat)
 
+            // The run marked itself done; the one door left is a re-link, which reads again.
+            store.done = false
             photos.exif = ExifFacts(lat = 38.0, lng = -122.8)
             assertEquals(1, SightingPlaceSweep(store, photos) { _, _ -> null }.run())
             assertEquals(38.0, store.captures.getValue("a").lat!!, 0.0001)

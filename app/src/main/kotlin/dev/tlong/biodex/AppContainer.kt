@@ -171,8 +171,9 @@ class AppContainer(val appContext: Context) {
             // a new one. Idempotent, and a handful of rows, so it needs no flag to remember.
             UserNameSweep(database).run()
             // D67: fill the place on sightings registered before the photo's original could be
-            // read. Only worth a pass once the library permission is held — without it every
-            // read would come back redacted, exactly as it did the first time.
+            // read. One pass, on the first start with the library permission held — without it
+            // every read would come back redacted, exactly as it did the first time — and the
+            // sweep flags itself done in `meta` so no later start pays for it.
             if (hasPhotoLibraryAccess(appContext)) {
                 SightingPlaceSweep(dexRepository, photoGateway, AndroidPlaceNamer(appContext)).run()
             }

@@ -221,5 +221,7 @@ data class MetaEntity(
     companion object {
         const val KEY_CATALOGUE_VERSION = "catalogueVersion"
         const val KEY_SCHEMA_SEEDED_AT = "schemaSeededAt"
+        /** D67: set once the one-time place backfill has run with the permission held. */
+        const val KEY_PLACE_BACKFILL_DONE = "placeBackfillDone"
     }
 }
