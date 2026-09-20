@@ -128,6 +128,27 @@ class CaptureRegistrarRoomTest {
     }
 
     @Test
+    fun unlinkingNullsTheReferenceAndTheStatusRowSkipsIt() = runBlocking {
+        val first = (registrar.register("western-screech-owl", "content://photos/1")
+            as CaptureRegistrar.RegisterResult.Registered).captureId
+        val second = (registrar.register("western-screech-owl", "content://photos/2")
+            as CaptureRegistrar.RegisterResult.Registered).captureId
+
+        registrar.unlinkPhoto(first)
+
+        val row = db.captureDao().captureOnce(first)!!
+        assertNull(row.photoUri)
+        assertNull(row.thumbPath)
+        assertEquals(37.8, row.lat!!, 0.0001)
+        assertNotNull("the catch survives", db.entryDao().entryOnce("western-screech-owl"))
+        // D61: the favourite is photoless now, so the status row falls through to the earliest
+        // capture that still has a thumbnail rather than to the earliest capture.
+        val status = db.entryDao().observeEntryStatuses().first().single()
+        assertEquals(thumbnailRelativePath(second), status.thumbPath)
+        assertEquals(listOf("content://photos/1"), photos.released)
+    }
+
+    @Test
     fun reLinkingUpdatesTheReferenceInPlace() = runBlocking {
         val id = (registrar.register("western-screech-owl", "content://photos/old")
             as CaptureRegistrar.RegisterResult.Registered).captureId
@@ -146,7 +167,9 @@ class CaptureRegistrarRoomTest {
         override fun persistGrant(uri: String) = true
         override fun releaseGrant(uri: String) { released += uri }
         override fun persistedGrantCount() = released.size
-        override fun readExif(uri: String) = ExifFacts.None
+        // Coordinates, because D60 refuses a registration with no place and nothing here is
+        // about the place.
+        override fun readExif(uri: String) = ExifFacts(lat = 37.8, lng = -122.3)
         override fun writeThumbnail(captureId: String, uri: String) =
             thumbnailRelativePath(captureId)
         override fun writeLocalCopy(captureId: String, uri: String) = null

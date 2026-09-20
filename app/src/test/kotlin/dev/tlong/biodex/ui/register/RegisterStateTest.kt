@@ -50,6 +50,7 @@ class RegisterStateTest {
         photo: PickedPhoto? = null,
         registering: Boolean = false,
         error: String? = null,
+        place: String = "",
     ) = runBlocking {
         registerUiState(
             species = MutableStateFlow(catalogue),
@@ -58,10 +59,15 @@ class RegisterStateTest {
             photo = MutableStateFlow(photo),
             registering = MutableStateFlow(registering),
             error = MutableStateFlow(error),
+            place = MutableStateFlow(place),
         ).first()
     }
 
-    private val photo = PickedPhoto("content://media/1", "IMG_1.jpg")
+    /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */
+    private val photo = PickedPhoto("content://media/1", "IMG_1.jpg", hasLocation = true)
+
+    /** The common case (R3): the picker stripped the GPS, so the place must be typed. */
+    private val stripped = PickedPhoto("content://media/2", "IMG_2.jpg", hasLocation = false)
 
     @Test
     fun `search matches common and scientific names, offline, in dex order`() {
@@ -82,6 +88,35 @@ class RegisterStateTest {
         assertFalse(state(selectedId = "western-screech-owl").canRegister)
         assertFalse(state(photo = photo).canRegister)
         assertTrue(state(selectedId = "western-screech-owl", photo = photo).canRegister)
+    }
+
+    @Test
+    fun `registering needs a place - from the photo or typed (D60)`() {
+        val owl = "western-screech-owl"
+        assertFalse(
+            "a stripped photo and nothing typed is not a sighting",
+            state(selectedId = owl, photo = stripped).canRegister,
+        )
+        assertFalse(
+            "whitespace is not a place",
+            state(selectedId = owl, photo = stripped, place = "   ").canRegister,
+        )
+        assertTrue(state(selectedId = owl, photo = stripped, place = "Bear Valley").canRegister)
+        assertTrue("GPS on the photo is enough", state(selectedId = owl, photo = photo).canRegister)
+        assertFalse(
+            "the button waits while the EXIF is still being read",
+            state(selectedId = owl, photo = stripped.copy(hasLocation = null)).canRegister,
+        )
+    }
+
+    @Test
+    fun `the place field says whether the photo answered it (D60)`() {
+        assertEquals(PlaceHint.REQUIRED, state().placeHint)
+        assertEquals(PlaceHint.REQUIRED, state(photo = stripped).placeHint)
+        assertEquals(PlaceHint.READING, state(photo = stripped.copy(hasLocation = null)).placeHint)
+        assertEquals(PlaceHint.FROM_PHOTO, state(photo = photo).placeHint)
+        assertTrue(PlaceHint.REQUIRED.placeholder.contains("required"))
+        assertTrue(PlaceHint.FROM_PHOTO.placeholder.contains("optional"))
     }
 
     @Test
@@ -201,12 +236,16 @@ class RegisterStateTest {
         assertFalse("a name with no photo is not enough", state(query = "Varied Thrush").canAddOwn)
         assertFalse("a photo with no name is not enough", state(photo = photo).canAddOwn)
         assertTrue(state(query = "Varied Thrush", photo = photo).canAddOwn)
+        // D60 holds on this path too: the card writes a capture, and a capture needs a place.
+        assertFalse(state(query = "Varied Thrush", photo = stripped).canAddOwn)
+        assertTrue(state(query = "Varied Thrush", photo = stripped, place = "Bear Valley").canAddOwn)
     }
 
     @Test
     fun `the button says which half is still missing`() {
         assertTrue(state().addOwnLabel.contains("Type a name"))
         assertTrue(state(query = "Varied Thrush").addOwnLabel.contains("Attach a photo"))
+        assertTrue(state(query = "Varied Thrush", photo = stripped).addOwnLabel.contains("Say where"))
         assertEquals(
             "Add \u201CVaried Thrush\u201D as your own species \uFF0B",
             state(query = "Varied Thrush", photo = photo).addOwnLabel,

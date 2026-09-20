@@ -91,6 +91,33 @@ fun planCaptureDeletion(
 }
 
 /**
+ * D61's unlink: the photograph goes, the sighting stays. Every owned file for the capture is
+ * deleted and the grant is handed back on the same shared-reference rule as deletion, but the
+ * row — its date, its coordinates, its label, its note — is untouched, and so is the entry.
+ * The favourite is left alone too: the entry-status query falls through a photoless favourite
+ * to the earliest capture that still has a thumbnail, and if none does the tile draws the
+ * reference picture with M44's tick, which is the honest state.
+ */
+data class PhotoUnlinkPlan(
+    val captureId: String,
+    val filesToDelete: List<String>,
+    val releaseUri: String?,
+) {
+    /** Nothing to do for a capture that already has no photograph. */
+    val isNoOp: Boolean get() = filesToDelete.isEmpty() && releaseUri == null
+}
+
+fun planPhotoUnlink(
+    capture: Capture,
+    /** Captures anywhere in the database holding this exact `photoUri`, including this one. */
+    uriReferenceCount: Int,
+): PhotoUnlinkPlan = PhotoUnlinkPlan(
+    captureId = capture.id,
+    filesToDelete = listOfNotNull(capture.thumbPath, capture.localCopyPath),
+    releaseUri = capture.photoUri?.takeIf { uriReferenceCount <= 1 },
+)
+
+/**
  * Re-linking a broken reference (4.2): the capture keeps its identity, gains a new URI, and
  * regenerates its thumbnail into the same path. The old grant is released on the same
  * shared-reference rule as deletion.

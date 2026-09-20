@@ -19,8 +19,9 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Everything the grid needs to know about a caught species, derived rather than stored:
- * the capture count and the thumbnail of the favorite capture (falling back to the first,
- * per S04).
+ * the capture count and the thumbnail of the favorite capture (falling back to the earliest
+ * capture that still has one, per S04 — a photoless sighting, D61, is skipped, so unlinking
+ * the favourite's photo does not blank a tile another photo could fill).
  */
 data class EntryStatusRow(
     val speciesId: String,
@@ -123,7 +124,7 @@ interface EntryDao {
                    (SELECT cf.thumbPath FROM captures cf
                       WHERE cf.id = e.favoriteCaptureId AND cf.speciesId = e.speciesId),
                    (SELECT c2.thumbPath FROM captures c2
-                      WHERE c2.speciesId = e.speciesId
+                      WHERE c2.speciesId = e.speciesId AND c2.thumbPath IS NOT NULL
                       ORDER BY c2.createdAt ASC
                       LIMIT 1)
                ) AS thumbPath
@@ -186,6 +187,13 @@ interface CaptureDao {
     /** Re-link (ARCHITECTURE.md 4.2): a new reference and thumbnail under the same capture id. */
     @Query("UPDATE captures SET photoUri = :photoUri, thumbPath = :thumbPath WHERE id = :captureId")
     suspend fun updateReference(captureId: String, photoUri: String, thumbPath: String)
+
+    /** D61: the photograph goes, every other column of the sighting stays. */
+    @Query(
+        "UPDATE captures SET photoUri = NULL, thumbPath = NULL, localCopyPath = NULL " +
+            "WHERE id = :captureId",
+    )
+    suspend fun clearReference(captureId: String)
 
     /** S08's "recently caught" strip. */
     @Query("SELECT * FROM captures ORDER BY createdAt DESC LIMIT :limit")

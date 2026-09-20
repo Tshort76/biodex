@@ -45,10 +45,10 @@ fun availabilityFor(ref: PhotoRef?): PhotoAvailability = when (ref) {
         showFullSize = false,
     )
 
-    // M41. The viewer should never open on a photoless capture at all — the detail screen
-    // gives such a row no tap target — so this branch is the belt to that braces. What matters
-    // is what it does *not* do: no re-link. There is nothing to re-link to, and offering it
-    // would tell the user a photo of theirs had gone missing when none ever existed.
+    // A photoless sighting (D61: the photo was unlinked and the row kept). The viewer opens on
+    // it so the sighting can still be deleted, and what matters is what it does *not* do: no
+    // re-link. There is nothing to re-link to, and offering one would tell the user a photo of
+    // theirs had gone missing when they chose to let it go.
     PhotoRef.None ->
         PhotoAvailability(bannerText = null, offerRelink = false, showFullSize = false)
 }
@@ -64,6 +64,9 @@ data class PhotoViewerUiState(
     val loading: Boolean = true,
 ) {
     val availability: PhotoAvailability get() = availabilityFor(ref)
+
+    /** D61. False for a sighting whose photograph was unlinked: no frame, no favourite, no unlink. */
+    val hasPhoto: Boolean get() = capture?.photoUri != null
 
     val missing: Boolean get() = !loading && capture == null
 

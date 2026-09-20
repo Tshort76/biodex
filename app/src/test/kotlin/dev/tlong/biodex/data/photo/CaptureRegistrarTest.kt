@@ -51,10 +51,39 @@ class CaptureRegistrarTest {
         assertEquals(38.07, store.captures.getValue(named.captureId).lat!!, 0.0001)
 
         photos.exif = ExifFacts.None
-        val bare = naming.register("owl", "content://photos/3")
+        val bare = naming.register("owl", "content://photos/3", locationLabel = "Bear Valley")
             as CaptureRegistrar.RegisterResult.Registered
-        assertNull(store.captures.getValue(bare.captureId).locationLabel)
+        assertEquals("Bear Valley", store.captures.getValue(bare.captureId).locationLabel)
         assertEquals("no coordinates, nothing to name", 1, asked)
+    }
+
+    @Test
+    fun `no typed place and no GPS writes nothing and hands the grant back (D60)`() = runBlocking {
+        photos.exif = ExifFacts(takenAt = 42L)
+        val result = registrar.register("owl", "content://photos/1")
+        assertEquals(CaptureRegistrar.RegisterResult.PlaceMissing, result)
+        assertTrue("no row", store.captures.isEmpty())
+        assertFalse("no unlock", store.entries.containsKey("owl"))
+        assertEquals("no thumbnail written", emptyList<String>(), photos.writtenThumbnails)
+        assertEquals("the grant taken for the attempt is released", listOf("content://photos/1"), photos.released)
+
+        // A blank label is no label.
+        assertEquals(
+            CaptureRegistrar.RegisterResult.PlaceMissing,
+            registrar.register("owl", "content://photos/1", locationLabel = "  "),
+        )
+        // Coordinates alone are a place: no geocoder is required for the row to be written.
+        photos.exif = ExifFacts(lat = 44.0, lng = -121.3)
+        assertTrue(registrar.register("owl", "content://photos/1") is CaptureRegistrar.RegisterResult.Registered)
+    }
+
+    @Test
+    fun `a grant another capture holds is not released when a place is missing (D60)`() = runBlocking {
+        registrar.register("owl", "content://photos/shared")
+        photos.released.clear()
+        photos.exif = ExifFacts.None
+        registrar.register("frog", "content://photos/shared")
+        assertEquals(emptyList<String>(), photos.released)
     }
 
     @Test
@@ -138,7 +167,7 @@ class CaptureRegistrarTest {
 
             photos.exif = ExifFacts.None
             clock = 7_777L
-            val without = registrar.register("frog", "content://photos/2")
+            val without = registrar.register("frog", "content://photos/2", locationLabel = "Pond")
                 as CaptureRegistrar.RegisterResult.Registered
             assertEquals(7_777L, store.captures.getValue(without.captureId).takenAt)
             assertNull(store.captures.getValue(without.captureId).lat)
@@ -306,6 +335,74 @@ class CaptureRegistrarTest {
     }
 
     // -- Grants (4.4) --------------------------------------------------------
+
+    // -- Unlinking (D61) ---------------------------------------------------------
+
+    @Test
+    fun `unlinking drops the photo and keeps the sighting and the catch`() = runBlocking {
+        photos.exif = ExifFacts(takenAt = 42L, lat = 44.0, lng = -121.3)
+        val r = registrar.register("owl", "content://photos/1", note = "on the fence post")
+            as CaptureRegistrar.RegisterResult.Registered
+
+        val plan = registrar.unlinkPhoto(r.captureId)!!
+
+        val row = store.captures.getValue(r.captureId)
+        assertNull(row.photoUri)
+        assertNull(row.thumbPath)
+        assertNull(row.localCopyPath)
+        assertEquals("the sighting's moment survives", 42L, row.takenAt)
+        assertEquals("and its place", 44.0, row.lat!!, 0.0001)
+        assertEquals("and its note", "on the fence post", row.note)
+        assertTrue("the species stays caught", store.entries.containsKey("owl"))
+        assertEquals(listOf(thumbnailRelativePath(r.captureId)), photos.deletedFiles)
+        assertEquals(listOf("content://photos/1"), photos.released)
+        assertFalse(plan.isNoOp)
+    }
+
+    @Test
+    fun `unlinking a shared photo keeps the other capture's grant`() = runBlocking {
+        val a = registrar.register("owl", "content://photos/shared")
+            as CaptureRegistrar.RegisterResult.Registered
+        registrar.register("frog", "content://photos/shared")
+        photos.released.clear()
+
+        registrar.unlinkPhoto(a.captureId)
+
+        assertEquals(emptyList<String>(), photos.released)
+        assertEquals(1, store.captures.values.count { it.photoUri == "content://photos/shared" })
+    }
+
+    @Test
+    fun `unlinking the favourite lets the tile fall through to another photo`() = runBlocking {
+        val first = registrar.register("owl", "content://photos/1")
+            as CaptureRegistrar.RegisterResult.Registered
+        clock = 2_000L
+        val second = registrar.register("owl", "content://photos/2")
+            as CaptureRegistrar.RegisterResult.Registered
+        assertEquals(thumbnailRelativePath(first.captureId), store.renderedThumbPath("owl"))
+
+        registrar.unlinkPhoto(first.captureId)
+
+        assertEquals(
+            "the DAO's COALESCE skips the photoless favourite",
+            thumbnailRelativePath(second.captureId),
+            store.renderedThumbPath("owl"),
+        )
+    }
+
+    @Test
+    fun `unlinking twice, or an unknown capture, is harmless`() = runBlocking {
+        val r = registrar.register("owl", "content://photos/1")
+            as CaptureRegistrar.RegisterResult.Registered
+        registrar.unlinkPhoto(r.captureId)
+        photos.deletedFiles.clear()
+        photos.released.clear()
+
+        assertTrue(registrar.unlinkPhoto(r.captureId)!!.isNoOp)
+        assertEquals(emptyList<String>(), photos.deletedFiles)
+        assertEquals(emptyList<String>(), photos.released)
+        assertNull(registrar.unlinkPhoto("nope"))
+    }
 
     @Test
     fun `grant pressure is reported against the 5000 cap`() {

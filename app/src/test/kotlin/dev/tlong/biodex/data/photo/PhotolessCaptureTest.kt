@@ -106,7 +106,7 @@ class PhotolessCaptureTest {
             val photos = FakePhotoGateway()
             val registrar = CaptureRegistrar(store, photos, newCaptureId = { "cap-1" }, now = { 42L })
 
-            val result = registrar.register(speciesId = "salal", photoUri = null)
+            val result = registrar.register(speciesId = "salal", photoUri = null, locationLabel = "Ridge trail")
 
             assertTrue(result is CaptureRegistrar.RegisterResult.Registered)
             assertEquals(emptyList<String>(), photos.persisted)
@@ -125,12 +125,26 @@ class PhotolessCaptureTest {
         val store = FakeCaptureStore()
         val registrar = CaptureRegistrar(store, FakePhotoGateway(), now = { 42L })
 
-        val first = registrar.register("salal", null) as CaptureRegistrar.RegisterResult.Registered
-        val again = registrar.register("salal", null) as CaptureRegistrar.RegisterResult.Registered
+        val first = registrar.register("salal", null, locationLabel = "Ridge trail")
+            as CaptureRegistrar.RegisterResult.Registered
+        val again = registrar.register("salal", null, locationLabel = "Ridge trail")
+            as CaptureRegistrar.RegisterResult.Registered
 
         assertTrue(first.isFirst)
         assertFalse("seen again, here, on this date", again.isFirst)
     }
+
+    @Test
+    fun `a photoless registration has no EXIF to lean on, so the place must be typed (D60)`() =
+        runBlocking {
+            val store = FakeCaptureStore()
+            val registrar = CaptureRegistrar(store, FakePhotoGateway(), now = { 42L })
+            assertEquals(
+                CaptureRegistrar.RegisterResult.PlaceMissing,
+                registrar.register("salal", null),
+            )
+            assertTrue(store.captures.isEmpty())
+        }
 
     // -----------------------------------------------------------------------
     // Export. The rule that matters: an archive of photoless plants is

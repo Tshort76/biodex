@@ -306,9 +306,10 @@ fun RegisterScreen(
                     onTakePhoto = onTakePhoto,
                     onPickFromFiles = onPickFromFiles,
                 )
-                // D56. One optional line, because the photo usually arrives with its location
-                // stripped (R3) and this is the only other way the place can be known.
-                PlaceField(place = state.place, onPlaceChange = onPlaceChange)
+                // D56, required since D60. The photo usually arrives with its location stripped
+                // (R3), and a sighting with no place is not one, so this line is the answer
+                // unless the photo carried its own.
+                PlaceField(place = state.place, hint = state.placeHint, onPlaceChange = onPlaceChange)
 
                 // S06. Lens is the one "what is this?" tool the app offers (S12).
                 state.photo?.let { picked ->
@@ -437,33 +438,45 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
  * the bottom bar reads as one form rather than a stack of unrelated widgets.
  */
 @Composable
-private fun PlaceField(place: String, onPlaceChange: (String) -> Unit) {
+private fun PlaceField(place: String, hint: PlaceHint, onPlaceChange: (String) -> Unit) {
     val colors = DexTheme.colors
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.codeBg)
-            .padding(horizontal = 12.dp, vertical = 9.dp),
-    ) {
-        Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
-        Box(modifier = Modifier.weight(1f)) {
-            if (place.isEmpty()) {
-                Text(
-                    text = "Where was this? (optional)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.faint,
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.codeBg)
+                .padding(horizontal = 12.dp, vertical = 9.dp),
+        ) {
+            Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
+            Box(modifier = Modifier.weight(1f)) {
+                if (place.isEmpty()) {
+                    Text(
+                        text = hint.placeholder,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.faint,
+                    )
+                }
+                BasicTextField(
+                    value = place,
+                    onValueChange = onPlaceChange,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+                    cursorBrush = SolidColor(colors.accent),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-            BasicTextField(
-                value = place,
-                onValueChange = onPlaceChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
-                cursorBrush = SolidColor(colors.accent),
-                modifier = Modifier.fillMaxWidth(),
+        }
+        // D60. Said once, under the field, and only when there is something to say: the photo is
+        // being read, or it answered the question itself.
+        hint.note?.let { note ->
+            Text(
+                text = note,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (hint == PlaceHint.FROM_PHOTO) colors.accent else colors.faint,
+                modifier = Modifier.padding(start = 12.dp, top = 4.dp),
             )
         }
     }

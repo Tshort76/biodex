@@ -77,6 +77,7 @@ fun PhotoViewerRoute(
         onBack = onBack,
         onToggleFavorite = viewModel::toggleFavorite,
         onDelete = viewModel::delete,
+        onUnlink = viewModel::unlinkPhoto,
         onRelink = {
             relinkPicker.launch(
                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
@@ -93,11 +94,13 @@ fun PhotoViewerScreen(
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
+    onUnlink: () -> Unit,
     onRelink: () -> Unit,
     onRetry: () -> Unit,
 ) {
     val colors = DexTheme.colors
     var confirmingDelete by remember { mutableStateOf(false) }
+    var confirmingUnlink by remember { mutableStateOf(false) }
 
     Scaffold(containerColor = colors.bg) { inner ->
         Column(
@@ -176,11 +179,59 @@ fun PhotoViewerScreen(
                 Text(text = it, style = MaterialTheme.typography.bodySmall, color = colors.fg)
             }
 
-            ActionRow(
-                label = if (state.isFavorite) "★ Favorite photo" else "☆ Make this the favorite",
-                emphasised = state.isFavorite,
-                onClick = onToggleFavorite,
-            )
+            if (state.hasPhoto) {
+                ActionRow(
+                    label = if (state.isFavorite) "★ Favorite photo" else "☆ Make this the favorite",
+                    emphasised = state.isFavorite,
+                    onClick = onToggleFavorite,
+                )
+            }
+
+            // D61. The middle road between keeping and deleting: the sighting's date and place
+            // stay, the species stays caught, and only the app's link to the photo goes.
+            if (state.hasPhoto) {
+                if (confirmingUnlink) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.accentSoft)
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Unlink the photo? The sighting keeps its date and place and " +
+                                "${state.speciesName} stays caught. The photo stays in your " +
+                                "gallery — only the app's link and thumbnail go.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.accent,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ActionRow(
+                                label = "Unlink",
+                                emphasised = true,
+                                onClick = {
+                                    confirmingUnlink = false
+                                    onUnlink()
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                            ActionRow(
+                                label = "Keep",
+                                emphasised = false,
+                                onClick = { confirmingUnlink = false },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                } else {
+                    ActionRow(
+                        label = "Unlink photo, keep the sighting",
+                        emphasised = false,
+                        onClick = { confirmingUnlink = true },
+                    )
+                }
+            }
 
             if (confirmingDelete) {
                 Column(
@@ -192,13 +243,18 @@ fun PhotoViewerScreen(
                         .padding(12.dp),
                 ) {
                     Text(
-                        text = if (state.isLastCapture) {
-                            "This is the only photo of ${state.speciesName}. Deleting it " +
-                                "reverts the species to uncaught. Your gallery photo is not " +
-                                "touched."
-                        } else {
-                            "Delete this capture? The photo stays in your gallery — only the " +
-                                "app's link and thumbnail go."
+                        text = when {
+                            state.isLastCapture && state.hasPhoto ->
+                                "This is the only sighting of ${state.speciesName}. Deleting it " +
+                                    "reverts the species to uncaught. Your gallery photo is not " +
+                                    "touched."
+                            state.isLastCapture ->
+                                "This is the only sighting of ${state.speciesName}. Deleting it " +
+                                    "reverts the species to uncaught."
+                            state.hasPhoto ->
+                                "Delete this sighting? The photo stays in your gallery — only " +
+                                    "the app's link and thumbnail go."
+                            else -> "Delete this sighting? Its date and place go with it."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.stop,
@@ -220,7 +276,7 @@ fun PhotoViewerScreen(
                 }
             } else {
                 ActionRow(
-                    label = "Delete this capture",
+                    label = "Delete this sighting",
                     emphasised = false,
                     onClick = { confirmingDelete = true },
                     modifier = Modifier.padding(bottom = 24.dp),
@@ -256,6 +312,20 @@ private fun PhotoFrame(
             .clip(RoundedCornerShape(12.dp))
             .background(colors.silBg),
     ) {
+        // D61. A sighting with no photograph draws no frame at all — a blank AsyncImage with a
+        // "stored thumbnail" caption would claim a picture that was deliberately let go.
+        if (!state.hasPhoto) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "📍", style = MaterialTheme.typography.headlineLarge)
+                Text(
+                    text = "Sighting only — no photo kept",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.muted,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            return@Box
+        }
         AsyncImage(
             model = fullModel ?: thumbModel,
             contentDescription = null,
@@ -335,6 +405,7 @@ private fun PhotoViewerRevokedPreview() {
             onBack = {},
             onToggleFavorite = {},
             onDelete = {},
+            onUnlink = {},
             onRelink = {},
             onRetry = {},
         )

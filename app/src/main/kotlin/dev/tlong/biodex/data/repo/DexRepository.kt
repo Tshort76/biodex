@@ -229,6 +229,10 @@ class DexRepository(
         db.captureDao().updateReference(captureId, photoUri, thumbPath)
     }
 
+    override suspend fun clearCaptureReference(captureId: String) {
+        db.captureDao().clearReference(captureId)
+    }
+
     // -----------------------------------------------------------------------
     // User-added species (slice 7). Every decision is in `AddSpeciesRegistrar` and
     // `domain/UserSpecies.kt`; this half only reads and writes rows.

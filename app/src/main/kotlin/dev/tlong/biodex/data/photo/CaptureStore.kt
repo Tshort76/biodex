@@ -38,4 +38,7 @@ interface CaptureStore {
     suspend fun setPreferOwnPhoto(speciesId: String, preferOwnPhoto: Boolean)
 
     suspend fun updateCaptureReference(captureId: String, photoUri: String, thumbPath: String)
+
+    /** D61. Nulls the reference, the thumbnail and any local copy; every other column stays. */
+    suspend fun clearCaptureReference(captureId: String)
 }

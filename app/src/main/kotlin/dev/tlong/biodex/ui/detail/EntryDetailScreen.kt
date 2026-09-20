@@ -365,9 +365,9 @@ private fun DetailBody(
     if (captures.isNotEmpty()) {
         SectionHeader(
             if (captures.all { it.thumbPath == null }) {
-                // M41: nothing here is linked from a gallery, so the old header would be a
-                // lie about where these catches came from.
-                "My catches (${captures.size}) · no photos kept"
+                // D61: nothing here is linked from a gallery, so the old header would be a
+                // lie about where these sightings came from.
+                "My sightings (${captures.size}) · no photos kept"
             } else {
                 "My photos (${captures.size}) · linked from gallery"
             },
@@ -381,7 +381,7 @@ private fun DetailBody(
         // D56. The when-and-where of every catch, kept on the row and so untouched by what
         // happens to the photo afterwards. Newest first; the strip above stays in its order.
         SectionHeader("Sightings (${captures.size}) · when and where")
-        SightingsList(rows = sightingRows(captures))
+        SightingsList(rows = sightingRows(captures), onOpen = onOpenPhoto)
     }
 
     if (!summary.caught) {
@@ -458,8 +458,9 @@ private fun NearestLink(onClick: () -> Unit) {
     }
 }
 
+/** Every row opens the capture (D61): the viewer is where a sighting is unlinked or deleted. */
 @Composable
-private fun SightingsList(rows: List<SightingRow>) {
+private fun SightingsList(rows: List<SightingRow>, onOpen: (String) -> Unit) {
     val colors = DexTheme.colors
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -473,10 +474,11 @@ private fun SightingsList(rows: List<SightingRow>) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .background(colors.codeBg)
+                    .clickable { onOpen(row.captureId) }
                     .padding(horizontal = 10.dp, vertical = 7.dp),
             ) {
                 Text(
-                    text = if (row.hasPhoto) "📷" else "🍃",
+                    text = if (row.hasPhoto) "📷" else "📍",
                     style = MaterialTheme.typography.labelMedium,
                 )
                 Column(modifier = Modifier.weight(1f)) {
@@ -515,23 +517,16 @@ private fun PhotoStrip(
             .padding(top = 4.dp),
     ) {
         captures.forEach { capture ->
-            // M41. A capture with no photograph is a date-and-place row and nothing more: no
-            // thumbnail, and **no tap target**, because the viewer it would open exists to
-            // show a photo and to offer a re-link, and neither means anything here. This is
-            // where that capture is kept out of the viewer — the route never learns about it.
+            // D61. A sighting with no photograph is a date-and-place tile, and it opens the
+            // viewer like any other so it can still be deleted — the viewer knows to draw no
+            // frame and offer no re-link for it.
             val hasPhoto = capture.thumbPath != null
             Column(
                 modifier = Modifier
                     .width(92.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(if (hasPhoto) colors.silBg else colors.accentSoft)
-                    .then(
-                        if (hasPhoto) {
-                            Modifier.clickable { onOpenPhoto(capture.id) }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .clickable { onOpenPhoto(capture.id) },
             ) {
                 if (hasPhoto) {
                     AsyncImage(
@@ -548,7 +543,7 @@ private fun PhotoStrip(
                         modifier = Modifier.fillMaxWidth().height(72.dp),
                     ) {
                         Text(
-                            text = "🍃",
+                            text = "📍",
                             style = MaterialTheme.typography.titleLarge,
                         )
                     }

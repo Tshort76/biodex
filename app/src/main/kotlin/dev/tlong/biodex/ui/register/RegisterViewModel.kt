@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -82,11 +83,24 @@ class RegisterViewModel(
         error.value = null
     }
 
-    /** Called with the picker's result after the route has taken the persistable grant. */
+    /**
+     * Called with the picker's result after the route has taken the persistable grant. D60:
+     * the EXIF is read here, off the main thread, so the place field knows whether it is
+     * required before the user reaches the button; the read lands only if this is still the
+     * photo on screen.
+     */
     fun onPhotoPicked(picked: PickedPhoto?) {
         photo.value = picked
         error.value = null
-        if (picked != null) refreshGrantPressure()
+        if (picked == null) return
+        refreshGrantPressure()
+        viewModelScope.launch {
+            val facts = withContext(Dispatchers.IO) { photos.readExif(picked.uri) }
+            val located = facts.lat != null && facts.lng != null
+            photo.update { current ->
+                if (current?.uri == picked.uri) current.copy(hasLocation = located) else current
+            }
+        }
     }
 
     /** M08's typed path, unchanged in behaviour and routed through the same hand-off. */
@@ -151,6 +165,13 @@ class RegisterViewModel(
                     error.value = "That photo could not be read. Pick another one — nothing " +
                         "was saved."
                     events.send(RegisterEvent.PhotoUnreadable)
+                }
+
+                // The button is disabled until `placeSatisfied`, so this is belt to that braces:
+                // the door's own rule (D60), said on the screen.
+                CaptureRegistrar.RegisterResult.PlaceMissing -> {
+                    error.value = "Where was this? Type the place — the photo carries no " +
+                        "location. Nothing was saved."
                 }
             }
             registering.value = false

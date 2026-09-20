@@ -6,6 +6,12 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v22 — 2026-09-20
+
+- **Changed** — a capture needs a place. If the photo carries no GPS (the gallery picker strips it), the "Where was this?" line is required and the Register button waits for it; a photo from the Files picker or the camera that does carry GPS fills it in and the field says "Place read from the photo ✓". Nothing is written without one or the other. (`M13` revised, `D60`)
+- **Added** — "Unlink photo, keep the sighting" in the photo viewer. The app's link and thumbnail go, the photo stays in your gallery, and the sighting keeps its date, place and note — the species stays caught. A sighting without a photo shows a 📍 and can still be opened and deleted. (`M07`, `M12`, `S07` revised, `D61`)
+- **Changed** — the unlock reveal opens with a catch: a ball closes around the silhouette, clicks, rocks itself still, and opens on your photo. About four seconds, still skippable with a tap. (`M09` revised, `D62`)
+
 ## v21 — 2026-09-13
 
 - **Removed** — plants. The 80 curated plants, every plant you added yourself, their uses and Duke's data, and the Pl@ntNet identification button and API key are gone; the app is an animal-and-fungus dex. **Upgrading deletes every plant entry and capture on the phone** — that was the request. The Food source filter stays for the animals that carry it, fungal cautions stay, and a backup from before v21 restores everything except its plants (the import says how many it skipped). Every kingdom keeps its own photograph again. (`D59`; M22–M27, M30, M35, M42, S10, S15 revised; M31–M34, M36–M39, M41, S13, C09, C10, C12 struck)

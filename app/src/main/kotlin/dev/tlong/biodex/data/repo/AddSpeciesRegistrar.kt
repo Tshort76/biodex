@@ -34,6 +34,9 @@ class AddSpeciesRegistrar(
 
         /** The photo could not be read; nothing survives — not the species, not a capture. */
         data object PhotoUnreadable : CreateResult
+
+        /** D60: no typed place and no GPS on the photo. Same rollback as [PhotoUnreadable]. */
+        data object PlaceMissing : CreateResult
     }
 
     /**
@@ -67,10 +70,16 @@ class AddSpeciesRegistrar(
         // this is the one door into the store, which is also why the normalization above
         // lives here rather than only on the card.
         if (photoUri != null) {
-            val registered = captures.register(record.id, photoUri, locationLabel = locationLabel)
-            if (registered is CaptureRegistrar.RegisterResult.ThumbnailFailed) {
-                store.deleteUserSpecies(record.id)
-                return CreateResult.PhotoUnreadable
+            when (captures.register(record.id, photoUri, locationLabel = locationLabel)) {
+                is CaptureRegistrar.RegisterResult.Registered -> Unit
+                is CaptureRegistrar.RegisterResult.ThumbnailFailed -> {
+                    store.deleteUserSpecies(record.id)
+                    return CreateResult.PhotoUnreadable
+                }
+                CaptureRegistrar.RegisterResult.PlaceMissing -> {
+                    store.deleteUserSpecies(record.id)
+                    return CreateResult.PlaceMissing
+                }
             }
         }
         return CreateResult.Created(record.id, record.dexNumber)

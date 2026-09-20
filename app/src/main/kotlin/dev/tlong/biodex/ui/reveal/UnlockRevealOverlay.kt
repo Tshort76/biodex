@@ -76,11 +76,18 @@ import kotlinx.coroutines.delay
  * lands, a warm wash sits behind it, a rainbow ring turns slowly around the picture, and the
  * "NEW SPECIES" label goes gold. What stays from D33 is the sequence and its timing, the
  * fixed scatter (the same screen every time), and no sound or mascot.
+ *
+ * **D62 puts the catch in front of the reveal.** Before the silhouette resolves, a ball closes
+ * around it from above and below, clicks shut with a haptic, rocks itself still, and then
+ * opens — and what it opens on is the photograph, so D33's crossfade is now the ball opening.
+ * The confetti and the burst wait for that moment rather than firing on arrival.
  */
-const val REVEAL_DURATION_MS = 2_800L
+const val REVEAL_DURATION_MS = 3_900L
 
 /** The beats, in milliseconds from the start. Each one reads as its own event. */
 private const val HOLD_MS = 180L
+private const val CLOSE_MS = 420
+private const val WOBBLE_MS = 680
 private const val CROSSFADE_MS = 620
 private const val BURST_MS = 900
 private const val CONFETTI_MS = 2_400
@@ -150,6 +157,8 @@ fun UnlockRevealOverlay(
     // at 0f and driven by the timeline below — never by `animateFloatAsState`, which would
     // start at its target and play nothing (the defect D33 fixes).
     val resolve = remember { Animatable(0f) }
+    val close = remember { Animatable(0f) }
+    val wobble = remember { Animatable(0f) }
     val burst = remember { Animatable(0f) }
     val confetti = remember { Animatable(0f) }
     val ring = remember { Animatable(0f) }
@@ -161,6 +170,11 @@ fun UnlockRevealOverlay(
         // on the grid for weeks, so the reveal is worth more if it starts from that.
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         delay(HOLD_MS)
+        // D62: the ball. Linear on the way in — the shell applies its own ease so the halves
+        // arrive with a click rather than a drift — then the click itself, then the rock.
+        close.animateTo(1f, tween(durationMillis = CLOSE_MS, easing = LinearEasing))
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        wobble.animateTo(1f, tween(durationMillis = WOBBLE_MS, easing = LinearEasing))
         launch {
             burst.animateTo(1f, tween(durationMillis = BURST_MS, easing = LinearOutSlowInEasing))
         }
@@ -182,7 +196,7 @@ fun UnlockRevealOverlay(
         // say: you have one more than you had.
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         counter.animateTo(1f, tween(durationMillis = COUNTER_MS, easing = FastOutSlowInEasing))
-        delay(REVEAL_DURATION_MS - HOLD_MS - CROSSFADE_MS - TEXT_MS - COUNTER_MS)
+        delay(REVEAL_DURATION_MS - HOLD_MS - CLOSE_MS - WOBBLE_MS - CROSSFADE_MS - TEXT_MS - COUNTER_MS)
         onDismiss()
     }
 
@@ -287,6 +301,20 @@ fun UnlockRevealOverlay(
                             )
                         }
                     }
+                    // D62. Over the disc and inside the halo, not inside the disc's own clip:
+                    // the halves come in from the halo's edge, and the rock needs room to lean.
+                    PokeballShell(
+                        close = close.value,
+                        wobble = wobble.value,
+                        open = progress,
+                        colours = PokeballColours(
+                            upper = colors.stop,
+                            lower = colors.card,
+                            band = colors.fg,
+                            button = colors.bg,
+                        ),
+                        modifier = Modifier.size(150.dp),
+                    )
                 }
             }
             if (content.leafMark) {

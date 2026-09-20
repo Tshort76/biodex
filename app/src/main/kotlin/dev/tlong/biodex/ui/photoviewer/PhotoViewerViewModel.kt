@@ -83,6 +83,17 @@ class PhotoViewerViewModel(
         }
     }
 
+    /**
+     * D61. The photograph goes and the sighting stays; the reference is probed again afterwards
+     * so the screen settles on [PhotoRef.None] rather than on the state it opened with.
+     */
+    fun unlinkPhoto() {
+        viewModelScope.launch {
+            registrar.unlinkPhoto(captureId)
+            resolve()
+        }
+    }
+
     fun relink(newUri: String) {
         viewModelScope.launch {
             if (registrar.relink(captureId, newUri)) {

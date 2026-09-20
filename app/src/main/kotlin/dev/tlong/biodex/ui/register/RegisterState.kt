@@ -24,6 +24,12 @@ data class PickedPhoto(
      * afterwards. A `FileProvider` URI and a picker URI are both `content://`.
      */
     val source: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
+    /**
+     * D60. Whether the photograph's EXIF carries a coordinate pair — read on pick, off the
+     * main thread, so the screen can say "place from photo" or ask for one *before* the button
+     * is pressed. Null while the read is still running; the button waits for the answer.
+     */
+    val hasLocation: Boolean? = null,
 )
 
 /** M09's outcome, raised to the screen as a one-shot event so the route can navigate. */
@@ -55,9 +61,10 @@ data class RegisterUiState(
     val selected: SpeciesSummary? = null,
     val photo: PickedPhoto? = null,
     /**
-     * D56. Where the catch happened, in the user's words. Optional: a photo that still carries
-     * GPS names its own place, and this field is the answer for the far more common photo that
-     * does not — the system picker strips location from most of what it hands over (R3).
+     * D56, required since D60. Where the catch happened, in the user's words. A photo that
+     * still carries GPS names its own place; this field is the answer for the far more common
+     * photo that does not — the system picker strips location from most of what it hands over
+     * (R3) — and one of the two must hold before anything is written.
      */
     val place: String = "",
     val registering: Boolean = false,
@@ -73,11 +80,32 @@ data class RegisterUiState(
     val preselectedIndex: Int? = null,
 ) {
     /**
+     * D60: a sighting is a time and a place, so the place is satisfied either by the photo's
+     * own coordinates or by what the user typed. The same rule is enforced at the door in
+     * `CaptureRegistrar`; this copy exists so the button can explain itself.
+     */
+    val placeSatisfied: Boolean
+        get() = placeLabelOrNull(place) != null || photo?.hasLocation == true
+
+    /**
+     * The line under the place field. It changes with the photo rather than the typing: once a
+     * photo carries its own coordinates the field is genuinely optional again.
+     */
+    val placeHint: PlaceHint
+        get() = when {
+            photo == null -> PlaceHint.REQUIRED
+            photo.hasLocation == null -> PlaceHint.READING
+            photo.hasLocation -> PlaceHint.FROM_PHOTO
+            else -> PlaceHint.REQUIRED
+        }
+
+    /**
      * Every kingdom needs a photograph: for an animal or a fungus the photograph *is* the
-     * catch (M07). The plant exception (M41) left with the plants (D59).
+     * catch (M07) — though it can be unlinked afterwards and the sighting kept (D61). The
+     * plant exception (M41) left with the plants (D59). And every capture needs a place (D60).
      */
     val canRegister: Boolean
-        get() = selected != null && !registering && photo != null
+        get() = selected != null && !registering && photo != null && placeSatisfied
 
     /**
      * M08's affordance. The name is not in the catalogue, so "Add your own species" is the
@@ -93,12 +121,14 @@ data class RegisterUiState(
      * the catalogue, and the photo. Offered as soon as a name is typed — the button explains
      * what it still wants rather than disappearing.
      */
-    val canAddOwn: Boolean get() = query.isNotBlank() && photo != null && !registering
+    val canAddOwn: Boolean
+        get() = query.isNotBlank() && photo != null && placeSatisfied && !registering
 
     val addOwnLabel: String
         get() = when {
             query.isBlank() -> "Not in the list? Type a name to add your own species ＋"
             photo == null -> "Attach a photo to add “${query.trim()}” as your own species ＋"
+            !placeSatisfied -> "Say where to add “${query.trim()}” as your own species ＋"
             else -> "Add “${query.trim()}” as your own species ＋"
         }
 }
@@ -142,6 +172,18 @@ fun registerUiState(
         )
     }.combine(error) { state, message -> state.copy(error = message) }
         .combine(place) { state, where -> state.copy(place = where) }
+
+/** D60: what the place field says under itself, decided by the photo, not the typing. */
+enum class PlaceHint(val placeholder: String, val note: String?) {
+    /** No photo yet, or a photo with no coordinates: the field is the only place there is. */
+    REQUIRED("Where was this? (required)", null),
+
+    /** The EXIF read is still running; a beat at most. */
+    READING("Where was this?", "Checking the photo for its location…"),
+
+    /** The photo carries GPS: typing is optional and, if done, wins (D56). */
+    FROM_PHOTO("Where was this? (optional)", "Place read from the photo ✓"),
+}
 
 /** D56: the typed place, trimmed, or null when nothing was typed — never an empty label. */
 internal fun placeLabelOrNull(place: String): String? = place.trim().takeIf { it.isNotEmpty() }

@@ -37,6 +37,13 @@ class CaptureRegistrar(
 
         /** The photo could not be turned into a thumbnail; nothing was written. */
         data class ThumbnailFailed(val photoUri: String) : RegisterResult
+
+        /**
+         * D60: a sighting is a time *and a place*. Nothing was typed and the photograph carries
+         * no coordinates, so nothing was written — and the grant taken for the attempt was
+         * handed back.
+         */
+        data object PlaceMissing : RegisterResult
     }
 
     /**
@@ -60,6 +67,11 @@ class CaptureRegistrar(
         val grantPersisted = photos.persistGrant(photoUri)
 
         val facts = photos.readExif(photoUri)
+        // D60. Checked before the thumbnail is written, so a refusal leaves no file behind.
+        if (!hasPlace(locationLabel, facts)) {
+            if (grantPersisted && !alreadyReferenced) photos.releaseGrant(photoUri)
+            return RegisterResult.PlaceMissing
+        }
         val captureId = newCaptureId()
         val thumbPath = photos.writeThumbnail(captureId, photoUri)
         if (thumbPath == null) {
@@ -116,6 +128,14 @@ class CaptureRegistrar(
     }
 
     /**
+     * D60's rule, and the screen's `PickedPhoto.hasLocation` gate is the same rule read early:
+     * a typed label or a coordinate pair, either one. A geocoded name is never required — the
+     * sighting row prints the coordinates when there is no label.
+     */
+    private fun hasPlace(typed: String?, facts: ExifFacts): Boolean =
+        !typed.isNullOrBlank() || (facts.lat != null && facts.lng != null)
+
+    /**
      * A capture with no photograph (M41). Everything else about a catch is still recorded —
      * the species, the date, the place, the note — which is what makes "seen again, here, on
      * this date" mean something for a plant that will never carry a picture of its own.
@@ -125,6 +145,8 @@ class CaptureRegistrar(
         note: String?,
         locationLabel: String?,
     ): RegisterResult {
+        // D60: with no photograph there is no EXIF, so the typed place is the only place.
+        if (locationLabel.isNullOrBlank()) return RegisterResult.PlaceMissing
         val captureId = newCaptureId()
         val registeredAt = now()
         val plan = planRegistration(
@@ -161,6 +183,24 @@ class CaptureRegistrar(
             uriReferenceCount = capture.photoUri?.let { store.captureCountForUri(it) } ?: 0,
         )
         store.applyDeletion(plan)
+        plan.filesToDelete.forEach(photos::deleteOwnedFile)
+        plan.releaseUri?.let(photos::releaseGrant)
+        return plan
+    }
+
+    /**
+     * D61. Drops the photograph from a capture and keeps the sighting: the row stays with its
+     * date, place and note, the species stays caught, and the gallery photo is never touched.
+     * Returns null for an unknown capture, and a no-op plan for one that already had no photo.
+     */
+    suspend fun unlinkPhoto(captureId: String): PhotoUnlinkPlan? {
+        val capture = store.captureOnce(captureId) ?: return null
+        val plan = planPhotoUnlink(
+            capture = capture,
+            uriReferenceCount = capture.photoUri?.let { store.captureCountForUri(it) } ?: 0,
+        )
+        if (plan.isNoOp) return plan
+        store.clearCaptureReference(captureId)
         plan.filesToDelete.forEach(photos::deleteOwnedFile)
         plan.releaseUri?.let(photos::releaseGrant)
         return plan

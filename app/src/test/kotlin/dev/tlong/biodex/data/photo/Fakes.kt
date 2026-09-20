@@ -55,19 +55,29 @@ class FakeCaptureStore : CaptureStore {
             .copy(photoUri = photoUri, thumbPath = thumbPath)
     }
 
+    override suspend fun clearCaptureReference(captureId: String) {
+        captures[captureId] = captures.getValue(captureId)
+            .copy(photoUri = null, thumbPath = null, localCopyPath = null)
+    }
+
     /** What the grid would render for a species — the DAO's COALESCE, in Kotlin. */
     fun renderedThumbPath(speciesId: String): String? {
         val entry = entries[speciesId] ?: return null
         val mine = captures.values.filter { it.speciesId == speciesId }
         return mine.firstOrNull { it.id == entry.favoriteCaptureId }?.thumbPath
-            ?: mine.minByOrNull { it.createdAt }?.thumbPath
+            ?: mine.filter { it.thumbPath != null }.minByOrNull { it.createdAt }?.thumbPath
     }
 }
 
 class FakePhotoGateway(
     var thumbnailWorks: Boolean = true,
     var grantPersists: Boolean = true,
-    var exif: ExifFacts = ExifFacts.None,
+    /**
+     * Coordinates by default rather than [ExifFacts.None]: D60 refuses a registration with no
+     * place, and most tests here are about something else. A test about the place itself sets
+     * this explicitly.
+     */
+    var exif: ExifFacts = ExifFacts(lat = 37.8, lng = -122.3),
     var grantCount: Int = 3,
     var resolveResult: PhotoRef? = null,
 ) : PhotoGateway {

@@ -130,6 +130,11 @@ class ConfirmSpeciesViewModel(
                 error = "That photo could not be read. Nothing was saved."
                 publish()
             }
+
+            AddSpeciesRegistrar.CreateResult.PlaceMissing -> {
+                error = PLACE_MISSING_MESSAGE
+                publish()
+            }
         }
     }
 
@@ -244,6 +249,12 @@ class ConfirmSpeciesViewModel(
                     error = "That photo could not be read. Nothing was saved — pick another one."
                     publish()
                 }
+
+                AddSpeciesRegistrar.CreateResult.PlaceMissing -> {
+                    saving = false
+                    error = PLACE_MISSING_MESSAGE
+                    publish()
+                }
             }
         }
     }
@@ -288,6 +299,15 @@ class ConfirmSpeciesViewModel(
     }
 
     companion object {
+        /**
+         * D60. The Register screen already refuses to hand a draft over without a place, so this
+         * is reached only when the photo's GPS read differently at the two moments; it says what
+         * to do rather than what went wrong inside.
+         */
+        const val PLACE_MISSING_MESSAGE =
+            "Where was this? Go back and type the place — the photo carries no location. " +
+                "Nothing was saved."
+
         fun factory(container: AppContainer, draftId: String): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
