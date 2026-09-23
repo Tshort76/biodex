@@ -21,7 +21,7 @@ ADB := $(SDK_DIR)/platform-tools/adb
 PKG := dev.tlong.biodex
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor debug release install test test-device check catalogue catalogue-test screenshot clean
+.PHONY: help doctor debug release install test test-device check catalogue catalogue-test places places-test screenshot clean
 
 help: ## List the targets
 	@echo "BioDex â€” make targets"
@@ -86,7 +86,7 @@ test-device: ## Run the instrumented tests (needs a phone; UNINSTALLS the app â€
 	@echo "Note: that run uninstalled BioDex from the phone. 'make install' puts it back,"
 	@echo "but every registered photo needs re-linking from its entry's photo viewer."
 
-check: catalogue-test ## Everything runnable without a phone: JVM tests + catalogue tests
+check: catalogue-test places-test ## Everything runnable without a phone: JVM tests + catalogue and place-list tests
 	@$(GRADLE) testDebugUnitTest --rerun-tasks
 
 catalogue: ## Rebuild the bundled catalogue asset (network on a cold cache; slow)
@@ -95,6 +95,12 @@ catalogue: ## Rebuild the bundled catalogue asset (network on a cold cache; slow
 
 catalogue-test: ## Run the catalogue pipeline's Python tests
 	@cd tools/catalogue && python3 -m unittest test_build_catalogue
+
+places: ## Rebuild the bundled place list (downloads a 71 MB GeoNames dump on a cold cache)
+	@cd tools/places && python3 build_places.py
+
+places-test: ## Run the place-list pipeline's Python tests
+	@cd tools/places && python3 -m unittest test_build_places
 
 screenshot: ## Grab the phone's screen to shot.png
 	@$(ADB) exec-out screencap -p > shot.png && echo "wrote shot.png"

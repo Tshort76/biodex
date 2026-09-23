@@ -73,4 +73,4 @@ make check     # JVM + catalogue tests, no phone needed
 
 ## License
 
-Code is MIT. The bundled catalogue is CC BY-SA 4.0, because it reuses Wikipedia prose, with GBIF (CC BY 4.0) underneath it and per-image Commons credits carried in each entry. [`LICENSE`](LICENSE) has the split in full, and the app shows the same thing at *Settings → Licenses and attribution*.
+Code is MIT. The bundled catalogue is CC BY-SA 4.0, because it reuses Wikipedia prose, with GBIF (CC BY 4.0) underneath it and per-image Commons credits carried in each entry. The bundled place list — the names the "Where was this?" prompt suggests — is from [GeoNames](https://www.geonames.org/), CC BY 4.0. [`LICENSE`](LICENSE) has the split in full, and the app shows the same thing at *Settings → Licenses and attribution*.

@@ -6,6 +6,11 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v23 — 2026-09-23
+
+- **Added** — the "Where was this?" prompt suggests places instead of taking free text. It opens on the places your collection already uses, and as you type it searches a bundled list of 44,620 towns, parks, trails, beaches and landmarks across California, Oregon and Washington. Everything is on the phone, so it works with no signal. **Register lights only when what is typed is one of the offers**, so a sighting can no longer carry a typo as its permanent address. Somewhere with no name on the list gets the nearest town, park or beach. (`M13` revised, `D68`)
+- **Added** — `make places` rebuilds the place list from the GeoNames dump, and `make check` now runs its tests too.
+
 ## v22.6 — 2026-09-20
 
 - **Removed** — the one-time place backfill, now that it has run. Re-linking a photo still fills that sighting's place. (`D67` revised)

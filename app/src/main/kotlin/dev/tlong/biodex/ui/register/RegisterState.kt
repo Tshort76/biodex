@@ -2,7 +2,10 @@ package dev.tlong.biodex.ui.register
 
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
+import dev.tlong.biodex.domain.GazetteerPlace
 import dev.tlong.biodex.domain.SpeciesSummary
+import dev.tlong.biodex.domain.isKnownPlace
+import dev.tlong.biodex.domain.suggestPlaces
 import dev.tlong.biodex.ui.grid.matchesQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -66,6 +69,8 @@ data class RegisterUiState(
      * field on the screen itself — the photo answers the question for most catches (D63).
      */
     val placePrompt: PlacePrompt? = null,
+    /** D68: what is typed into that prompt, what it suggests, and whether it names a real place. */
+    val place: PlaceSearchState = PlaceSearchState(),
     val registering: Boolean = false,
     val error: String? = null,
     /** 4.4: shown only when the persisted-grant count is actually near Android's cap. */
@@ -144,6 +149,7 @@ fun registerUiState(
     error: Flow<String?>,
     preselectedSpeciesId: String? = null,
     placePrompt: Flow<PlacePrompt?> = flowOf(null),
+    place: Flow<PlaceSearchState> = flowOf(PlaceSearchState()),
 ): Flow<RegisterUiState> =
     combine(species, query, selectedSpeciesId, photo, registering) { all, q, id, pic, busy ->
         val results = registerResults(all, q)
@@ -161,9 +167,40 @@ fun registerUiState(
         )
     }.combine(error) { state, message -> state.copy(error = message) }
         .combine(placePrompt) { state, prompt -> state.copy(placePrompt = prompt) }
+        .combine(place) { state, search -> state.copy(place = search) }
 
 /** D64: which tap raised the "Where was this?" prompt, so the answer resumes the right one. */
 enum class PlacePrompt { REGISTER, ADD_OWN }
+
+/**
+ * D68. The place prompt's own little screen state: what has been typed, the labels to offer
+ * for it, and whether what is typed is one of them. [isKnown] is what lights the button — the
+ * prompt takes a place off the list, not free text, so a typo cannot become a sighting's
+ * permanent address.
+ */
+data class PlaceSearchState(
+    val query: String = "",
+    val suggestions: List<String> = emptyList(),
+    val isKnown: Boolean = false,
+)
+
+/**
+ * D68. Pure, and deliberately not inside [registerUiState]: it scans 45,000 names on every
+ * keystroke, which is microseconds but belongs on a background dispatcher, and the ViewModel
+ * puts it there.
+ */
+fun placeSearchState(
+    query: Flow<String>,
+    gazetteer: Flow<List<GazetteerPlace>>,
+    recent: Flow<List<String>>,
+): Flow<PlaceSearchState> =
+    combine(query, gazetteer, recent) { typed, places, used ->
+        PlaceSearchState(
+            query = typed,
+            suggestions = suggestPlaces(typed, places, used),
+            isKnown = isKnownPlace(typed, places, used),
+        )
+    }
 
 /** D56: the typed place, trimmed, or null when nothing was typed — never an empty label. */
 internal fun placeLabelOrNull(place: String): String? = place.trim().takeIf { it.isNotEmpty() }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -204,6 +205,7 @@ fun RegisterRoute(
         onPickPhoto = {
             if (libraryAccess) openPicker() else libraryThenPick.launch(photoLibraryPermissions())
         },
+        onPlaceQueryChange = viewModel::onPlaceQueryChange,
         onPlaceEntered = viewModel::onPlaceEntered,
         onPlacePromptDismissed = viewModel::onPlacePromptDismissed,
         onGrantPhotoAccess = if (libraryAccess) null else {
@@ -250,6 +252,7 @@ fun RegisterScreen(
     onSelectSpecies: (String) -> Unit,
     onPickPhoto: () -> Unit,
     /** D64: the "Where was this?" prompt's two exits. */
+    onPlaceQueryChange: (String) -> Unit = {},
     onPlaceEntered: (String) -> Unit = {},
     onPlacePromptDismissed: () -> Unit = {},
     /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
@@ -279,7 +282,12 @@ fun RegisterScreen(
     }
 
     if (state.placePrompt != null) {
-        PlacePromptDialog(onPlaceEntered = onPlaceEntered, onDismiss = onPlacePromptDismissed)
+        PlacePromptDialog(
+            place = state.place,
+            onQueryChange = onPlaceQueryChange,
+            onPlaceEntered = onPlaceEntered,
+            onDismiss = onPlacePromptDismissed,
+        )
     }
 
     Scaffold(
@@ -489,18 +497,21 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 }
 
 /**
- * D64. Raised by the Register (or add-your-own) tap when the photo carries no coordinates,
- * and only then. Material's dialog, as in Settings (D49): the confirm side says what it does
- * and is dark until something is typed; Cancel returns to the screen exactly as it was.
+ * D64/D68. Raised by the Register (or add-your-own) tap when the photo carries no coordinates,
+ * and only then. Material's dialog, as in Settings (D49), with a suggestion list under the
+ * field: the places this collection already uses, then the region's bundled gazetteer. The
+ * confirm side stays dark until what is typed *is* one of them, so a sighting's address is
+ * always a real place and never a typo nothing can correct later.
  */
 @Composable
 private fun PlacePromptDialog(
+    place: PlaceSearchState,
+    onQueryChange: (String) -> Unit,
     onPlaceEntered: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
-    var place by rememberSaveable { mutableStateOf("") }
-    val ready = place.isNotBlank()
+    val ready = place.isKnown
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.card,
@@ -514,7 +525,7 @@ private fun PlacePromptDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "The photo carries no location, and a sighting needs one.",
+                    text = "The photo carries no location. Pick a place from the list.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )
@@ -529,7 +540,7 @@ private fun PlacePromptDialog(
                 ) {
                     Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
                     Box(modifier = Modifier.weight(1f)) {
-                        if (place.isEmpty()) {
+                        if (place.query.isEmpty()) {
                             Text(
                                 text = "e.g. Bear Valley, Point Reyes",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -537,8 +548,8 @@ private fun PlacePromptDialog(
                             )
                         }
                         BasicTextField(
-                            value = place,
-                            onValueChange = { place = it },
+                            value = place.query,
+                            onValueChange = onQueryChange,
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
                             cursorBrush = SolidColor(colors.accent),
@@ -546,10 +557,32 @@ private fun PlacePromptDialog(
                         )
                     }
                 }
+                // Capped rather than scrolled to its content: a dialog that grows as you type
+                // walks its own buttons off the bottom of a short screen.
+                LazyColumn(modifier = Modifier.heightIn(max = 208.dp)) {
+                    items(place.suggestions, key = { it }) { suggestion ->
+                        PlaceSuggestionRow(
+                            label = suggestion,
+                            chosen = suggestion.equals(place.query, ignoreCase = true),
+                            onClick = { onQueryChange(suggestion) },
+                        )
+                    }
+                    if (place.suggestions.isEmpty() && place.query.isNotBlank()) {
+                        item {
+                            Text(
+                                text = "No place here by that name. Try the nearest town, " +
+                                    "park or beach.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.faint,
+                                modifier = Modifier.padding(vertical = 8.dp),
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onPlaceEntered(place) }, enabled = ready) {
+            TextButton(onClick = { onPlaceEntered(place.query) }, enabled = ready) {
                 Text(
                     text = "Register",
                     color = if (ready) colors.accent else colors.faint,
@@ -562,6 +595,24 @@ private fun PlacePromptDialog(
                 Text(text = "Cancel", color = colors.muted)
             }
         },
+    )
+}
+
+/** One offered place. The tap fills the field, which is also what makes the button live. */
+@Composable
+private fun PlaceSuggestionRow(label: String, chosen: Boolean, onClick: () -> Unit) {
+    val colors = DexTheme.colors
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (chosen) colors.accent else colors.fg,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 9.dp),
     )
 }
 

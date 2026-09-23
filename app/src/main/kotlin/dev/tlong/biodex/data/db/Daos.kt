@@ -206,6 +206,17 @@ interface CaptureDao {
     @Query("SELECT * FROM captures ORDER BY createdAt DESC LIMIT :limit")
     fun observeRecent(limit: Int): Flow<List<CaptureEntity>>
 
+    /**
+     * D68. The places this collection already uses, most recently used first — the first tier
+     * of the place prompt's suggestions, and the only one that can hold a trail or a back
+     * garden the bundled gazetteer has never heard of.
+     */
+    @Query(
+        "SELECT locationLabel FROM captures WHERE locationLabel IS NOT NULL " +
+            "GROUP BY locationLabel ORDER BY MAX(createdAt) DESC LIMIT :limit",
+    )
+    fun observePlaceLabels(limit: Int): Flow<List<String>>
+
     /** S01's export, oldest first so the archive reads in the order the catches happened. */
     @Query("SELECT * FROM captures ORDER BY createdAt ASC")
     suspend fun capturesOnce(): List<CaptureEntity>

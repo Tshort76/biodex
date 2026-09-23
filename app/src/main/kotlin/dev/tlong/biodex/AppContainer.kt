@@ -17,6 +17,8 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.net.WikipediaClient
 import dev.tlong.biodex.data.photo.AndroidPhotoGateway
 import dev.tlong.biodex.data.photo.AndroidPlaceNamer
+import dev.tlong.biodex.data.place.AssetPlaceGazetteer
+import dev.tlong.biodex.data.place.PlaceGazetteer
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
@@ -57,6 +59,13 @@ class AppContainer(val appContext: Context) {
 
     /** The platform half of the photo layer (ARCHITECTURE.md 4). */
     val photoGateway: PhotoGateway by lazy { AndroidPhotoGateway(appContext) }
+
+    /**
+     * D68. The region's bundled place names, behind the "Where was this?" prompt. A singleton
+     * because the parse is the expensive part and the result is 45,000 rows of immutable text;
+     * the asset itself is not read until something asks for a suggestion.
+     */
+    val placeGazetteer: PlaceGazetteer by lazy { AssetPlaceGazetteer(appContext) }
 
     /** S03 and the app's other preferences (4.5: plain SharedPreferences). */
     val settings: AppSettings by lazy { AppSettings(appContext) }

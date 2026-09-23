@@ -17,6 +17,7 @@ local.properties
 
 # Catalogue pipeline
 tools/catalogue/cache/
+tools/places/cache/
 
 # Python bytecode from the tools/ scripts
 __pycache__/

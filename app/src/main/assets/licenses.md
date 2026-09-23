@@ -29,6 +29,15 @@ Taxonomy through the GBIF API. GBIF's backbone is published under CC BY 4.0.
 - GBIF: https://www.gbif.org
 - API terms: https://www.gbif.org/terms
 
+## Place names — GeoNames
+
+The places the "Where was this?" prompt suggests are a filtered extract of the GeoNames dump
+for the United States: the towns, parks, trails, beaches and landmarks of California, Oregon
+and Washington. GeoNames is published under CC BY 4.0.
+
+- GeoNames: https://www.geonames.org
+- CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+
 ## Silhouettes
 
 The ten class silhouettes are drawn for this app and are not derived from any third-party

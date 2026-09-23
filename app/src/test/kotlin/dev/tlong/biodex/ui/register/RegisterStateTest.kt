@@ -1,5 +1,6 @@
 package dev.tlong.biodex.ui.register
 
+import dev.tlong.biodex.domain.GazetteerPlace
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -61,6 +62,43 @@ class RegisterStateTest {
             error = MutableStateFlow(error),
             placePrompt = MutableStateFlow(placePrompt),
         ).first()
+    }
+
+    /**
+     * D68. The prompt's own state: what is typed, what to offer, and whether the button lights.
+     * The ranking itself is `PlaceSuggestTest`'s; what is pinned here is that the three travel
+     * together, so the screen can never offer a list and a button that disagree.
+     */
+    @Test
+    fun `the place prompt offers the list and lights only on a place from it`() = runBlocking {
+        val gazetteer = listOf(
+            GazetteerPlace("Bear Valley", "CA", 0),
+            GazetteerPlace("Bear Valley Trail", "CA", 1),
+        )
+        fun search(typed: String) = runBlocking {
+            placeSearchState(
+                query = MutableStateFlow(typed),
+                gazetteer = MutableStateFlow(gazetteer),
+                recent = MutableStateFlow(listOf("Tomales Bay, California")),
+            ).first()
+        }
+
+        val empty = search("")
+        assertEquals("nothing typed offers where we have been", listOf("Tomales Bay, California"), empty.suggestions)
+        assertFalse("and nothing is chosen yet", empty.isKnown)
+
+        val typing = search("bear")
+        assertEquals(
+            listOf("Bear Valley, California", "Bear Valley Trail, California"),
+            typing.suggestions,
+        )
+        assertFalse("half a name is not a place", typing.isKnown)
+
+        val chosen = search("Bear Valley, California")
+        assertTrue(chosen.isKnown)
+        assertEquals("Bear Valley, California", chosen.query)
+
+        assertFalse("and free text never is", search("out behind the barn").isKnown)
     }
 
     /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */

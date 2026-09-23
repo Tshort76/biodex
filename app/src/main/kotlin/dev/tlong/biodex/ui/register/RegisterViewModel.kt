@@ -10,6 +10,7 @@ import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.place.PlaceGazetteer
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
 import dev.tlong.biodex.data.photo.shouldPromoteToGallery
@@ -20,6 +21,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -35,12 +39,21 @@ class RegisterViewModel(
     private val registrar: CaptureRegistrar,
     private val preselectedSpeciesId: String?,
     private val photos: PhotoGateway,
+    private val gazetteer: PlaceGazetteer = PlaceGazetteer.None,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val selectedSpeciesId = MutableStateFlow(preselectedSpeciesId)
     private val photo = MutableStateFlow<PickedPhoto?>(null)
     private val placePrompt = MutableStateFlow<PlacePrompt?>(null)
+    private val placeQuery = MutableStateFlow("")
+
+    /**
+     * D68. The bundled place list, read once the first time anything collects this — which is
+     * the first time the screen is opened, not process start: most registrations never raise
+     * the prompt at all (D63), and 900 KB of asset should not be parsed for them.
+     */
+    private val gazetteerPlaces = flow { emit(gazetteer.places()) }.onStart { emit(emptyList()) }
     private val registering = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
@@ -59,6 +72,11 @@ class RegisterViewModel(
             error = error,
             preselectedSpeciesId = preselectedSpeciesId,
             placePrompt = placePrompt,
+            place = placeSearchState(
+                query = placeQuery,
+                gazetteer = gazetteerPlaces,
+                recent = repository.placeLabels(),
+            ).flowOn(Dispatchers.Default),
         ),
         _grantWarning,
     ) { state, warning ->
@@ -74,14 +92,22 @@ class RegisterViewModel(
         query.value = value
     }
 
+    /** D68: each keystroke in the place prompt, which re-ranks the suggestions. */
+    fun onPlaceQueryChange(value: String) {
+        placeQuery.value = value
+    }
+
     /**
      * D64. The prompt's answer: a typed place resumes whichever tap raised it; a dismissal
-     * just closes it and the screen is as it was.
+     * just closes it and the screen is as it was. The screen only offers this for a place off
+     * the list (D68), and the check is repeated here because this is the one entry point.
      */
     fun onPlaceEntered(place: String) {
         val label = placeLabelOrNull(place) ?: return
+        if (!uiState.value.place.isKnown) return
         val prompt = placePrompt.value ?: return
         placePrompt.value = null
+        placeQuery.value = ""
         when (prompt) {
             PlacePrompt.REGISTER -> register(label)
             PlacePrompt.ADD_OWN -> viewModelScope.launch {
@@ -92,6 +118,7 @@ class RegisterViewModel(
 
     fun onPlacePromptDismissed() {
         placePrompt.value = null
+        placeQuery.value = ""
     }
 
     fun onSelectSpecies(speciesId: String) {
@@ -244,6 +271,7 @@ class RegisterViewModel(
                     registrar = container.captureRegistrar,
                     preselectedSpeciesId = preselectedSpeciesId,
                     photos = container.photoGateway,
+                    gazetteer = container.placeGazetteer,
                 )
             }
         }

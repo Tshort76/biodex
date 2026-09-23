@@ -1,0 +1,20 @@
+{
+  "gazetteerVersion": 1,
+  "states": ["CA", "OR", "WA"],
+
+  "tiers": {
+    "0": ["P.PPL", "P.PPLA", "P.PPLA2", "P.PPLA3", "P.PPLC"],
+    "1": ["L.PRK", "L.RES", "L.RESF", "L.RESN", "L.RESV", "L.RESW", "S.CMP", "R.TRL", "T.BCH"],
+    "2": ["T.MT", "T.PK", "T.CAPE", "T.ISL", "T.CLF", "H.LK", "H.BAY", "H.ESTY", "H.SWMP", "L.RGN"]
+  },
+
+  "_notes": [
+    "The offline place list the 'Where was this?' prompt suggests from (DESIGN.md D68).",
+    "Three states, because the Pacific USA dex's edible rule is already scoped to them",
+    "(D48) and the owner's catches are there. A tier is the only ranking the search has:",
+    "0 towns and cities, 1 the places you go on purpose — parks, reserves, campgrounds,",
+    "trails, beaches — and 2 the natural features you end up at. Streams (H.STM, 28k of",
+    "them), valleys, springs, schools and buildings are left out on purpose: they are the",
+    "bulk of the dump and nobody names a sighting after them."
+  ]
+}

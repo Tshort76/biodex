@@ -141,6 +141,10 @@ class DexRepository(
     fun recentCaptures(limit: Int = 12): Flow<List<Capture>> =
         db.captureDao().observeRecent(limit).map { rows -> rows.map { it.toDomain() } }
 
+    /** D68: the places already on this collection's sightings, most recent first. */
+    fun placeLabels(limit: Int = 40): Flow<List<String>> =
+        db.captureDao().observePlaceLabels(limit)
+
     fun entry(speciesId: String): Flow<Entry?> =
         combine(db.entryDao().observeEntry(speciesId), entryStatusFlow) { entry, statuses ->
             entry?.let {

@@ -57,9 +57,21 @@ with these upstream terms underneath it, per field:
      duke_ethnobot.json)                   catalogue/LICENSE-duke.txt
 
 Reference images are referenced by URL rather than redistributed, and each
-entry carries the author and license string Commons reports for it. The app
-shows all of this at Settings -> Licenses and attribution, which renders
-app/src/main/assets/licenses.md.
+entry carries the author and license string Commons reports for it.
+
+The bundled place list (app/src/main/assets/places/pacific.tsv) is a separate
+asset from the catalogue and carries its own terms:
+
+  Place names, states                      CC BY 4.0, GeoNames
+    (app/src/main/assets/places/           https://www.geonames.org/
+     pacific.tsv)
+
+It is a filtered extract of the GeoNames dump for the United States -- the
+names of towns, parks, trails, beaches and landmarks in California, Oregon and
+Washington -- and nothing else from that dataset ships.
+
+The app shows all of this at Settings -> Licenses and attribution, which
+renders app/src/main/assets/licenses.md.
 
 The edible tags and the short note naming a plant part and a season are this
 project's own curation and fall under part 1, not under any upstream source.
