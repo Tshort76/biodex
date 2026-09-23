@@ -17,11 +17,12 @@ A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-worl
 ```bash
 make            # list targets
 make doctor     # check the toolchain; names whatever is missing
-make check      # JVM tests + catalogue tests, no phone      (the usual pre-commit gate)
+make check      # JVM + catalogue + place-list tests, no phone  (the usual pre-commit gate)
 make test       # JVM tests only
 make install    # build and install onto an attached phone
 make test-device   # instrumented tests; UNINSTALLS the app — refuses while photos are registered
 make catalogue  # regenerate the bundled catalogue asset
+make places     # regenerate the bundled place list (71 MB GeoNames dump on a cold cache)
 ```
 
 Gradle direct, for what `make` does not wrap:
