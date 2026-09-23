@@ -24,6 +24,9 @@ data class GazetteerPlace(
 
     /** Folded once at parse, because the search folds the query and then scans all 45,000. */
     val folded: String = foldPlace(name)
+
+    /** The same for the whole label, which is what the validation compares against. */
+    val foldedLabel: String = foldPlace(label)
 }
 
 /** The three states the shipped list covers, spelled the way the geocoder spells them. */
@@ -133,13 +136,16 @@ fun suggestPlaces(
 }
 
 /**
- * Whether [text] names a place either source holds — the validation D68 asks for. Folded on
- * both sides, so "bear valley, california" typed in lower case is the same answer as the one
- * the list offered.
+ * The label [text] names, or null if neither source holds it — the validation D68 asks for.
+ *
+ * It returns the *place's own* spelling rather than a yes, and that is the point: the match
+ * folds case, accents and spacing on both sides, so "bear valley,  california" is a hit, and
+ * writing that string onto a sighting would ship the typo the check just caught. What lands on
+ * the capture is always the list's own label.
  */
-fun isKnownPlace(text: String, places: List<GazetteerPlace>, recent: List<String>): Boolean {
+fun canonicalPlace(text: String, places: List<GazetteerPlace>, recent: List<String>): String? {
     val folded = foldPlace(text)
-    if (folded.isEmpty()) return false
-    if (recent.any { foldPlace(it) == folded }) return true
-    return places.any { foldPlace(it.label) == folded }
+    if (folded.isEmpty()) return null
+    recent.firstOrNull { foldPlace(it) == folded }?.let { return it }
+    return places.firstOrNull { it.foldedLabel == folded }?.label
 }

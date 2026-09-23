@@ -4,7 +4,7 @@ import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.GazetteerPlace
 import dev.tlong.biodex.domain.SpeciesSummary
-import dev.tlong.biodex.domain.isKnownPlace
+import dev.tlong.biodex.domain.canonicalPlace
 import dev.tlong.biodex.domain.suggestPlaces
 import dev.tlong.biodex.ui.grid.matchesQuery
 import kotlinx.coroutines.flow.Flow
@@ -181,8 +181,15 @@ enum class PlacePrompt { REGISTER, ADD_OWN }
 data class PlaceSearchState(
     val query: String = "",
     val suggestions: List<String> = emptyList(),
-    val isKnown: Boolean = false,
-)
+    /**
+     * The place's own spelling of what is typed, or null when what is typed is not a place.
+     * It is what gets written — never the raw text, which may differ from it in case, accents
+     * or spacing and would put exactly the sloppiness D68 exists to prevent onto a sighting.
+     */
+    val canonical: String? = null,
+) {
+    val isKnown: Boolean get() = canonical != null
+}
 
 /**
  * D68. Pure, and deliberately not inside [registerUiState]: it scans 45,000 names on every
@@ -198,9 +205,7 @@ fun placeSearchState(
         PlaceSearchState(
             query = typed,
             suggestions = suggestPlaces(typed, places, used),
-            isKnown = isKnownPlace(typed, places, used),
+            canonical = canonicalPlace(typed, places, used),
         )
     }
 
-/** D56: the typed place, trimmed, or null when nothing was typed — never an empty label. */
-internal fun placeLabelOrNull(place: String): String? = place.trim().takeIf { it.isNotEmpty() }

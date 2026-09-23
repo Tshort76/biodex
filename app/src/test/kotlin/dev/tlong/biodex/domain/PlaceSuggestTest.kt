@@ -1,7 +1,6 @@
 package dev.tlong.biodex.domain
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -107,13 +106,33 @@ class PlaceSuggestTest {
     }
 
     @Test
-    fun `only a place off one of the two lists counts as known`() {
+    fun `only a place off one of the two lists is a place`() {
         val recent = listOf("The back garden")
-        assertTrue(isKnownPlace("Bear Valley, California", gazetteer, recent))
-        assertTrue("case and spacing are forgiven", isKnownPlace("bear valley,  california", gazetteer, recent))
-        assertTrue("a place already used is a place", isKnownPlace("The back garden", gazetteer, recent))
-        assertFalse("the bare name is not the label", isKnownPlace("Bear Valley", gazetteer, recent))
-        assertFalse(isKnownPlace("Somewhere near the creek", gazetteer, recent))
-        assertFalse(isKnownPlace("", gazetteer, recent))
+        assertEquals(
+            "Bear Valley, California",
+            canonicalPlace("Bear Valley, California", gazetteer, recent),
+        )
+        assertEquals(
+            "a place already used is a place",
+            "The back garden",
+            canonicalPlace("The back garden", gazetteer, recent),
+        )
+        assertNull("the bare name is not the label", canonicalPlace("Bear Valley", gazetteer, recent))
+        assertNull(canonicalPlace("Somewhere near the creek", gazetteer, recent))
+        assertNull(canonicalPlace("", gazetteer, recent))
+    }
+
+    @Test
+    fun `what lands on the sighting is the list's spelling, not what was typed`() {
+        // The match forgives case, accents and spacing — so the label has to come from the
+        // list, or the prompt would validate the typing and then store it anyway.
+        assertEquals(
+            "Bear Valley, California",
+            canonicalPlace("bear valley,   california", gazetteer, recent = emptyList()),
+        )
+        assertEquals(
+            "Cañada de los Osos, California",
+            canonicalPlace("CANADA DE LOS OSOS, california", gazetteer, recent = emptyList()),
+        )
     }
 }

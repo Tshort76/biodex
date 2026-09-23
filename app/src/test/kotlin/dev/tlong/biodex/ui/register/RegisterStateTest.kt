@@ -85,20 +85,20 @@ class RegisterStateTest {
 
         val empty = search("")
         assertEquals("nothing typed offers where we have been", listOf("Tomales Bay, California"), empty.suggestions)
-        assertFalse("and nothing is chosen yet", empty.isKnown)
+        assertNull("and nothing is chosen yet", empty.canonical)
 
         val typing = search("bear")
         assertEquals(
             listOf("Bear Valley, California", "Bear Valley Trail, California"),
             typing.suggestions,
         )
-        assertFalse("half a name is not a place", typing.isKnown)
+        assertNull("half a name is not a place", typing.canonical)
 
-        val chosen = search("Bear Valley, California")
+        val chosen = search("bear valley, california")
         assertTrue(chosen.isKnown)
-        assertEquals("Bear Valley, California", chosen.query)
+        assertEquals("and it is the list's spelling that gets written", "Bear Valley, California", chosen.canonical)
 
-        assertFalse("and free text never is", search("out behind the barn").isKnown)
+        assertNull("free text never is", search("out behind the barn").canonical)
     }
 
     /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */

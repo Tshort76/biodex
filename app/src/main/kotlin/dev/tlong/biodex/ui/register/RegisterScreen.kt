@@ -253,7 +253,7 @@ fun RegisterScreen(
     onPickPhoto: () -> Unit,
     /** D64: the "Where was this?" prompt's two exits. */
     onPlaceQueryChange: (String) -> Unit = {},
-    onPlaceEntered: (String) -> Unit = {},
+    onPlaceEntered: () -> Unit = {},
     onPlacePromptDismissed: () -> Unit = {},
     /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
     onGrantPhotoAccess: (() -> Unit)? = null,
@@ -507,7 +507,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 private fun PlacePromptDialog(
     place: PlaceSearchState,
     onQueryChange: (String) -> Unit,
-    onPlaceEntered: (String) -> Unit,
+    onPlaceEntered: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
@@ -563,7 +563,7 @@ private fun PlacePromptDialog(
                     items(place.suggestions, key = { it }) { suggestion ->
                         PlaceSuggestionRow(
                             label = suggestion,
-                            chosen = suggestion.equals(place.query, ignoreCase = true),
+                            chosen = suggestion == place.canonical,
                             onClick = { onQueryChange(suggestion) },
                         )
                     }
@@ -582,7 +582,7 @@ private fun PlacePromptDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onPlaceEntered(place.query) }, enabled = ready) {
+            TextButton(onClick = onPlaceEntered, enabled = ready) {
                 Text(
                     text = "Register",
                     color = if (ready) colors.accent else colors.faint,
