@@ -56,13 +56,6 @@ class CaptureRegistrar(
         note: String? = null,
         locationLabel: String? = null,
         /**
-         * D60. Where to read the EXIF from when it is not [photoUri]: a camera shot is promoted
-         * into the gallery a moment before this call, and the screen's "place read from the
-         * photo" answer came from the cache file, so the door reads the same bytes rather than
-         * trusting the media store to hand the coordinates back for the copy.
-         */
-        exifUri: String? = null,
-        /**
          * D68. The point of a place picked off the offline list — written only when the photo's
          * EXIF carries no coordinates, since the photograph's GPS is where the animal was and a
          * town's point is only near it. Null for a place typed in the user's own words.
@@ -82,7 +75,7 @@ class CaptureRegistrar(
         // build the thumbnail, which is the durable artifact either way.
         val grantPersisted = photos.persistGrant(photoUri)
 
-        val facts = photos.readExif(exifUri ?: photoUri)
+        val facts = photos.readExif(photoUri)
         // D60. Checked before the thumbnail is written, so a refusal leaves no file behind.
         if (!hasPlace(locationLabel, facts)) {
             if (grantPersisted && !alreadyReferenced) photos.releaseGrant(photoUri)

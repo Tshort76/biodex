@@ -135,20 +135,4 @@ class FakePhotoGateway(
         resolveResult ?: resolvePhotoRef(photoUri, localCopyPath) { null }
 
     override fun displayName(uri: String): String? = uri.substringAfterLast('/')
-
-    override fun newCameraCaptureUri(): String =
-        "content://dev.tlong.biodex.files/capture/${cameraCounter++}.jpg"
-
-    override fun promoteToGallery(cacheUri: String, displayName: String): String? {
-        promoted += cacheUri
-        return "content://media/external/images/promoted-${promoted.size}"
-    }
-
-    override fun sweepCameraCache() {
-        cacheSweeps++
-    }
-
-    val promoted = mutableListOf<String>()
-    var cacheSweeps = 0
-    private var cameraCounter = 1
 }

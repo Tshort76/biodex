@@ -1,7 +1,6 @@
 package dev.tlong.biodex.ui.register
 
 import dev.tlong.biodex.data.net.LookupOutcome
-import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.GazetteerPlace
 import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -22,12 +21,6 @@ import kotlinx.coroutines.flow.flowOf
 data class PickedPhoto(
     val uri: String,
     val displayName: String? = null,
-    /**
-     * M40/D26. Where it came from decides two things the URI string cannot: whether it must be
-     * promoted into the gallery at registration, and whether its cache file must be swept
-     * afterwards. A `FileProvider` URI and a picker URI are both `content://`.
-     */
-    val source: PhotoSourceKind = PhotoSourceKind.GALLERY_PICKER,
     /**
      * D60. Whether the photograph's EXIF carries a coordinate pair — read on pick, off the
      * main thread, so the screen can say "place from photo" or ask for one *before* the button

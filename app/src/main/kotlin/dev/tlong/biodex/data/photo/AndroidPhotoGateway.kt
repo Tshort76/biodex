@@ -2,7 +2,6 @@ package dev.tlong.biodex.data.photo
 
 import android.Manifest
 import android.content.ContentUris
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,13 +13,11 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.util.UUID
 
 /**
  * The platform shell of the photo layer (ARCHITECTURE.md 4.1–4.4). Deliberately dumb: every
@@ -173,44 +170,6 @@ class AndroidPhotoGateway(
         null
     }
 
-    override fun newCameraCaptureUri(): String? = try {
-        val target = File(context.cacheDir, cameraCacheRelativePath(UUID.randomUUID().toString()))
-        target.parentFile?.mkdirs()
-        target.createNewFile()
-        FileProvider.getUriForFile(context, "${context.packageName}.files", target).toString()
-    } catch (e: Exception) {
-        Log.w(TAG, "Could not make a camera capture file: ${e.message}")
-        null
-    }
-
-    override fun promoteToGallery(cacheUri: String, displayName: String): String? = try {
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, GALLERY_SUBDIRECTORY)
-        }
-        val inserted = resolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            values,
-        )
-        if (inserted == null) {
-            null
-        } else {
-            resolver.openInputStream(Uri.parse(cacheUri))?.use { input ->
-                resolver.openOutputStream(inserted)?.use { output -> input.copyTo(output) }
-            }
-            inserted.toString()
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "Could not promote $cacheUri into the gallery: ${e.message}")
-        null
-    }
-
-    override fun sweepCameraCache() {
-        runCatching { File(context.cacheDir, CAMERA_CACHE_DIR).listFiles()?.forEach { it.delete() } }
-            .onFailure { Log.i(TAG, "Camera cache sweep failed: ${it.message}") }
-    }
-
     private fun writeJpeg(bitmap: Bitmap, relativePath: String, quality: Int) {
         val target = File(filesDir, relativePath).also { it.parentFile?.mkdirs() }
         FileOutputStream(target).use { out ->
@@ -220,9 +179,6 @@ class AndroidPhotoGateway(
 
     private companion object {
         const val TAG = "PhotoGateway"
-
-        /** Its own album, so a promoted photo is findable and never mixed into Camera/. */
-        const val GALLERY_SUBDIRECTORY = "Pictures/BioDex"
     }
 }
 

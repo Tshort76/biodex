@@ -177,8 +177,5 @@ class CaptureRegistrarRoomTest {
         override fun resolve(photoUri: String?, localCopyPath: String?) =
             resolvePhotoRef(photoUri, localCopyPath) { null }
         override fun displayName(uri: String) = null
-        override fun newCameraCaptureUri() = "content://files/capture/1.jpg"
-        override fun promoteToGallery(cacheUri: String, displayName: String) = cacheUri
-        override fun sweepCameraCache() = Unit
     }
 }
