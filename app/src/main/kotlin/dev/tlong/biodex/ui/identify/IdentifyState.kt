@@ -21,8 +21,6 @@ data class IdentifyUiState(
     val selected: SpeciesSummary? = null,
     /** D69's rule: the search names no species in the dex, so it is a species to add. */
     val addableName: String? = null,
-    /** Text copied in Lens, offered back once as the search (D78). */
-    val clipboardOffer: String? = null,
     val capturing: Boolean = false,
 ) {
     val canCapture: Boolean get() = selected != null && !capturing
@@ -35,10 +33,9 @@ fun identifyUiState(
     species: Flow<List<SpeciesSummary>>,
     query: Flow<String>,
     selectedId: Flow<String?>,
-    clipboard: Flow<String?>,
     capturing: Flow<Boolean>,
 ): Flow<IdentifyUiState> =
-    combine(species, query, selectedId, clipboard, capturing) { all, typed, id, clip, busy ->
+    combine(species, query, selectedId, capturing) { all, typed, id, busy ->
         IdentifyUiState(
             photo = photo,
             query = typed,
@@ -46,7 +43,6 @@ fun identifyUiState(
             // From the whole dex, so a selection survives the search being edited.
             selected = all.firstOrNull { it.id == id },
             addableName = addableNameFor(all, typed),
-            clipboardOffer = clipboardOffer(clip, typed),
             capturing = busy,
         )
     }
@@ -66,14 +62,13 @@ private fun bestRank(species: SpeciesSummary, query: String): Int? =
     ).minOrNull()
 
 /**
- * D78. What the clipboard holds, when it looks like a name worth offering: one line, short,
- * with a letter in it, and not already what the search says. A copied paragraph or URL is not
- * a species name, and offering the search back to itself is noise.
+ * D78. The name in what was copied in Lens, or null when it does not look like one: the first
+ * non-blank line, short, with a letter in it and no link. Lens copies can carry a second line
+ * (a rank, a summary), and the name is the line that leads.
  */
-internal fun clipboardOffer(clip: String?, query: String): String? {
-    val text = clip?.trim()?.trimEnd('.', ',', ';', ':')?.trim() ?: return null
-    if (text.isEmpty() || text.length > 60 || '\n' in text || text.none { it.isLetter() }) return null
-    if ("://" in text) return null
-    if (SearchMatch.fold(text) == SearchMatch.fold(query)) return null
+internal fun nameFromClipboard(clip: String?): String? {
+    val line = clip?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() } ?: return null
+    val text = line.trimEnd('.', ',', ';', ':').trim()
+    if (text.isEmpty() || text.length > 60 || text.none { it.isLetter() } || "://" in text) return null
     return text
 }

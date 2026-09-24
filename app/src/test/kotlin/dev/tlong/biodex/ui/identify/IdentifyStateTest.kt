@@ -47,7 +47,6 @@ class IdentifyStateTest {
     private fun state(
         query: String = "",
         selectedId: String? = null,
-        clipboard: String? = null,
         capturing: Boolean = false,
     ) = runBlocking {
         identifyUiState(
@@ -55,7 +54,6 @@ class IdentifyStateTest {
             species = MutableStateFlow(catalogue),
             query = MutableStateFlow(query),
             selectedId = MutableStateFlow(selectedId),
-            clipboard = MutableStateFlow(clipboard),
             capturing = MutableStateFlow(capturing),
         ).first()
     }
@@ -93,20 +91,18 @@ class IdentifyStateTest {
     }
 
     @Test
-    fun `the clipboard is offered only when it looks like a name`() {
+    fun `the name is taken from what was copied only when it looks like one`() {
         val cases = mapOf(
             "Varied Thrush" to "Varied Thrush",
             "  Ixoreus naevius.  " to "Ixoreus naevius",
+            "Grass-veneer moth\nSpecies of moth" to "Grass-veneer moth",
+            "\n  Downy Woodpecker\n" to "Downy Woodpecker",
             null to null,
             "" to null,
             "12345" to null,
             "https://lens.google.com/x" to null,
-            "a line\nand another" to null,
             "x".repeat(61) to null,
-            "western" to null,
-            "WESTERN" to null,
         )
-        cases.forEach { (clip, offer) -> assertEquals("clip=$clip", offer, clipboardOffer(clip, "western")) }
-        assertEquals("the screen carries the offer", "Varied Thrush", state(clipboard = "Varied Thrush").clipboardOffer)
+        cases.forEach { (clip, name) -> assertEquals("clip=$clip", name, nameFromClipboard(clip)) }
     }
 }

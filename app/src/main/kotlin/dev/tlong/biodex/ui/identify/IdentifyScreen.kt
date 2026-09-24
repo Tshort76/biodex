@@ -74,7 +74,7 @@ fun IdentifyRoute(
     val placePrompt by viewModel.placePrompt.collectAsStateWithLifecycle()
     var message by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Lens hands nothing back; the name returns on the clipboard. Android lets only the app
+    // Lens hands nothing back; the name returns on the clipboard, and fills the search. Android lets only the app
     // with window focus read it, and focus arrives a moment after resume, so this keys on focus.
     val focused = LocalWindowInfo.current.isWindowFocused
     LaunchedEffect(focused) {
@@ -112,9 +112,11 @@ fun IdentifyRoute(
         state = state,
         message = message,
         onBack = leave,
-        onOpenLens = { openInLens(context, photo.uri) },
+        onOpenLens = {
+            viewModel.onLensOpened()
+            openInLens(context, photo.uri)
+        },
         onQueryChange = viewModel::onQueryChange,
-        onUseClipboard = viewModel::onUseClipboard,
         onSelect = viewModel::onSelect,
         onAdd = viewModel::onAdd,
         onCapture = viewModel::onCapture,
@@ -128,7 +130,6 @@ fun IdentifyScreen(
     onBack: () -> Unit,
     onOpenLens: () -> Unit,
     onQueryChange: (String) -> Unit,
-    onUseClipboard: () -> Unit,
     onSelect: (String) -> Unit,
     onAdd: () -> Unit,
     onCapture: () -> Unit,
@@ -186,26 +187,11 @@ fun IdentifyScreen(
                         .padding(horizontal = 12.dp, vertical = 11.dp),
                 )
                 Text(
-                    text = "Copy the name in Lens and come back — it is offered here.",
+                    text = "Copy the name in Lens and come back — it fills in below.",
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.faint,
                 )
             }
-        }
-
-        state.clipboardOffer?.let { offer ->
-            Text(
-                text = "Use “$offer” ›",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.accent,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, colors.accent, RoundedCornerShape(20.dp))
-                    .clickable(onClick = onUseClipboard)
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            )
         }
 
         NameField(query = state.query, onQueryChange = onQueryChange)

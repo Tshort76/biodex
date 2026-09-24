@@ -56,7 +56,9 @@ class IdentifyViewModel(
 
     private val query = MutableStateFlow("")
     private val selectedId = MutableStateFlow<String?>(null)
-    private val clipboard = MutableStateFlow<String?>(null)
+
+    /** Set when Lens opens; the next clipboard read fills the search, and only that one. */
+    private var lensOpened = false
     private val capturing = MutableStateFlow(false)
 
     /** Null while the EXIF read runs; then whether the photo carries coordinates. */
@@ -74,7 +76,6 @@ class IdentifyViewModel(
         species = repository.speciesSummaries(),
         query = query,
         selectedId = selectedId,
-        clipboard = clipboard,
         capturing = capturing,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IdentifyUiState(photo))
 
@@ -103,15 +104,18 @@ class IdentifyViewModel(
         selectedId.value = if (selectedId.value == speciesId) null else speciesId
     }
 
-    /** The route reads the clipboard when the screen comes back to the front — after Lens. */
-    fun onClipboard(text: String?) {
-        clipboard.value = text
+    fun onLensOpened() {
+        lensOpened = true
     }
 
-    fun onUseClipboard() {
-        val offer = uiState.value.clipboardOffer ?: return
-        query.value = offer
-        clipboard.value = null
+    /**
+     * The route reads the clipboard whenever the screen regains focus; it counts only on the
+     * way back from Lens, so something copied before the photo was picked never fills the search.
+     */
+    fun onClipboard(text: String?) {
+        if (!lensOpened) return
+        lensOpened = false
+        nameFromClipboard(text)?.let { query.value = it }
     }
 
     fun onCapture() {

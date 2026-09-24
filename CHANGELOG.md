@@ -8,6 +8,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ## v24 — 2026-09-24
 
+- **Changed** — the name you copy in Google Lens fills in the "What is it?" search when you come back; there is no "Use “X”" chip to tap. (`S06` revised, `D79`)
 - **Changed** — the grid's ＋ starts from a photo. Pick one, and a new **Identify** screen shows it with "🔍 Identify with Google Lens" and a "What is it?" search. Copy the name in Lens and come back: the app offers it as "Use “X”". Pick the species and tap Capture — the "Where was this?" prompt appears only when the photo has no location — and you land back on the dex at that species. (`M07`, `S06` revised, `D78`)
 - **Added** — a name the dex doesn't hold on the Identify screen offers "Add “X” and capture it": once the lookup finds the species, it is added and the photo captured in one step. (`M08` revised, `D78`)
 - **Changed** — to add a species by name without a photo, search for it on the grid and tap "Add “X” to your dex". (`M08` revised, `D78`)

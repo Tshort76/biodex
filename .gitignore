@@ -29,3 +29,6 @@ keystore.properties
 
 # Agent worktrees
 .claude/
+
+# Databases saved by tools/phone/dexdb.py before it edits the phone's copy
+.phone-backups/

@@ -42,7 +42,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
-Counts as of the last commit: **416 JVM, 44 instrumented, 31 Python.**
+Counts as of the last commit: **416 JVM, 44 instrumented, 36 Python.**
 
 ## The design registers — the convention to respect
 
@@ -128,5 +128,7 @@ Verification on a real device is a normal part of finishing UI work here, since 
 **An uninstall costs the user their photos, and no file-level backup fully prevents it.** `make test-device` uninstalls the app, and so does every launcher-icon check below. Two things die with it. The thumbnails under `files/thumbnails/` are what the grid draws, so a database restored without them leaves every caught species drawing a silhouette. And the stored `content://media/picker/...` URIs are grants held by the *installed package*, so they are revoked no matter what is restored — the photos are still in the user's gallery, but the app cannot read them until each capture is re-linked from the photo viewer. **Prefer the app's own export** (Settings → export) over anything done with `adb`, and treat "uninstall" as a request the user has to agree to, not a step.
 
 If you do copy the data out by hand, take **`databases/` and `files/` together** — the thumbnails are half of it. Checkpoint the database's WAL locally (`PRAGMA wal_checkpoint(TRUNCATE)`, which also removes the sidecar files) so one file carries everything, then with the app force-stopped delete the `-wal`/`-shm` a fresh install made and push it back through `run-as` — using an **absolute** path, since `run-as ... sh -c 'cat > databases/x'` fails on a relative one.
+
+**Removing test rows from the phone** — `tools/phone/dexdb.py` (`list`, `show`, `remove <species>`, `drop-capture <id>`; dry run unless `--apply`) pulls the database, edits it locally and pushes it back with the app stopped. It removes only a species the owner added, and saves the database it replaced under `.phone-backups/`. Use it to clean up after a test capture or add rather than asking the owner to; never on a species or sighting the owner made for real.
 
 **A launcher-icon change will not appear on a same-version reinstall.** The launcher caches icons keyed by package version, so `make install` leaves the old icon on screen and a correct change reads as a failure — `adb uninstall dev.tlong.biodex && make install` is what busts it. Judge the icon's composition from a local render instead (crop the central 72dp of the generated 108dp PNG and apply the mask); a drawer screenshot is ~140px and too blurred to judge. `tools/icon/build_icon.py` holds the geometry and how the mask was measured.
