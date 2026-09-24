@@ -9,6 +9,8 @@ import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
+import dev.tlong.biodex.domain.SpeciesSource
+import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import org.junit.Assert.assertEquals
@@ -59,6 +61,7 @@ class ConfirmSpeciesStateTest {
         edits: ConfirmCardEdits = ConfirmCardEdits(),
         draft: AddSpeciesDraft = this.draft,
         nextDexNumber: Int = 9001,
+        held: List<SpeciesSummary> = emptyList(),
     ) = confirmCardState(
         draft = draft,
         outcome = outcome,
@@ -67,7 +70,58 @@ class ConfirmSpeciesStateTest {
         edits = edits,
         ecosystems = ecosystems,
         nextDexNumber = nextDexNumber,
+        held = held,
     )
+
+    private fun summary(id: String, number: Int, common: String, scientific: String?, source: SpeciesSource = SpeciesSource.CURATED) =
+        SpeciesSummary(
+            id = id, regionId = "pacific", dexNumber = number, source = source, detailsPending = false,
+            commonName = common, scientificName = scientific, taxClass = TaxClass.BIRD, kingdom = Kingdom.ANIMAL,
+            silhouetteRes = "sil_bird", ecosystemIds = emptyList(), caughtAt = null, thumbPath = null, captureCount = 0,
+        )
+
+    // -----------------------------------------------------------------------
+    // D69. ＋ adds any name no species contains word for word, so a typo reaches the card.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `a card that resolves to a species the dex holds offers that entry instead`() {
+        val tanager = summary("western-tanager", 34, "Western Tanager", "Piranga ludoviciana")
+        val ownThrush = summary("user-3", 9003, "Varied Thrush", "Ixoreus naevius", SpeciesSource.USER)
+        val fields = SpeciesFields(commonName = "Western Tanager", scientificName = "Piranga ludoviciana")
+        listOf(
+            Triple("same scientific name", fields.copy(commonName = "Western Tanagre"), "western-tanager"),
+            Triple("folded common name, no scientific", SpeciesFields(commonName = "western  tanager"), "western-tanager"),
+            Triple("a species of the user's own", SpeciesFields(commonName = "Thrush", scientificName = "Ixoreus naevius"), "user-3"),
+            Triple("nothing held", SpeciesFields(commonName = "Pacific Wren", scientificName = "Troglodytes pacificus"), null),
+        ).forEach { (why, f, expected) ->
+            assertEquals(why, expected, heldMatch(f, listOf(tanager, ownThrush))?.speciesId)
+        }
+        assertEquals("#034 Western Tanager", heldMatch(fields, listOf(tanager))?.title)
+        assertNull("a backfill is not a duplicate of itself", heldMatch(fields, listOf(tanager), exceptId = "western-tanager"))
+    }
+
+    @Test
+    fun `the card reads the dex and will not add a duplicate`() {
+        val held = card(held = listOf(summary("user-3", 9003, "Varied Thrush", "Ixoreus naevius", SpeciesSource.USER)))
+        assertEquals("user-3", held.alreadyHeld?.speciesId)
+        assertFalse(held.canAccept)
+        assertNull(card().alreadyHeld)
+        assertTrue(card().canAccept)
+    }
+
+    @Test
+    fun `a typo GBIF could not place suggests the held species but still allows the add`() {
+        val tanager = summary("western-tanager", 34, "Western Tanager", "Piranga ludoviciana")
+        val typo = card(
+            draft = draft.copy(typedName = "Western Tanagre"),
+            outcome = LookupOutcome.NoMatch, details = null, held = listOf(tanager),
+        )
+        assertEquals("western-tanager", typo.nearMiss?.speciesId)
+        assertNull(typo.alreadyHeld)
+        assertTrue(typo.canAccept)
+        assertNull(nearMissFor("Varied Thrush", listOf(tanager)))
+    }
 
     // -----------------------------------------------------------------------
     // The populated card (the mockup's frame 6).

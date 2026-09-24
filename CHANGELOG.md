@@ -8,7 +8,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ## v24 — 2026-09-24
 
-- **Added** — adding a species is its own action. Type a name the dex doesn't hold in the grid's search and tap ＋: the lookup runs straight away with that name, the card adds the species to the dex *uncaught*, and then asks "Have you caught it?" — *Not yet* goes home, *Yes* opens its entry to register a photo. Useful for adding what you expect to see before a trip. (`M08`, `M20` revised, `D69`)
+- **Added** — adding a species is its own action. Type a name the dex doesn't hold in the grid's search and tap ＋: the lookup runs straight away with that name, the card adds the species to the dex *uncaught*, and then asks "Have you caught it?" — *Not yet* goes home, *Yes* opens its entry to register a photo. Useful for adding what you expect to see before a trip. If the lookup lands on a species already in the dex (a typo, say), the card offers to open it instead of adding a copy, and a near-miss name gets a "Did you mean…?" link. (`M08`, `M20` revised, `D69`)
 - **Changed** — tapping ＋ with a search typed opens Register with that search already filled in, and Register's "nothing found" line offers to add the name. (`D69`)
 - **Removed** — the Register screen's "Not in the list? Type a name…" button, which the new ＋ replaces. (`D55` superseded, `D69`)
 - **Changed** — the Register screen's photo row ends in 📁 and 🔍; the 🔍 opens the attached photo straight in Google Lens and replaces the "Not sure what it is?" banner. The "📍 Place read from the photo" line is gone — the place is still read, just not announced. (`S06`, `D64` revised, `D72`)

@@ -13,6 +13,8 @@ import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.detailsPendingFor
 import dev.tlong.biodex.domain.displayDexNumber
+import dev.tlong.biodex.domain.SearchMatch
+import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.previewFields
 
 /**
@@ -81,6 +83,10 @@ sealed interface ConfirmSpeciesUiState {
          */
         val typedCommonName: String? = null,
         val typedScientificName: String? = null,
+        /** D69. The dex already holds what the card resolved to, so it offers that entry instead. */
+        val alreadyHeld: HeldSpecies? = null,
+        /** D69. A held species the typed name is a letter or two off — offered, never enforced. */
+        val nearMiss: HeldSpecies? = null,
     ) : ConfirmSpeciesUiState {
 
         val selectedCandidate: SpeciesCandidate? get() = candidates.getOrNull(selectedIndex)
@@ -127,11 +133,14 @@ sealed interface ConfirmSpeciesUiState {
                 else -> "Add to my dex — $dexLabel ${fields.commonName}"
             }
 
-        val canAccept: Boolean get() = !saving && fields.commonName.isNotBlank()
+        val canAccept: Boolean get() = !saving && fields.commonName.isNotBlank() && alreadyHeld == null
 
         fun isEdited(field: String): Boolean = field in editedFields
     }
 }
+
+/** "#34 Western Tanager" — a species already in the dex that the card would duplicate. */
+data class HeldSpecies(val speciesId: String, val title: String)
 
 /**
  * Builds the card. [outcome] is null while the lookup is in flight or when it was never made
@@ -149,6 +158,8 @@ fun confirmCardState(
     ecosystems: List<Ecosystem>,
     nextDexNumber: Int,
     saving: Boolean = false,
+    /** The dex as it stands, so a typo that GBIF corrects to a held species is caught (D69). */
+    held: List<SpeciesSummary> = emptyList(),
 ): ConfirmSpeciesUiState.Card {
     val resolved = outcome as? LookupOutcome.Resolved
     val candidates = resolved?.candidates.orEmpty()
@@ -156,19 +167,21 @@ fun confirmCardState(
     val stored = existing?.fields ?: SpeciesFields(commonName = draft.typedName)
     val locked = existing?.userEditedFields.orEmpty().toSet() + edits.editedFields
 
+    val fields = previewFields(
+        stored = stored,
+        lookup = details?.fields,
+        lockedFields = locked,
+        editValues = edits.values,
+        editedNow = edits.editedFields,
+    )
+
     return ConfirmSpeciesUiState.Card(
         typedName = draft.typedName,
         isBackfill = draft.isBackfill,
         candidates = candidates,
         selectedIndex = selectedIndex,
         showAlternatives = edits.showAlternatives,
-        fields = previewFields(
-            stored = stored,
-            lookup = details?.fields,
-            lockedFields = locked,
-            editValues = edits.values,
-            editedNow = edits.editedFields,
-        ),
+        fields = fields,
         editedFields = locked,
         habitatSource = details?.habitatSource,
         lookupFailed = outcome is LookupOutcome.Failed,
@@ -182,8 +195,34 @@ fun confirmCardState(
             ?.takeIf { SpeciesField.COMMON_NAME in edits.editedFields },
         typedScientificName = edits.values?.scientificName
             ?.takeIf { SpeciesField.SCIENTIFIC_NAME in edits.editedFields },
+        alreadyHeld = heldMatch(fields, held, exceptId = existing?.id),
+        nearMiss = nearMissFor(draft.typedName, held, exceptId = existing?.id),
     )
 }
+
+/**
+ * D69. The held species the grid's forgiving search would show for [typedName], when GBIF did
+ * not correct the typo itself. A suggestion only: "Pacific Wren" is near "Pacific Tree Frog".
+ */
+internal fun nearMissFor(typedName: String, held: List<SpeciesSummary>, exceptId: String? = null): HeldSpecies? =
+    held.firstOrNull { it.id != exceptId && SearchMatch.matches(it.commonName, typedName) }?.let(::heldSpecies)
+
+/**
+ * D69. The species in [held] that [fields] would duplicate: the same scientific name, or failing
+ * one, the same common name, folded. The grid's ＋ adds any name no species contains word for
+ * word, so "Western Tanagre" reaches here, and GBIF answers *Piranga ludoviciana*, which the
+ * catalogue already holds.
+ */
+internal fun heldMatch(fields: SpeciesFields, held: List<SpeciesSummary>, exceptId: String? = null): HeldSpecies? {
+    fun same(a: String?, b: String?) = a != null && b != null && SearchMatch.fold(a) == SearchMatch.fold(b)
+    val match = held.firstOrNull { it.id != exceptId && same(it.scientificName, fields.scientificName) }
+        ?: held.firstOrNull { it.id != exceptId && same(it.commonName, fields.commonName) }
+        ?: return null
+    return heldSpecies(match)
+}
+
+private fun heldSpecies(s: SpeciesSummary) =
+    HeldSpecies(s.id, "${displayDexNumber(s.dexNumber, s.source, s.kingdom)} ${s.commonName}")
 
 /** D69. What the screen says once [fields] has been written as [speciesId] under [dexNumber]. */
 fun addedState(speciesId: String, dexNumber: Int, fields: SpeciesFields): ConfirmSpeciesUiState.Added =

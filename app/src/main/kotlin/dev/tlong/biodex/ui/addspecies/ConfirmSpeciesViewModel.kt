@@ -16,6 +16,7 @@ import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesField
 import dev.tlong.biodex.domain.SpeciesFields
+import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.nextUserDexNumber
@@ -57,6 +58,9 @@ class ConfirmSpeciesViewModel(
         /** D69: added and already caught — the route opens its entry to register the photo. */
         data class Caught(val speciesId: String) : Event
 
+        /** D69: the dex already holds what the card resolved to — the route opens that entry. */
+        data class OpenExisting(val speciesId: String) : Event
+
         /** A backfill was saved: the route just goes back to the entry it came from. */
         data class Updated(val speciesId: String) : Event
 
@@ -71,6 +75,7 @@ class ConfirmSpeciesViewModel(
     private var edits = ConfirmCardEdits()
     private var ecosystems: List<Ecosystem> = emptyList()
     private var nextDexNumber = FIRST_USER_DEX_NUMBER
+    private var held: List<SpeciesSummary> = emptyList()
     private var saving = false
 
     private val _uiState = MutableStateFlow<ConfirmSpeciesUiState>(
@@ -87,6 +92,7 @@ class ConfirmSpeciesViewModel(
 
     private fun start(draft: AddSpeciesDraft) = viewModelScope.launch {
         ecosystems = repository.ecosystems().first()
+        held = repository.speciesSummaries().first()
         nextDexNumber = nextUserDexNumber(repository.maxUserDexNumber(DEFAULT_REGION_ID))
         existing = draft.backfillSpeciesId?.let { repository.userSpecies(it) }
         if (draft.isBackfill && existing == null) {
@@ -216,6 +222,14 @@ class ConfirmSpeciesViewModel(
         }
     }
 
+    /** D69. Leaves the card for the entry the dex already holds; nothing is written. */
+    fun onOpenExisting() {
+        val card = _uiState.value as? ConfirmSpeciesUiState.Card ?: return
+        val existingId = (card.alreadyHeld ?: card.nearMiss)?.speciesId ?: return
+        drafts.remove(draftId)
+        viewModelScope.launch { events.send(Event.OpenExisting(existingId)) }
+    }
+
     /** D69's two answers. Asked only once the species exists, so neither writes anything. */
     fun onNotCaught() = answer { Event.NotCaught(it) }
 
@@ -244,6 +258,7 @@ class ConfirmSpeciesViewModel(
             ecosystems = ecosystems,
             nextDexNumber = nextDexNumber,
             saving = saving,
+            held = held,
         )
     }
 

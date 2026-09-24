@@ -82,6 +82,8 @@ fun ConfirmSpeciesRoute(
             when (event) {
                 is ConfirmSpeciesViewModel.Event.NotCaught -> onNotCaught(event.speciesId)
                 is ConfirmSpeciesViewModel.Event.Caught -> onCaught(event.speciesId)
+                // The same move as "Yes": open that species' entry, with the grid behind it.
+                is ConfirmSpeciesViewModel.Event.OpenExisting -> onCaught(event.speciesId)
                 is ConfirmSpeciesViewModel.Event.Updated -> onUpdated(event.speciesId)
                 ConfirmSpeciesViewModel.Event.Dismissed -> onBack()
             }
@@ -101,6 +103,7 @@ fun ConfirmSpeciesRoute(
         onAccept = viewModel::onAccept,
         onNotCaught = viewModel::onNotCaught,
         onCaught = viewModel::onCaught,
+        onOpenExisting = viewModel::onOpenExisting,
     )
 }
 
@@ -118,6 +121,7 @@ fun ConfirmSpeciesScreen(
     onAccept: () -> Unit,
     onNotCaught: () -> Unit = {},
     onCaught: () -> Unit = {},
+    onOpenExisting: () -> Unit = {},
 ) {
     val colors = DexTheme.colors
     // D69. Once the species is written, Back means "not yet" — never a return to a card that
@@ -186,6 +190,7 @@ fun ConfirmSpeciesScreen(
                     onToggleKingdom = onToggleKingdom,
                     onSelectTaxClass = onSelectTaxClass,
                     onAccept = onAccept,
+                    onOpenExisting = onOpenExisting,
                 )
             }
         }
@@ -203,6 +208,7 @@ private fun CardBody(
     onToggleKingdom: () -> Unit,
     onSelectTaxClass: (TaxClass) -> Unit,
     onAccept: () -> Unit,
+    onOpenExisting: () -> Unit,
 ) {
     val colors = DexTheme.colors
 
@@ -333,12 +339,33 @@ private fun CardBody(
         )
     }
 
-    PrimaryCta(
-        label = if (state.saving) "Saving…" else state.acceptLabel,
-        enabled = state.canAccept,
-        onClick = onAccept,
-        modifier = Modifier.padding(top = 6.dp),
-    )
+    val held = state.alreadyHeld
+    if (held != null) {
+        Text(
+            text = "${held.title} is already in your dex.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.fg,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        PrimaryCta(label = "Open ${held.title}", enabled = true, onClick = onOpenExisting)
+    } else {
+        state.nearMiss?.let { near ->
+            Text(
+                text = "Did you mean ${near.title}? Open it ›",
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.accent,
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .clickable(onClick = onOpenExisting),
+            )
+        }
+        PrimaryCta(
+            label = if (state.saving) "Saving…" else state.acceptLabel,
+            enabled = state.canAccept,
+            onClick = onAccept,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 
     Text(
         text = if (state.handEditing) "Done editing by hand" else "Edit all details by hand",
