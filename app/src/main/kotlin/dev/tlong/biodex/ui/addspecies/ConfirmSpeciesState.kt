@@ -53,8 +53,6 @@ sealed interface ConfirmSpeciesUiState {
         val speciesId: String,
         /** "U07 Pacific Wren". */
         val title: String,
-        /** Saved without a scientific name: the lookup is still owed (M20). */
-        val detailsPending: Boolean,
     ) : ConfirmSpeciesUiState
 
     data class Card(
@@ -133,7 +131,15 @@ sealed interface ConfirmSpeciesUiState {
                 else -> "Add to my dex — $dexLabel ${fields.commonName}"
             }
 
-        val canAccept: Boolean get() = !saving && fields.commonName.isNotBlank() && alreadyHeld == null
+        /** D73. The lookup found this species: a match is selected and it carries a scientific name. */
+        val found: Boolean get() = selectedCandidate != null && !fields.scientificName.isNullOrBlank()
+
+        /**
+         * D73: a new species is added only once the lookup has found it — a name nothing online
+         * knows is almost always a typo. A backfill (M20) may still be saved by hand.
+         */
+        val canAccept: Boolean
+            get() = !saving && fields.commonName.isNotBlank() && alreadyHeld == null && (isBackfill || found)
 
         fun isEdited(field: String): Boolean = field in editedFields
     }
@@ -143,8 +149,7 @@ sealed interface ConfirmSpeciesUiState {
 data class HeldSpecies(val speciesId: String, val title: String)
 
 /**
- * Builds the card. [outcome] is null while the lookup is in flight or when it was never made
- * (the offline path never gets here — it writes immediately, per M20).
+ * Builds the card. [outcome] is null while the lookup is in flight.
  *
  * The field values come from `previewFields`, the same expression the write path uses, so the
  * card cannot show a merge the save would not perform.
@@ -229,7 +234,6 @@ fun addedState(speciesId: String, dexNumber: Int, fields: SpeciesFields): Confir
     ConfirmSpeciesUiState.Added(
         speciesId = speciesId,
         title = "${displayDexNumber(dexNumber, SpeciesSource.USER, fields.kingdom)} ${fields.commonName}",
-        detailsPending = detailsPendingFor(fields),
     )
 
 /** Fallback when nothing has been allocated yet; the first user species is U01. */

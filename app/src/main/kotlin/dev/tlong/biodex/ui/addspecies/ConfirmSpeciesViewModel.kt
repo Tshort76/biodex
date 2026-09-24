@@ -33,13 +33,10 @@ import kotlinx.coroutines.launch
 /**
  * The confirm card's state holder (M18–M21).
  *
- * It has one branch the rest of the app does not: **offline never reaches the card.** M20 says
- * adding never blocks on the network and an offline add is created immediately from the name
- * alone, so when the screen opens with no connectivity it writes the details-pending species
- * straight away. M19's "nothing is written until you accept" governs the lookup path, which is
- * the only path where there is something to confirm.
+ * Nothing is written until the user accepts (M19), and a new species can be accepted only once
+ * the lookup has found it (D73) — offline, the card says so rather than saving a bare name.
  *
- * Adding is not catching (D69): both paths end on [ConfirmSpeciesUiState.Added], which asks
+ * Adding is not catching (D69): accepting ends on [ConfirmSpeciesUiState.Added], which asks
  * whether the species has been caught, and the answer is an event the route navigates on.
  */
 class ConfirmSpeciesViewModel(
@@ -103,23 +100,13 @@ class ConfirmSpeciesViewModel(
             repository.speciesDetail(record.id).first()?.summary?.ecosystemIds?.toSet()
         }.orEmpty())
 
-        val online = networkMonitor.online.value
-        if (!online && !draft.isBackfill) {
-            createOfflinePending(draft)
-            return@launch
+        outcome = draft.prefetched ?: if (networkMonitor.online.value || draft.isBackfill) {
+            lookups.lookup(draft.typedName)
+        } else {
+            LookupOutcome.Failed("offline")
         }
-
-        outcome = draft.prefetched ?: lookups.lookup(draft.typedName)
         details = (outcome as? LookupOutcome.Resolved)?.details
         publish()
-    }
-
-    /** M20's offline path: one write, no card, no waiting — then the same question (D69). */
-    private suspend fun createOfflinePending(draft: AddSpeciesDraft) {
-        val fields = SpeciesFields(commonName = draft.typedName)
-        val created = registrar.create(fields = fields, ecosystemIds = emptyList())
-        drafts.remove(draftId)
-        _uiState.value = addedState(created.speciesId, created.dexNumber, fields.normalized())
     }
 
     fun onSelectCandidate(index: Int) {

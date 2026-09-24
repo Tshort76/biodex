@@ -6,7 +6,7 @@ import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.canonicalPlace
 import dev.tlong.biodex.domain.suggestPlaces
-import dev.tlong.biodex.ui.grid.matchesQuery
+import dev.tlong.biodex.domain.SearchMatch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
@@ -91,17 +91,26 @@ data class RegisterUiState(
 }
 
 /**
- * Search is the grid's, reused verbatim (M07/M14 use the same rule) and offline by
- * construction — it runs over rows Room already gave us. An empty query lists the catalogue
- * in dex order rather than showing nothing, so a preselected species is visible in context.
+ * Search matches the grid's (M07/M14 use the same rule) and is offline by construction — it
+ * runs over rows Room already gave us. Results are ordered best match first (D74), then by dex
+ * number; an empty query lists the catalogue in dex order rather than showing nothing, so a
+ * preselected species is visible in context.
  *
  * Uncapped (11.4, D18). The old 25-row cap existed only to keep the photo row and the buttons
  * reachable inside one long scroll; the screen now pins them, and the list is a `LazyColumn`,
  * so all 200 species are listed.
  */
 internal fun registerResults(species: List<SpeciesSummary>, query: String): List<SpeciesSummary> =
-    species.filter { matchesQuery(it, query) }
-        .sortedBy { it.dexNumber }
+    species.mapNotNull { s -> bestRank(s, query)?.let { s to it } }
+        .sortedWith(compareBy({ it.second }, { it.first.dexNumber }))
+        .map { it.first }
+
+/** D74. The better of the two names' ranks, so "ardea" leads with the heron it names. */
+private fun bestRank(species: SpeciesSummary, query: String): Int? =
+    listOfNotNull(
+        SearchMatch.rank(species.commonName, query),
+        species.scientificName?.let { SearchMatch.rank(it, query) },
+    ).minOrNull()
 
 fun registerUiState(
     species: Flow<List<SpeciesSummary>>,

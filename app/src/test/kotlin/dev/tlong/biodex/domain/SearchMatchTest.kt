@@ -76,4 +76,19 @@ class SearchMatchTest {
         assertFalse(SearchMatch.approximatelyContains("", "abc", 2))
         assertTrue(SearchMatch.approximatelyContains("anything", "", 0))
     }
+
+    @Test
+    fun `rank orders exact, prefix, word start, contains, then near (D74)`() {
+        listOf(
+            Triple("Western Tanager", "western tanager", SearchMatch.EXACT),
+            Triple("Western Tanager", "west", SearchMatch.PREFIX),
+            Triple("Western Tanager", "tanager", SearchMatch.WORD),
+            Triple("Black-spot Chestnut", "spot", SearchMatch.WORD),
+            Triple("Great Blue Heron", "lue", SearchMatch.CONTAINS),
+            Triple("Western Tanager", "tanagre", SearchMatch.NEAR),
+            Triple("Western Tanager", "heron", null),
+        ).forEach { (name, query, expected) ->
+            assertEquals("$query in $name", expected, SearchMatch.rank(name, query))
+        }
+    }
 }

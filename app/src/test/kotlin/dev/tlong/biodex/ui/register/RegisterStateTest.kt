@@ -141,6 +141,32 @@ class RegisterStateTest {
     }
 
     @Test
+    fun `results lead with the best match, then dex order (D74)`() {
+        val s = runBlocking {
+            registerUiState(
+                species = MutableStateFlow(
+                    listOf(
+                        species("tanager-hunter", 5, "Tanager Hunter", null),
+                        species("screech", 21, "Western Screech-Owl", "Megascops kennicottii"),
+                        species("tanager", 34, "Western Tanager", "Piranga ludoviciana"),
+                    ),
+                ),
+                query = MutableStateFlow("western tanager"),
+                selectedSpeciesId = MutableStateFlow(null),
+                photo = MutableStateFlow(null),
+                registering = MutableStateFlow(false),
+                error = MutableStateFlow(null),
+            ).first()
+        }
+        assertEquals("the exact name first", "tanager", s.results.first().id)
+        assertEquals(
+            "equal matches keep dex order",
+            listOf("Western Screech-Owl", "Western Tanager"),
+            state(query = "western").results.map { it.commonName },
+        )
+    }
+
+    @Test
     fun `registering needs both a species and a photo`() {
         assertFalse(state().canRegister)
         assertFalse(state(selectedId = "western-screech-owl").canRegister)

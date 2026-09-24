@@ -54,6 +54,39 @@ object SearchMatch {
     }
 
     /**
+     * How well [query] matches [name], best first, or null when [matches] would say no:
+     * [EXACT] the whole name; [PREFIX] its start; [WORD] the start of a later word ("tanager"
+     * in "Western Tanager"); [CONTAINS] anywhere; [NEAR] only within the edit budget. The
+     * Register screen sorts by it so the name typed in full leads the list (D74).
+     */
+    fun rank(name: String, query: String): Int? {
+        val q = fold(query)
+        if (q.isEmpty()) return EXACT
+        val n = fold(name)
+        val at = n.indexOf(q)
+        return when {
+            n == q -> EXACT
+            at == 0 -> PREFIX
+            at > 0 && wordStarts(name).any { n.startsWith(q, it) } -> WORD
+            at > 0 -> CONTAINS
+            matches(name, query) -> NEAR
+            else -> null
+        }
+    }
+
+    const val EXACT = 0
+    const val PREFIX = 1
+    const val WORD = 2
+    const val CONTAINS = 3
+    const val NEAR = 4
+
+    /** Where each word of [name] begins in its folded form. */
+    private fun wordStarts(name: String): List<Int> {
+        var offset = 0
+        return name.split(' ', '-', '/').map { word -> offset.also { offset += fold(word).length } }
+    }
+
+    /**
      * Whether [pattern] occurs somewhere in [text] with at most [maxEdits] edits — an edit
      * being a missing, extra, or wrong character, or two adjacent characters swapped.
      *

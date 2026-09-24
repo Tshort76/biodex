@@ -12,6 +12,8 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Changed** — tapping ＋ with a search typed opens Register with that search already filled in, and Register's "nothing found" line offers to add the name. (`D69`)
 - **Removed** — the Register screen's "Not in the list? Type a name…" button, which the new ＋ replaces. (`D55` superseded, `D69`)
 - **Changed** — the Register screen's photo row ends in 📁 and 🔍; the 🔍 opens the attached photo straight in Google Lens and replaces the "Not sure what it is?" banner. The "📍 Place read from the photo" line is gone — the place is still read, just not announced. (`S06`, `D64` revised, `D72`)
+- **Changed** — a species can be added only once the lookup finds it. Offline, or when nothing online matches the name (usually a typo), the card says so and adds nothing. (`M20` revised, `D73`)
+- **Changed** — the Register screen lists the best match first: the name typed in full, then names that start with it, and so on. (`M14` revised, `D74`)
 - **Removed** — the in-app camera. Take the photo with your phone's camera and attach it from the gallery. (`M40` struck, `D26` superseded, `D71`)
 - **Changed** — a species you add to the dex counts toward the meters straight away, in the total, and in the caught count once you catch it. (`M15`, `D29` revised, `D70`)
 

@@ -197,6 +197,19 @@ fun ConfirmSpeciesScreen(
     }
 }
 
+/** D69. "Did you mean #052 Western Tanager? Open it ›" — a suggestion, never a block. */
+@Composable
+private fun NearMissLink(near: HeldSpecies, onOpen: () -> Unit) {
+    Text(
+        text = "Did you mean ${near.title}? Open it ›",
+        style = MaterialTheme.typography.labelMedium,
+        color = DexTheme.colors.accent,
+        modifier = Modifier
+            .padding(top = 6.dp)
+            .clickable(onClick = onOpen),
+    )
+}
+
 @Composable
 private fun CardBody(
     state: ConfirmSpeciesUiState.Card,
@@ -212,14 +225,16 @@ private fun CardBody(
 ) {
     val colors = DexTheme.colors
 
+    // D73. A new species the lookup did not find is not added — the card says why and stops.
+    val notFound = !state.isBackfill && !state.found && (state.lookupFailed || state.noMatch)
     if (state.lookupFailed || state.noMatch) {
         Text(
-            text = if (state.noMatch) {
-                "Nothing in GBIF matches “${state.typedName}”. Name it yourself, or add it " +
-                    "now and let the app try again later."
-            } else {
-                "Could not reach the lookup services. Add it now — the app fills in the " +
-                    "details the next time you open it online."
+            text = when {
+                !state.isBackfill && state.noMatch ->
+                    "Nothing online matches “${state.typedName}” — check the spelling and search again."
+                !state.isBackfill -> "Couldn't reach the lookup — try again when you're online."
+                state.noMatch -> "Nothing in GBIF matches “${state.typedName}”. Fill in the details by hand."
+                else -> "Could not reach the lookup services. Try again online, or fill in the details by hand."
             },
             style = MaterialTheme.typography.bodySmall,
             color = colors.warn,
@@ -229,6 +244,11 @@ private fun CardBody(
                 .background(colors.warnSoft)
                 .padding(10.dp),
         )
+    }
+
+    if (notFound) {
+        state.nearMiss?.let { near -> NearMissLink(near, onOpenExisting) }
+        return
     }
 
     SectionHeader("Best match · GBIF")
@@ -349,16 +369,7 @@ private fun CardBody(
         )
         PrimaryCta(label = "Open ${held.title}", enabled = true, onClick = onOpenExisting)
     } else {
-        state.nearMiss?.let { near ->
-            Text(
-                text = "Did you mean ${near.title}? Open it ›",
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.accent,
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .clickable(onClick = onOpenExisting),
-            )
-        }
+        state.nearMiss?.let { near -> NearMissLink(near, onOpenExisting) }
         PrimaryCta(
             label = if (state.saving) "Saving…" else state.acceptLabel,
             enabled = state.canAccept,
@@ -403,13 +414,6 @@ private fun AddedBody(
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             color = colors.fg,
         )
-        if (state.detailsPending) {
-            Text(
-                text = "Details pending — the app fills them in next time you're online.",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.faint,
-            )
-        }
         Text(
             text = "Have you caught it?",
             style = MaterialTheme.typography.bodyLarge,

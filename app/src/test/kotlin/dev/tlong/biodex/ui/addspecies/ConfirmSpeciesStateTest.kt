@@ -111,7 +111,7 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `a typo GBIF could not place suggests the held species but still allows the add`() {
+    fun `a typo GBIF could not place suggests the held species`() {
         val tanager = summary("western-tanager", 34, "Western Tanager", "Piranga ludoviciana")
         val typo = card(
             draft = draft.copy(typedName = "Western Tanagre"),
@@ -119,7 +119,6 @@ class ConfirmSpeciesStateTest {
         )
         assertEquals("western-tanager", typo.nearMiss?.speciesId)
         assertNull(typo.alreadyHeld)
-        assertTrue(typo.canAccept)
         assertNull(nearMissFor("Varied Thrush", listOf(tanager)))
     }
 
@@ -207,24 +206,34 @@ class ConfirmSpeciesStateTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `a lookup that could not be made offers a details-pending save`() {
-        val state = card(outcome = LookupOutcome.Failed("offline"), details = null)
+    fun `a new species is added only once the lookup has found it (D73)`() {
+        val failed = card(outcome = LookupOutcome.Failed("offline"), details = null)
+        assertTrue(failed.lookupFailed)
+        assertFalse(failed.found)
+        assertFalse(failed.canAccept)
 
-        assertTrue(state.lookupFailed)
-        assertFalse(state.noMatch)
-        assertNull(state.fields.scientificName)
-        assertTrue(state.willBeDetailsPending)
-        assertEquals("Add to my dex — U01 Varied Thrush (details pending)", state.acceptLabel)
-        assertTrue(state.canAccept)
+        val noMatch = card(outcome = LookupOutcome.NoMatch, details = null)
+        assertTrue(noMatch.noMatch)
+        assertFalse(noMatch.lookupFailed)
+        assertFalse(noMatch.canAccept)
+
+        val found = card()
+        assertTrue(found.found)
+        assertTrue(found.canAccept)
     }
 
     @Test
-    fun `a name GBIF does not know is a no-match, distinct from a failure`() {
-        val state = card(outcome = LookupOutcome.NoMatch, details = null)
-
-        assertTrue(state.noMatch)
-        assertFalse(state.lookupFailed)
-        assertTrue(state.willBeDetailsPending)
+    fun `a pending species already in the dex can still be filled in by hand`() {
+        val pending = UserSpeciesRecord(
+            id = "user-1", regionId = "pacific", dexNumber = 9001, detailsPending = true,
+            fields = SpeciesFields(commonName = "Varied Thrush"), userEditedFields = emptyList(),
+        )
+        val state = card(
+            draft = draft.copy(backfillSpeciesId = "user-1"),
+            existing = pending, outcome = LookupOutcome.NoMatch, details = null,
+        )
+        assertFalse(state.found)
+        assertTrue(state.canAccept)
     }
 
     // -----------------------------------------------------------------------
@@ -385,10 +394,6 @@ class ConfirmSpeciesStateTest {
         )
         assertEquals("U07 Pacific Wren", added.title)
         assertEquals("user-7", added.speciesId)
-        assertFalse(added.detailsPending)
-
-        val pending = addedState("user-8", FIRST_USER_DEX_NUMBER + 7, SpeciesFields(commonName = "Mystery Moth"))
-        assertTrue("no scientific name, so the lookup is still owed", pending.detailsPending)
     }
 
     @Test
