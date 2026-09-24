@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +31,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +63,7 @@ import dev.tlong.biodex.ui.common.RegionPill
 import dev.tlong.biodex.ui.common.SpeciesCell
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
+import kotlinx.coroutines.delay
 
 /**
  * Frame 1 of `mockup.html`: the dex grid (M01/M02/M14). App bar with region and progress
@@ -77,6 +80,11 @@ fun DexGridRoute(
     onOpenStats: () -> Unit,
     onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
+    /** D77: a species just captured on its entry — scrolled to the top once, then cleared. */
+    scrollToSpeciesId: String? = null,
+    /** D77: a brief note to show on arrival, such as "+1 photo". */
+    note: String? = null,
+    onArrivalHandled: () -> Unit = {},
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: DexGridViewModel = viewModel(factory = DexGridViewModel.factory(container))
@@ -97,6 +105,9 @@ fun DexGridRoute(
         onOpenStats = onOpenStats,
         onOpenNearest = onOpenNearest,
         onOpenSettings = onOpenSettings,
+        scrollToSpeciesId = scrollToSpeciesId,
+        note = note,
+        onArrivalHandled = onArrivalHandled,
     )
 }
 
@@ -116,62 +127,99 @@ fun DexGridScreen(
     onOpenStats: () -> Unit,
     onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
+    scrollToSpeciesId: String? = null,
+    note: String? = null,
+    onArrivalHandled: () -> Unit = {},
 ) {
     val colors = DexTheme.colors
-    Scaffold(
-        containerColor = colors.bg,
-        bottomBar = { DexBottomBar(selected = 0, onDex = {}, onStats = onOpenStats) },
-    ) { inner ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner)
-                .padding(horizontal = 12.dp),
-        ) {
-            GridAppBar(
-                regionLabel = state.regionLabel,
-                animals = state.animals,
-                fungi = state.fungi.takeIf { state.showFungiPill },
-                // D69: one ＋, two jobs. A search the dex does not hold is a species to add;
-                // anything else opens Register with the search already typed.
-                onRegister = {
-                    state.addableName?.let(onAddSpecies) ?: onRegister(state.query.trim())
-                },
-                onOpenNearest = onOpenNearest,
-                onOpenSettings = onOpenSettings,
-            )
-            SearchField(query = state.query, onQueryChange = onQueryChange)
-            FilterRow(
-                state = state,
-                onCaughtFilter = onCaughtFilter,
-                onUseFilter = onUseFilter,
-                onClassFilter = onClassFilter,
-                onEcosystemFilter = onEcosystemFilter,
-                onSort = onSort,
-                onClearFilters = onClearFilters,
-            )
-            when {
-                state.loading -> CentredNote("Loading the Pacific catalogue…")
-                state.species.isEmpty() -> CentredNote(
-                    when {
-                        state.addableName != null ->
-                            "Not in your dex. Tap ＋ to add “${state.addableName}”."
-                        state.isFiltered -> "No species match."
-                        else -> "The catalogue is empty."
+    val gridState = rememberLazyGridState()
+    // D77. Held here rather than read from the arguments, so it outlives [onArrivalHandled]
+    // clearing them and still shows for its moment.
+    var shownNote by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(scrollToSpeciesId, state.species) {
+        if (scrollToSpeciesId == null) return@LaunchedEffect
+        val index = state.species.indexOfFirst { it.id == scrollToSpeciesId }
+        if (index < 0) return@LaunchedEffect
+        gridState.scrollToItem(index)
+        shownNote = note
+        onArrivalHandled()
+    }
+    LaunchedEffect(shownNote) {
+        if (shownNote != null) {
+            delay(1_800)
+            shownNote = null
+        }
+    }
+    Box {
+        Scaffold(
+            containerColor = colors.bg,
+            bottomBar = { DexBottomBar(selected = 0, onDex = {}, onStats = onOpenStats) },
+        ) { inner ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+                    .padding(horizontal = 12.dp),
+            ) {
+                GridAppBar(
+                    regionLabel = state.regionLabel,
+                    animals = state.animals,
+                    fungi = state.fungi.takeIf { state.showFungiPill },
+                    // D69: one ＋, two jobs. A search the dex does not hold is a species to add;
+                    // anything else opens Register with the search already typed.
+                    onRegister = {
+                        state.addableName?.let(onAddSpecies) ?: onRegister(state.query.trim())
                     },
+                    onOpenNearest = onOpenNearest,
+                    onOpenSettings = onOpenSettings,
                 )
-                else -> LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.species, key = { it.id }) { species ->
-                        SpeciesCell(species = species, onClick = { onOpenSpecies(species.id) })
+                SearchField(query = state.query, onQueryChange = onQueryChange)
+                FilterRow(
+                    state = state,
+                    onCaughtFilter = onCaughtFilter,
+                    onUseFilter = onUseFilter,
+                    onClassFilter = onClassFilter,
+                    onEcosystemFilter = onEcosystemFilter,
+                    onSort = onSort,
+                    onClearFilters = onClearFilters,
+                )
+                when {
+                    state.loading -> CentredNote("Loading the Pacific catalogue…")
+                    state.species.isEmpty() -> CentredNote(
+                        when {
+                            state.addableName != null ->
+                                "Not in your dex. Tap ＋ to add “${state.addableName}”."
+                            state.isFiltered -> "No species match."
+                            else -> "The catalogue is empty."
+                        },
+                    )
+                    else -> LazyVerticalGrid(
+                        state = gridState,
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(state.species, key = { it.id }) { species ->
+                            SpeciesCell(species = species, onClick = { onOpenSpecies(species.id) })
+                        }
                     }
                 }
             }
+        }
+        shownNote?.let { text ->
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = colors.accent,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 96.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.accentSoft)
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
+            )
         }
     }
 }

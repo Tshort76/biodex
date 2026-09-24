@@ -93,6 +93,11 @@ fun EntryDetailRoute(
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onBackfillReady: (draftId: String) -> Unit,
+    /**
+     * D77: a Capture! made here is done with this screen — the user came to it to capture —
+     * so the route returns to the grid, scrolled to this species. [note] is what to say there.
+     */
+    onCaptured: (note: String?) -> Unit = {},
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: EntryDetailViewModel = viewModel(
@@ -105,6 +110,8 @@ fun EntryDetailRoute(
     // is what stops a rotation or a process death replaying it (6.1's route argument stays
     // true for the life of the back-stack entry).
     var revealPending by rememberSaveable(speciesId) { mutableStateOf(justUnlocked) }
+    // Set when the reveal on screen is this screen's own Capture!, so dismissing it goes home.
+    var homeAfterReveal by rememberSaveable(speciesId) { mutableStateOf(false) }
 
     // D76. Capture! runs here: pick, the place prompt if the photo has none, the write, and
     // then the same reveal or "+1" this screen shows after a registration made elsewhere.
@@ -136,7 +143,12 @@ fun EntryDetailRoute(
     LaunchedEffect(speciesId) {
         viewModel.captureEvents.collect { event ->
             when (event) {
-                is CaptureEvent.Captured -> if (event.isFirst) revealPending = true else chip = "+1 photo"
+                is CaptureEvent.Captured -> if (event.isFirst) {
+                    revealPending = true
+                    homeAfterReveal = true
+                } else {
+                    onCaptured("+1 photo")
+                }
                 CaptureEvent.Unreadable -> chip = "That photo could not be read — nothing was saved"
             }
         }
@@ -186,7 +198,10 @@ fun EntryDetailRoute(
                         ).joinToString(" · ")
                     },
                 ),
-                onDismiss = { revealPending = false },
+                onDismiss = {
+                    revealPending = false
+                    if (homeAfterReveal) onCaptured(null)
+                },
             )
         }
         val chipText = chip

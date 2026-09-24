@@ -9,6 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +38,10 @@ import kotlinx.serialization.Serializable
 // templates. The Unlock Reveal is deliberately NOT a route: it is a full-screen
 // overlay that EntryDetail shows when navigated with justUnlocked = true.
 // ---------------------------------------------------------------------------
+
+/** D77: the grid's saved-state keys for a return from a capture. */
+private const val SCROLL_TO_KEY = "scrollToSpeciesId"
+private const val NOTE_KEY = "arrivalNote"
 
 @Serializable
 data object DexGrid
@@ -90,8 +96,18 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
         navController.navigate(ConfirmSpecies(container.addSpeciesDrafts.put(typedName = name)))
     }
     NavHost(navController = navController, startDestination = DexGrid) {
-        composable<DexGrid> {
+        composable<DexGrid> { backStackEntry ->
+            // D77: what a capture on an entry hands back — the species to scroll to, and a note.
+            val handle = backStackEntry.savedStateHandle
+            val scrollTo by handle.getStateFlow<String?>(SCROLL_TO_KEY, null).collectAsState()
+            val note by handle.getStateFlow<String?>(NOTE_KEY, null).collectAsState()
             DexGridRoute(
+                scrollToSpeciesId = scrollTo,
+                note = note,
+                onArrivalHandled = {
+                    handle[SCROLL_TO_KEY] = null
+                    handle[NOTE_KEY] = null
+                },
                 onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
                 onRegister = { query ->
                     navController.navigate(Register(initialQuery = query.ifBlank { null }))
@@ -116,6 +132,15 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 // same confirmation card. Single-top, so a second emission cannot stack cards.
                 onBackfillReady = { draftId ->
                     navController.navigate(ConfirmSpecies(draftId)) { launchSingleTop = true }
+                },
+                // D77: captured here, so home — scrolled to it — like "← Dex", from wherever
+                // the entry was opened.
+                onCaptured = { note ->
+                    navController.getBackStackEntry<DexGrid>().savedStateHandle.apply {
+                        set(SCROLL_TO_KEY, route.speciesId)
+                        set(NOTE_KEY, note)
+                    }
+                    navController.popBackStack(DexGrid, inclusive = false)
                 },
             )
         }
