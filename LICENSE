@@ -52,9 +52,6 @@ with these upstream terms underneath it, per field:
   Wikimedia Commons reference images       per image; the credit and license
                                            travel with each entry in the JSON
   GBIF backbone taxonomy (names, class)    CC BY 4.0
-  Dr. Duke's ethnobotanical database       CC0 1.0 (public domain dedication);
-    (app/src/main/assets/catalogue/        the full dedication is in
-     duke_ethnobot.json)                   catalogue/LICENSE-duke.txt
 
 Reference images are referenced by URL rather than redistributed, and each
 entry carries the author and license string Commons reports for it.
