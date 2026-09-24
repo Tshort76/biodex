@@ -1,5 +1,6 @@
 package dev.tlong.biodex.ui.addspecies
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,13 +57,17 @@ import dev.tlong.biodex.ui.theme.DexTheme
  * Frame 6 of `mockup.html`: the GBIF best-match card with its alternatives link, the found
  * image and its credit, the found habitat text with an edit affordance,
  * the manual ecosystem multi-select, and the accept button naming the U-number the species is
- * about to take.
+ * about to take. Accepting adds the species and nothing more; the screen then asks whether it
+ * has been caught (D69).
  */
 @Composable
 fun ConfirmSpeciesRoute(
     draftId: String,
     onBack: () -> Unit,
-    onCreated: (speciesId: String) -> Unit,
+    /** D69: added, not caught yet. */
+    onNotCaught: (speciesId: String) -> Unit,
+    /** D69: added and caught — to its entry, where the photo is registered. */
+    onCaught: (speciesId: String) -> Unit,
     onUpdated: (speciesId: String) -> Unit,
 ) {
     val container = LocalContext.current.appContainer
@@ -74,7 +80,8 @@ fun ConfirmSpeciesRoute(
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                is ConfirmSpeciesViewModel.Event.Created -> onCreated(event.speciesId)
+                is ConfirmSpeciesViewModel.Event.NotCaught -> onNotCaught(event.speciesId)
+                is ConfirmSpeciesViewModel.Event.Caught -> onCaught(event.speciesId)
                 is ConfirmSpeciesViewModel.Event.Updated -> onUpdated(event.speciesId)
                 ConfirmSpeciesViewModel.Event.Dismissed -> onBack()
             }
@@ -92,6 +99,8 @@ fun ConfirmSpeciesRoute(
         onToggleKingdom = viewModel::onToggleKingdom,
         onSelectTaxClass = viewModel::onSelectTaxClass,
         onAccept = viewModel::onAccept,
+        onNotCaught = viewModel::onNotCaught,
+        onCaught = viewModel::onCaught,
     )
 }
 
@@ -107,8 +116,13 @@ fun ConfirmSpeciesScreen(
     onToggleKingdom: () -> Unit,
     onSelectTaxClass: (TaxClass) -> Unit,
     onAccept: () -> Unit,
+    onNotCaught: () -> Unit = {},
+    onCaught: () -> Unit = {},
 ) {
     val colors = DexTheme.colors
+    // D69. Once the species is written, Back means "not yet" — never a return to a card that
+    // would add it a second time.
+    BackHandler(enabled = state is ConfirmSpeciesUiState.Added, onBack = onNotCaught)
     Scaffold(containerColor = colors.bg) { inner ->
         Column(
             modifier = Modifier
@@ -127,10 +141,16 @@ fun ConfirmSpeciesScreen(
                     text = "←",
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.muted,
-                    modifier = Modifier.clickable(onClick = onBack),
+                    modifier = Modifier.clickable(
+                        onClick = if (state is ConfirmSpeciesUiState.Added) onNotCaught else onBack,
+                    ),
                 )
                 Text(
-                    text = "Add Your Own Species",
+                    text = if ((state as? ConfirmSpeciesUiState.Card)?.isBackfill == true) {
+                        "Fill In the Details"
+                    } else {
+                        "Add a Species"
+                    },
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = colors.fg,
                 )
@@ -145,9 +165,15 @@ fun ConfirmSpeciesScreen(
 
                 ConfirmSpeciesUiState.Missing -> Text(
                     text = "This draft is gone — the app restarted before it was saved. " +
-                        "Register the photo again to start over.",
+                        "Search the name again to start over.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.muted,
+                )
+
+                is ConfirmSpeciesUiState.Added -> AddedBody(
+                    state = state,
+                    onNotCaught = onNotCaught,
+                    onCaught = onCaught,
                 )
 
                 is ConfirmSpeciesUiState.Card -> CardBody(
@@ -183,11 +209,11 @@ private fun CardBody(
     if (state.lookupFailed || state.noMatch) {
         Text(
             text = if (state.noMatch) {
-                "Nothing in GBIF matches “${state.typedName}”. You can name it yourself, or " +
-                    "save it now and let the app try again later."
+                "Nothing in GBIF matches “${state.typedName}”. Name it yourself, or add it " +
+                    "now and let the app try again later."
             } else {
-                "Could not reach the lookup services. Save it now — the app will fill the " +
-                    "details in the next time you open it online."
+                "Could not reach the lookup services. Add it now — the app fills in the " +
+                    "details the next time you open it online."
             },
             style = MaterialTheme.typography.bodySmall,
             color = colors.warn,
@@ -272,13 +298,7 @@ private fun CardBody(
         )
     }
 
-    SectionHeader("Ecosystems · your pick")
-    Text(
-        text = "No lookup can tell us which of these seven a species belongs to — this one is " +
-            "yours to choose, and leaving it empty is fine.",
-        style = MaterialTheme.typography.labelSmall,
-        color = colors.faint,
-    )
+    SectionHeader("Ecosystems · optional")
     EcosystemChips(
         ecosystems = state.ecosystems,
         selected = state.selectedEcosystemIds,
@@ -305,23 +325,9 @@ private fun CardBody(
         )
     }
 
-    state.error?.let { message ->
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.stop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(colors.stopSoft)
-                .padding(10.dp),
-        )
-    }
-
     if (state.willBeDetailsPending && !state.isBackfill) {
         Text(
-            text = "Saved without a match, this entry stays “details pending” and the app " +
-                "tries the lookup again the next time you open it online.",
+            text = "No match yet — the app tries again next time you're online.",
             style = MaterialTheme.typography.labelSmall,
             color = colors.faint,
         )
@@ -337,17 +343,66 @@ private fun CardBody(
     Text(
         text = if (state.handEditing) "Done editing by hand" else "Edit all details by hand",
         style = MaterialTheme.typography.labelMedium,
-        color = colors.faint,
+        color = colors.muted,
+        textAlign = TextAlign.Center,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, colors.rule, RoundedCornerShape(12.dp))
             .clickable(onClick = onToggleHandEditing)
-            .padding(vertical = 12.dp)
-            .padding(bottom = 0.dp),
+            .padding(vertical = 12.dp),
     )
 
     state.fields.imageAttribution?.let { AttributionLine(it, Modifier.padding(bottom = 24.dp)) }
+}
+
+/**
+ * D69's question. The species already exists, so both answers are navigation: the photo that
+ * proves a catch is registered from the entry, the same way as for any catalogue species.
+ */
+@Composable
+private fun AddedBody(
+    state: ConfirmSpeciesUiState.Added,
+    onNotCaught: () -> Unit,
+    onCaught: () -> Unit,
+) {
+    val colors = DexTheme.colors
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(top = 24.dp),
+    ) {
+        Text(
+            text = "${state.title} is in your dex.",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = colors.fg,
+        )
+        if (state.detailsPending) {
+            Text(
+                text = "Details pending — the app fills them in next time you're online.",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.faint,
+            )
+        }
+        Text(
+            text = "Have you caught it?",
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.fg,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        PrimaryCta(label = "Yes — register my photo", enabled = true, onClick = onCaught)
+        Text(
+            text = "Not yet",
+            style = MaterialTheme.typography.labelLarge,
+            color = colors.muted,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, colors.rule, RoundedCornerShape(12.dp))
+                .clickable(onClick = onNotCaught)
+                .padding(vertical = 14.dp),
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 @Composable

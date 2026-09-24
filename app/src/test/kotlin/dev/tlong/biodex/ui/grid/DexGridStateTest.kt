@@ -121,6 +121,47 @@ class DexGridStateTest {
 
     private fun names(): List<String> = state().species.map { it.commonName }
 
+    // ---- D69: what the header's ＋ does with the search ----------------------------------
+
+    @Test
+    fun `an empty search leaves ＋ to open Register`() {
+        assertEquals(null, state().addableName)
+        query.value = "   "
+        assertEquals(null, state().addableName)
+    }
+
+    @Test
+    fun `a name the dex holds, by common or scientific name, opens Register not an add`() {
+        query.value = "heron"
+        assertEquals(null, state().addableName)
+        query.value = "Megascops"
+        assertEquals(null, state().addableName)
+        query.value = "varied thrush"
+        assertEquals("the user's own species count as held", null, state().addableName)
+    }
+
+    @Test
+    fun `a name the dex does not hold is offered to ＋, trimmed`() {
+        query.value = "  Pacific Wren "
+        assertEquals("Pacific Wren", state().addableName)
+    }
+
+    @Test
+    fun `a near miss the forgiving search shows does not hide the add`() {
+        // Within two edits of "Western Tanager", so the grid shows the tanager — but the dex
+        // does not hold a "Western Tanagerr", and the forgiving match must not decide that.
+        query.value = "Western Tanagre"
+        assertTrue("the grid still shows the near miss", names().contains("Western Tanager"))
+        assertEquals("Western Tanagre", state().addableName)
+    }
+
+    @Test
+    fun `a filter that hides the held species does not make its name addable`() {
+        query.value = "heron"
+        filters.value = DexGridFilters(caught = CaughtFilter.CAUGHT)
+        assertEquals(null, state().addableName)
+    }
+
     // ---- search --------------------------------------------------------------------
 
     @Test

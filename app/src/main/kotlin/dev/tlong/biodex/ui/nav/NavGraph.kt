@@ -52,8 +52,9 @@ data class EntryDetail(
     val photoAdded: Boolean = false,
 )
 
+/** [initialQuery] is the grid's search, carried over so a name is never typed twice (D69). */
 @Serializable
-data class Register(val preselectedSpeciesId: String? = null)
+data class Register(val preselectedSpeciesId: String? = null, val initialQuery: String? = null)
 
 @Serializable
 data class ConfirmSpecies(val draftId: String)
@@ -81,11 +82,19 @@ data object Licenses
 @Composable
 fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
     val container = LocalContext.current.appContainer
+    // D69: adding a species by name — from the grid's ＋ or the Register screen's no-results
+    // line — opens the lookup card with that name, and nothing else rides along.
+    val addSpecies = { name: String ->
+        navController.navigate(ConfirmSpecies(container.addSpeciesDrafts.put(typedName = name)))
+    }
     NavHost(navController = navController, startDestination = DexGrid) {
         composable<DexGrid> {
             DexGridRoute(
                 onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
-                onRegister = { navController.navigate(Register()) },
+                onRegister = { query ->
+                    navController.navigate(Register(initialQuery = query.ifBlank { null }))
+                },
+                onAddSpecies = addSpecies,
                 onOpenStats = { navController.navigate(Stats) },
                 onOpenNearest = { navController.navigate(Nearest()) },
                 onOpenSettings = { navController.navigate(Settings) },
@@ -112,6 +121,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             val route = backStackEntry.toRoute<Register>()
             RegisterRoute(
                 preselectedSpeciesId = route.preselectedSpeciesId,
+                initialQuery = route.initialQuery,
                 onBack = { navController.popBackStack() },
                 onRegistered = { speciesId, justUnlocked ->
                     // DESIGN.md §6's navigation rule: after registering, back from the detail
@@ -126,19 +136,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                         popUpTo(DexGrid)
                     }
                 },
-                // `prefetched` is null on the typed-name path and carries the GBIF lookup an
-                // identification already ran, so a candidate that is not in the catalogue
-                // opens the same confirmation card rather than a second one (M33).
-                onAddOwnSpecies = { typedName, photoUri, photoSource, prefetched, place ->
-                    val draftId = container.addSpeciesDrafts.put(
-                        typedName = typedName,
-                        photoUri = photoUri,
-                        photoSource = photoSource,
-                        prefetched = prefetched,
-                        place = place,
-                    )
-                    navController.navigate(ConfirmSpecies(draftId))
-                },
+                onAddSpecies = addSpecies,
             )
         }
         composable<ConfirmSpecies> { backStackEntry ->
@@ -146,12 +144,13 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             ConfirmSpeciesRoute(
                 draftId = route.draftId,
                 onBack = { navController.popBackStack() },
-                // A new user-added species is a first catch by definition, so it gets the
-                // reveal — and back from the detail screen returns to the grid (DESIGN.md §6).
-                onCreated = { speciesId ->
-                    navController.navigate(
-                        EntryDetail(speciesId = speciesId, justUnlocked = true),
-                    ) {
+                // D69. Adding is not catching. "Not yet" is home — past Register, if the add
+                // started there, since that job is done. "Yes" is the entry, uncaught, where
+                // Register this species records the catch and plays the reveal; back from it
+                // returns to the grid (DESIGN.md §6).
+                onNotCaught = { navController.popBackStack(DexGrid, inclusive = false) },
+                onCaught = { speciesId ->
+                    navController.navigate(EntryDetail(speciesId = speciesId)) {
                         popUpTo(DexGrid)
                     }
                 },

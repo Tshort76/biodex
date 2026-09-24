@@ -102,6 +102,12 @@ data class DexGridUiState(
      * while the user narrows to a class none of the tagged species belong to.
      */
     val hasTaggedSpecies: Boolean = false,
+    /**
+     * D69. The name the header's ＋ adds to the dex: the search text, when no species in the
+     * region — filters aside — contains it. Null when the search is empty, or when some species
+     * does contain it, and then ＋ opens Register with the search carried over instead.
+     */
+    val addableName: String? = null,
 ) {
     val isFiltered: Boolean get() = query.isNotBlank() || !filters.isEmpty
 
@@ -237,8 +243,28 @@ fun dexGridUiState(
             availableClasses = reads.progress.perClass.map { it.first }.toSet(),
             loading = reads.species.isEmpty() && reads.progress.totalSpecies == 0,
             hasTaggedSpecies = reads.species.any { it.uses.isNotEmpty() },
+            addableName = addableNameFor(reads.species, reads.query),
         )
     }
+
+/**
+ * D69. Whether the search names a species the dex does not hold, and so is something ＋ should
+ * look up and add rather than open Register for.
+ *
+ * Deliberately a plain folded substring test, not the grid's typo-forgiving [matchesQuery]:
+ * "Pacific Wren" is within two edits of "Pacific Tree Frog", so the forgiving match would show a
+ * frog and quietly take the add away. A name typed in full that no species contains word for
+ * word is a name to add. Case, accents and punctuation still do not count.
+ */
+internal fun addableNameFor(species: List<SpeciesSummary>, query: String): String? {
+    val folded = SearchMatch.fold(query)
+    if (folded.isEmpty()) return null
+    val held = species.any { summary ->
+        SearchMatch.fold(summary.commonName).contains(folded) ||
+            summary.scientificName?.let { SearchMatch.fold(it).contains(folded) } == true
+    }
+    return if (held) null else query.trim()
+}
 
 /** The five original inputs as one value, so the six-way composition above stays typed. */
 private data class GridReads(

@@ -42,6 +42,19 @@ sealed interface ConfirmSpeciesUiState {
     /** The draft died with the process (or the backfill's species was deleted). */
     data object Missing : ConfirmSpeciesUiState
 
+    /**
+     * D69. The species is in the dex, uncaught, and the screen asks whether it has been caught:
+     * "Not yet" goes home, "Yes" goes to its entry, where Register this species is the ordinary
+     * way to record the catch. Only a new species gets here — a backfill (M20) just goes back.
+     */
+    data class Added(
+        val speciesId: String,
+        /** "U07 Pacific Wren". */
+        val title: String,
+        /** Saved without a scientific name: the lookup is still owed (M20). */
+        val detailsPending: Boolean,
+    ) : ConfirmSpeciesUiState
+
     data class Card(
         val typedName: String,
         val isBackfill: Boolean,
@@ -60,9 +73,6 @@ sealed interface ConfirmSpeciesUiState {
         val dexNumber: Int,
         val handEditing: Boolean,
         val saving: Boolean,
-        /** Whether a photo came with the draft. */
-        val hasPhoto: Boolean = false,
-        val error: String? = null,
         /**
          * The name exactly as it is being typed, while a hand-edit is open. [fields] carries
          * the formatted spelling (M45), and a text field bound to that would fight the typist —
@@ -139,7 +149,6 @@ fun confirmCardState(
     ecosystems: List<Ecosystem>,
     nextDexNumber: Int,
     saving: Boolean = false,
-    error: String? = null,
 ): ConfirmSpeciesUiState.Card {
     val resolved = outcome as? LookupOutcome.Resolved
     val candidates = resolved?.candidates.orEmpty()
@@ -169,14 +178,20 @@ fun confirmCardState(
         dexNumber = existing?.dexNumber ?: nextDexNumber,
         handEditing = edits.handEditing,
         saving = saving,
-        hasPhoto = draft.photoUri != null,
-        error = error,
         typedCommonName = edits.values?.commonName
             ?.takeIf { SpeciesField.COMMON_NAME in edits.editedFields },
         typedScientificName = edits.values?.scientificName
             ?.takeIf { SpeciesField.SCIENTIFIC_NAME in edits.editedFields },
     )
 }
+
+/** D69. What the screen says once [fields] has been written as [speciesId] under [dexNumber]. */
+fun addedState(speciesId: String, dexNumber: Int, fields: SpeciesFields): ConfirmSpeciesUiState.Added =
+    ConfirmSpeciesUiState.Added(
+        speciesId = speciesId,
+        title = "${displayDexNumber(dexNumber, SpeciesSource.USER, fields.kingdom)} ${fields.commonName}",
+        detailsPending = detailsPendingFor(fields),
+    )
 
 /** Fallback when nothing has been allocated yet; the first user species is U01. */
 const val FIRST_USER_DEX_NUMBER = USER_DEX_NUMBER_BASE + 1

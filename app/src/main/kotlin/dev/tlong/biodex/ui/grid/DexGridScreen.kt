@@ -70,7 +70,10 @@ import dev.tlong.biodex.ui.theme.DexTheme
 @Composable
 fun DexGridRoute(
     onOpenSpecies: (String) -> Unit,
-    onRegister: () -> Unit,
+    /** Opens Register with the search text carried over, so nothing is typed twice. */
+    onRegister: (query: String) -> Unit,
+    /** D69: looks the name up and opens the add screen with it. */
+    onAddSpecies: (name: String) -> Unit,
     onOpenStats: () -> Unit,
     onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -90,6 +93,7 @@ fun DexGridRoute(
         onClearFilters = viewModel::onClearFilters,
         onOpenSpecies = onOpenSpecies,
         onRegister = onRegister,
+        onAddSpecies = onAddSpecies,
         onOpenStats = onOpenStats,
         onOpenNearest = onOpenNearest,
         onOpenSettings = onOpenSettings,
@@ -107,7 +111,8 @@ fun DexGridScreen(
     onSort: (DexSort) -> Unit,
     onClearFilters: () -> Unit,
     onOpenSpecies: (String) -> Unit,
-    onRegister: () -> Unit,
+    onRegister: (query: String) -> Unit,
+    onAddSpecies: (name: String) -> Unit = {},
     onOpenStats: () -> Unit,
     onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -127,7 +132,11 @@ fun DexGridScreen(
                 regionLabel = state.regionLabel,
                 animals = state.animals,
                 fungi = state.fungi.takeIf { state.showFungiPill },
-                onRegister = onRegister,
+                // D69: one ＋, two jobs. A search the dex does not hold is a species to add;
+                // anything else opens Register with the search already typed.
+                onRegister = {
+                    state.addableName?.let(onAddSpecies) ?: onRegister(state.query.trim())
+                },
                 onOpenNearest = onOpenNearest,
                 onOpenSettings = onOpenSettings,
             )
@@ -144,7 +153,12 @@ fun DexGridScreen(
             when {
                 state.loading -> CentredNote("Loading the Pacific catalogue…")
                 state.species.isEmpty() -> CentredNote(
-                    if (state.isFiltered) "No species match." else "The catalogue is empty.",
+                    when {
+                        state.addableName != null ->
+                            "Not in your dex. Tap ＋ to add “${state.addableName}”."
+                        state.isFiltered -> "No species match."
+                        else -> "The catalogue is empty."
+                    },
                 )
                 else -> LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
@@ -649,7 +663,7 @@ private fun DexGridPreview() {
             onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
-            onRegister = {},
+            onRegister = { _ -> },
             onOpenStats = {},
             onOpenNearest = {},
             onOpenSettings = {},
@@ -681,7 +695,7 @@ private fun DexGridSearchPreview() {
             onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
-            onRegister = {},
+            onRegister = { _ -> },
             onOpenStats = {},
             onOpenNearest = {},
             onOpenSettings = {},

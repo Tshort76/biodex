@@ -273,10 +273,6 @@ class DexRepository(
         }
     }
 
-    override suspend fun deleteUserSpecies(speciesId: String) {
-        db.speciesDao().deleteByIds(listOf(speciesId))
-    }
-
     // -----------------------------------------------------------------------
     // Export and import (slice 8, S01). Every rule lives in `data/backup/`; this
     // half reads rows and applies a plan.

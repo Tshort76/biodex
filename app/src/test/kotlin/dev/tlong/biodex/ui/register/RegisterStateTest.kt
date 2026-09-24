@@ -189,7 +189,7 @@ class RegisterStateTest {
     }
 
     @Test
-    fun `a name outside the catalogue is the add-your-own path, not an error`() {
+    fun `a name outside the dex is the add path, not an error (D69)`() {
         val s = state(query = "varied thrush")
         assertTrue(s.noResults)
         assertNull(s.error)
@@ -277,30 +277,5 @@ class RegisterStateTest {
         }
         assertEquals("s-137", tapped.selected?.id)
         assertNull(tapped.preselectedIndex)
-    }
-
-    // -----------------------------------------------------------------------
-    // M08's hand-off into the user-added flow (slice 7).
-    // -----------------------------------------------------------------------
-
-    @Test
-    fun `adding your own species needs both the name and the photo`() {
-        assertFalse(state().canAddOwn)
-        assertFalse("a name with no photo is not enough", state(query = "Varied Thrush").canAddOwn)
-        assertFalse("a photo with no name is not enough", state(photo = photo).canAddOwn)
-        assertTrue(state(query = "Varied Thrush", photo = photo).canAddOwn)
-        // D64: a stripped photo still lights the button; the tap prompts for the place.
-        assertTrue(state(query = "Varied Thrush", photo = stripped).canAddOwn)
-        assertFalse(state(query = "Varied Thrush", photo = stripped.copy(hasLocation = null)).canAddOwn)
-    }
-
-    @Test
-    fun `the button says which half is still missing`() {
-        assertTrue(state().addOwnLabel.contains("Type a name"))
-        assertTrue(state(query = "Varied Thrush").addOwnLabel.contains("Attach a photo"))
-        assertEquals(
-            "Add \u201CVaried Thrush\u201D as your own species \uFF0B",
-            state(query = "Varied Thrush", photo = photo).addOwnLabel,
-        )
     }
 }

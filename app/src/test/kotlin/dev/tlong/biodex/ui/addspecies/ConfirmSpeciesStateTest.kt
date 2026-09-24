@@ -24,7 +24,7 @@ import org.junit.Test
  */
 class ConfirmSpeciesStateTest {
 
-    private val draft = AddSpeciesDraft(id = "d1", typedName = "Varied Thrush", photoUri = "content://p/1")
+    private val draft = AddSpeciesDraft(id = "d1", typedName = "Varied Thrush")
 
     private val thrush = SpeciesCandidate(
         scientificName = "Ixoreus naevius",
@@ -208,7 +208,7 @@ class ConfirmSpeciesStateTest {
     @Test
     fun `a backfill card keeps the entry's own U-number and changes the button`() {
         val state = card(
-            draft = draft.copy(photoUri = null, backfillSpeciesId = "user-1"),
+            draft = draft.copy(backfillSpeciesId = "user-1"),
             existing = pendingRecord(),
         )
 
@@ -228,7 +228,7 @@ class ConfirmSpeciesStateTest {
         }
 
         val state = card(
-            draft = draft.copy(photoUri = null, backfillSpeciesId = "user-1"),
+            draft = draft.copy(backfillSpeciesId = "user-1"),
             existing = edited,
         )
 
@@ -299,9 +299,9 @@ class ConfirmSpeciesStateTest {
     }
 
     @Test
-    fun `toggling the kingdom on the card takes the class with it and keeps the photo`() {
+    fun `toggling the kingdom on the card takes the class with it`() {
         // GBIF said bird; the user says fungus. The class resets to that kingdom's default
-        // (11.4), and the photo stays — every kingdom keeps its photograph (D59).
+        // (11.4).
         val state = card(
             edits = ConfirmCardEdits(
                 values = SpeciesFields(
@@ -316,7 +316,25 @@ class ConfirmSpeciesStateTest {
         assertTrue(state.isFungus)
         assertEquals(TaxClass.OTHER_FUNGUS, state.fields.taxClass)
         assertTrue(state.isEdited(SpeciesField.KINGDOM))
-        assertTrue(state.hasPhoto)
+    }
+
+    @Test
+    fun `once added, the screen names the species by its U-number and asks (D69)`() {
+        val added = addedState(
+            speciesId = "user-7",
+            dexNumber = FIRST_USER_DEX_NUMBER + 6,
+            fields = SpeciesFields(
+                commonName = "Pacific Wren",
+                scientificName = "Troglodytes pacificus",
+                taxClass = TaxClass.BIRD,
+            ),
+        )
+        assertEquals("U07 Pacific Wren", added.title)
+        assertEquals("user-7", added.speciesId)
+        assertFalse(added.detailsPending)
+
+        val pending = addedState("user-8", FIRST_USER_DEX_NUMBER + 7, SpeciesFields(commonName = "Mystery Moth"))
+        assertTrue("no scientific name, so the lookup is still owed", pending.detailsPending)
     }
 
     @Test

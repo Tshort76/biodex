@@ -8,6 +8,9 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ## v24 — 2026-09-24
 
+- **Added** — adding a species is its own action. Type a name the dex doesn't hold in the grid's search and tap ＋: the lookup runs straight away with that name, the card adds the species to the dex *uncaught*, and then asks "Have you caught it?" — *Not yet* goes home, *Yes* opens its entry to register a photo. Useful for adding what you expect to see before a trip. (`M08`, `M20` revised, `D69`)
+- **Changed** — tapping ＋ with a search typed opens Register with that search already filled in, and Register's "nothing found" line offers to add the name. (`D69`)
+- **Removed** — the Register screen's "Not in the list? Type a name…" button, which the new ＋ replaces. (`D55` superseded, `D69`)
 - **Changed** — a species you add to the dex counts toward the meters straight away, in the total, and in the caught count once you catch it. (`M15`, `D29` revised, `D70`)
 
 ## v23.1 — 2026-09-24

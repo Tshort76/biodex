@@ -1,8 +1,5 @@
 package dev.tlong.biodex.data.repo
 
-import dev.tlong.biodex.data.photo.CaptureRegistrar
-import dev.tlong.biodex.data.photo.FakeCaptureStore
-import dev.tlong.biodex.data.photo.FakePhotoGateway
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesUse
@@ -32,28 +29,14 @@ class FakeUserSpeciesStore : UserSpeciesStore {
         species[record.id] = record
         if (ecosystemIds != null) memberships[record.id] = ecosystemIds
     }
-
-    override suspend fun deleteUserSpecies(speciesId: String) {
-        species.remove(speciesId)
-        memberships.remove(speciesId)
-    }
 }
 
 class AddSpeciesRegistrarTest {
 
-    private val captureStore = FakeCaptureStore()
-    private val gateway = FakePhotoGateway()
     private val store = FakeUserSpeciesStore()
-    private var nextId = 0
 
     private val registrar = AddSpeciesRegistrar(
         store = store,
-        captures = CaptureRegistrar(
-            store = captureStore,
-            photos = gateway,
-            newCaptureId = { "capture-${nextId++}" },
-            now = { 1_000L },
-        ),
         newSpeciesId = { "user-${store.species.size + 1}" },
     )
 
@@ -69,72 +52,41 @@ class AddSpeciesRegistrarTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `accepting the card writes the species, its ecosystems and the photo together`() = runBlocking {
-        val result = registrar.create(
+    fun `accepting the card writes the species and its ecosystems, and catches nothing (D69)`() = runBlocking {
+        val created = registrar.create(
             fields = thrush,
             ecosystemIds = listOf("coastal-rainforest", "urban-suburban"),
-            photoUri = "content://photo/1",
         )
 
-        val created = result as AddSpeciesRegistrar.CreateResult.Created
         val record = store.species.getValue(created.speciesId)
-        assertEquals(9001, record.dexNumber)
+        assertEquals(9001, created.dexNumber)
         assertEquals("Ixoreus naevius", record.fields.scientificName)
         assertEquals("sil_bird", record.fields.silhouetteRes)
         assertEquals(listOf("coastal-rainforest", "urban-suburban"), store.memberships[created.speciesId])
-        assertEquals(1, captureStore.captures.size)
-        assertTrue("a new user species is caught by definition", captureStore.entries.isNotEmpty())
+        // The registrar has no capture door at all any more; the Room test pins that no
+        // capture or entry row appears.
     }
 
     @Test
     fun `user dex numbers climb, so U01 keeps its place`() = runBlocking {
-        val first = registrar.create(thrush, emptyList(), "content://photo/1")
-        val second = registrar.create(thrush.copy(commonName = "Something else"), emptyList(), "content://photo/2")
+        val first = registrar.create(thrush, emptyList())
+        val second = registrar.create(thrush.copy(commonName = "Something else"), emptyList())
 
-        assertEquals(9001, (first as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
-        assertEquals(9002, (second as AddSpeciesRegistrar.CreateResult.Created).dexNumber)
+        assertEquals(9001, (first).dexNumber)
+        assertEquals(9002, (second).dexNumber)
     }
-
-    @Test
-    fun `every kingdom the user adds keeps its photograph`() = runBlocking {
-        // The plant exception (M41) left with the plants (D59): a fungus is registered exactly
-        // like an animal, photo and thumbnail included.
-        registrar.create(thrush, emptyList(), "content://photo/1")
-        registrar.create(chanterelle, emptyList(), "content://photo/2")
-
-        val uris = captureStore.captures.values.map { it.photoUri }.toSet()
-        assertEquals(setOf("content://photo/1", "content://photo/2"), uris)
-        assertTrue(captureStore.captures.values.all { it.thumbPath != null })
-    }
-
-    @Test
-    fun `an unreadable photo leaves nothing behind — not even the species row`() = runBlocking {
-        gateway.thumbnailWorks = false
-
-        val result = registrar.create(thrush, listOf("alpine"), "content://photo/1")
-
-        assertEquals(AddSpeciesRegistrar.CreateResult.PhotoUnreadable, result)
-        assertTrue("the species must not survive its own failed registration", store.species.isEmpty())
-        assertTrue(captureStore.captures.isEmpty())
-    }
-
-    // -----------------------------------------------------------------------
-    // The offline path (M20).
-    // -----------------------------------------------------------------------
 
     @Test
     fun `an offline add is created immediately and marked details pending`() = runBlocking {
         val result = registrar.create(
             fields = SpeciesFields(commonName = "Varied Thrush"),
             ecosystemIds = emptyList(),
-            photoUri = "content://photo/1",
         )
 
-        val record = store.species.getValue((result as AddSpeciesRegistrar.CreateResult.Created).speciesId)
+        val record = store.species.getValue((result).speciesId)
         assertTrue(record.detailsPending)
         assertEquals("Varied Thrush", record.fields.commonName)
         assertEquals("sil_other_invertebrate", record.fields.silhouetteRes)
-        assertEquals(1, captureStore.captures.size)
     }
 
     @Test
@@ -142,8 +94,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             SpeciesFields(commonName = "Varied Thrush"),
             emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val updated = registrar.backfill(
             speciesId = created.speciesId,
@@ -165,8 +116,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             SpeciesFields(commonName = "Varied Thrush"),
             emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val updated = registrar.backfill(created.speciesId, lookup = null)!!
 
@@ -182,8 +132,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             SpeciesFields(commonName = "Varied Thrush"),
             emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         // The user opens the card and rewrites the habitat in their own words.
         registrar.backfill(
@@ -219,9 +168,8 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             thrush,
             emptyList(),
-            "content://photo/1",
             userEditedFields = listOf(SpeciesField.SCIENTIFIC_NAME),
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val updated = registrar.backfill(
             speciesId = created.speciesId,
@@ -236,8 +184,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             thrush,
             listOf("coastal-rainforest"),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         registrar.backfill(created.speciesId, LookupFields(habitatText = "Anywhere."))
 
@@ -272,8 +219,7 @@ class AddSpeciesRegistrarTest {
                 usesNote = "Caution: only with a confident identification.",
             ),
             ecosystemIds = listOf("coastal-rainforest"),
-            photoUri = "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val fields = store.species.getValue(created.speciesId).fields
         assertEquals(Kingdom.FUNGUS, fields.kingdom)
@@ -290,8 +236,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             fields = chanterelle.copy(taxClass = TaxClass.BIRD),
             ecosystemIds = emptyList(),
-            photoUri = "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val fields = store.species.getValue(created.speciesId).fields
         assertEquals(Kingdom.FUNGUS, fields.kingdom)
@@ -303,8 +248,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             SpeciesFields(commonName = "Golden Chanterelle"),
             emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         // 5.6's details-pending default is animal / other-invertebrate, corrected on backfill.
         assertEquals(Kingdom.ANIMAL, store.species.getValue(created.speciesId).fields.kingdom)
@@ -332,8 +276,7 @@ class AddSpeciesRegistrarTest {
         val result = registrar.create(
             fields = SpeciesFields(commonName = "brown pelican", scientificName = "pelecanus OCCIDENTALIS"),
             ecosystemIds = emptyList(),
-            photoUri = "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val record = store.species.getValue(result.speciesId)
         assertEquals("Brown Pelican", record.fields.commonName)
@@ -345,8 +288,7 @@ class AddSpeciesRegistrarTest {
         val created = registrar.create(
             SpeciesFields(commonName = "Varied Thrush"),
             emptyList(),
-            "content://photo/1",
-        ) as AddSpeciesRegistrar.CreateResult.Created
+        )
 
         val updated = registrar.backfill(
             speciesId = created.speciesId,

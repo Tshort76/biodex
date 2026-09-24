@@ -43,20 +43,6 @@ sealed interface RegisterEvent {
 
     data object PhotoUnreadable : RegisterEvent
 
-    /**
-     * M33's not-in-dex hand-off. It travels as an event rather than a direct call because the
-     * draft and the navigation belong to the route, and it carries [prefetched] so the
-     * existing confirmation card (M19) opens with the GBIF lookup already done rather than
-     * repeating it — there is one confirmation path in this app, not two.
-     */
-    data class AddOwnSpecies(
-        val typedName: String,
-        val photoUri: String,
-        val photoSource: PhotoSourceKind,
-        val prefetched: LookupOutcome? = null,
-        /** D56: what the user typed under "Where?", carried to the capture the card writes. */
-        val place: String? = null,
-    ) : RegisterEvent
 }
 
 data class RegisterUiState(
@@ -111,21 +97,6 @@ data class RegisterUiState(
 
     val registerLabel: String
         get() = selected?.let { "Register — ${it.commonName}" } ?: "Register"
-
-    /**
-     * M08 into M18–M21. The flow needs the two things only the user has: a name that is not in
-     * the catalogue, and the photo. Offered as soon as a name is typed — the button explains
-     * what it still wants rather than disappearing.
-     */
-    val canAddOwn: Boolean
-        get() = query.isNotBlank() && photo?.hasLocation != null && !registering
-
-    val addOwnLabel: String
-        get() = when {
-            query.isBlank() -> "Not in the list? Type a name to add your own species ＋"
-            photo == null -> "Attach a photo to add “${query.trim()}” as your own species ＋"
-            else -> "Add “${query.trim()}” as your own species ＋"
-        }
 }
 
 /**
@@ -170,8 +141,11 @@ fun registerUiState(
         .combine(placePrompt) { state, prompt -> state.copy(placePrompt = prompt) }
         .combine(place) { state, search -> state.copy(place = search) }
 
-/** D64: which tap raised the "Where was this?" prompt, so the answer resumes the right one. */
-enum class PlacePrompt { REGISTER, ADD_OWN }
+/**
+ * D64: which tap raised the "Where was this?" prompt, so the answer resumes the right one.
+ * Only Register raises it now that adding a species no longer takes a photo (D69).
+ */
+enum class PlacePrompt { REGISTER }
 
 /**
  * D68. The place prompt's own little screen state: what has been typed, the labels to offer

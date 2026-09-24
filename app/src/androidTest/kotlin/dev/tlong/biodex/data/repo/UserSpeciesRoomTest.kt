@@ -188,7 +188,6 @@ class UserSpeciesRoomTest {
     fun backfillRoundTripsThroughRoomAndKeepsTheUsersEdit() = runBlocking {
         val registrar = AddSpeciesRegistrar(
             store = repository,
-            captures = throwingRegistrar(),
             newSpeciesId = { "user-1" },
         )
         repository.upsertUserSpecies(
@@ -273,11 +272,10 @@ class UserSpeciesRoomTest {
         )
         val registrar = AddSpeciesRegistrar(
             store = repository,
-            captures = throwingRegistrar(),
             newSpeciesId = { "user-1" },
         )
 
-        registrar.create(agaric, emptyList(), photoUri = null)
+        registrar.create(agaric, emptyList())
 
         val stored = repository.userSpecies("user-1")!!
         assertTrue(stored.fields.uses.isEmpty())
@@ -289,25 +287,14 @@ class UserSpeciesRoomTest {
         assertNull(repository.userSpecies("western-screech-owl"))
     }
 
-    /** The photo half is slice 5's and has its own Room test; nothing here registers one. */
-    private fun throwingRegistrar() = dev.tlong.biodex.data.photo.CaptureRegistrar(
-        store = repository,
-        photos = object : dev.tlong.biodex.data.photo.PhotoGateway {
-            override fun persistGrant(uri: String) = false
-            override fun releaseGrant(uri: String) = Unit
-            override fun persistedGrantCount() = 0
-            override fun readExif(uri: String) = dev.tlong.biodex.data.photo.ExifFacts.None
-            override fun writeThumbnail(captureId: String, uri: String): String? = null
-            override fun writeLocalCopy(captureId: String, uri: String): String? = null
-            override fun deleteOwnedFile(relativePath: String) = Unit
-            override fun resolve(
-                photoUri: String?,
-                localCopyPath: String?,
-            ) = dev.tlong.biodex.data.photo.PhotoRef.Revoked
-            override fun displayName(uri: String): String? = null
-            override fun newCameraCaptureUri(): String? = null
-            override fun promoteToGallery(cacheUri: String, displayName: String): String? = null
-            override fun sweepCameraCache() = Unit
-        },
-    )
+    @Test
+    fun addingASpeciesPutsItInTheDexUncaught() = runBlocking {
+        // D69: adding is not a catch. The species row exists; no capture and no entry do.
+        AddSpeciesRegistrar(store = repository, newSpeciesId = { "user-1" })
+            .create(SpeciesFields(commonName = "Pacific Wren"), emptyList())
+
+        assertEquals("Pacific Wren", repository.userSpecies("user-1")!!.fields.commonName)
+        assertEquals(0, db.captureDao().countForSpecies("user-1"))
+        assertNull(db.entryDao().observeEntry("user-1").first())
+    }
 }

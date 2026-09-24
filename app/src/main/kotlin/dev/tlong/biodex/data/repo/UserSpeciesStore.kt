@@ -20,7 +20,4 @@ interface UserSpeciesStore {
 
     /** One transaction: the species row plus its ecosystem memberships. */
     suspend fun upsertUserSpecies(record: UserSpeciesRecord, ecosystemIds: List<String>?)
-
-    /** Used only to roll back a species whose photo turned out to be unreadable. */
-    suspend fun deleteUserSpecies(speciesId: String)
 }

@@ -58,7 +58,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
-import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.hasPhotoLibraryAccess
 import dev.tlong.biodex.data.photo.photoLibraryPermissions
@@ -82,21 +81,18 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun RegisterRoute(
     preselectedSpeciesId: String?,
+    /** D69: the grid's search text, already typed into this screen's search. */
+    initialQuery: String? = null,
     onBack: () -> Unit,
     onRegistered: (speciesId: String, justUnlocked: Boolean) -> Unit,
-    onAddOwnSpecies: (
-        typedName: String,
-        photoUri: String,
-        photoSource: PhotoSourceKind,
-        prefetched: LookupOutcome?,
-        place: String?,
-    ) -> Unit,
+    /** D69: the no-results line's way to add the typed name to the dex. */
+    onAddSpecies: (name: String) -> Unit,
 ) {
     val context = LocalContext.current
     val container = context.appContainer
     val viewModel: RegisterViewModel = viewModel(
-        key = preselectedSpeciesId ?: "register",
-        factory = RegisterViewModel.factory(container, preselectedSpeciesId),
+        key = preselectedSpeciesId ?: "register:${initialQuery.orEmpty()}",
+        factory = RegisterViewModel.factory(container, preselectedSpeciesId, initialQuery),
     )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -183,15 +179,6 @@ fun RegisterRoute(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is RegisterEvent.Registered -> onRegistered(event.speciesId, event.isFirst)
-                is RegisterEvent.AddOwnSpecies ->
-                    onAddOwnSpecies(
-                        event.typedName,
-                        event.photoUri,
-                        event.photoSource,
-                        event.prefetched,
-                        event.place,
-                    )
-
                 RegisterEvent.PhotoUnreadable -> Unit
             }
         }
@@ -225,7 +212,7 @@ fun RegisterRoute(
         },
         onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
-        onAddOwnSpecies = viewModel::onAddOwnTyped,
+        onAddSpecies = { onAddSpecies(state.query.trim()) },
     )
 }
 
@@ -261,7 +248,7 @@ fun RegisterScreen(
     onPickFromFiles: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
-    onAddOwnSpecies: () -> Unit,
+    onAddSpecies: () -> Unit = {},
 ) {
     val colors = DexTheme.colors
     val listState = rememberLazyListState()
@@ -420,15 +407,6 @@ fun RegisterScreen(
                     enabled = state.canRegister,
                     onClick = onRegister,
                 )
-
-                // M08. The flow needs both halves of what only the user has — the name and the
-                // photo (M20 creates an offline entry "from the name and photo alone"), so the
-                // button waits for the photo rather than opening a card that cannot be saved.
-                GhostCta(
-                    label = state.addOwnLabel,
-                    enabled = state.canAddOwn,
-                    onClick = onAddOwnSpecies,
-                )
             }
         },
     ) { inner ->
@@ -440,15 +418,19 @@ fun RegisterScreen(
                 .padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            // D69. Adding a species is its own action now, with no photo — so a name the dex
+            // lacks gets one line that leads there, and only when nothing matches.
             if (state.noResults) {
                 item(key = "no-results") {
                     Text(
-                        text = "No catalogue species matches “${state.query}”. If you " +
-                            "photographed something outside the Pacific catalogue, add it as " +
-                            "your own species.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.faint,
-                        modifier = Modifier.padding(vertical = 6.dp),
+                        text = "Not in your dex. Add “${state.query.trim()}” ›",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.accent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable(onClick = onAddSpecies)
+                            .padding(vertical = 10.dp, horizontal = 4.dp),
                     )
                 }
             }
@@ -816,42 +798,6 @@ internal fun PrimaryCta(
     }
 }
 
-/**
- * The secondary action under [PrimaryCta]. Outlined rather than filled so it never competes
- * with Register, but **live and dead look different** (D55): enabled it is accent on the soft
- * accent ground with an accent border, and only when it is waiting for a name or a photo does
- * it fall back to faint text on a hairline. The owner read the old always-faint version as a
- * disabled button, and tapped it expecting nothing.
- */
-@Composable
-private fun GhostCta(
-    label: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = DexTheme.colors
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (enabled) colors.accentSoft else Color.Transparent)
-            .border(1.dp, if (enabled) colors.accent else colors.rule, RoundedCornerShape(12.dp))
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = label,
-            // One size in both states, so the bar does not shift when the photo lands (D53).
-            style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = if (enabled) FontWeight.Bold else FontWeight.Normal,
-            ),
-            color = if (enabled) colors.accent else colors.faint,
-        )
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Previews. Nothing renders them without Android Studio (risk R6), but they compile
 // and they are the cheapest description of each state the screen has.
@@ -916,7 +862,6 @@ private fun RegisterReadyPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = {},
         )
     }
 }
@@ -933,7 +878,6 @@ private fun RegisterNoResultsPreview() {
             onPickPhoto = {},
             onOpenLens = {},
             onRegister = {},
-            onAddOwnSpecies = {},
         )
     }
 }

@@ -6,7 +6,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import dev.tlong.biodex.AppContainer
-import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.GrantPressure
 import dev.tlong.biodex.data.photo.PhotoGateway
@@ -40,10 +39,12 @@ class RegisterViewModel(
     private val registrar: CaptureRegistrar,
     private val preselectedSpeciesId: String?,
     private val photos: PhotoGateway,
+    /** D69: the grid's search, carried over so a name is never typed twice. */
+    initialQuery: String? = null,
     private val gazetteer: PlaceGazetteer = PlaceGazetteer.None,
 ) : ViewModel() {
 
-    private val query = MutableStateFlow("")
+    private val query = MutableStateFlow(initialQuery.orEmpty())
     private val selectedSpeciesId = MutableStateFlow(preselectedSpeciesId)
     private val photo = MutableStateFlow<PickedPhoto?>(null)
     private val placePrompt = MutableStateFlow<PlacePrompt?>(null)
@@ -110,9 +111,6 @@ class RegisterViewModel(
         placeQuery.value = ""
         when (prompt) {
             PlacePrompt.REGISTER -> register(answer)
-            PlacePrompt.ADD_OWN -> viewModelScope.launch {
-                sendAddOwn(typedName = query.value.trim(), prefetched = null, place = answer.label)
-            }
         }
     }
 
@@ -144,43 +142,6 @@ class RegisterViewModel(
                 if (current?.uri == picked.uri) current.copy(hasLocation = located) else current
             }
         }
-    }
-
-    /**
-     * M08's typed path, routed through the same hand-off. D64: a photo with no coordinates
-     * raises the place prompt first, and the answer lands in [onPlaceEntered].
-     */
-    fun onAddOwnTyped() {
-        val state = uiState.value
-        if (!state.canAddOwn) return
-        if (state.needsPlacePrompt) {
-            placePrompt.value = PlacePrompt.ADD_OWN
-            return
-        }
-        viewModelScope.launch { sendAddOwn(typedName = query.value.trim(), prefetched = null, place = null) }
-    }
-
-    /**
-     * The one place a photo leaves this screen for the add-your-own card.
-     *
-     * **A camera shot is handed over still sitting in the cache, and its source travels with
-     * it.** Promoting here is tempting — a cache URI registered as a capture would be deleted
-     * by the next cold start's sweep, leaving a capture whose photo the app itself destroyed —
-     * but the card may still be abandoned, so the card promotes before it registers and
-     * sweeps the cache either way. The draft holder is in memory, so a draft and its cache
-     * file die together on process death; nothing dangles.
-     */
-    private suspend fun sendAddOwn(typedName: String, prefetched: LookupOutcome?, place: String?) {
-        val picked = photo.value ?: return
-        events.send(
-            RegisterEvent.AddOwnSpecies(
-                typedName,
-                picked.uri,
-                picked.source,
-                prefetched,
-                place = place,
-            ),
-        )
     }
 
     /**
@@ -266,6 +227,7 @@ class RegisterViewModel(
         fun factory(
             container: AppContainer,
             preselectedSpeciesId: String?,
+            initialQuery: String? = null,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 RegisterViewModel(
@@ -274,6 +236,7 @@ class RegisterViewModel(
                     preselectedSpeciesId = preselectedSpeciesId,
                     photos = container.photoGateway,
                     gazetteer = container.placeGazetteer,
+                    initialQuery = initialQuery,
                 )
             }
         }

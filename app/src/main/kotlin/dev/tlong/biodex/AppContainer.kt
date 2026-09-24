@@ -139,7 +139,7 @@ class AppContainer(val appContext: Context) {
     val addSpeciesDrafts: AddSpeciesDraftHolder by lazy { AddSpeciesDraftHolder() }
 
     val addSpeciesRegistrar: AddSpeciesRegistrar by lazy {
-        AddSpeciesRegistrar(store = dexRepository, captures = captureRegistrar)
+        AddSpeciesRegistrar(store = dexRepository)
     }
 
     // -----------------------------------------------------------------------

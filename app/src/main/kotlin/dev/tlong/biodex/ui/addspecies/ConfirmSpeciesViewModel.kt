@@ -9,9 +9,6 @@ import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
-import dev.tlong.biodex.data.photo.PhotoGateway
-import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
-import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
 import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
@@ -22,8 +19,8 @@ import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import dev.tlong.biodex.domain.nextUserDexNumber
+import dev.tlong.biodex.domain.normalized
 import dev.tlong.biodex.media.NetworkMonitor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,17 +28,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * The confirm card's state holder (M18–M21).
  *
  * It has one branch the rest of the app does not: **offline never reaches the card.** M20 says
- * registration never blocks on the network and an offline add is created immediately from the
- * name and the photo alone, so when the screen opens with no connectivity it writes the
- * details-pending species and hands the route a navigation event. M19's "nothing is written
- * until you accept" governs the lookup path, which is the only path where there is something
- * to confirm.
+ * adding never blocks on the network and an offline add is created immediately from the name
+ * alone, so when the screen opens with no connectivity it writes the details-pending species
+ * straight away. M19's "nothing is written until you accept" governs the lookup path, which is
+ * the only path where there is something to confirm.
+ *
+ * Adding is not catching (D69): both paths end on [ConfirmSpeciesUiState.Added], which asks
+ * whether the species has been caught, and the answer is an event the route navigates on.
  */
 class ConfirmSpeciesViewModel(
     private val drafts: AddSpeciesDraftHolder,
@@ -49,13 +47,15 @@ class ConfirmSpeciesViewModel(
     private val registrar: AddSpeciesRegistrar,
     private val repository: DexRepository,
     private val networkMonitor: NetworkMonitor,
-    private val photos: PhotoGateway,
     private val draftId: String,
 ) : ViewModel() {
 
     sealed interface Event {
-        /** Created from scratch: the route navigates to the detail screen with the reveal. */
-        data class Created(val speciesId: String) : Event
+        /** D69: added, not caught yet — the route goes back to the grid. */
+        data class NotCaught(val speciesId: String) : Event
+
+        /** D69: added and already caught — the route opens its entry to register the photo. */
+        data class Caught(val speciesId: String) : Event
 
         /** A backfill was saved: the route just goes back to the entry it came from. */
         data class Updated(val speciesId: String) : Event
@@ -72,7 +72,6 @@ class ConfirmSpeciesViewModel(
     private var ecosystems: List<Ecosystem> = emptyList()
     private var nextDexNumber = FIRST_USER_DEX_NUMBER
     private var saving = false
-    private var error: String? = null
 
     private val _uiState = MutableStateFlow<ConfirmSpeciesUiState>(
         if (draft == null) ConfirmSpeciesUiState.Missing else ConfirmSpeciesUiState.Loading,
@@ -109,34 +108,12 @@ class ConfirmSpeciesViewModel(
         publish()
     }
 
-    /** M20's offline path: one write, no card, no waiting. The photo is kept, as everywhere. */
+    /** M20's offline path: one write, no card, no waiting — then the same question (D69). */
     private suspend fun createOfflinePending(draft: AddSpeciesDraft) {
         val fields = SpeciesFields(commonName = draft.typedName)
-        when (
-            val result = registrar.create(
-                fields = fields,
-                ecosystemIds = emptyList(),
-                photoUri = photoForCapture(draft),
-                locationLabel = draft.place,
-                exifUri = draft.photoUri,
-            )
-        ) {
-            is AddSpeciesRegistrar.CreateResult.Created -> {
-                sweepCacheFor(draft)
-                drafts.remove(draftId)
-                events.send(Event.Created(result.speciesId))
-            }
-
-            AddSpeciesRegistrar.CreateResult.PhotoUnreadable -> {
-                error = "That photo could not be read. Nothing was saved."
-                publish()
-            }
-
-            AddSpeciesRegistrar.CreateResult.PlaceMissing -> {
-                error = PLACE_MISSING_MESSAGE
-                publish()
-            }
-        }
+        val created = registrar.create(fields = fields, ecosystemIds = emptyList())
+        drafts.remove(draftId)
+        _uiState.value = addedState(created.speciesId, created.dexNumber, fields.normalized())
     }
 
     fun onSelectCandidate(index: Int) {
@@ -215,7 +192,6 @@ class ConfirmSpeciesViewModel(
         val card = _uiState.value as? ConfirmSpeciesUiState.Card ?: return
         if (saving) return
         saving = true
-        error = null
         publish()
         viewModelScope.launch {
             val speciesId = existing?.id
@@ -230,55 +206,24 @@ class ConfirmSpeciesViewModel(
                 events.send(Event.Updated(speciesId))
                 return@launch
             }
-            when (
-                val result = registrar.create(
-                    fields = card.fields,
-                    ecosystemIds = card.selectedEcosystemIds.toList(),
-                    photoUri = photoForCapture(draft),
-                    userEditedFields = edits.editedFields.toList(),
-                    locationLabel = draft.place,
-                    // D60: the Register screen's place gate read this file; the door reads it too.
-                    exifUri = draft.photoUri,
-                )
-            ) {
-                is AddSpeciesRegistrar.CreateResult.Created -> {
-                    sweepCacheFor(draft)
-                    drafts.remove(draftId)
-                    events.send(Event.Created(result.speciesId))
-                }
-
-                AddSpeciesRegistrar.CreateResult.PhotoUnreadable -> {
-                    saving = false
-                    error = "That photo could not be read. Nothing was saved — pick another one."
-                    publish()
-                }
-
-                AddSpeciesRegistrar.CreateResult.PlaceMissing -> {
-                    saving = false
-                    error = PLACE_MISSING_MESSAGE
-                    publish()
-                }
-            }
+            val created = registrar.create(
+                fields = card.fields,
+                ecosystemIds = card.selectedEcosystemIds.toList(),
+                userEditedFields = edits.editedFields.toList(),
+            )
+            drafts.remove(draftId)
+            _uiState.value = addedState(created.speciesId, created.dexNumber, card.fields)
         }
     }
 
-    /**
-     * D26. A camera shot is still sitting in the app's cache: it is promoted into the gallery
-     * now, so the capture references a real gallery item rather than a file the next cold
-     * start sweeps away. All this decides is whether the file needs a home first.
-     */
-    private suspend fun photoForCapture(draft: AddSpeciesDraft): String? {
-        val uri = draft.photoUri ?: return null
-        if (!shouldPromoteToGallery(draft.photoSource)) return uri
-        return withContext(Dispatchers.IO) {
-            photos.promoteToGallery(uri, "BioDex.jpg")
-        } ?: uri
-    }
+    /** D69's two answers. Asked only once the species exists, so neither writes anything. */
+    fun onNotCaught() = answer { Event.NotCaught(it) }
 
-    /** A camera shot's cache file goes whether it was promoted, attached or dropped. */
-    private suspend fun sweepCacheFor(draft: AddSpeciesDraft) {
-        if (!shouldDeleteCacheFile(draft.photoSource)) return
-        withContext(Dispatchers.IO) { photos.sweepCameraCache() }
+    fun onCaught() = answer { Event.Caught(it) }
+
+    private fun answer(event: (String) -> Event) {
+        val added = _uiState.value as? ConfirmSpeciesUiState.Added ?: return
+        viewModelScope.launch { events.send(event(added.speciesId)) }
     }
 
     fun onDismiss() {
@@ -288,6 +233,8 @@ class ConfirmSpeciesViewModel(
 
     private fun publish() {
         val draft = draft ?: return
+        // A lookup still in flight must not paint the card back over the question (D69).
+        if (_uiState.value is ConfirmSpeciesUiState.Added) return
         _uiState.value = confirmCardState(
             draft = draft,
             outcome = outcome,
@@ -297,20 +244,10 @@ class ConfirmSpeciesViewModel(
             ecosystems = ecosystems,
             nextDexNumber = nextDexNumber,
             saving = saving,
-            error = error,
         )
     }
 
     companion object {
-        /**
-         * D60. The Register screen already refuses to hand a draft over without a place, so this
-         * is reached only when the photo's GPS read differently at the two moments; it says what
-         * to do rather than what went wrong inside.
-         */
-        const val PLACE_MISSING_MESSAGE =
-            "Where was this? Go back and type the place — the photo carries no location. " +
-                "Nothing was saved."
-
         fun factory(container: AppContainer, draftId: String): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
@@ -320,7 +257,6 @@ class ConfirmSpeciesViewModel(
                         registrar = container.addSpeciesRegistrar,
                         repository = container.dexRepository,
                         networkMonitor = container.networkMonitor,
-                        photos = container.photoGateway,
                         draftId = draftId,
                     )
                 }
