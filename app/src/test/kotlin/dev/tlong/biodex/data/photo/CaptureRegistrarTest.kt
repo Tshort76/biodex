@@ -191,6 +191,39 @@ class CaptureRegistrarTest {
         }
 
     @Test
+    fun `a picked place's point fills the coordinates only when the photo has none (D68)`() =
+        runBlocking {
+            // The photo's GPS is where the animal was; the place's point is only near it.
+            photos.exif = ExifFacts(takenAt = 42L, lat = 44.0, lng = -121.3)
+            val located = registrar.register(
+                "owl", "content://photos/1",
+                locationLabel = "Bend, Oregon", placeLat = 44.0582, placeLng = -121.3153,
+            ) as CaptureRegistrar.RegisterResult.Registered
+            val kept = store.captures.getValue(located.captureId)
+            assertEquals("photo GPS is never overwritten", 44.0, kept.lat!!, 0.0)
+            assertEquals(-121.3, kept.lng!!, 0.0)
+            assertEquals("Bend, Oregon", kept.locationLabel)
+
+            photos.exif = ExifFacts.None
+            val stripped = registrar.register(
+                "owl", "content://photos/2",
+                locationLabel = "Bear Valley, California", placeLat = 38.4665, placeLng = -120.0441,
+            ) as CaptureRegistrar.RegisterResult.Registered
+            val filled = store.captures.getValue(stripped.captureId)
+            assertEquals("a photo with no GPS takes the place's point", 38.4665, filled.lat!!, 0.0)
+            assertEquals(-120.0441, filled.lng!!, 0.0)
+
+            val halfAPoint = registrar.register(
+                "owl", "content://photos/3", locationLabel = "Somewhere", placeLat = 38.0,
+            ) as CaptureRegistrar.RegisterResult.Registered
+            assertNull("half a coordinate is no coordinate", store.captures.getValue(halfAPoint.captureId).lat)
+
+            val ownWords = registrar.register("owl", "content://photos/4", locationLabel = "The back garden")
+                as CaptureRegistrar.RegisterResult.Registered
+            assertNull("free text carries no point", store.captures.getValue(ownWords.captureId).lat)
+        }
+
+    @Test
     fun `no local copy is written by default (D6), and one is when the setting is on`() =
         runBlocking {
             registrar.register("owl", "content://photos/1")

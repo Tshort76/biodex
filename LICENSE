@@ -62,7 +62,7 @@ entry carries the author and license string Commons reports for it.
 The bundled place list (app/src/main/assets/places/pacific.tsv) is a separate
 asset from the catalogue and carries its own terms:
 
-  Place names, states                      CC BY 4.0, GeoNames
+  Place names, states, coordinates         CC BY 4.0, GeoNames
     (app/src/main/assets/places/           https://www.geonames.org/
      pacific.tsv)
 

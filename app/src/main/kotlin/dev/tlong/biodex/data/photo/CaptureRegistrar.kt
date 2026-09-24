@@ -62,12 +62,20 @@ class CaptureRegistrar(
          * trusting the media store to hand the coordinates back for the copy.
          */
         exifUri: String? = null,
+        /**
+         * D68. The point of a place picked off the offline list — written only when the photo's
+         * EXIF carries no coordinates, since the photograph's GPS is where the animal was and a
+         * town's point is only near it. Null for a place typed in the user's own words.
+         */
+        placeLat: Double? = null,
+        placeLng: Double? = null,
     ): RegisterResult {
+        val placePoint = pointOrNull(placeLat, placeLng)
         // A photoless registration skips the grant, the EXIF read and the thumbnail entirely —
         // there is nothing to take a grant on, nothing to read a date out of, and nothing to
         // render. Its `takenAt` is the registration time, which is the honest answer. No screen
         // takes this path since D59; the photoless shape a screen does produce is D61's unlink.
-        if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel)
+        if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel, placePoint)
 
         val alreadyReferenced = store.captureCountForUri(photoUri) > 0
         // 4.1 step 1. A refusal is tolerated: the picker's own grant lasts long enough to
@@ -89,6 +97,7 @@ class CaptureRegistrar(
         }
 
         val registeredAt = now()
+        val point = pointOrNull(facts.lat, facts.lng) ?: placePoint
         val plan = planRegistration(
             capture = Capture(
                 id = captureId,
@@ -101,8 +110,8 @@ class CaptureRegistrar(
                     null
                 },
                 takenAt = takenAtOrFallback(facts, registeredAt),
-                lat = facts.lat,
-                lng = facts.lng,
+                lat = point?.first,
+                lng = point?.second,
                 locationLabel = resolveLocationLabel(locationLabel, facts),
                 note = note,
                 createdAt = registeredAt,
@@ -133,6 +142,10 @@ class CaptureRegistrar(
 
     private companion object {
         const val PLACE_NAME_TIMEOUT_MS = 3_000L
+
+        /** A coordinate is a pair or nothing: half of one would draw a sighting on the equator. */
+        fun pointOrNull(lat: Double?, lng: Double?): Pair<Double, Double>? =
+            if (lat != null && lng != null) lat to lng else null
     }
 
     /**
@@ -151,6 +164,7 @@ class CaptureRegistrar(
         speciesId: String,
         note: String?,
         locationLabel: String?,
+        placePoint: Pair<Double, Double>?,
     ): RegisterResult {
         // D60: with no photograph there is no EXIF, so the typed place is the only place.
         if (locationLabel.isNullOrBlank()) return RegisterResult.PlaceMissing
@@ -164,6 +178,8 @@ class CaptureRegistrar(
                 thumbPath = null,
                 localCopyPath = null,
                 takenAt = registeredAt,
+                lat = placePoint?.first,
+                lng = placePoint?.second,
                 locationLabel = locationLabel,
                 note = note,
                 createdAt = registeredAt,

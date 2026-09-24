@@ -511,7 +511,7 @@ private fun PlacePromptDialog(
     onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
-    val ready = place.label != null
+    val ready = place.answer != null
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.card,
@@ -563,7 +563,7 @@ private fun PlacePromptDialog(
                     items(place.suggestions, key = { it }) { suggestion ->
                         PlaceSuggestionRow(
                             label = suggestion,
-                            chosen = suggestion == place.canonical,
+                            chosen = suggestion == place.canonical?.label,
                             onClick = { onQueryChange(suggestion) },
                         )
                     }

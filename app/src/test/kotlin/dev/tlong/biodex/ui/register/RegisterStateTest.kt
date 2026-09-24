@@ -2,6 +2,7 @@ package dev.tlong.biodex.ui.register
 
 import dev.tlong.biodex.domain.GazetteerPlace
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -72,8 +73,8 @@ class RegisterStateTest {
     @Test
     fun `the place prompt offers the list and writes the list's spelling when it matches`() = runBlocking {
         val gazetteer = listOf(
-            GazetteerPlace("Bear Valley", "CA", 0),
-            GazetteerPlace("Bear Valley Trail", "CA", 1),
+            GazetteerPlace("Bear Valley", "CA", 0, lat = 38.4665, lng = -120.0441),
+            GazetteerPlace("Bear Valley Trail", "CA", 1, lat = 38.0405, lng = -122.7996),
         )
         fun search(typed: String) = runBlocking {
             placeSearchState(
@@ -85,8 +86,8 @@ class RegisterStateTest {
 
         val empty = search("")
         assertEquals("nothing typed offers where we have been", listOf("Tomales Bay, California"), empty.suggestions)
-        assertNull("and an empty prompt still writes nothing", empty.label)
-        assertNull(search("   ").label)
+        assertNull("and an empty prompt still writes nothing", empty.answer)
+        assertNull(search("   ").answer)
 
         val typing = search("bear")
         assertEquals(
@@ -96,11 +97,15 @@ class RegisterStateTest {
 
         val chosen = search("bear valley, california")
         assertTrue(chosen.isKnown)
-        assertEquals("the list's spelling is what gets written", "Bear Valley, California", chosen.label)
+        assertEquals(
+            "the list's spelling is what gets written, with its point",
+            PlaceAnswer("Bear Valley, California", lat = 38.4665, lng = -120.0441),
+            chosen.answer,
+        )
 
         val ownWords = search("  out behind the barn  ")
         assertFalse("a place the list has never heard of is still a place", ownWords.isKnown)
-        assertEquals("and it is written as typed, trimmed", "out behind the barn", ownWords.label)
+        assertEquals("written as typed, trimmed, with no point", PlaceAnswer("out behind the barn"), ownWords.answer)
     }
 
     /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */

@@ -3,6 +3,7 @@ package dev.tlong.biodex.ui.register
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.domain.GazetteerPlace
+import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.canonicalPlace
 import dev.tlong.biodex.domain.suggestPlaces
@@ -182,17 +183,18 @@ data class PlaceSearchState(
     val query: String = "",
     val suggestions: List<String> = emptyList(),
     /**
-     * The list's own spelling of what is typed, when the list holds it — null otherwise, which
-     * is a perfectly good answer (D68: the list is autocomplete, not a gate).
+     * The place what is typed names, with the list's own spelling and its point — null when
+     * neither list holds it, which is a perfectly good answer (D68: autocomplete, not a gate).
      */
-    val canonical: String? = null,
+    val canonical: PlaceAnswer? = null,
 ) {
     /**
-     * What a registration would write: the list's spelling when what was typed names a place
-     * it holds, and otherwise the text as typed. Null only when nothing has been typed at all,
-     * which is the one state the prompt refuses — D60 still needs *a* place.
+     * What a registration would write: the list's place when what was typed names one, and
+     * otherwise the text as typed with no coordinates. Null only when nothing has been typed at
+     * all, which is the one state the prompt refuses — D60 still needs *a* place.
      */
-    val label: String? get() = canonical ?: query.trim().takeIf { it.isNotEmpty() }
+    val answer: PlaceAnswer?
+        get() = canonical ?: query.trim().takeIf { it.isNotEmpty() }?.let { PlaceAnswer(it) }
 
     /** Whether what is typed came off one of the two lists, for the row that draws as chosen. */
     val isKnown: Boolean get() = canonical != null

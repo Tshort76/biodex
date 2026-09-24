@@ -1,7 +1,7 @@
 # The place list
 
 `build_places.py` generates `app/src/main/assets/places/pacific.tsv` — the offline list of
-place names the app's "Where was this?" prompt suggests from and validates against
+place names, with their coordinates, that the app's "Where was this?" prompt suggests from
 (`DESIGN.md` D68). Like the catalogue, it is **generated and committed**, so no build and no
 registration touches the network.
 
@@ -31,7 +31,12 @@ for the same reason.
 
 Rows are then deduplicated on **name and state**, because the label a sighting stores is
 "Bear Valley, California" — five parks called City Park in California are one suggestion. Where
-two rows share a name and a state, the better tier wins. That leaves 44,620 places in 918 KB.
+two rows share a name and a state, the better tier wins, and so do its coordinates. That leaves
+44,620 places in 1.7 MB, one per line as `name<TAB>state<TAB>tier<TAB>lat<TAB>lng`.
+
+Coordinates are rounded to four decimals, about 11 metres. The app writes them onto a sighting
+whose photo had no GPS, so a place picked from the list is mappable; a photo's own GPS always
+wins over them.
 
 ## Editing it
 
@@ -47,7 +52,7 @@ no `catalogueVersion`-style bump.
 
 `test_build_places.py` pins the filter (which states, which codes, how duplicates collapse)
 and the shipped asset itself — every line is three fields, every state is one the config
-names, every tier is 0, 1 or 2. A malformed line is skipped by the app rather than crashing
+names, every tier is 0, 1 or 2, and every point falls inside a box around the three states. A malformed line is skipped by the app rather than crashing
 it, but it is still a bug here.
 
 ## Licence

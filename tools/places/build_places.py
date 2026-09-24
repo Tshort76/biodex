@@ -3,7 +3,7 @@
 
 Reads `places.json` (the states and the feature codes worth keeping) and the
 GeoNames dump for the United States, and writes a tab-separated asset — one
-place per line, `name<TAB>state<TAB>tier` — to
+place per line, `name<TAB>state<TAB>tier<TAB>lat<TAB>lng` — to
 `app/src/main/assets/places/pacific.tsv`. DESIGN.md D68 has the why; the app
 loads the file once and ranks suggestions by tier, so the file needs no order
 of its own beyond being stable, and it is sorted for a readable diff.
@@ -39,11 +39,17 @@ DEFAULT_OUT = ASSET_DIR / "pacific.tsv"
 DUMP_URL = "https://download.geonames.org/export/dump/US.zip"
 USER_AGENT = "BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)"
 
-# GeoNames' columns, as the dump's readme.txt names them. Only these four matter.
+# GeoNames' columns, as the dump's readme.txt names them. Only these six matter.
 COL_NAME = 1
+COL_LAT = 4
+COL_LNG = 5
 COL_FEATURE_CLASS = 6
 COL_FEATURE_CODE = 7
 COL_ADMIN1 = 10
+
+# Four decimal places is about 11 metres — far finer than the centroid of a town or a
+# park needs, and it keeps the asset a third smaller than the dump's seven.
+COORDINATE_DECIMALS = 4
 
 
 def load_config(path: Path) -> tuple[set[str], dict[str, int]]:
@@ -91,18 +97,20 @@ def usable_name(name: str) -> bool:
     return any(character.isalpha() for character in stripped)
 
 
-def select_places(lines, states: set[str], tiers: dict[str, int]) -> list[tuple[str, str, int]]:
+def select_places(lines, states: set[str], tiers: dict[str, int]):
     """
     Every row of the dump that is in one of [states] and carries a feature code
-    in [tiers], as `(name, state, tier)`, deduplicated on name and state.
+    in [tiers], as `(name, state, tier, lat, lng)`, deduplicated on name and state.
 
     Deduplication is the whole reason this is worth doing at build time: the dump
     holds 232,000 rows for these three states and roughly a fifth of them are a
     name the app already has — five parks called "City Park" in California are
     one suggestion, because what the app stores is the label "City Park, CA".
-    Where two rows share a name and a state, the better tier wins.
+    Where two rows share a name and a state, the better tier wins, and so do its
+    coordinates; between two rows of the same tier the first in the dump wins, so
+    the output is stable from one build to the next.
     """
-    best: dict[tuple[str, str], int] = {}
+    best: dict[tuple[str, str], tuple[int, float, float]] = {}
     for raw in lines:
         fields = raw.rstrip("\n").split("\t")
         if len(fields) <= COL_ADMIN1:
@@ -116,14 +124,24 @@ def select_places(lines, states: set[str], tiers: dict[str, int]) -> list[tuple[
         name = unicodedata.normalize("NFC", fields[COL_NAME].strip())
         if not usable_name(name):
             continue
+        try:
+            lat = round(float(fields[COL_LAT]), COORDINATE_DECIMALS)
+            lng = round(float(fields[COL_LNG]), COORDINATE_DECIMALS)
+        except ValueError:
+            continue
         key = (name, state)
-        if tier < best.get(key, 99):
-            best[key] = tier
-    return sorted((name, state, tier) for (name, state), tier in best.items())
+        if key not in best or tier < best[key][0]:
+            best[key] = (tier, lat, lng)
+    return sorted(
+        (name, state, tier, lat, lng) for (name, state), (tier, lat, lng) in best.items()
+    )
 
 
-def render(places: list[tuple[str, str, int]]) -> str:
-    return "".join(f"{name}\t{state}\t{tier}\n" for name, state, tier in places)
+def render(places) -> str:
+    return "".join(
+        f"{name}\t{state}\t{tier}\t{lat:.{COORDINATE_DECIMALS}f}\t{lng:.{COORDINATE_DECIMALS}f}\n"
+        for name, state, tier, lat, lng in places
+    )
 
 
 def main(argv: list[str]) -> int:
@@ -144,7 +162,7 @@ def main(argv: list[str]) -> int:
     text = render(places)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(text, encoding="utf-8")
-    counts = {tier: sum(1 for _, _, t in places if t == tier) for tier in (0, 1, 2)}
+    counts = {tier: sum(1 for place in places if place[2] == tier) for tier in (0, 1, 2)}
     print(
         f"wrote {args.out} — {len(places)} places "
         f"({counts[0]} towns, {counts[1]} parks and trails, {counts[2]} natural features), "

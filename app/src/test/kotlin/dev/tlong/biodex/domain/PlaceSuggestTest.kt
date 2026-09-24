@@ -12,32 +12,37 @@ import org.junit.Test
  */
 class PlaceSuggestTest {
 
+    /** A place with a made-up point: the ranking never looks at coordinates. */
+    private fun place(name: String, state: String, tier: Int) =
+        GazetteerPlace(name, state, tier, lat = 38.0, lng = -122.0)
+
     private val gazetteer = listOf(
-        GazetteerPlace("Point Reyes Station", "CA", 0),
-        GazetteerPlace("Point Reyes Hill", "CA", 2),
-        GazetteerPlace("Bear Valley", "CA", 0),
-        GazetteerPlace("Bear Valley Trail", "CA", 1),
-        GazetteerPlace("Cañada de los Osos", "CA", 2),
-        GazetteerPlace("Astoria", "OR", 0),
-        GazetteerPlace("Bear Valley", "WA", 2),
+        place("Point Reyes Station", "CA", 0),
+        place("Point Reyes Hill", "CA", 2),
+        GazetteerPlace("Bear Valley", "CA", 0, lat = 38.4665, lng = -120.0441),
+        place("Bear Valley Trail", "CA", 1),
+        place("Cañada de los Osos", "CA", 2),
+        place("Astoria", "OR", 0),
+        place("Bear Valley", "WA", 2),
     )
 
     @Test
     fun `a line of the asset parses into a place, and a broken one into nothing`() {
         assertEquals(
-            GazetteerPlace("Bear Valley", "CA", 0),
-            parseGazetteerLine("Bear Valley\tCA\t0"),
+            GazetteerPlace("Bear Valley", "CA", 0, lat = 38.4665, lng = -120.0441),
+            parseGazetteerLine("Bear Valley\tCA\t0\t38.4665\t-120.0441"),
         )
-        assertNull(parseGazetteerLine("Bear Valley\tCA"))
-        assertNull(parseGazetteerLine("Bear Valley\tCA\tzero"))
-        assertNull(parseGazetteerLine("\tCA\t0"))
+        assertNull("the old three-column shape", parseGazetteerLine("Bear Valley\tCA\t0"))
+        assertNull(parseGazetteerLine("Bear Valley\tCA\tzero\t38.4\t-120.0"))
+        assertNull(parseGazetteerLine("Bear Valley\tCA\t0\tnorth\t-120.0"))
+        assertNull(parseGazetteerLine("\tCA\t0\t38.4\t-120.0"))
         assertNull(parseGazetteerLine(""))
     }
 
     @Test
     fun `a place reads as the geocoder would have written it`() {
-        assertEquals("Bear Valley, California", GazetteerPlace("Bear Valley", "CA", 0).label)
-        assertEquals("Astoria, Oregon", GazetteerPlace("Astoria", "OR", 0).label)
+        assertEquals("Bear Valley, California", place("Bear Valley", "CA", 0).label)
+        assertEquals("Astoria, Oregon", place("Astoria", "OR", 0).label)
     }
 
     @Test
@@ -101,7 +106,7 @@ class PlaceSuggestTest {
 
     @Test
     fun `the list is capped, so a common word cannot fill the dialog`() {
-        val many = (1..50).map { GazetteerPlace("City Park $it", "CA", 1) }
+        val many = (1..50).map { place("City Park $it", "CA", 1) }
         assertEquals(3, suggestPlaces("city park", many, recent = emptyList(), limit = 3).size)
     }
 
@@ -109,12 +114,12 @@ class PlaceSuggestTest {
     fun `only a place off one of the two lists is a place`() {
         val recent = listOf("The back garden")
         assertEquals(
-            "Bear Valley, California",
+            PlaceAnswer("Bear Valley, California", lat = 38.4665, lng = -120.0441),
             canonicalPlace("Bear Valley, California", gazetteer, recent),
         )
         assertEquals(
-            "a place already used is a place",
-            "The back garden",
+            "a place already used is a place, with no point to give it",
+            PlaceAnswer("The back garden"),
             canonicalPlace("The back garden", gazetteer, recent),
         )
         assertNull("the bare name is not the label", canonicalPlace("Bear Valley", gazetteer, recent))
@@ -128,11 +133,21 @@ class PlaceSuggestTest {
         // list, or the prompt would validate the typing and then store it anyway.
         assertEquals(
             "Bear Valley, California",
-            canonicalPlace("bear valley,   california", gazetteer, recent = emptyList()),
+            canonicalPlace("bear valley,   california", gazetteer, recent = emptyList())?.label,
         )
         assertEquals(
             "Cañada de los Osos, California",
-            canonicalPlace("CANADA DE LOS OSOS, california", gazetteer, recent = emptyList()),
+            canonicalPlace("CANADA DE LOS OSOS, california", gazetteer, recent = emptyList())?.label,
         )
+    }
+
+    @Test
+    fun `a place already in the collection still maps when the list holds it`() {
+        // It started life as a suggestion or a geocoded name, and the list knows where it is.
+        val recent = listOf("Bear Valley, California")
+        val answer = canonicalPlace("bear valley, california", gazetteer, recent)!!
+        assertEquals("Bear Valley, California", answer.label)
+        assertEquals(38.4665, answer.lat!!, 0.0)
+        assertEquals(-120.0441, answer.lng!!, 0.0)
     }
 }

@@ -15,6 +15,7 @@ import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.shouldDeleteCacheFile
 import dev.tlong.biodex.data.photo.shouldPromoteToGallery
 import dev.tlong.biodex.data.repo.DexRepository
+import dev.tlong.biodex.domain.PlaceAnswer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,17 +101,17 @@ class RegisterViewModel(
     /**
      * D64. The prompt's answer: a place resumes whichever tap raised it; a dismissal just
      * closes it and the screen is as it was. What is written is the *list's* spelling when the
-     * list holds what was typed (D68), and the text as typed when it does not.
+     * list holds what was typed (D68), with its point, and the text as typed when it does not.
      */
     fun onPlaceEntered() {
-        val label = uiState.value.place.label ?: return
+        val answer = uiState.value.place.answer ?: return
         val prompt = placePrompt.value ?: return
         placePrompt.value = null
         placeQuery.value = ""
         when (prompt) {
-            PlacePrompt.REGISTER -> register(label)
+            PlacePrompt.REGISTER -> register(answer)
             PlacePrompt.ADD_OWN -> viewModelScope.launch {
-                sendAddOwn(typedName = query.value.trim(), prefetched = null, place = label)
+                sendAddOwn(typedName = query.value.trim(), prefetched = null, place = answer.label)
             }
         }
     }
@@ -193,10 +194,10 @@ class RegisterViewModel(
             placePrompt.value = PlacePrompt.REGISTER
             return
         }
-        register(locationLabel = null)
+        register(place = null)
     }
 
-    private fun register(locationLabel: String?) {
+    private fun register(place: PlaceAnswer?) {
         val speciesId = selectedSpeciesId.value ?: return
         val picked = photo.value ?: return
         if (registering.value) return
@@ -215,9 +216,11 @@ class RegisterViewModel(
             val result = registrar.register(
                 speciesId,
                 registerUri,
-                locationLabel = locationLabel,
+                locationLabel = place?.label,
                 // D60: the place gate above read the cache file; the door reads the same one.
                 exifUri = picked.uri.takeIf { it != registerUri },
+                placeLat = place?.lat,
+                placeLng = place?.lng,
             )
             when (result) {
                 is CaptureRegistrar.RegisterResult.Registered -> {

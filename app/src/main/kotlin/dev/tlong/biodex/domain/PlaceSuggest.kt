@@ -13,11 +13,16 @@ import java.text.Normalizer
  * or a back garden no gazetteer holds.
  */
 
-/** One row of the asset. [tier] is 0 for a town, 1 for a park or trail, 2 for a landmark. */
+/**
+ * One row of the asset. [tier] is 0 for a town, 1 for a park or trail, 2 for a landmark;
+ * [lat]/[lng] are GeoNames' point for it, to four decimals.
+ */
 data class GazetteerPlace(
     val name: String,
     val state: String,
     val tier: Int,
+    val lat: Double,
+    val lng: Double,
 ) {
     /** What a sighting stores — the same "Locality, Region" shape the geocoder produces (D56). */
     val label: String get() = "$name, ${stateName(state)}"
@@ -38,19 +43,35 @@ private fun stateName(code: String): String = when (code) {
 }
 
 /**
- * `name<TAB>state<TAB>tier`, or null for a line the asset should not have carried. A bad line
- * is skipped rather than thrown: a place list that lost its last byte in a bad install should
- * cost the suggestions it holds, not the app's ability to register a catch.
+ * `name<TAB>state<TAB>tier<TAB>lat<TAB>lng`, or null for a line the asset should not have
+ * carried. A bad line is skipped rather than thrown: a place list that lost its last byte in a
+ * bad install should cost the suggestions it holds, not the app's ability to register a catch.
  */
 fun parseGazetteerLine(line: String): GazetteerPlace? {
     val fields = line.split('\t')
-    if (fields.size != 3) return null
+    if (fields.size != 5) return null
     val name = fields[0].trim()
     val state = fields[1].trim()
     val tier = fields[2].trim().toIntOrNull()
-    if (name.isEmpty() || state.isEmpty() || tier == null) return null
-    return GazetteerPlace(name = name, state = state, tier = tier)
+    val lat = fields[3].trim().toDoubleOrNull()
+    val lng = fields[4].trim().toDoubleOrNull()
+    if (name.isEmpty() || state.isEmpty() || tier == null || lat == null || lng == null) {
+        return null
+    }
+    return GazetteerPlace(name = name, state = state, tier = tier, lat = lat, lng = lng)
 }
+
+/**
+ * What the place prompt hands a registration: the words that go on the sighting and, when the
+ * list knows the place, where it is. The coordinates are a *fallback* for the photo's own —
+ * the registrar writes them only when the EXIF had none (D68), because a photograph's GPS is
+ * where the animal was and a town's point is only near it.
+ */
+data class PlaceAnswer(
+    val label: String,
+    val lat: Double? = null,
+    val lng: Double? = null,
+)
 
 /**
  * Lower-cased, accents stripped, and every run of punctuation or whitespace flattened to one
@@ -136,16 +157,20 @@ fun suggestPlaces(
 }
 
 /**
- * The label [text] names, or null if neither source holds it — the validation D68 asks for.
+ * The place [text] names, or null if neither source holds it.
  *
  * It returns the *place's own* spelling rather than a yes, and that is the point: the match
  * folds case, accents and spacing on both sides, so "bear valley,  california" is a hit, and
- * writing that string onto a sighting would ship the typo the check just caught. What lands on
- * the capture is always the list's own label.
+ * writing that string onto a sighting would store the sloppiness the match forgave. A label
+ * this collection already uses keeps its own spelling; the coordinates come from the bundled
+ * list whenever it holds the same place, so a recent place that started life as a suggestion
+ * — or as a reverse-geocoded name — still maps.
  */
-fun canonicalPlace(text: String, places: List<GazetteerPlace>, recent: List<String>): String? {
+fun canonicalPlace(text: String, places: List<GazetteerPlace>, recent: List<String>): PlaceAnswer? {
     val folded = foldPlace(text)
     if (folded.isEmpty()) return null
-    recent.firstOrNull { foldPlace(it) == folded }?.let { return it }
-    return places.firstOrNull { it.foldedLabel == folded }?.label
+    val listed = places.firstOrNull { it.foldedLabel == folded }
+    val used = recent.firstOrNull { foldPlace(it) == folded }
+    val label = used ?: listed?.label ?: return null
+    return PlaceAnswer(label = label, lat = listed?.lat, lng = listed?.lng)
 }
