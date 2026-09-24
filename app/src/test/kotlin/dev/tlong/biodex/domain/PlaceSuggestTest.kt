@@ -142,6 +142,25 @@ class PlaceSuggestTest {
     }
 
     @Test
+    fun `a label written with the postal code finds its place and its point`() {
+        // Most of the owner's older sightings read "Town, CA"; the list says "California".
+        val answer = canonicalPlace("Bear Valley, CA", gazetteer, recent = listOf("Bear Valley, CA"))!!
+        assertEquals("the collection's own spelling is kept", "Bear Valley, CA", answer.label)
+        assertEquals(38.4665, answer.lat!!, 0.0)
+        assertEquals("Astoria, Oregon", expandStateCode("Astoria, or"))
+        assertEquals("a code mid-name is left alone", "CA Ranch", expandStateCode("CA Ranch"))
+        assertEquals("Eagle, Idaho", expandStateCode("Eagle, Idaho"))
+    }
+
+    @Test
+    fun `a one-letter query still ranks towns first and stops at the limit`() {
+        val many = (1..500).map { place("R Hill $it", "CA", 2) } + place("Redding", "CA", 0)
+        val offered = suggestPlaces("r", many, recent = emptyList(), limit = 5)
+        assertEquals(5, offered.size)
+        assertEquals("Redding, California", offered.first())
+    }
+
+    @Test
     fun `a place already in the collection still maps when the list holds it`() {
         // It started life as a suggestion or a geocoded name, and the list knows where it is.
         val recent = listOf("Bear Valley, California")

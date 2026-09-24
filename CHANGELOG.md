@@ -6,6 +6,12 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v23.1 — 2026-09-24
+
+- **Fixed** — typing in the "Where was this?" prompt did nothing: every keystroke was thrown away before it reached the field. Found on the phone; the field now keeps its own text.
+- **Fixed** — a one-letter search in the prompt took about 400 ms; it is now fast enough to keep up with typing.
+- **Changed** — a place written "Town, CA" (as most older sightings are) now matches the list's "Town, California", so picking it stores the place's coordinates too. (`D68`)
+
 ## v23 — 2026-09-24
 
 - **Added** — the "Where was this?" prompt autocompletes. It opens on the places your collection already uses, and as you type it searches a bundled list of 44,620 towns, parks, trails, beaches and landmarks across California, Oregon and Washington. Everything is on the phone, so it works with no signal. Tap a suggestion to fill the field. The field is still free text, so somewhere with no name on any list is still a place — but a name the list *does* hold is stored the list's way, so "bear valley,  california" lands as "Bear Valley, California" and two catches there read as one place. A place off the list also brings its coordinates, which fill in the sighting's location when the photo had none — so sightings stay mappable. Coordinates from a photo's GPS are kept exactly as before and always win. (`M13` revised, `D68`)

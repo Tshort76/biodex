@@ -24,8 +24,12 @@ data class GazetteerPlace(
     val lat: Double,
     val lng: Double,
 ) {
-    /** What a sighting stores — the same "Locality, Region" shape the geocoder produces (D56). */
-    val label: String get() = "$name, ${stateName(state)}"
+    /**
+     * What a sighting stores — the same "Locality, Region" shape the geocoder produces (D56).
+     * Built once: the search compares and offers labels, and allocating 45,000 of them per
+     * keystroke was most of what made a one-letter query take 400 ms on the phone.
+     */
+    val label: String = "$name, ${stateName(state)}"
 
     /** Folded once at parse, because the search folds the query and then scans all 45,000. */
     val folded: String = foldPlace(name)
@@ -41,6 +45,16 @@ private fun stateName(code: String): String = when (code) {
     "WA" -> "Washington"
     else -> code
 }
+
+private val TRAILING_STATE_CODE = Regex(""",\s*(CA|OR|WA)\s*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * "La Jolla, CA" spelled the way the list spells it — "La Jolla, California" — so a label typed
+ * with the postal code, as most of the owner's older sightings were, still finds its place and
+ * its point. Anything else comes back unchanged.
+ */
+internal fun expandStateCode(text: String): String =
+    TRAILING_STATE_CODE.replace(text) { ", " + stateName(it.groupValues[1].uppercase()) }
 
 /**
  * `name<TAB>state<TAB>tier<TAB>lat<TAB>lng`, or null for a line the asset should not have
@@ -100,10 +114,14 @@ fun foldPlace(text: String): String {
     return out.toString()
 }
 
-/** Where the query landed in a name: at the front, at a word, or just somewhere inside it. */
-private fun matchRank(folded: String, query: String): Int = when {
+/**
+ * Where the query landed in a name: at the front, at a word, or just somewhere inside it.
+ * [atWord] is the query with a leading space, built once by the caller rather than once per
+ * place.
+ */
+private fun matchRank(folded: String, query: String, atWord: String): Int = when {
     folded.startsWith(query) -> 0
-    folded.contains(" $query") -> 1
+    folded.contains(atWord) -> 1
     folded.contains(query) -> 2
     else -> NO_MATCH
 }
@@ -127,34 +145,41 @@ fun suggestPlaces(
 ): List<String> {
     val folded = foldPlace(query)
     if (folded.isEmpty()) return recent.take(limit)
+    val atWord = " $folded"
 
-    data class Hit(val label: String, val match: Int, val known: Int, val tier: Int)
+    // Every hit falls in one of a handful of buckets — (match, known, tier) — and the buckets
+    // are already in rank order. So rather than sort every hit (a one-letter query hits most of
+    // the 45,000), fill the buckets and sort only the few it takes to reach [limit].
+    val buckets = Array(MATCH_RANKS * 2 * TIERS) { ArrayList<String>() }
+    fun bucket(match: Int, known: Int, tier: Int) =
+        buckets[(match * 2 + known) * TIERS + tier.coerceIn(0, TIERS - 1)]
 
-    val hits = ArrayList<Hit>()
+    val alreadyOffered = HashSet<String>()
     for (label in recent) {
-        val rank = matchRank(foldPlace(label), folded)
-        if (rank != NO_MATCH) hits += Hit(label, rank, known = 0, tier = 0)
+        val rank = matchRank(foldPlace(label), folded, atWord)
+        if (rank != NO_MATCH && alreadyOffered.add(label)) bucket(rank, known = 0, tier = 0) += label
     }
-    val alreadyOffered = recent.toHashSet()
     for (place in places) {
-        val rank = matchRank(place.folded, folded)
-        if (rank == NO_MATCH) continue
-        val label = place.label
-        if (label in alreadyOffered) continue
-        hits += Hit(label, rank, known = 1, tier = place.tier)
+        val rank = matchRank(place.folded, folded, atWord)
+        if (rank == NO_MATCH || place.label in alreadyOffered) continue
+        bucket(rank, known = 1, tier = place.tier) += place.label
     }
 
-    return hits
-        .sortedWith(
-            compareBy<Hit> { it.match }
-                .thenBy { it.known }
-                .thenBy { it.tier }
-                .thenBy { it.label.length }
-                .thenBy { it.label },
-        )
-        .map { it.label }
-        .take(limit)
+    val out = ArrayList<String>(limit)
+    for (hits in buckets) {
+        if (out.size >= limit) break
+        if (hits.isEmpty()) continue
+        hits.sortWith(compareBy<String> { it.length }.thenBy { it })
+        for (label in hits) {
+            if (out.size >= limit) break
+            out += label
+        }
+    }
+    return out
 }
+
+private const val MATCH_RANKS = 3
+private const val TIERS = 3
 
 /**
  * The place [text] names, or null if neither source holds it.
@@ -163,14 +188,14 @@ fun suggestPlaces(
  * folds case, accents and spacing on both sides, so "bear valley,  california" is a hit, and
  * writing that string onto a sighting would store the sloppiness the match forgave. A label
  * this collection already uses keeps its own spelling; the coordinates come from the bundled
- * list whenever it holds the same place, so a recent place that started life as a suggestion
- * — or as a reverse-geocoded name — still maps.
+ * list whenever it holds the same place, so a recent place that started life as a suggestion,
+ * a reverse-geocoded name or a typed "Town, CA" still maps.
  */
 fun canonicalPlace(text: String, places: List<GazetteerPlace>, recent: List<String>): PlaceAnswer? {
-    val folded = foldPlace(text)
+    val folded = foldPlace(expandStateCode(text))
     if (folded.isEmpty()) return null
     val listed = places.firstOrNull { it.foldedLabel == folded }
-    val used = recent.firstOrNull { foldPlace(it) == folded }
+    val used = recent.firstOrNull { foldPlace(expandStateCode(it)) == folded }
     val label = used ?: listed?.label ?: return null
     return PlaceAnswer(label = label, lat = listed?.lat, lng = listed?.lng)
 }

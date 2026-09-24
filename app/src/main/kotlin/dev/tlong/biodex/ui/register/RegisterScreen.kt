@@ -253,7 +253,7 @@ fun RegisterScreen(
     onPickPhoto: () -> Unit,
     /** D64: the "Where was this?" prompt's two exits. */
     onPlaceQueryChange: (String) -> Unit = {},
-    onPlaceEntered: () -> Unit = {},
+    onPlaceEntered: (String) -> Unit = {},
     onPlacePromptDismissed: () -> Unit = {},
     /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
     onGrantPhotoAccess: (() -> Unit)? = null,
@@ -507,11 +507,20 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 private fun PlacePromptDialog(
     place: PlaceSearchState,
     onQueryChange: (String) -> Unit,
-    onPlaceEntered: () -> Unit,
+    onPlaceEntered: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
-    val ready = place.answer != null
+    // The field's text lives here, not in the ViewModel. Routed through the ViewModel it came
+    // back asynchronously, after the search; in between, the field redrew with the old value
+    // and the keyboard's input was thrown away — every keystroke, on the phone. The ViewModel
+    // is told what was typed and answers with suggestions; it never owns the text.
+    var text by rememberSaveable { mutableStateOf("") }
+    val type = { value: String ->
+        text = value
+        onQueryChange(value)
+    }
+    val ready = text.isNotBlank()
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.card,
@@ -540,7 +549,7 @@ private fun PlacePromptDialog(
                 ) {
                     Text(text = "📍", style = MaterialTheme.typography.bodyMedium)
                     Box(modifier = Modifier.weight(1f)) {
-                        if (place.query.isEmpty()) {
+                        if (text.isEmpty()) {
                             Text(
                                 text = "e.g. Bear Valley, Point Reyes",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -548,8 +557,8 @@ private fun PlacePromptDialog(
                             )
                         }
                         BasicTextField(
-                            value = place.query,
-                            onValueChange = onQueryChange,
+                            value = text,
+                            onValueChange = type,
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
                             cursorBrush = SolidColor(colors.accent),
@@ -564,10 +573,21 @@ private fun PlacePromptDialog(
                         PlaceSuggestionRow(
                             label = suggestion,
                             chosen = suggestion == place.canonical?.label,
-                            onClick = { onQueryChange(suggestion) },
+                            onClick = { type(suggestion) },
                         )
                     }
-                    if (place.suggestions.isEmpty() && place.query.isNotBlank()) {
+                    // A picked place's full label matches no name on the list, so the
+                    // suggestions empty out the moment one is chosen — show the choice itself
+                    // rather than a line claiming nothing matched.
+                    val chosen = place.canonical?.label?.takeIf { place.query == text }
+                    if (place.suggestions.isEmpty() && chosen != null) {
+                        item {
+                            PlaceSuggestionRow(label = "✓ $chosen", chosen = true, onClick = {})
+                        }
+                    }
+                    if (place.suggestions.isEmpty() && chosen == null && text.isNotBlank() &&
+                        place.query == text
+                    ) {
                         item {
                             Text(
                                 text = "Nothing on the list matches — what you typed will be " +
@@ -582,7 +602,7 @@ private fun PlacePromptDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onPlaceEntered, enabled = ready) {
+            TextButton(onClick = { onPlaceEntered(text) }, enabled = ready) {
                 Text(
                     text = "Register",
                     color = if (ready) colors.accent else colors.faint,

@@ -103,8 +103,8 @@ class RegisterViewModel(
      * closes it and the screen is as it was. What is written is the *list's* spelling when the
      * list holds what was typed (D68), with its point, and the text as typed when it does not.
      */
-    fun onPlaceEntered() {
-        val answer = uiState.value.place.answer ?: return
+    fun onPlaceEntered(typed: String) {
+        val answer = placeAnswerFor(typed, uiState.value.place) ?: return
         val prompt = placePrompt.value ?: return
         placePrompt.value = null
         placeQuery.value = ""

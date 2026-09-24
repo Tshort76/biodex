@@ -108,6 +108,19 @@ class RegisterStateTest {
         assertEquals("written as typed, trimmed, with no point", PlaceAnswer("out behind the barn"), ownWords.answer)
     }
 
+    @Test
+    fun `the prompt writes the search's answer only when it was computed for this text`() {
+        val bear = PlaceAnswer("Bear Valley, California", lat = 38.4665, lng = -120.0441)
+        val caughtUp = PlaceSearchState(query = "bear valley, california", canonical = bear)
+        assertEquals(bear, placeAnswerFor("bear valley, california", caughtUp))
+        assertEquals(
+            "a search a keystroke behind is not trusted; the text is taken as typed",
+            PlaceAnswer("bear valley, californiax"),
+            placeAnswerFor("bear valley, californiax", caughtUp),
+        )
+        assertNull(placeAnswerFor("  ", caughtUp))
+    }
+
     /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */
     private val photo = PickedPhoto("content://media/1", "IMG_1.jpg", hasLocation = true)
 

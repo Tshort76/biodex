@@ -201,6 +201,19 @@ data class PlaceSearchState(
 }
 
 /**
+ * D68. What the prompt's Register tap writes for [typed]. The search runs a keystroke behind
+ * the field — the dialog owns the text, the ViewModel only hears about it — so the search's
+ * answer is used only when it was computed for exactly this text. Otherwise the text is taken
+ * as typed: a tap faster than one search is rare, and it costs a listed place its spelling and
+ * point, never the registration.
+ */
+fun placeAnswerFor(typed: String, search: PlaceSearchState): PlaceAnswer? {
+    if (typed.isBlank()) return null
+    if (search.query == typed) return search.answer
+    return PlaceAnswer(typed.trim())
+}
+
+/**
  * D68. Pure, and deliberately not inside [registerUiState]: it scans 45,000 names on every
  * keystroke, which is microseconds but belongs on a background dispatcher, and the ViewModel
  * puts it there.
