@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v24 — 2026-09-24
+
+- **Changed** — a species you add to the dex counts toward the meters straight away, in the total, and in the caught count once you catch it. (`M15`, `D29` revised, `D70`)
+
 ## v23.1 — 2026-09-24
 
 - **Fixed** — typing in the "Where was this?" prompt did nothing: every keystroke was thrown away before it reached the field. Found on the phone; the field now keeps its own text.

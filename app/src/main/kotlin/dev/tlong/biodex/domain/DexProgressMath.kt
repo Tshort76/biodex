@@ -5,8 +5,9 @@ package dev.tlong.biodex.domain
  * on the JVM.
  *
  * The rules it encodes:
- *  - A caught user-added species counts in its kingdom's fraction, on both sides of it: a
- *    dex of 120 animals plus two of the user's own reads `2/122`, not `0/120 +2` (D29).
+ *  - A user-added species counts in its kingdom's fraction like a catalogue one: in the
+ *    denominator from the moment it is added, and in the numerator once it is caught. A dex
+ *    of 120 animals plus two of the user's own, both caught, reads `2/122` (D29, D70).
  *  - Kingdoms are still never blended into one fraction (D13).
  *  - [Meter.userAdded] survives as the count of how many of those caught species are the
  *    user's own. It is now a breakdown of the numerator rather than an addendum beside it.
@@ -37,15 +38,13 @@ object DexProgressMath {
         memberships: List<MembershipRow>,
         ecosystems: List<Ecosystem>,
     ): DexProgress {
-        val curated = species.filter { it.source == SpeciesSource.CURATED }
-        // A user-added species exists only because the user registered a photo of it, so
-        // in practice it is always caught; the filter keeps the count honest anyway. An
-        // uncaught one — only reachable through a backup import — enters no fraction at all,
-        // because it would inflate the denominator with something nobody has found.
+        // D70: every species in the dex is counted, the user's own included whether or not it
+        // has been caught. Adding a species by name is how the owner says "I expect to find
+        // this" (D69), so an uncaught one is a target the meter should show as unfound —
+        // not, as D29 once assumed, a backup-import oddity to keep out of the denominator.
+        val counted = species
+        // Carried alongside only to say how much of the numerator is the user's own.
         val userAdded = species.filter { it.source == SpeciesSource.USER && it.caught }
-        // D29: the two lists are one counted set. Everything below counts `counted`, and
-        // `userAdded` is carried alongside only to say how much of it is the user's own.
-        val counted = curated + userAdded
 
         fun meterFor(kingdom: Kingdom) = Meter(
             caught = counted.count { it.kingdom == kingdom && it.caught },
@@ -77,16 +76,14 @@ object DexProgressMath {
 
         val perEcosystem = ecosystems.sortedBy { it.sortOrder }.map { ecosystem ->
             val members = membersOf[ecosystem.id].orEmpty().mapNotNull { byId[it] }
-            // D29: the same counted set as the kingdom meters, so an ecosystem row and the
+            // D29/D70: the same counted set as the kingdom meters, so an ecosystem row and the
             // header pill can never disagree about whether the user's own bird exists.
-            val countedMembers = members.filter {
-                it.source == SpeciesSource.CURATED || it.caught
-            }
+            val countedMembers = members
             fun kingdomMeter(kingdom: Kingdom) = Meter(
                 caught = countedMembers.count { it.kingdom == kingdom && it.caught },
                 total = countedMembers.count { it.kingdom == kingdom },
                 userAdded = countedMembers.count {
-                    it.source == SpeciesSource.USER && it.kingdom == kingdom
+                    it.source == SpeciesSource.USER && it.kingdom == kingdom && it.caught
                 },
             )
             EcosystemProgress(

@@ -48,21 +48,27 @@ class DexProgressMathTest {
     }
 
     @Test
-    fun `an uncaught user-added species enters neither side of the fraction`() {
-        // Only a backup import can produce one. It must not inflate the denominator: a
-        // species nobody has found is not something the user is being asked to find.
+    fun `an added species not yet caught is a target - denominator, not numerator (D70)`() {
+        // D69 makes this the normal case: the owner adds a species they expect to find on a
+        // trip. It is unfound, and the meter says so, exactly as for a catalogue species.
         val progress = DexProgressMath.compute(
             regionId = "pacific",
             regionName = "Pacific USA",
             species = listOf(
                 curated("heron", TaxClass.BIRD, caught = true),
-                user("ghost", TaxClass.BIRD, caught = false),
+                user("wren", TaxClass.BIRD, caught = false),
             ),
-            memberships = emptyList(),
-            ecosystems = emptyList(),
+            memberships = listOf(MembershipRow("wren", "coastal-rainforest")),
+            ecosystems = listOf(Ecosystem("coastal-rainforest", "pacific", "Coastal Rainforest", 1)),
         )
 
-        assertEquals(Meter(caught = 1, total = 1, userAdded = 0), progress.animals)
+        assertEquals(Meter(caught = 1, total = 2, userAdded = 0), progress.animals)
+        val rainforest = progress.perEcosystem.single()
+        assertEquals(
+            "the ecosystem it was tagged to counts it too, and nobody's catch yet",
+            Meter(caught = 0, total = 1, userAdded = 0),
+            rainforest.animals,
+        )
     }
 
     @Test
