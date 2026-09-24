@@ -1,6 +1,9 @@
 package dev.tlong.biodex.ui.detail
 
 import androidx.compose.foundation.border
+import dev.tlong.biodex.ui.register.PlacePromptDialog
+import dev.tlong.biodex.ui.register.rememberGalleryPicker
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -58,7 +61,6 @@ import dev.tlong.biodex.ui.common.CaughtChip
 import dev.tlong.biodex.ui.common.DIMMED_ALPHA
 import dev.tlong.biodex.ui.common.DIMMED_FILTER
 import dev.tlong.biodex.ui.common.DexFilterChip
-import dev.tlong.biodex.ui.common.LinkRow
 import dev.tlong.biodex.ui.common.RangeMap
 import dev.tlong.biodex.ui.common.ScientificName
 import dev.tlong.biodex.ui.common.SectionHeader
@@ -85,8 +87,9 @@ fun EntryDetailRoute(
     speciesId: String,
     justUnlocked: Boolean,
     photoAdded: Boolean,
+    /** D76: arrived from "Yes — register my photo", so the picker opens straight away. */
+    startCapture: Boolean = false,
     onBack: () -> Unit,
-    onRegister: (String) -> Unit,
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onBackfillReady: (draftId: String) -> Unit,
@@ -103,6 +106,18 @@ fun EntryDetailRoute(
     // true for the life of the back-stack entry).
     var revealPending by rememberSaveable(speciesId) { mutableStateOf(justUnlocked) }
 
+    // D76. Capture! runs here: pick, the place prompt if the photo has none, the write, and
+    // then the same reveal or "+1" this screen shows after a registration made elsewhere.
+    val capture = rememberGalleryPicker(onPicked = viewModel::onPhotoPicked)
+    val placePrompt by viewModel.placePrompt.collectAsStateWithLifecycle()
+    var captureStarted by rememberSaveable(speciesId) { mutableStateOf(false) }
+    LaunchedEffect(speciesId) {
+        if (startCapture && !captureStarted) {
+            captureStarted = true
+            capture()
+        }
+    }
+
     // The repeat-registration acknowledgment (M09): a "+1" that shows for a moment and goes.
     // Same one-shot guard, for the same reason.
     // M20's trigger. The ViewModel decides whether a lookup is owed and whether it succeeded;
@@ -111,12 +126,28 @@ fun EntryDetailRoute(
         viewModel.backfillEvents.collect { draftId -> onBackfillReady(draftId) }
     }
 
-    var toastPending by rememberSaveable(speciesId) { mutableStateOf(photoAdded) }
-    if (toastPending) {
-        LaunchedEffect(speciesId) {
+    var chip by rememberSaveable(speciesId) { mutableStateOf(if (photoAdded) "+1 photo" else null) }
+    LaunchedEffect(chip) {
+        if (chip != null) {
             delay(PHOTO_ADDED_TOAST_MS)
-            toastPending = false
+            chip = null
         }
+    }
+    LaunchedEffect(speciesId) {
+        viewModel.captureEvents.collect { event ->
+            when (event) {
+                is CaptureEvent.Captured -> if (event.isFirst) revealPending = true else chip = "+1 photo"
+                CaptureEvent.Unreadable -> chip = "That photo could not be read — nothing was saved"
+            }
+        }
+    }
+    placePrompt?.let { place ->
+        PlacePromptDialog(
+            place = place,
+            onQueryChange = viewModel::onPlaceQueryChange,
+            onPlaceEntered = viewModel::onPlaceEntered,
+            onDismiss = viewModel::onPlacePromptDismissed,
+        )
     }
 
     Box {
@@ -124,7 +155,7 @@ fun EntryDetailRoute(
             state = state,
             filesDir = container.appContext.filesDir.absolutePath,
             onBack = onBack,
-            onRegister = onRegister,
+            onCapture = capture,
             onOpenPhoto = onOpenPhoto,
             onOpenNearest = onOpenNearest,
             onPreferOwnPhoto = viewModel::onPreferOwnPhoto,
@@ -158,9 +189,10 @@ fun EntryDetailRoute(
                 onDismiss = { revealPending = false },
             )
         }
-        if (toastPending && !revealPending) {
+        val chipText = chip
+        if (chipText != null && !revealPending) {
             Text(
-                text = "+1 photo",
+                text = chipText,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = DexTheme.colors.accent,
                 modifier = Modifier
@@ -182,7 +214,7 @@ fun EntryDetailScreen(
     state: EntryDetailUiState,
     filesDir: String,
     onBack: () -> Unit,
-    onRegister: (String) -> Unit,
+    onCapture: () -> Unit,
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onPreferOwnPhoto: (Boolean) -> Unit = {},
@@ -222,7 +254,7 @@ fun EntryDetailScreen(
                     detail = detail,
                     state = state,
                     filesDir = filesDir,
-                    onRegister = onRegister,
+                    onCapture = onCapture,
                     onOpenPhoto = onOpenPhoto,
                     onOpenNearest = onOpenNearest,
                     onPreferOwnPhoto = onPreferOwnPhoto,
@@ -237,7 +269,7 @@ private fun DetailBody(
     detail: SpeciesDetail,
     state: EntryDetailUiState,
     filesDir: String,
-    onRegister: (String) -> Unit,
+    onCapture: () -> Unit,
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onPreferOwnPhoto: (Boolean) -> Unit,
@@ -376,7 +408,7 @@ private fun DetailBody(
             captures = captures,
             filesDir = filesDir,
             onOpenPhoto = onOpenPhoto,
-            onAddPhoto = { onRegister(summary.id) },
+            onAddPhoto = onCapture,
         )
         // D56. The when-and-where of every catch, kept on the row and so untouched by what
         // happens to the photo afterwards. Newest first; the strip above stays in its order.
@@ -384,32 +416,42 @@ private fun DetailBody(
         SightingsList(rows = sightingRows(captures), onOpen = onOpenPhoto)
     }
 
-    if (!summary.caught) {
+    // D76. One row: Capture! records a sighting of this species right here, caught or not,
+    // and the magnifier beside it opens the reference link that "Learn more" used to.
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(top = 14.dp),
+    ) {
         Button(
-            onClick = { onRegister(summary.id) },
+            onClick = onCapture,
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colors.accent,
                 contentColor = colors.card,
             ),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 14.dp),
+                .weight(1f)
+                .height(48.dp),
         ) {
             Text(
-                text = "Register this species",
+                text = "Capture!",
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             )
         }
+        detail.infoUrl?.let { url ->
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.accentSoft)
+                    .clickable { uriHandler.openUri(url) },
+            ) {
+                Text(text = "🔍", style = MaterialTheme.typography.titleLarge)
+            }
+        }
     }
-
-    val infoUrl = detail.infoUrl
-    LinkRow(
-        label = if (infoUrl != null) "Learn more" else "No reference link",
-        enabled = infoUrl != null,
-        onClick = { infoUrl?.let(uriHandler::openUri) },
-        modifier = Modifier.padding(top = 10.dp),
-    )
 
     detail.imageAttribution?.let {
         AttributionLine(text = it, modifier = Modifier.padding(top = 8.dp))
@@ -800,7 +842,7 @@ private fun EntryDetailCaughtPreview() {
             ),
             filesDir = "/data/user/0/dev.tlong.biodex/files",
             onBack = {},
-            onRegister = {},
+            onCapture = {},
             onOpenPhoto = {},
             onOpenNearest = {},
         )
@@ -821,7 +863,7 @@ private fun EntryDetailUncaughtPreview() {
             ),
             filesDir = "/data/user/0/dev.tlong.biodex/files",
             onBack = {},
-            onRegister = {},
+            onCapture = {},
             onOpenPhoto = {},
             onOpenNearest = {},
         )

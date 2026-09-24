@@ -450,7 +450,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
  * own spelling, and anything else typed is taken as written.
  */
 @Composable
-private fun PlacePromptDialog(
+internal fun PlacePromptDialog(
     place: PlaceSearchState,
     onQueryChange: (String) -> Unit,
     onPlaceEntered: (String) -> Unit,

@@ -15,6 +15,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Changed** — a species can be added only once the lookup finds it. Offline, or when nothing online matches the name (usually a typo), the card says so and adds nothing. (`M20` revised, `D73`)
 - **Changed** — the Register screen lists the best match first: the name typed in full, then names that start with it, and so on. (`M14` revised, `D74`)
 - **Changed** — a species is dated "Caught" on the day its earliest photo was taken, not the day you registered it. Existing entries are corrected on upgrade. (`M09` revised, `D75`)
+- **Changed** — every entry has a **Capture!** button: tap it, pick the photo, and the sighting is recorded right there — the "Where was this?" prompt appears only when the photo has no location. The photo strip's ＋ does the same, and "Yes — register my photo" after adding a species opens the picker straight away. A 🔍 beside Capture! replaces the "Learn more" row. (`M04` revised, `D76`)
 - **Removed** — the in-app camera. Take the photo with your phone's camera and attach it from the gallery. (`M40` struck, `D26` superseded, `D71`)
 - **Changed** — a species you add to the dex counts toward the meters straight away, in the total, and in the caught count once you catch it. (`M15`, `D29` revised, `D70`)
 

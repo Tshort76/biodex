@@ -50,6 +50,8 @@ data class EntryDetail(
     val speciesId: String,
     val justUnlocked: Boolean = false,
     val photoAdded: Boolean = false,
+    /** D76: open the photo picker on arrival, as "Yes — register my photo" promised. */
+    val capture: Boolean = false,
 )
 
 /** [initialQuery] is the grid's search, carried over so a name is never typed twice (D69). */
@@ -106,8 +108,8 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 speciesId = route.speciesId,
                 justUnlocked = route.justUnlocked,
                 photoAdded = route.photoAdded,
+                startCapture = route.capture,
                 onBack = { navController.popBackStack() },
-                onRegister = { speciesId -> navController.navigate(Register(speciesId)) },
                 onOpenPhoto = { captureId -> navController.navigate(PhotoViewer(captureId)) },
                 onOpenNearest = { navController.navigate(Nearest(route.speciesId)) },
                 // M20: a details-pending entry opened online looks itself up and presents the
@@ -145,12 +147,12 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 draftId = route.draftId,
                 onBack = { navController.popBackStack() },
                 // D69. Adding is not catching. "Not yet" is home — past Register, if the add
-                // started there, since that job is done. "Yes" is the entry, uncaught, where
-                // Register this species records the catch and plays the reveal; back from it
-                // returns to the grid (DESIGN.md §6).
+                // started there, since that job is done. "Yes" is the entry, uncaught, with the
+                // photo picker already open (D76); the catch plays the reveal there, and back
+                // from it returns to the grid (DESIGN.md §6).
                 onNotCaught = { navController.popBackStack(DexGrid, inclusive = false) },
                 onCaught = { speciesId ->
-                    navController.navigate(EntryDetail(speciesId = speciesId)) {
+                    navController.navigate(EntryDetail(speciesId = speciesId, capture = true)) {
                         popUpTo(DexGrid)
                     }
                 },
