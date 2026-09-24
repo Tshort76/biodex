@@ -32,6 +32,18 @@ data class EntryStatusRow(
     val preferOwnPhoto: Boolean = false,
 )
 
+
+/**
+ * D75. An entry's caught date is the date its earliest photo was taken — the capture's EXIF
+ * `takenAt`, which falls back to registration time. Applied after every write that adds or
+ * removes a capture, and once to the whole table by [MIGRATION_6_7]. An entry with no capture
+ * left is deleted by the same writes, so the `EXISTS` only guards a row mid-transaction.
+ */
+const val SYNC_CAUGHT_AT_SQL =
+    "UPDATE entries SET caughtAt = " +
+        "(SELECT MIN(c.takenAt) FROM captures c WHERE c.speciesId = entries.speciesId) " +
+        "WHERE EXISTS (SELECT 1 FROM captures c WHERE c.speciesId = entries.speciesId)"
+
 @Dao
 interface SpeciesDao {
 
@@ -152,6 +164,14 @@ interface EntryDao {
 
     @Query("DELETE FROM entries WHERE speciesId = :speciesId")
     suspend fun deleteBySpeciesId(speciesId: String)
+
+    /** D75: this species' caught date follows its earliest photo. */
+    @Query("$SYNC_CAUGHT_AT_SQL AND speciesId = :speciesId")
+    suspend fun syncCaughtAt(speciesId: String)
+
+    /** D75, for every entry at once — after an import. */
+    @Query(SYNC_CAUGHT_AT_SQL)
+    suspend fun syncAllCaughtAt()
 
     @Query("UPDATE entries SET favoriteCaptureId = :captureId WHERE speciesId = :speciesId")
     suspend fun setFavoriteCapture(speciesId: String, captureId: String?)

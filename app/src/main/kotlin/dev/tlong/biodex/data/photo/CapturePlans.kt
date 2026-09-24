@@ -22,9 +22,9 @@ data class RegistrationPlan(
 }
 
 /**
- * M09. The species is unlocked by its first capture, and `caughtAt` is that capture's
- * registration time — the entry and the capture agree by construction rather than by two
- * clock reads.
+ * M09. The species is unlocked by its first capture, and `caughtAt` is the date that photo was
+ * taken (D75) — its EXIF time, else its registration time. Later captures can move it earlier;
+ * the store re-derives it from every capture on each write.
  */
 fun planRegistration(
     capture: Capture,
@@ -34,7 +34,7 @@ fun planRegistration(
     newEntry = if (existingEntry == null) {
         Entry(
             speciesId = capture.speciesId,
-            caughtAt = capture.createdAt,
+            caughtAt = capture.takenAt,
             favoriteCaptureId = capture.id,
             captureCount = 1,
         )

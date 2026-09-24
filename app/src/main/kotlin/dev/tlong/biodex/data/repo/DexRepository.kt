@@ -201,6 +201,8 @@ class DexRepository(
                 )
             }
             db.captureDao().insert(plan.capture.toEntity())
+            // D75: a photo taken earlier than the first one moves the caught date back.
+            db.entryDao().syncCaughtAt(plan.capture.speciesId)
         }
     }
 
@@ -214,6 +216,8 @@ class DexRepository(
             db.captureDao().deleteById(plan.captureId)
             if (plan.deleteEntry) {
                 db.entryDao().deleteBySpeciesId(plan.speciesId)
+            } else {
+                db.entryDao().syncCaughtAt(plan.speciesId)
             }
         }
     }
@@ -330,6 +334,8 @@ class DexRepository(
                     ),
                 )
             }
+            // D75: an archive written before v24 carries registration dates.
+            db.entryDao().syncAllCaughtAt()
         }
     }
 }

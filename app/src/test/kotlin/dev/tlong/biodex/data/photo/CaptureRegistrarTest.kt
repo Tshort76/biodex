@@ -131,6 +131,20 @@ class CaptureRegistrarTest {
         }
 
     @Test
+    fun `the caught date is the earliest photo's, not the registration's (D75)`() = runBlocking {
+        photos.exif = ExifFacts(takenAt = 500L, lat = 44.0, lng = -121.3)
+        registrar.register("owl", "content://photos/1")
+        assertEquals("the photo's EXIF date, though registered at 1000", 500L, store.entries.getValue("owl").caughtAt)
+
+        photos.exif = ExifFacts(takenAt = 200L, lat = 44.0, lng = -121.3)
+        val earlier = registrar.register("owl", "content://photos/2") as CaptureRegistrar.RegisterResult.Registered
+        assertEquals("a photo taken earlier moves it back", 200L, store.entries.getValue("owl").caughtAt)
+
+        registrar.deleteCapture(earlier.captureId)
+        assertEquals("and deleting that photo moves it forward again", 500L, store.entries.getValue("owl").caughtAt)
+    }
+
+    @Test
     fun `a photo that cannot be thumbnailed writes nothing at all`() = runBlocking {
         photos.thumbnailWorks = false
 

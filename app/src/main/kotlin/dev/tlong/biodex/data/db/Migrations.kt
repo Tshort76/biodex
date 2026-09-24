@@ -167,3 +167,13 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         PURGE_PLANTS_SQL.forEach(db::execSQL)
     }
 }
+
+/**
+ * D75. No schema change: every existing entry's caught date moves from the day its first photo
+ * was registered to the day its earliest photo was taken.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(SYNC_CAUGHT_AT_SQL)
+    }
+}

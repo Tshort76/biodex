@@ -28,6 +28,13 @@ class FakeCaptureStore : CaptureStore {
     override suspend fun applyRegistration(plan: RegistrationPlan) {
         plan.newEntry?.let { entries[it.speciesId] = it }
         captures[plan.capture.id] = plan.capture
+        syncCaughtAt(plan.capture.speciesId)
+    }
+
+    /** `SYNC_CAUGHT_AT_SQL`, in memory (D75). */
+    private fun syncCaughtAt(speciesId: String) {
+        val earliest = captures.values.filter { it.speciesId == speciesId }.minOfOrNull { it.takenAt } ?: return
+        entries[speciesId]?.let { entries[speciesId] = it.copy(caughtAt = earliest) }
     }
 
     override suspend fun applyDeletion(plan: CaptureDeletionPlan) {
@@ -35,7 +42,7 @@ class FakeCaptureStore : CaptureStore {
             entries[plan.speciesId] = entries.getValue(plan.speciesId).copy(favoriteCaptureId = null)
         }
         captures.remove(plan.captureId)
-        if (plan.deleteEntry) entries.remove(plan.speciesId)
+        if (plan.deleteEntry) entries.remove(plan.speciesId) else syncCaughtAt(plan.speciesId)
     }
 
     override suspend fun setFavoriteCapture(speciesId: String, captureId: String?) {
