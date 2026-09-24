@@ -70,8 +70,6 @@ data class RegisterUiState(
      */
     val preselectedIndex: Int? = null,
 ) {
-    /** D63: the photo carried its own coordinates, so no prompt will be raised. */
-    val placeFromPhoto: Boolean get() = photo?.hasLocation == true
 
     /**
      * D60/D64: the tap must ask for a place before writing. True once the EXIF read has

@@ -1,6 +1,7 @@
 package dev.tlong.biodex.ui.register
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -58,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
-import dev.tlong.biodex.data.photo.PhotoSourceKind
 import dev.tlong.biodex.data.photo.hasPhotoLibraryAccess
 import dev.tlong.biodex.data.photo.photoLibraryPermissions
 import dev.tlong.biodex.domain.Kingdom
@@ -72,9 +72,9 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Frame 3 of `mockup.html` (M07, M08, M10, S06). Species-first: search the catalogue offline,
- * attach one photo — from the system picker or the in-app camera (M40) — and register.
+ * attach one photo and register.
  *
- * A photo is one photo, from the gallery, the Files picker (D58) or the camera, and every
+ * A photo is one photo, from the gallery or the Files picker (D58), and every
  * kingdom keeps it. (Pl@ntNet identification and the photoless plant catch lived here from
  * v6 to v20; both left with the plants, D59.)
  */
@@ -151,30 +151,6 @@ fun RegisterRoute(
         if (libraryAccess) state.photo?.let(viewModel::onPhotoPicked)
     }
 
-    // M40/D26. `ACTION_IMAGE_CAPTURE` to a FileProvider URI over `cacheDir/capture/` — the
-    // system camera app takes the photograph, so this app declares no CAMERA permission and
-    // asks for nothing at runtime. (Verified from the `ACTION_IMAGE_CAPTURE` reference:
-    // declaring CAMERA *without holding it* is what throws; not declaring it is free.)
-    //
-    // The pending URI is remembered across the launch because the result carries only a
-    // success flag — the camera app writes to where the intent said, not to a returned URI.
-    var pendingCameraUri by rememberSaveable { mutableStateOf<String?>(null) }
-    val camera = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture(),
-    ) { saved: Boolean ->
-        val uri = pendingCameraUri
-        pendingCameraUri = null
-        if (saved && uri != null) {
-            viewModel.onPhotoPicked(
-                PickedPhoto(
-                    uri = uri,
-                    displayName = "Taken just now",
-                    source = PhotoSourceKind.CAMERA_CACHE,
-                ),
-            )
-        }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
@@ -203,14 +179,13 @@ fun RegisterRoute(
                 PackageManager.PERMISSION_GRANTED
             if (granted) openFiles() else mediaLocation.launch(Manifest.permission.ACCESS_MEDIA_LOCATION)
         },
-        onTakePhoto = {
-            val uri = container.photoGateway.newCameraCaptureUri()
-            if (uri != null) {
-                pendingCameraUri = uri
-                camera.launch(Uri.parse(uri))
+        onOpenLens = { uri ->
+            try {
+                context.startActivity(lensIntentFor(uri))
+            } catch (_: ActivityNotFoundException) {
+                context.startActivity(lensChooserFor(uri))
             }
         },
-        onOpenLens = { uri -> context.startActivity(lensChooserFor(uri)) },
         onRegister = viewModel::onRegister,
         onAddSpecies = { onAddSpecies(state.query.trim()) },
     )
@@ -222,13 +197,25 @@ fun RegisterRoute(
  * the chooser offers. `FLAG_GRANT_READ_URI_PERMISSION` is what lets the receiving app open a
  * URI this app only has a read grant on.
  */
-internal fun lensChooserFor(photoUri: String): Intent {
-    val share = Intent(Intent.ACTION_SEND).apply {
-        type = "image/*"
-        putExtra(Intent.EXTRA_STREAM, Uri.parse(photoUri))
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-    return Intent.createChooser(share, "Identify this photo")
+internal fun lensChooserFor(photoUri: String): Intent =
+    Intent.createChooser(imageShare(photoUri), "Identify this photo")
+
+/**
+ * D72. The same share, addressed to Lens's own share target in the Google app, so the 🔍 opens
+ * Lens rather than a sheet of contacts. Started directly rather than resolved first — resolving
+ * another package needs a `<queries>` entry — so a phone without the Google app throws
+ * `ActivityNotFoundException` and the caller falls back to [lensChooserFor].
+ */
+internal fun lensIntentFor(photoUri: String): Intent =
+    imageShare(photoUri).setClassName(
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.apps.search.lens.LensShareEntryPointActivity",
+    )
+
+private fun imageShare(photoUri: String): Intent = Intent(Intent.ACTION_SEND).apply {
+    type = "image/*"
+    putExtra(Intent.EXTRA_STREAM, Uri.parse(photoUri))
+    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 }
 
 @Composable
@@ -244,7 +231,6 @@ fun RegisterScreen(
     onPlacePromptDismissed: () -> Unit = {},
     /** D63: null once the photo-library permission is held; otherwise the tap that asks for it. */
     onGrantPhotoAccess: (() -> Unit)? = null,
-    onTakePhoto: () -> Unit = {},
     onPickFromFiles: () -> Unit = {},
     onOpenLens: (String) -> Unit,
     onRegister: () -> Unit,
@@ -326,7 +312,7 @@ fun RegisterScreen(
                     .padding(top = 10.dp, bottom = 12.dp),
             ) {
                 Text(
-                    text = "PHOTO · GALLERY, FILES OR CAMERA",
+                    text = "PHOTO · GALLERY OR FILES",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
@@ -336,21 +322,14 @@ fun RegisterScreen(
                 PhotoAttachRow(
                     photo = state.photo,
                     onPickPhoto = onPickPhoto,
-                    onTakePhoto = onTakePhoto,
                     onPickFromFiles = onPickFromFiles,
+                    onOpenLens = onOpenLens,
                 )
-                // D64. Nothing about the place lives on this screen: the photo answers for
-                // itself (one quiet line says so), and a photo that cannot is asked about when
-                // Register is tapped. The one exception is the offer to grant photo access,
-                // shown only when a picked photo came back placeless without it (D63).
-                if (state.placeFromPhoto) {
-                    Text(
-                        text = "📍 Place read from the photo",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.accent,
-                        modifier = Modifier.padding(start = 4.dp),
-                    )
-                } else if (state.needsPlacePrompt && onGrantPhotoAccess != null) {
+                // D64/D72. Nothing about the place lives on this screen: the photo answers for
+                // itself, and a photo that cannot is asked about when Register is tapped. The
+                // one exception is the offer to grant photo access, shown only when a picked
+                // photo came back placeless without it (D63).
+                if (state.needsPlacePrompt && onGrantPhotoAccess != null) {
                     Text(
                         text = "Allow photo access to read the place from your photos →",
                         style = MaterialTheme.typography.labelSmall,
@@ -358,21 +337,6 @@ fun RegisterScreen(
                         modifier = Modifier
                             .padding(start = 4.dp)
                             .clickable(onClick = onGrantPhotoAccess),
-                    )
-                }
-
-                // S06. Lens is the one "what is this?" tool the app offers (S12).
-                state.photo?.let { picked ->
-                    Text(
-                        text = "Not sure what it is? Open photo in Google Lens ↗",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.accent,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.accentSoft)
-                            .clickable { onOpenLens(picked.uri) }
-                            .padding(horizontal = 12.dp, vertical = 9.dp),
                     )
                 }
 
@@ -695,8 +659,8 @@ private fun SpeciesResultRow(
 private fun PhotoAttachRow(
     photo: PickedPhoto?,
     onPickPhoto: () -> Unit,
-    onTakePhoto: () -> Unit,
     onPickFromFiles: () -> Unit,
+    onOpenLens: (String) -> Unit,
 ) {
     val colors = DexTheme.colors
     Row(
@@ -749,9 +713,8 @@ private fun PhotoAttachRow(
                 color = if (photo == null) colors.faint else colors.accent,
             )
         }
-        // M40. Its own tap target rather than a second row: the camera is the other way to
-        // get the same one photo, not a separate step. D58: the Files picker is the third,
-        // for a photo whose place should come along with it — the one way GPS survives.
+        // D58. Its own tap target rather than a second row: the Files picker is the other way
+        // to get the same one photo, for a photo whose place should come along with it.
         Text(
             text = "📁",
             style = MaterialTheme.typography.titleLarge,
@@ -761,15 +724,19 @@ private fun PhotoAttachRow(
                 .clickable(onClick = onPickFromFiles)
                 .padding(horizontal = 10.dp, vertical = 6.dp),
         )
-        Text(
-            text = "📷",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(colors.accentSoft)
-                .clickable(onClick = onTakePhoto)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        )
+        // S06/D72. Lens is the one "what is this?" tool the app offers (S12), so it sits
+        // beside the photo it would open, and only once there is one.
+        if (photo != null) {
+            Text(
+                text = "🔍",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.accentSoft)
+                    .clickable { onOpenLens(photo.uri) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 

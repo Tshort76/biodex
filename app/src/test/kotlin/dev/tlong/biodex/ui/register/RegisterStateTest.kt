@@ -154,12 +154,10 @@ class RegisterStateTest {
         val s = state(selectedId = owl, photo = stripped)
         assertTrue("the button is live", s.canRegister)
         assertTrue("and the tap will prompt", s.needsPlacePrompt)
-        assertFalse(s.placeFromPhoto)
 
         val located = state(selectedId = owl, photo = photo)
         assertTrue(located.canRegister)
         assertFalse("GPS on the photo means no prompt", located.needsPlacePrompt)
-        assertTrue(located.placeFromPhoto)
 
         val reading = state(selectedId = owl, photo = stripped.copy(hasLocation = null))
         assertFalse("the button waits while the EXIF is still being read", reading.canRegister)
