@@ -9,6 +9,7 @@ import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.net.CandidateDetails
 import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
+import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
 import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
@@ -46,6 +47,8 @@ class ConfirmSpeciesViewModel(
     private val repository: DexRepository,
     private val networkMonitor: NetworkMonitor,
     private val draftId: String,
+    /** D78: records the draft's photo once the species exists. */
+    private val captures: CaptureRegistrar? = null,
 ) : ViewModel() {
 
     sealed interface Event {
@@ -54,6 +57,9 @@ class ConfirmSpeciesViewModel(
 
         /** D69: added and already caught — the route opens its entry to register the photo. */
         data class Caught(val speciesId: String) : Event
+
+        /** D78: added and captured with the Identify screen's photo — the route plays the reveal. */
+        data class AddedAndCaptured(val speciesId: String) : Event
 
         /** D69: the dex already holds what the card resolved to — the route opens that entry. */
         data class OpenExisting(val speciesId: String) : Event
@@ -205,7 +211,24 @@ class ConfirmSpeciesViewModel(
                 userEditedFields = edits.editedFields.toList(),
             )
             drafts.remove(draftId)
-            _uiState.value = addedState(created.speciesId, created.dexNumber, card.fields)
+            // D78 (the owner's Q02): a species added from a photo was caught in that photo, so
+            // it is captured now rather than asked about. Should the photo not register, the
+            // species still exists and the ordinary question follows.
+            val photo = draft.photo
+            val result = photo?.let {
+                captures?.register(
+                    created.speciesId,
+                    it.uri,
+                    locationLabel = it.place?.label,
+                    placeLat = it.place?.lat,
+                    placeLng = it.place?.lng,
+                )
+            }
+            if (result is CaptureRegistrar.RegisterResult.Registered) {
+                events.send(Event.AddedAndCaptured(created.speciesId))
+            } else {
+                _uiState.value = addedState(created.speciesId, created.dexNumber, card.fields)
+            }
         }
     }
 
@@ -259,6 +282,7 @@ class ConfirmSpeciesViewModel(
                         registrar = container.addSpeciesRegistrar,
                         repository = container.dexRepository,
                         networkMonitor = container.networkMonitor,
+                        captures = container.captureRegistrar,
                         draftId = draftId,
                     )
                 }

@@ -1,8 +1,8 @@
 package dev.tlong.biodex.ui.detail
 
 import androidx.compose.foundation.border
-import dev.tlong.biodex.ui.register.PlacePromptDialog
-import dev.tlong.biodex.ui.register.rememberGalleryPicker
+import dev.tlong.biodex.ui.capture.PlacePromptDialog
+import dev.tlong.biodex.ui.capture.rememberGalleryPicker
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -86,7 +86,8 @@ import kotlinx.coroutines.delay
 fun EntryDetailRoute(
     speciesId: String,
     justUnlocked: Boolean,
-    photoAdded: Boolean,
+    /** D77: the reveal is for a capture made elsewhere, so dismissing it goes home. */
+    homeAfterReveal: Boolean = false,
     /** D76: arrived from "Yes — register my photo", so the picker opens straight away. */
     startCapture: Boolean = false,
     onBack: () -> Unit,
@@ -111,7 +112,7 @@ fun EntryDetailRoute(
     // true for the life of the back-stack entry).
     var revealPending by rememberSaveable(speciesId) { mutableStateOf(justUnlocked) }
     // Set when the reveal on screen is this screen's own Capture!, so dismissing it goes home.
-    var homeAfterReveal by rememberSaveable(speciesId) { mutableStateOf(false) }
+    var goHomeAfterReveal by rememberSaveable(speciesId) { mutableStateOf(homeAfterReveal) }
 
     // D76. Capture! runs here: pick, the place prompt if the photo has none, the write, and
     // then the same reveal or "+1" this screen shows after a registration made elsewhere.
@@ -125,15 +126,15 @@ fun EntryDetailRoute(
         }
     }
 
-    // The repeat-registration acknowledgment (M09): a "+1" that shows for a moment and goes.
-    // Same one-shot guard, for the same reason.
     // M20's trigger. The ViewModel decides whether a lookup is owed and whether it succeeded;
     // this only routes the result, once, to the confirmation card.
     LaunchedEffect(speciesId) {
         viewModel.backfillEvents.collect { draftId -> onBackfillReady(draftId) }
     }
 
-    var chip by rememberSaveable(speciesId) { mutableStateOf(if (photoAdded) "+1 photo" else null) }
+    // A note that shows for a moment and goes — today only a photo that could not be read,
+    // since a successful capture leaves this screen (D77).
+    var chip by rememberSaveable(speciesId) { mutableStateOf<String?>(null) }
     LaunchedEffect(chip) {
         if (chip != null) {
             delay(PHOTO_ADDED_TOAST_MS)
@@ -145,7 +146,7 @@ fun EntryDetailRoute(
             when (event) {
                 is CaptureEvent.Captured -> if (event.isFirst) {
                     revealPending = true
-                    homeAfterReveal = true
+                    goHomeAfterReveal = true
                 } else {
                     onCaptured("+1 photo")
                 }
@@ -200,7 +201,7 @@ fun EntryDetailRoute(
                 ),
                 onDismiss = {
                     revealPending = false
-                    if (homeAfterReveal) onCaptured(null)
+                    if (goHomeAfterReveal) onCaptured(null)
                 },
             )
         }

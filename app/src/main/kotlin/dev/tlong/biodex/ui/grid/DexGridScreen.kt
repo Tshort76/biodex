@@ -73,8 +73,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun DexGridRoute(
     onOpenSpecies: (String) -> Unit,
-    /** Opens Register with the search text carried over, so nothing is typed twice. */
-    onRegister: (query: String) -> Unit,
+    /** D78: the ＋ picks a photo; Identify names it and captures it. */
+    onAddPhoto: () -> Unit,
     /** D69: looks the name up and opens the add screen with it. */
     onAddSpecies: (name: String) -> Unit,
     onOpenStats: () -> Unit,
@@ -100,7 +100,7 @@ fun DexGridRoute(
         onSort = viewModel::onSort,
         onClearFilters = viewModel::onClearFilters,
         onOpenSpecies = onOpenSpecies,
-        onRegister = onRegister,
+        onAddPhoto = onAddPhoto,
         onAddSpecies = onAddSpecies,
         onOpenStats = onOpenStats,
         onOpenNearest = onOpenNearest,
@@ -122,7 +122,7 @@ fun DexGridScreen(
     onSort: (DexSort) -> Unit,
     onClearFilters: () -> Unit,
     onOpenSpecies: (String) -> Unit,
-    onRegister: (query: String) -> Unit,
+    onAddPhoto: () -> Unit,
     onAddSpecies: (name: String) -> Unit = {},
     onOpenStats: () -> Unit,
     onOpenNearest: () -> Unit,
@@ -165,11 +165,7 @@ fun DexGridScreen(
                     regionLabel = state.regionLabel,
                     animals = state.animals,
                     fungi = state.fungi.takeIf { state.showFungiPill },
-                    // D69: one ＋, two jobs. A search the dex does not hold is a species to add;
-                    // anything else opens Register with the search already typed.
-                    onRegister = {
-                        state.addableName?.let(onAddSpecies) ?: onRegister(state.query.trim())
-                    },
+                    onAddPhoto = onAddPhoto,
                     onOpenNearest = onOpenNearest,
                     onOpenSettings = onOpenSettings,
                 )
@@ -185,13 +181,11 @@ fun DexGridScreen(
                 )
                 when {
                     state.loading -> CentredNote("Loading the Pacific catalogue…")
+                    // D78: a search the dex does not hold is where a species is added by name.
+                    state.species.isEmpty() && state.addableName != null ->
+                        AddByNameNote(name = state.addableName, onClick = { onAddSpecies(state.addableName) })
                     state.species.isEmpty() -> CentredNote(
-                        when {
-                            state.addableName != null ->
-                                "Not in your dex. Tap ＋ to add “${state.addableName}”."
-                            state.isFiltered -> "No species match."
-                            else -> "The catalogue is empty."
-                        },
+                        if (state.isFiltered) "No species match." else "The catalogue is empty.",
                     )
                     else -> LazyVerticalGrid(
                         state = gridState,
@@ -236,7 +230,7 @@ private fun GridAppBar(
     regionLabel: String,
     animals: Meter,
     fungi: Meter?,
-    onRegister: () -> Unit,
+    onAddPhoto: () -> Unit,
     onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -270,9 +264,9 @@ private fun GridAppBar(
             )
         }
         NearestButton(onClick = onOpenNearest)
-        RegisterButton(onClick = onRegister)
+        AddPhotoButton(onClick = onAddPhoto)
         // Was a TextButton, whose Material minimum size is 58dp wide for a one-glyph label.
-        // The Register button had to come from somewhere: matching the gear to it costs the
+        // The ＋ had to come from somewhere: matching the gear to it costs the
         // header less width than it did before, rather than more.
         HeaderIconButton(glyph = "⚙", tint = DexTheme.colors.muted, onClick = onOpenSettings)
     }
@@ -320,15 +314,15 @@ private fun NearestButton(onClick: () -> Unit) {
 }
 
 /**
- * Register a species (D31). This was the Scaffold's floating action button until the owner
- * asked for it at the top: the grid is scrolled far more often than it is registered into,
- * and a FAB sits over the tiles the whole time it is not being used.
+ * Capture from a photo (D31, D78): picks one, then Identify names it. This was the Scaffold's
+ * floating action button until the owner asked for it at the top: the grid is scrolled far
+ * more often than it is added to, and a FAB sits over the tiles the whole time.
  *
  * An accent circle rather than another muted text button, because it is the one control on
  * this screen that adds to the collection.
  */
 @Composable
-private fun RegisterButton(onClick: () -> Unit) = HeaderIconButton(
+private fun AddPhotoButton(onClick: () -> Unit) = HeaderIconButton(
     glyph = "＋",
     tint = DexTheme.colors.card,
     background = DexTheme.colors.accent,
@@ -609,6 +603,21 @@ private fun <T> FilterDropdown(
 }
 
 @Composable
+private fun AddByNameNote(name: String, onClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = "Not in your dex. Add “$name” to your dex ›",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = DexTheme.colors.accent,
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+        )
+    }
+}
+
+@Composable
 private fun CentredNote(text: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
@@ -711,7 +720,7 @@ private fun DexGridPreview() {
             onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
-            onRegister = { _ -> },
+            onAddPhoto = {},
             onOpenStats = {},
             onOpenNearest = {},
             onOpenSettings = {},
@@ -743,7 +752,7 @@ private fun DexGridSearchPreview() {
             onSort = {},
             onClearFilters = {},
             onOpenSpecies = {},
-            onRegister = { _ -> },
+            onAddPhoto = {},
             onOpenStats = {},
             onOpenNearest = {},
             onOpenSettings = {},

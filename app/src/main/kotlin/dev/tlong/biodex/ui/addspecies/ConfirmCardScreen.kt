@@ -49,7 +49,7 @@ import dev.tlong.biodex.domain.defaultSilhouetteFor
 import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.SectionHeader
 import dev.tlong.biodex.ui.common.SilhouetteIcon
-import dev.tlong.biodex.ui.register.PrimaryCta
+import dev.tlong.biodex.ui.common.PrimaryCta
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
 
@@ -68,6 +68,8 @@ fun ConfirmSpeciesRoute(
     onNotCaught: (speciesId: String) -> Unit,
     /** D69: added and caught — to its entry, where the photo is registered. */
     onCaught: (speciesId: String) -> Unit,
+    /** D78: added and captured with the Identify screen's photo; the route plays the reveal. */
+    onAddedAndCaptured: (speciesId: String) -> Unit = onCaught,
     onUpdated: (speciesId: String) -> Unit,
 ) {
     val container = LocalContext.current.appContainer
@@ -84,6 +86,7 @@ fun ConfirmSpeciesRoute(
                 is ConfirmSpeciesViewModel.Event.Caught -> onCaught(event.speciesId)
                 // The same move as "Yes": open that species' entry, with the grid behind it.
                 is ConfirmSpeciesViewModel.Event.OpenExisting -> onCaught(event.speciesId)
+                is ConfirmSpeciesViewModel.Event.AddedAndCaptured -> onAddedAndCaptured(event.speciesId)
                 is ConfirmSpeciesViewModel.Event.Updated -> onUpdated(event.speciesId)
                 ConfirmSpeciesViewModel.Event.Dismissed -> onBack()
             }

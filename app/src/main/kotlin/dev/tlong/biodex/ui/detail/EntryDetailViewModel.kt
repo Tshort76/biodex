@@ -15,10 +15,10 @@ import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.media.NetworkMonitor
 import dev.tlong.biodex.ui.addspecies.AddSpeciesDraftHolder
-import dev.tlong.biodex.ui.register.PickedPhoto
-import dev.tlong.biodex.ui.register.PlaceSearchState
-import dev.tlong.biodex.ui.register.placeAnswerFor
-import dev.tlong.biodex.ui.register.placeSearchState
+import dev.tlong.biodex.ui.capture.PickedPhoto
+import dev.tlong.biodex.ui.capture.PlaceSearchState
+import dev.tlong.biodex.ui.capture.placeAnswerFor
+import dev.tlong.biodex.ui.capture.placeSearchState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -8,6 +8,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ## v24 — 2026-09-24
 
+- **Changed** — the grid's ＋ starts from a photo. Pick one, and a new **Identify** screen shows it with "🔍 Identify with Google Lens" and a "What is it?" search. Copy the name in Lens and come back: the app offers it as "Use “X”". Pick the species and tap Capture — the "Where was this?" prompt appears only when the photo has no location — and you land back on the dex at that species. (`M07`, `S06` revised, `D78`)
+- **Added** — a name the dex doesn't hold on the Identify screen offers "Add “X” and capture it": once the lookup finds the species, it is added and the photo captured in one step. (`M08` revised, `D78`)
+- **Changed** — to add a species by name without a photo, search for it on the grid and tap "Add “X” to your dex". (`M08` revised, `D78`)
+- **Removed** — the Register screen, and with it the 📁 Files button. Capturing starts from ＋ or from an entry's Capture!. (`M28` struck, `D58` superseded, `D78`)
 - **Added** — adding a species is its own action. Type a name the dex doesn't hold in the grid's search and tap ＋: the lookup runs straight away with that name, the card adds the species to the dex *uncaught*, and then asks "Have you caught it?" — *Not yet* goes home, *Yes* opens its entry to register a photo. Useful for adding what you expect to see before a trip. If the lookup lands on a species already in the dex (a typo, say), the card offers to open it instead of adding a copy, and a near-miss name gets a "Did you mean…?" link. (`M08`, `M20` revised, `D69`)
 - **Changed** — tapping ＋ with a search typed opens Register with that search already filled in, and Register's "nothing found" line offers to add the name. (`D69`)
 - **Removed** — the Register screen's "Not in the list? Type a name…" button, which the new ＋ replaces. (`D55` superseded, `D69`)

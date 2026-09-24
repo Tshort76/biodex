@@ -22,11 +22,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.ui.addspecies.ConfirmSpeciesRoute
+import dev.tlong.biodex.ui.addspecies.DraftPhoto
+import dev.tlong.biodex.ui.capture.PickedPhoto
+import dev.tlong.biodex.ui.capture.rememberGalleryPicker
+import dev.tlong.biodex.ui.identify.IdentifyRoute
 import dev.tlong.biodex.ui.detail.EntryDetailRoute
 import dev.tlong.biodex.ui.grid.DexGridRoute
 import dev.tlong.biodex.ui.nearest.NearestRoute
 import dev.tlong.biodex.ui.photoviewer.PhotoViewerRoute
-import dev.tlong.biodex.ui.register.RegisterRoute
 import dev.tlong.biodex.ui.settings.LicensesRoute
 import dev.tlong.biodex.ui.settings.SettingsRoute
 import dev.tlong.biodex.ui.stats.StatsRoute
@@ -47,22 +50,22 @@ private const val NOTE_KEY = "arrivalNote"
 data object DexGrid
 
 /**
- * [justUnlocked] plays the reveal (M09); [photoAdded] is the low-key counterpart for a repeat
- * registration — a brief "+1", because DESIGN.md §4 reserves ceremony for firsts so that
- * firsts stay special.
+ * [justUnlocked] plays the reveal (M09) for a first catch made on another screen, and
+ * [homeAfterReveal] then returns to the grid scrolled to the species (D77), since that capture
+ * is finished.
  */
 @Serializable
 data class EntryDetail(
     val speciesId: String,
     val justUnlocked: Boolean = false,
-    val photoAdded: Boolean = false,
+    val homeAfterReveal: Boolean = false,
     /** D76: open the photo picker on arrival, as "Yes — register my photo" promised. */
     val capture: Boolean = false,
 )
 
-/** [initialQuery] is the grid's search, carried over so a name is never typed twice (D69). */
+/** D78: a photo picked from the grid's ＋, to be named and captured. */
 @Serializable
-data class Register(val preselectedSpeciesId: String? = null, val initialQuery: String? = null)
+data class Identify(val photoUri: String, val displayName: String? = null)
 
 @Serializable
 data class ConfirmSpecies(val draftId: String)
@@ -90,10 +93,24 @@ data object Licenses
 @Composable
 fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
     val container = LocalContext.current.appContainer
-    // D69: adding a species by name — from the grid's ＋ or the Register screen's no-results
-    // line — opens the lookup card with that name, and nothing else rides along.
+    // D69: adding a species by name from the grid's search opens the lookup card with that name.
     val addSpecies = { name: String ->
         navController.navigate(ConfirmSpecies(container.addSpeciesDrafts.put(typedName = name)))
+    }
+    // D77: home to the grid, scrolled to the species just captured, from wherever the capture
+    // was made.
+    val homeTo = { speciesId: String, note: String? ->
+        navController.getBackStackEntry<DexGrid>().savedStateHandle.apply {
+            set(SCROLL_TO_KEY, speciesId)
+            set(NOTE_KEY, note)
+        }
+        navController.popBackStack(DexGrid, inclusive = false)
+    }
+    // A first catch made off the entry screen plays its reveal there, then goes home (D77, D78).
+    val revealThenHome = { speciesId: String ->
+        navController.navigate(EntryDetail(speciesId, justUnlocked = true, homeAfterReveal = true)) {
+            popUpTo(DexGrid)
+        }
     }
     NavHost(navController = navController, startDestination = DexGrid) {
         composable<DexGrid> { backStackEntry ->
@@ -101,6 +118,10 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             val handle = backStackEntry.savedStateHandle
             val scrollTo by handle.getStateFlow<String?>(SCROLL_TO_KEY, null).collectAsState()
             val note by handle.getStateFlow<String?>(NOTE_KEY, null).collectAsState()
+            // D78: the ＋ picks a photo first; the Identify screen names it.
+            val pickPhoto = rememberGalleryPicker { photo ->
+                navController.navigate(Identify(photo.uri, photo.displayName))
+            }
             DexGridRoute(
                 scrollToSpeciesId = scrollTo,
                 note = note,
@@ -109,9 +130,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                     handle[NOTE_KEY] = null
                 },
                 onOpenSpecies = { speciesId -> navController.navigate(EntryDetail(speciesId)) },
-                onRegister = { query ->
-                    navController.navigate(Register(initialQuery = query.ifBlank { null }))
-                },
+                onAddPhoto = pickPhoto,
                 onAddSpecies = addSpecies,
                 onOpenStats = { navController.navigate(Stats) },
                 onOpenNearest = { navController.navigate(Nearest()) },
@@ -123,7 +142,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             EntryDetailRoute(
                 speciesId = route.speciesId,
                 justUnlocked = route.justUnlocked,
-                photoAdded = route.photoAdded,
+                homeAfterReveal = route.homeAfterReveal,
                 startCapture = route.capture,
                 onBack = { navController.popBackStack() },
                 onOpenPhoto = { captureId -> navController.navigate(PhotoViewer(captureId)) },
@@ -135,35 +154,28 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 // D77: captured here, so home — scrolled to it — like "← Dex", from wherever
                 // the entry was opened.
-                onCaptured = { note ->
-                    navController.getBackStackEntry<DexGrid>().savedStateHandle.apply {
-                        set(SCROLL_TO_KEY, route.speciesId)
-                        set(NOTE_KEY, note)
-                    }
-                    navController.popBackStack(DexGrid, inclusive = false)
-                },
+                onCaptured = { note -> homeTo(route.speciesId, note) },
             )
         }
-        composable<Register> { backStackEntry ->
-            val route = backStackEntry.toRoute<Register>()
-            RegisterRoute(
-                preselectedSpeciesId = route.preselectedSpeciesId,
-                initialQuery = route.initialQuery,
+        composable<Identify> { backStackEntry ->
+            val route = backStackEntry.toRoute<Identify>()
+            IdentifyRoute(
+                photo = PickedPhoto(route.photoUri, route.displayName),
                 onBack = { navController.popBackStack() },
-                onRegistered = { speciesId, justUnlocked ->
-                    // DESIGN.md §6's navigation rule: after registering, back from the detail
-                    // screen returns to the grid, not to the Register screen.
-                    navController.navigate(
-                        EntryDetail(
-                            speciesId = speciesId,
-                            justUnlocked = justUnlocked,
-                            photoAdded = !justUnlocked,
-                        ),
-                    ) {
-                        popUpTo(DexGrid)
-                    }
+                onCaptured = { speciesId, isFirst ->
+                    if (isFirst) revealThenHome(speciesId) else homeTo(speciesId, "+1 photo")
                 },
-                onAddSpecies = addSpecies,
+                // Q02: a name the dex lacks is added and captured with this photo in one go.
+                onAdd = { name, photoUri, place ->
+                    navController.navigate(
+                        ConfirmSpecies(
+                            container.addSpeciesDrafts.put(
+                                typedName = name,
+                                photo = DraftPhoto(photoUri, place),
+                            ),
+                        ),
+                    )
+                },
             )
         }
         composable<ConfirmSpecies> { backStackEntry ->
@@ -171,8 +183,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
             ConfirmSpeciesRoute(
                 draftId = route.draftId,
                 onBack = { navController.popBackStack() },
-                // D69. Adding is not catching. "Not yet" is home — past Register, if the add
-                // started there, since that job is done. "Yes" is the entry, uncaught, with the
+                // D69. Adding is not catching. "Not yet" is home. "Yes" is the entry, uncaught, with the
                 // photo picker already open (D76); the catch plays the reveal there, and back
                 // from it returns to the grid (DESIGN.md §6).
                 onNotCaught = { navController.popBackStack(DexGrid, inclusive = false) },
@@ -183,6 +194,7 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 // A backfill only filled in an entry that already exists; going back to it is
                 // the whole of the outcome.
+                onAddedAndCaptured = revealThenHome,
                 onUpdated = { navController.popBackStack() },
             )
         }

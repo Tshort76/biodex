@@ -83,6 +83,8 @@ sealed interface ConfirmSpeciesUiState {
         val typedScientificName: String? = null,
         /** D69. The dex already holds what the card resolved to, so it offers that entry instead. */
         val alreadyHeld: HeldSpecies? = null,
+        /** D78: the draft carries a photo, so accepting adds the species and captures it. */
+        val capturesPhoto: Boolean = false,
         /** D69. A held species the typed name is a letter or two off — offered, never enforced. */
         val nearMiss: HeldSpecies? = null,
     ) : ConfirmSpeciesUiState {
@@ -127,6 +129,7 @@ sealed interface ConfirmSpeciesUiState {
         val acceptLabel: String
             get() = when {
                 isBackfill -> "Save these details"
+                capturesPhoto -> "Add and capture — $dexLabel ${fields.commonName}"
                 willBeDetailsPending -> "Add to my dex — $dexLabel ${fields.commonName} (details pending)"
                 else -> "Add to my dex — $dexLabel ${fields.commonName}"
             }
@@ -201,6 +204,7 @@ fun confirmCardState(
         typedScientificName = edits.values?.scientificName
             ?.takeIf { SpeciesField.SCIENTIFIC_NAME in edits.editedFields },
         alreadyHeld = heldMatch(fields, held, exceptId = existing?.id),
+        capturesPhoto = draft.photo != null,
         nearMiss = nearMissFor(draft.typedName, held, exceptId = existing?.id),
     )
 }

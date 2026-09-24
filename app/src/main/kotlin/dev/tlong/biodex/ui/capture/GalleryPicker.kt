@@ -1,4 +1,4 @@
-package dev.tlong.biodex.ui.register
+package dev.tlong.biodex.ui.capture
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,10 +11,10 @@ import dev.tlong.biodex.data.photo.hasPhotoLibraryAccess
 import dev.tlong.biodex.data.photo.photoLibraryPermissions
 
 /**
- * D76. The gallery door on its own, for a screen that wants one photo and nothing else of the
- * Register screen: the entry's Capture! button. Returns the tap.
+ * D76/D78. The gallery door: the entry's Capture! button and the grid's ＋ both open it.
+ * Returns the tap.
  *
- * The same two rules as the Register screen's picker. The grant is taken on the way in
+ * Two rules. The grant is taken on the way in
  * (ARCHITECTURE.md 4.1 step 1), before anything else touches the URI. And the photo-library
  * permission is asked for on the first tap (D63), so the media-store original — GPS and all —
  * is readable behind the picker id; the picker opens whatever the answer.
