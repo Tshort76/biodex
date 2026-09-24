@@ -65,12 +65,12 @@ class RegisterStateTest {
     }
 
     /**
-     * D68. The prompt's own state: what is typed, what to offer, and whether the button lights.
-     * The ranking itself is `PlaceSuggestTest`'s; what is pinned here is that the three travel
-     * together, so the screen can never offer a list and a button that disagree.
+     * D68. The prompt's own state: what is typed, what to offer, and what a registration would
+     * write. The ranking itself is `PlaceSuggestTest`'s; what is pinned here is the label, since
+     * that is the string that ends up on a sighting forever.
      */
     @Test
-    fun `the place prompt offers the list and lights only on a place from it`() = runBlocking {
+    fun `the place prompt offers the list and writes the list's spelling when it matches`() = runBlocking {
         val gazetteer = listOf(
             GazetteerPlace("Bear Valley", "CA", 0),
             GazetteerPlace("Bear Valley Trail", "CA", 1),
@@ -85,20 +85,22 @@ class RegisterStateTest {
 
         val empty = search("")
         assertEquals("nothing typed offers where we have been", listOf("Tomales Bay, California"), empty.suggestions)
-        assertNull("and nothing is chosen yet", empty.canonical)
+        assertNull("and an empty prompt still writes nothing", empty.label)
+        assertNull(search("   ").label)
 
         val typing = search("bear")
         assertEquals(
             listOf("Bear Valley, California", "Bear Valley Trail, California"),
             typing.suggestions,
         )
-        assertNull("half a name is not a place", typing.canonical)
 
         val chosen = search("bear valley, california")
         assertTrue(chosen.isKnown)
-        assertEquals("and it is the list's spelling that gets written", "Bear Valley, California", chosen.canonical)
+        assertEquals("the list's spelling is what gets written", "Bear Valley, California", chosen.label)
 
-        assertNull("free text never is", search("out behind the barn").canonical)
+        val ownWords = search("  out behind the barn  ")
+        assertFalse("a place the list has never heard of is still a place", ownWords.isKnown)
+        assertEquals("and it is written as typed, trimmed", "out behind the barn", ownWords.label)
     }
 
     /** A photo whose EXIF carries coordinates — the place is answered without typing (D60). */

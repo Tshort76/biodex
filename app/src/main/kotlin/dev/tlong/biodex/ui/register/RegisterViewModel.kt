@@ -99,11 +99,11 @@ class RegisterViewModel(
 
     /**
      * D64. The prompt's answer: a place resumes whichever tap raised it; a dismissal just
-     * closes it and the screen is as it was. What is written is the *list's* spelling of what
-     * was typed (D68), not the text itself, and nothing is written when the two do not match.
+     * closes it and the screen is as it was. What is written is the *list's* spelling when the
+     * list holds what was typed (D68), and the text as typed when it does not.
      */
     fun onPlaceEntered() {
-        val label = uiState.value.place.canonical ?: return
+        val label = uiState.value.place.label ?: return
         val prompt = placePrompt.value ?: return
         placePrompt.value = null
         placeQuery.value = ""

@@ -182,12 +182,19 @@ data class PlaceSearchState(
     val query: String = "",
     val suggestions: List<String> = emptyList(),
     /**
-     * The place's own spelling of what is typed, or null when what is typed is not a place.
-     * It is what gets written — never the raw text, which may differ from it in case, accents
-     * or spacing and would put exactly the sloppiness D68 exists to prevent onto a sighting.
+     * The list's own spelling of what is typed, when the list holds it — null otherwise, which
+     * is a perfectly good answer (D68: the list is autocomplete, not a gate).
      */
     val canonical: String? = null,
 ) {
+    /**
+     * What a registration would write: the list's spelling when what was typed names a place
+     * it holds, and otherwise the text as typed. Null only when nothing has been typed at all,
+     * which is the one state the prompt refuses — D60 still needs *a* place.
+     */
+    val label: String? get() = canonical ?: query.trim().takeIf { it.isNotEmpty() }
+
+    /** Whether what is typed came off one of the two lists, for the row that draws as chosen. */
     val isKnown: Boolean get() = canonical != null
 }
 

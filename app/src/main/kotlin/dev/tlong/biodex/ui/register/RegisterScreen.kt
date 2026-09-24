@@ -500,8 +500,8 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
  * D64/D68. Raised by the Register (or add-your-own) tap when the photo carries no coordinates,
  * and only then. Material's dialog, as in Settings (D49), with a suggestion list under the
  * field: the places this collection already uses, then the region's bundled gazetteer. The
- * confirm side stays dark until what is typed *is* one of them, so a sighting's address is
- * always a real place and never a typo nothing can correct later.
+ * list is autocomplete rather than a gate — tapping a row fills the field with that place's
+ * own spelling, and anything else typed is taken as written.
  */
 @Composable
 private fun PlacePromptDialog(
@@ -511,7 +511,7 @@ private fun PlacePromptDialog(
     onDismiss: () -> Unit,
 ) {
     val colors = DexTheme.colors
-    val ready = place.isKnown
+    val ready = place.label != null
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = colors.card,
@@ -525,7 +525,7 @@ private fun PlacePromptDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "The photo carries no location. Pick a place from the list.",
+                    text = "The photo carries no location. Pick a place, or type your own.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.muted,
                 )
@@ -570,8 +570,8 @@ private fun PlacePromptDialog(
                     if (place.suggestions.isEmpty() && place.query.isNotBlank()) {
                         item {
                             Text(
-                                text = "No place here by that name. Try the nearest town, " +
-                                    "park or beach.",
+                                text = "Nothing on the list matches — what you typed will be " +
+                                    "used as it is.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.faint,
                                 modifier = Modifier.padding(vertical = 8.dp),
