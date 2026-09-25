@@ -3,6 +3,7 @@
 import unittest
 
 from select_corpus import (
+    best_taxon,
     choose_lookalikes,
     manifest_row,
     partition_other,
@@ -68,6 +69,27 @@ class OtherClassTest(unittest.TestCase):
         train, test = partition_other(species, 0.2)
         self.assertEqual(len(test), 10)
         self.assertFalse({s["taxon_id"] for s in train} & {s["taxon_id"] for s in test})
+
+
+class ResolveTest(unittest.TestCase):
+    def taxon(self, tid, name, rank, matched=None, count=0, kingdom=1):
+        return {"id": tid, "name": name, "rank": rank, "matched_term": matched or name, "is_active": True,
+                "observations_count": count, "ancestor_ids": [48460, kingdom]}
+
+    def test_a_renamed_species_resolves_through_its_synonym_to_the_species_not_a_subspecies(self):
+        results = [self.taxon(1, "Antigone canadensis", "species", "Grus canadensis", 85000),
+                   self.taxon(2, "Antigone canadensis tabida", "subspecies", "Grus canadensis tabida", 800)]
+        self.assertEqual(best_taxon(results, "Grus canadensis", "animal")["id"], 1)
+
+    def test_the_species_wins_over_a_complex_of_the_same_name(self):
+        results = [self.taxon(1, "Trametes versicolor", "complex", count=230000, kingdom=47170),
+                   self.taxon(2, "Trametes versicolor", "species", count=198000, kingdom=47170)]
+        self.assertEqual(best_taxon(results, "Trametes versicolor", "fungus")["id"], 2)
+
+    def test_a_namesake_in_the_other_kingdom_is_ignored_and_a_genus_name_finds_the_genus(self):
+        results = [self.taxon(1, "Ammopelmatus", "genus", kingdom=47170), self.taxon(2, "Ammopelmatus", "genus", count=5)]
+        self.assertEqual(best_taxon(results, "Ammopelmatus", "animal")["id"], 2)
+        self.assertIsNone(best_taxon(results, "Ammopelmatus fuscus", "animal"))
 
 
 if __name__ == "__main__":

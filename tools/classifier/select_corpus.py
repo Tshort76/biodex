@@ -195,17 +195,31 @@ def base_query(taxon_id: int) -> dict:
 # The build
 # --------------------------------------------------------------------------
 
+KINGDOM_TAXON = {"animal": 1, "fungus": 47170}
+
+
+def best_taxon(results: list[dict], name: str, kingdom: str) -> dict | None:
+    """The iNat taxon a catalogue name means: an exact name or synonym match, in the right kingdom,
+    at the rank the name implies (two words a species, one a genus), most-observed first."""
+    want = name.lower()
+    rank = "species" if len(name.split()) == 2 else "genus" if len(name.split()) == 1 else None
+    hits = [t for t in results
+            if want in (t["name"].lower(), (t.get("matched_term") or "").lower())
+            and t.get("is_active", True)
+            and KINGDOM_TAXON[kingdom] in t.get("ancestor_ids", [])
+            and (rank is None or t["rank"] == rank)]
+    return max(hits, key=lambda t: t.get("observations_count", 0), default=None)
+
+
 def resolve_taxa(api: Api, species: list[dict], overrides: dict) -> dict[str, dict]:
     """Catalogue id -> iNat taxon (id, name, rank, ancestor ids). Unresolved names are reported."""
     out, missing = {}, []
     for s in species:
         name = overrides.get(s["id"], s["scientificName"])
-        results = api.get("taxa", {"q": name, "per_page": 30})["results"]
-        exact = [t for t in results if t["name"].lower() == name.lower() and t.get("is_active", True)]
-        if len(exact) != 1:
-            missing.append(f"{s['id']} ({name}): {len(exact)} exact matches")
+        t = best_taxon(api.get("taxa", {"q": name, "per_page": 30})["results"], name, s["kingdom"])
+        if t is None:
+            missing.append(f"{s['id']} ({name})")
             continue
-        t = exact[0]
         out[s["id"]] = {"taxon_id": t["id"], "name": t["name"], "rank": t["rank"], "ancestor_ids": t.get("ancestor_ids", [])}
     if missing:
         print("Unresolved — add them to taxon_overrides.json:\n  " + "\n  ".join(missing), file=sys.stderr)
