@@ -1,0 +1,18 @@
+[project]
+name = "biodex-classifier"
+version = "0.1.0"
+description = "Train the on-device species classifier for BioDex (docs/CLASSIFIER-PLAN.md)"
+requires-python = "==3.12.*"
+dependencies = [
+    "torch>=2.13",
+    "torchvision",
+    "timm>=1.0.30",
+    "open_clip_torch",
+    "litert-torch>=0.9.4",
+    "ai-edge-litert",
+    "pillow",
+    "numpy",
+]
+
+[tool.uv]
+package = false
