@@ -5,6 +5,7 @@ import unittest
 from select_corpus import (
     best_taxon,
     choose_lookalikes,
+    drop_shared_photos,
     manifest_row,
     partition_other,
     pick,
@@ -55,6 +56,12 @@ class ManifestTest(unittest.TestCase):
         row = manifest_row(obs(7, user="someone"), "canada-goose", "train")
         self.assertEqual(row["url"], "https://x/photos/1007/medium.jpg")
         self.assertEqual((row["observer"], row["license"], row["lat"]), ("someone", "cc-by", 37.5))
+
+
+class SharedPhotoTest(unittest.TestCase):
+    def test_a_photo_on_two_observations_is_dropped_from_both(self):
+        rows = [{"photo_id": 1, "label": "a"}, {"photo_id": 1, "label": "b"}, {"photo_id": 2, "label": "a"}]
+        self.assertEqual(drop_shared_photos(rows), [{"photo_id": 2, "label": "a"}])
 
 
 class OtherClassTest(unittest.TestCase):

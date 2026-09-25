@@ -126,6 +126,12 @@ def manifest_row(obs: dict, label: str, split: str) -> dict:
     }
 
 
+def drop_shared_photos(rows: list[dict]) -> list[dict]:
+    """A photo attached to two observations may carry two labels or two splits; keep neither."""
+    counts = Counter(r["photo_id"] for r in rows)
+    return [r for r in rows if counts[r["photo_id"]] == 1]
+
+
 def choose_lookalikes(candidates: dict[int, list[dict]], dex_taxa: set[int], per_family: int) -> list[dict]:
     """From species_counts per family, the most-observed species the dex does not hold."""
     chosen: dict[int, dict] = {}
@@ -280,6 +286,7 @@ def main() -> None:
             rows += [manifest_row(o, OTHER_LABEL, split or split_for(o["id"])) for o in picked]
         print(f"other ({'test' if split else 'train'}): {len(group)} species", flush=True)
 
+    rows = drop_shared_photos(rows)
     DATA.mkdir(exist_ok=True)
     with open(DATA / "manifest.jsonl", "w") as f:
         for r in rows:

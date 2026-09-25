@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -34,7 +35,7 @@ def fetch(row: dict, folder: Path = IMAGES) -> str | None:
         body = urllib.request.urlopen(req, timeout=60).read()
     except Exception as e:  # noqa: BLE001 — a missing photo is reported, not fatal
         return f"{row['photo_id']}: {e}"
-    tmp = dest.with_suffix(".part")
+    tmp = dest.with_suffix(f".{threading.get_ident()}.part")
     tmp.write_bytes(body)
     tmp.rename(dest)
     return None
@@ -46,7 +47,8 @@ def main() -> None:
     args = ap.parse_args()
 
     IMAGES.mkdir(parents=True, exist_ok=True)
-    rows = [json.loads(line) for line in open(DATA / "manifest.jsonl")]
+    # A photo can sit on two observations; fetch it once.
+    rows = list({r["photo_id"]: r for r in map(json.loads, open(DATA / "manifest.jsonl"))}.values())
     failures = []
     with ThreadPoolExecutor(args.workers) as pool:
         futures = [pool.submit(fetch, r) for r in rows]
