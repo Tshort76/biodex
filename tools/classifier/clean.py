@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Drop photos that are not a picture of the animal itself, using BioCLIP 2 zero-shot.
+"""Drop photos that are not a picture of the animal itself.
 
-iNat research-grade observations include tracks, scat, feathers, bones, burrows,
-empty habitat and fish laid out on a deck. For each downloaded photo this scores
-its own species' name against a handful of "not the animal" prompts and rejects
-the photo when a reject prompt wins. Writes:
+iNat research-grade observations include tracks, scat, feathers, bones, eggs
+and nests. Zero-shot prompts do not catch them: scored against its own species
+name, a photo of goose tracks still reads as the goose (measured: 60 of 60
+tagged sign photos kept). So this trains a small probe instead, on BioCLIP 2
+image embeddings of photos iNat observers have tagged either "Organism" or as a
+sign (feather, scat, track, bone, molt, egg, hair, construction), reports its
+cross-validated accuracy, and applies it to the corpus. Writes:
 
-    data/clean.jsonl        photo_id, keep, p_species, top reject prompt
-    data/rejects.jpg        a contact sheet of a sample of rejects, for a spot check
+    data/clean.jsonl             photo_id, keep, p_animal
+    data/rejects.jpg             a contact sheet of a sample of rejects, for a spot check
     data/bioclip_zeroshot.json   BioCLIP's own 254-way accuracy on the test split (a reference number)
 
 Usage (inside the uv env):
@@ -18,8 +21,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+import certifi
+
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
 import numpy as np
 import open_clip
@@ -27,43 +36,96 @@ import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
-from select_corpus import CATALOGUE, DATA, OTHER_LABEL
+from download import fetch
+from select_corpus import CATALOGUE, DATA, EVIDENCE_TERM, OPEN_LICENCES, OTHER_LABEL, Api
 
 MODEL = "hf-hub:imageomics/bioclip-2"
-REJECT_PROMPTS = [
-    "a photo of animal tracks in mud or sand",
-    "a photo of animal scat or droppings",
-    "a photo of a feather on the ground",
-    "a photo of bones or a skull",
-    "a photo of an empty landscape",
-    "a photo of a burrow or a nest with no animal",
-    "a photo of a dead fish held in a person's hands",
-    "a photo of a fish lying on a boat deck or a cutting board",
-    "a photo of a museum specimen with a label",
-    "a blurry photo with no animal visible",
-]
-KEEP_THRESHOLD = 0.5  # the species prompt must take at least this share against the rejects
+ORGANISM = 24
+SIGNS = "23,25,26,27,28,30,31,35"  # feather, scat, track, bone, molt, egg, hair, construction
+REFERENCE_PAGES = 6                 # of 200 observations, per side
+KEEP_THRESHOLD = 0.15  # spot-checked: below it is mostly signs; 0.15-0.5 is mostly distant or dim animals, worth keeping
 
 
 class Photos(Dataset):
-    def __init__(self, rows, preprocess):
-        self.rows, self.preprocess = rows, preprocess
+    def __init__(self, paths, preprocess):
+        self.paths, self.preprocess = paths, preprocess
 
     def __len__(self):
-        return len(self.rows)
+        return len(self.paths)
 
     def __getitem__(self, i):
-        path = DATA / "images" / f"{self.rows[i]['photo_id']}.jpg"
         try:
-            return self.preprocess(Image.open(path).convert("RGB")), i
-        except Exception:  # noqa: BLE001 — unreadable file: scored as a reject
+            return self.preprocess(Image.open(self.paths[i]).convert("RGB")), i
+        except Exception:  # noqa: BLE001 — an unreadable file is embedded as zeros and rejected
             return torch.zeros(3, 224, 224), -1 - i
 
 
-def encode_text(model, tokenizer, texts, device):
-    with torch.no_grad():
-        t = model.encode_text(tokenizer(texts).to(device))
-    return torch.nn.functional.normalize(t.float(), dim=-1)
+def embed(model, preprocess, paths, device, batch) -> tuple[np.ndarray, np.ndarray]:
+    """L2-normalised image embeddings, and which paths could be read."""
+    out, ok = None, np.ones(len(paths), dtype=bool)
+    for n, (x, idx) in enumerate(DataLoader(Photos(paths, preprocess), batch_size=batch, num_workers=8)):
+        with torch.no_grad():
+            e = torch.nn.functional.normalize(model.encode_image(x.to(device)).float(), dim=-1).cpu().numpy()
+        if out is None:
+            out = np.zeros((len(paths), e.shape[1]), dtype=np.float32)
+        for j, i in enumerate(idx.tolist()):
+            if i < 0:
+                ok[-1 - i] = False
+            else:
+                out[i] = e[j]
+        if n % 100 == 0:
+            print(f"  embedded {n * batch}/{len(paths)}", flush=True)
+    return out, ok
+
+
+def reference_photos() -> tuple[list[Path], list[int]]:
+    """Photos iNat observers tagged Organism (1) or as a sign of the animal (0), downloaded once."""
+    api = Api(DATA / "cache" / "api", refresh=False)
+    folder = DATA / "reference"
+    folder.mkdir(parents=True, exist_ok=True)
+    wanted = []
+    for value, label in ((str(ORGANISM), 1), (SIGNS, 0)):
+        obs = api.observations({"taxon_id": 1, "term_id": EVIDENCE_TERM, "term_value_id": value, "photos": "true",
+                                "photo_license": OPEN_LICENCES, "quality_grade": "research"}, pages=REFERENCE_PAGES)
+        for o in obs:
+            p = next((p for p in o["photos"] if p["license_code"] in ("cc0", "cc-by")), None)
+            if p is not None:
+                wanted.append(({"photo_id": p["id"], "url": p["url"].replace("/square.", "/medium.")}, label))
+    with ThreadPoolExecutor(16) as pool:
+        list(pool.map(lambda w: fetch(w[0], folder), wanted))
+    paths, labels = [], []
+    for row, label in wanted:
+        dest = folder / f"{row['photo_id']}.jpg"
+        if dest.exists():
+            paths.append(dest)
+            labels.append(label)
+    return paths, labels
+
+
+def train_probe(x: np.ndarray, y: np.ndarray, epochs: int = 300) -> torch.nn.Linear:
+    probe = torch.nn.Linear(x.shape[1], 1)
+    opt = torch.optim.AdamW(probe.parameters(), lr=1e-2, weight_decay=1e-3)
+    xt, yt = torch.from_numpy(x), torch.from_numpy(y).float()
+    pos_weight = torch.tensor((len(y) - y.sum()) / max(y.sum(), 1))
+    for _ in range(epochs):
+        loss = torch.nn.functional.binary_cross_entropy_with_logits(probe(xt).squeeze(1), yt, pos_weight=pos_weight)
+        opt.zero_grad(); loss.backward(); opt.step()
+    return probe
+
+
+def cross_validate(x: np.ndarray, y: np.ndarray, folds: int = 5) -> dict:
+    order = np.random.default_rng(0).permutation(len(y))
+    tp = fp = tn = fn = 0
+    for k in range(folds):
+        test = order[k::folds]
+        train = np.setdiff1d(order, test)
+        probe = train_probe(x[train], y[train])
+        with torch.no_grad():
+            p = torch.sigmoid(probe(torch.from_numpy(x[test])).squeeze(1)).numpy() >= KEEP_THRESHOLD
+        t = y[test] == 1
+        tp += int((p & t).sum()); fn += int((~p & t).sum()); tn += int((~p & ~t).sum()); fp += int((p & ~t).sum())
+    return {"animal_photos_kept": round(tp / (tp + fn), 3), "sign_photos_rejected": round(tn / (tn + fp), 3),
+            "n_animal": tp + fn, "n_sign": tn + fp}
 
 
 def main() -> None:
@@ -77,62 +139,39 @@ def main() -> None:
     tokenizer = open_clip.get_tokenizer(MODEL)
     model = model.to(device).eval()
 
-    taxa = json.loads((DATA / "taxa.json").read_text())
-    lookalikes = json.loads((DATA / "lookalikes.json").read_text())
-    other_names = {s["taxon_id"]: s["name"] for g in lookalikes.values() for s in g}
-    dex_ids = [s["id"] for s in json.loads(CATALOGUE.read_text())["species"] if s["id"] in taxa]
+    ref_paths, ref_labels = reference_photos()
+    print(f"reference: {sum(ref_labels)} animal, {len(ref_labels) - sum(ref_labels)} sign photos", flush=True)
+    ref_x, ref_ok = embed(model, preprocess, ref_paths, device, args.batch)
+    ref_x, ref_y = ref_x[ref_ok], np.array(ref_labels)[ref_ok]
+    cv = cross_validate(ref_x, ref_y)
+    print(f"probe, 5-fold cross-validated: {cv}", flush=True)
+    probe = train_probe(ref_x, ref_y)
 
     rows = [json.loads(line) for line in open(DATA / "manifest.jsonl")]
     rows = [r for r in rows if (DATA / "images" / f"{r['photo_id']}.jpg").exists()]
     if args.limit:
         rows = random.Random(0).sample(rows, args.limit)
-
-    def name_of(r):
-        return other_names.get(r["taxon_id"]) if r["label"] == OTHER_LABEL else taxa[r["label"]]["name"]
-
-    names = sorted({name_of(r) for r in rows})
-    name_index = {n: i for i, n in enumerate(names)}
-    species_text = encode_text(model, tokenizer, [f"a photo of {n}." for n in names], device)
-    reject_text = encode_text(model, tokenizer, REJECT_PROMPTS, device)
-    dex_text = encode_text(model, tokenizer, [f"a photo of {taxa[i]['name']}." for i in dex_ids], device)
-    scale = model.logit_scale.exp().item()
-
-    loader = DataLoader(Photos(rows, preprocess), batch_size=args.batch, num_workers=8)
-    results = [None] * len(rows)
-    embeddings = np.zeros((len(rows), dex_text.shape[1]), dtype=np.float16)
-    zs_hits = {"top1": 0, "top3": 0, "n": 0}
-    for n, (x, idx) in enumerate(loader):
-        with torch.no_grad():
-            img = torch.nn.functional.normalize(model.encode_image(x.to(device)).float(), dim=-1)
-        own = species_text[[name_index[name_of(rows[max(i, -1 - i)])] for i in idx.tolist()]]
-        own_logit = (img * own).sum(-1, keepdim=True) * scale
-        rej_logit = img @ reject_text.T * scale
-        probs = torch.cat([own_logit, rej_logit], dim=1).softmax(-1).cpu()
-        dex_rank = (img @ dex_text.T).topk(3, dim=-1).indices.cpu()
-        for j, i in enumerate(idx.tolist()):
-            unreadable = i < 0
-            i = max(i, -1 - i)
-            r = rows[i]
-            p = probs[j, 0].item()
-            top_reject = REJECT_PROMPTS[int(probs[j, 1:].argmax())]
-            results[i] = {"photo_id": r["photo_id"], "keep": (not unreadable) and p >= KEEP_THRESHOLD,
-                          "p_species": round(p, 3), "reject": None if p >= KEEP_THRESHOLD else top_reject}
-            embeddings[i] = img[j].cpu().numpy()
-            if r["split"] == "test" and r["label"] != OTHER_LABEL:
-                zs_hits["n"] += 1
-                top = [dex_ids[k] for k in dex_rank[j].tolist()]
-                zs_hits["top1"] += top[0] == r["label"]
-                zs_hits["top3"] += r["label"] in top
-        if n % 50 == 0:
-            print(f"{n * args.batch}/{len(rows)}", flush=True)
-
+    x, ok = embed(model, preprocess, [DATA / "images" / f"{r['photo_id']}.jpg" for r in rows], device, args.batch)
+    with torch.no_grad():
+        p_animal = torch.sigmoid(probe(torch.from_numpy(x)).squeeze(1)).numpy()
+    results = [{"photo_id": r["photo_id"], "keep": bool(ok[i] and p_animal[i] >= KEEP_THRESHOLD), "p_animal": round(float(p_animal[i]), 3)}
+               for i, r in enumerate(rows)]
     with open(DATA / "clean.jsonl", "w") as f:
         for res in results:
             f.write(json.dumps(res) + "\n")
-    np.save(DATA / "bioclip_embeddings.npy", embeddings)
+    np.save(DATA / "bioclip_embeddings.npy", x.astype(np.float16))
     (DATA / "bioclip_rows.json").write_text(json.dumps([r["photo_id"] for r in rows]))
-    zs = {k: (v / zs_hits["n"] if k != "n" else v) for k, v in zs_hits.items()} if zs_hits["n"] else {}
-    (DATA / "bioclip_zeroshot.json").write_text(json.dumps(zs, indent=1))
+
+    # BioCLIP's own zero-shot answer over the catalogue, on the test split: the reference to beat.
+    taxa = json.loads((DATA / "taxa.json").read_text())
+    dex_ids = [s["id"] for s in json.loads(CATALOGUE.read_text())["species"] if s["id"] in taxa]
+    with torch.no_grad():
+        text = torch.nn.functional.normalize(model.encode_text(tokenizer([f"a photo of {taxa[i]['name']}." for i in dex_ids]).to(device)).float(), dim=-1).cpu().numpy()
+    test = [i for i, r in enumerate(rows) if r["split"] == "test" and r["label"] != OTHER_LABEL and ok[i]]
+    top = np.argsort(-(x[test] @ text.T), axis=1)[:, :3]
+    truth = [dex_ids.index(rows[i]["label"]) for i in test]
+    zs = {"top1": round(float(np.mean(top[:, 0] == truth)), 4), "top3": round(float(np.mean([t in row for t, row in zip(truth, top)])), 4), "n": len(test)}
+    (DATA / "bioclip_zeroshot.json").write_text(json.dumps({"zero_shot": zs, "probe_cv": cv}, indent=1))
 
     rejects = [r for r in results if not r["keep"]]
     print(f"kept {len(results) - len(rejects)} / {len(results)}; rejected {len(rejects)}")

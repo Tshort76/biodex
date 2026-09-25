@@ -25,8 +25,8 @@ from select_corpus import DATA, USER_AGENT
 IMAGES = DATA / "images"
 
 
-def fetch(row: dict) -> str | None:
-    dest = IMAGES / f"{row['photo_id']}.jpg"
+def fetch(row: dict, folder: Path = IMAGES) -> str | None:
+    dest = folder / f"{row['photo_id']}.jpg"
     if dest.exists() and dest.stat().st_size > 0:
         return None
     try:
