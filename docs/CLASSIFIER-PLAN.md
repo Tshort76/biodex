@@ -17,6 +17,19 @@ Accuracy is the one honest unknown: **85–93 % top-1 is an extrapolation**, not
 
 **Why this does not reopen D59.** D59 rejected "keeping identification for a future animal provider", and the D23 reasoning behind it was that a *third-party* model answers from the whole world, so most answers read "not in dex". A first-party model is trained on this catalogue: every answer is a dex entry, and a trained `other` class lets it say "not in dex" honestly.
 
+## 1a. Results so far (2026-09-28)
+
+Corpus: 117,999 CC0/CC-BY photos selected for all 254 species plus 384 lookalike species, 112,978 kept after cleaning (5,021 tracks, scat, bones and the like dropped by a probe on BioCLIP 2 embeddings).
+
+| Run | Test top-1 | Test top-3 | Unseen species flagged "not in dex" |
+|---|---|---|---|
+| MNv4, lr 1e-3 (first recipe) | 73.7 % | 87.1 % | 12 % |
+| MNv4, distilled from BioCLIP (lr 1e-3) | 68.6 % | 82.4 % | 11 % |
+| **MNv4, lr 2e-4 — current best (`data/runs/mnv4-lr2e-4`)** | **80.6 %** | **91.0 %** | 15 % (AUROC 0.73) |
+| BioCLIP 2 linear probe (reference; too large for the phone) | 95.9 % | 98.6 % | 69 % (AUROC 0.93) |
+
+The first recipe's learning rate was wrecking the pretrained features (12 % after one epoch; 59 % at 2e-4). The iNat top-3 bar of 90 % is met; the owner-photo gate is not yet run. Weakest groups: fish 61 % top-1, amphibians 71 %; fungi and invertebrates are ~90 %+. The open-set "not in dex" signal does not work yet. Export: the fp32 model (35 MB) matches PyTorch exactly; the int8-weight model (9.5 MB) agrees on 20/20 top-1 but drifts up to 0.12 in probability and fails the golden gate.
+
 ## 2. What the model is
 
 - **A 255-way image classifier**: the 254 catalogue species plus one `other` class. The photo is classified whole, in one pass. Not a detector (§7).
