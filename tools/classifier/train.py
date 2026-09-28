@@ -23,8 +23,10 @@ from collections import Counter, defaultdict
 
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
+import numpy as np
 import timm
 import torch
+import torch.nn.functional as F
 from PIL import Image
 from timm.data import create_transform, resolve_data_config
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
@@ -43,6 +45,19 @@ class Photos(Dataset):
         r = self.rows[i]
         img = Image.open(DATA / "images" / f"{r['photo_id']}.jpg").convert("RGB")
         return self.transform(img), self.label_index[r["label"]]
+
+
+class DistillPhotos(Photos):
+    """Like Photos, but also yields the teacher's logits for that photo."""
+
+    def __init__(self, rows, label_index, transform, teacher_logits, teacher_row):
+        super().__init__(rows, label_index, transform)
+        self.teacher_logits, self.teacher_row = teacher_logits, teacher_row
+
+    def __getitem__(self, i):
+        x, y = super().__getitem__(i)
+        t = self.teacher_logits[self.teacher_row[self.rows[i]["photo_id"]]]
+        return x, y, torch.from_numpy(t.astype("float32"))
 
 
 def load_rows() -> list[dict]:
@@ -106,6 +121,9 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=10)
     ap.add_argument("--name", default=None)
     ap.add_argument("--resume", action="store_true", help="resume from run/last.pt if present")
+    ap.add_argument("--teacher", default=None, help="path to teacher_logits.npy for distillation (default: off)")
+    ap.add_argument("--kd-alpha", type=float, default=0.3, help="weight on the hard-label CE term vs. the KD term")
+    ap.add_argument("--kd-temp", type=float, default=2.0, help="softmax temperature for the KD term")
     args = ap.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -135,7 +153,17 @@ def main() -> None:
     weights = [1.0 / counts[r["label"]] for r in split["train"]]
     sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
     loader_kw = dict(batch_size=args.batch, num_workers=args.workers, persistent_workers=True)
-    train_loader = DataLoader(Photos(split["train"], label_index, train_tf), sampler=sampler, drop_last=True, **loader_kw)
+
+    teacher_logits = None
+    if args.teacher:
+        teacher_labels = json.loads((DATA / "teacher_labels.json").read_text())
+        assert teacher_labels == labels, "teacher label order does not match this run's labels"
+        teacher_logits = np.load(args.teacher)
+        teacher_row = {pid: i for i, pid in enumerate(json.loads((DATA / "bioclip_rows.json").read_text()))}
+        train_ds = DistillPhotos(split["train"], label_index, train_tf, teacher_logits, teacher_row)
+    else:
+        train_ds = Photos(split["train"], label_index, train_tf)
+    train_loader = DataLoader(train_ds, sampler=sampler, drop_last=True, **loader_kw)
     val_loader = DataLoader(Photos(split["val"], label_index, eval_tf), **loader_kw)
 
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
@@ -160,9 +188,20 @@ def main() -> None:
     for epoch in range(start_epoch, args.epochs):
         model.train()
         t0, seen, total = time.time(), 0, 0.0
-        for x, y in train_loader:
+        for batch in train_loader:
+            if args.teacher:
+                x, y, t = batch
+                t = t.to(device)
+            else:
+                x, y = batch
             x, y = x.to(device), y.to(device)
-            loss = loss_fn(model(x), y)
+            logits = model(x)
+            if args.teacher:
+                ce = torch.nn.functional.cross_entropy(logits, y, label_smoothing=0.1)
+                kd = F.kl_div(F.log_softmax(logits / args.kd_temp, 1), F.softmax(t / args.kd_temp, 1), reduction="batchmean")
+                loss = args.kd_alpha * ce + (1 - args.kd_alpha) * (args.kd_temp ** 2) * kd
+            else:
+                loss = loss_fn(logits, y)
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
@@ -196,6 +235,7 @@ def main() -> None:
 
     metrics = {
         "model": args.model, "labels": len(labels), "epochs": args.epochs, "history": history,
+        "teacher": args.teacher, "kd_alpha": args.kd_alpha, "kd_temp": args.kd_temp,
         "test": closed_set_metrics(test_logits, test_targets, labels, groups, other_index),
         "open_set": {"auroc": round(auroc(known_test, unseen), 4), "threshold": round(threshold, 4),
                      "unseen_species_flagged_not_in_dex": round(unseen_says_other, 4), "n_unseen": len(open_rows)},
