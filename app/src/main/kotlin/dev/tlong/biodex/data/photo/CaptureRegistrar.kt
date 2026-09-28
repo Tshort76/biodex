@@ -64,11 +64,6 @@ class CaptureRegistrar(
         placeLng: Double? = null,
         /** D80. False for a sighting in captivity. */
         wild: Boolean = true,
-        /**
-         * D83: copy the full-size photo whatever S03's setting says — for a photo shared in,
-         * whose temporary grant ends with the task, so no reference to it can outlive the day.
-         */
-        keepCopy: Boolean = false,
     ): RegisterResult {
         val placePoint = pointOrNull(placeLat, placeLng)
         // A photoless registration skips the grant, the EXIF read and the thumbnail entirely —
@@ -104,7 +99,7 @@ class CaptureRegistrar(
                 speciesId = speciesId,
                 photoUri = photoUri,
                 thumbPath = thumbPath,
-                localCopyPath = if (keepCopy || keepLocalCopy()) {
+                localCopyPath = if (keepLocalCopy()) {
                     photos.writeLocalCopy(captureId, photoUri)
                 } else {
                     null

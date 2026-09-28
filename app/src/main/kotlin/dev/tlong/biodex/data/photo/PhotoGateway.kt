@@ -50,6 +50,13 @@ interface PhotoGateway {
 
     /** Best-effort display name for the picked file, for the Register screen's photo row. */
     fun displayName(uri: String): String?
+
+    /**
+     * D83. The gallery's own URI for a photo another app shared in, which the photo-library
+     * permission keeps readable for good — the shared URI's grant ends with the task. Null
+     * when the photo cannot be found in the gallery, or the permission is not held.
+     */
+    fun galleryUriFor(sharedUri: String): String? = null
 }
 
 /**

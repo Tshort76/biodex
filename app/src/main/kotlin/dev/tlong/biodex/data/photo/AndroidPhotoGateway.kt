@@ -75,7 +75,9 @@ class AndroidPhotoGateway(
 
     /** The unredacted media-store URI behind a picker URI, or null when there is none to try. */
     private fun originalFor(picker: Uri): Uri? {
-        val id = mediaStoreIdFromPickerUri(picker.toString()) ?: return null
+        val id = mediaStoreIdFromPickerUri(picker.toString())
+            ?: mediaStoreIdFromMediaUri(picker.toString())
+            ?: return null
         if (!hasPhotoLibraryAccess(context)) return null
         return MediaStore.setRequireOriginal(
             ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id),
@@ -158,6 +160,41 @@ class AndroidPhotoGateway(
         }
     } catch (e: Exception) {
         e
+    }
+
+    override fun galleryUriFor(sharedUri: String): String? {
+        if (!hasPhotoLibraryAccess(context)) return null
+        mediaStoreUriInShare(sharedUri)?.let { if (probeFailure(it) == null) return it }
+        // Nothing in the URI names the gallery row: match the file by its name, and by its
+        // size when the sharing app reports one, newest first.
+        val (name, size) = try {
+            resolver.query(
+                Uri.parse(sharedUri),
+                arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
+                null, null, null,
+            )?.use { c ->
+                if (!c.moveToFirst() || c.isNull(0)) null else c.getString(0) to (if (c.isNull(1)) null else c.getLong(1))
+            }
+        } catch (e: Exception) {
+            Log.i(TAG, "No name for shared $sharedUri: ${e.message}")
+            null
+        } ?: return null
+        val selection = MediaStore.Images.Media.DISPLAY_NAME + " = ?" +
+            (if (size != null) " AND " + MediaStore.Images.Media.SIZE + " = ?" else "")
+        val args = listOfNotNull(name, size?.toString()).toTypedArray()
+        val id = try {
+            resolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Images.Media._ID),
+                selection, args,
+                MediaStore.Images.Media.DATE_MODIFIED + " DESC",
+            )?.use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+        } catch (e: Exception) {
+            Log.i(TAG, "Gallery lookup failed for $name: ${e.message}")
+            null
+        }
+        Log.i(TAG, "Shared $sharedUri resolved to gallery id $id")
+        return id?.let { ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, it).toString() }
     }
 
     override fun displayName(uri: String): String? = try {

@@ -18,3 +18,27 @@ fun mediaStoreIdFromPickerUri(uri: String): Long? {
 
 private val PICKER_URI =
     Regex("""content://media/picker(?:_get_content)?/\d+/com\.android\.providers\.media\.photopicker/media/(\d+)""")
+
+/**
+ * D83. The media-store image a photo shared in from another app stands for, when its URI
+ * says so: a media-store URI itself, a local picker URI, or a Google Photos provider URI,
+ * which carries the media-store URI inside it, URL-encoded. Null for anything else — the
+ * caller then looks the file up by name.
+ */
+fun mediaStoreUriInShare(uri: String): String? {
+    val decoded = try {
+        java.net.URLDecoder.decode(uri, "UTF-8")
+    } catch (_: IllegalArgumentException) {
+        uri
+    }
+    val id = MEDIA_URI.find(decoded)?.groupValues?.get(1)?.toLongOrNull() ?: mediaStoreIdFromPickerUri(uri)
+    return id?.let { "$MEDIA_IMAGES/$it" }
+}
+
+/** The `_ID` of a `content://media/external/images/media/<id>` URI; null for any other. */
+fun mediaStoreIdFromMediaUri(uri: String): Long? =
+    MEDIA_URI.matchEntire(uri)?.groupValues?.get(1)?.toLongOrNull()
+
+private const val MEDIA_IMAGES = "content://media/external/images/media"
+
+private val MEDIA_URI = Regex("""content://media/external(?:_primary)?/images/media/(\d+)""")

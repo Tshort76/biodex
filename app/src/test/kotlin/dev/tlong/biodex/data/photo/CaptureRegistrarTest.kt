@@ -240,9 +240,6 @@ class CaptureRegistrarTest {
                 localCopyRelativePath("cap-copy"),
                 store.captures.getValue("cap-copy").localCopyPath,
             )
-
-            registrar.register("heron", "content://shared/3", keepCopy = true)
-            assertEquals("a shared-in photo is copied with the setting off (D83)", 2, photos.localCopiesWritten)
         }
 
     @Test

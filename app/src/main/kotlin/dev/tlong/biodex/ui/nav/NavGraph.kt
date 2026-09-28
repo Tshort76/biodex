@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -100,8 +102,11 @@ fun BioDexNavHost(
 ) {
     val container = LocalContext.current.appContainer
     LaunchedEffect(sharedPhotoUri) {
-        if (sharedPhotoUri == null) return@LaunchedEffect
-        navController.navigate(Identify(sharedPhotoUri, shared = true)) { popUpTo(DexGrid) }
+        val shared = sharedPhotoUri ?: return@LaunchedEffect
+        // D83: the capture links the gallery's copy, like any other; the shared URI's grant
+        // ends with the task. Kept only when the gallery has no match.
+        val gallery = withContext(Dispatchers.IO) { container.photoGateway.galleryUriFor(shared) }
+        navController.navigate(Identify(gallery ?: shared, shared = true)) { popUpTo(DexGrid) }
         onSharedPhotoOpened()
     }
     // D69: adding a species by name from the grid's search opens the lookup card with that name.
@@ -182,7 +187,7 @@ fun BioDexNavHost(
                         ConfirmSpecies(
                             container.addSpeciesDrafts.put(
                                 typedName = name,
-                                photo = DraftPhoto(photo.uri, place, wild, photo.shared),
+                                photo = DraftPhoto(photo.uri, place, wild),
                             ),
                         ),
                     )

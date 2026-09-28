@@ -183,7 +183,6 @@ class IdentifyViewModel(
             placeLat = place?.lat,
             placeLng = place?.lng,
             wild = wild,
-            keepCopy = photo.shared,
         )
         when (result) {
             is CaptureRegistrar.RegisterResult.Registered ->

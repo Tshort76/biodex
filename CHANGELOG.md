@@ -13,7 +13,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Changed** — the Identify screen shows the photo across most of the screen with the name field under it, and the Lens button on the photo. One **Register** button captures the species you pick, or the one whose name you typed in full, or adds the name when the dex doesn't hold it. The separate "Not in your dex" link is gone. (`D81`)
 - **Changed** — "Add “X” to your dex" on the grid is now a **＋ Add to Dex** button, and it shows even when the search also lists near-misses. (`M08` revised, `D81`)
 - **Fixed** — searching "orca" showed the American beaver (its scientific name, *Castor canadensis*, contains "orca" across the space) and offered no way to add the orca. (`M14` revised, `D82`)
-- **Added** — BioDex is in the share sheet as "Register in BioDex". Share a photo from Google Photos, and it opens on the Identify screen, with the name you copied in Lens already filled in. A shared photo keeps its own full-size copy. (`S03` revised, `D83`)
+- **Added** — BioDex is in the share sheet as "Register in BioDex". Share a photo from Google Photos, and it opens on the Identify screen, with the name you copied in Lens already filled in. The capture links the photo in your gallery, like any other — nothing is copied. (`D83`)
 
 ## v24 — 2026-09-24
 
