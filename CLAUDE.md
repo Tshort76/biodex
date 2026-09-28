@@ -87,7 +87,7 @@ val uiState: StateFlow<DexGridUiState> = dexGridUiState(…).stateIn(viewModelSc
 
 **Invariants belong at the one door into the store, not on the screen.** `AddSpeciesRegistrar` enforces rules like the kingdom/class pairing and the no-uses rule for a user-added species because it is the single write path and is JVM-testable; the ViewModel keeps only the side effects it alone can perform, such as promoting a camera shot to the gallery once the kingdom is known.
 
-**Photos are referenced, never copied** (except the opt-in "keep a local copy" setting), and every kingdom keeps its photograph. The app stores a URI and a small thumbnail. A deleted gallery photo is an expected state with its own UI, not an error.
+**Photos are referenced, never copied** (except the opt-in "keep a local copy" setting), and every kingdom keeps its photograph. The app stores a URI and a small thumbnail. A deleted gallery photo is an expected state with its own UI, not an error. **This holds even when a link looks impossible**: the owner does not want copies of photos in the app, and a session nearly shipped one for shared-in photos, whose grant cannot be persisted. The answer there was to find the same photo in the gallery and link that (D83). When a reference seems unkeepable, look for another URI to the same photo, or fall back to the thumbnail and the re-link UI — never to a silent copy.
 
 **Room migrations are hand-written with `exportSchema` on.** There is no `fallbackToDestructiveMigration` and there must not be — this database holds a collection that cannot be re-earned.
 
