@@ -118,6 +118,7 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=20)
     ap.add_argument("--batch", type=int, default=96)
     ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--aug", choices=("strong", "light"), default="strong", help="strong = rand-augment + quarter-frame crop (default); light = crop + flip only")
     ap.add_argument("--workers", type=int, default=10)
     ap.add_argument("--name", default=None)
     ap.add_argument("--resume", action="store_true", help="resume from run/last.pt if present")
@@ -145,7 +146,10 @@ def main() -> None:
 
     model = timm.create_model(args.model, pretrained=True, num_classes=len(labels))
     cfg = resolve_data_config({"input_size": (3, args.size, args.size)}, model=model)
-    train_tf = create_transform(**cfg, is_training=True, scale=(0.25, 1.0), auto_augment="rand-m6-mstd0.5-inc1")
+    if args.aug == "light":
+        train_tf = create_transform(**cfg, is_training=True, scale=(0.5, 1.0), auto_augment=None, re_prob=0.0)
+    else:
+        train_tf = create_transform(**cfg, is_training=True, scale=(0.25, 1.0), auto_augment="rand-m6-mstd0.5-inc1")
     eval_tf = create_transform(**cfg, is_training=False)
     model = model.to(device)
 
@@ -234,7 +238,8 @@ def main() -> None:
     unseen_says_other = ((open_logits.argmax(1) == other_index) | (unseen < threshold)).float().mean().item()
 
     metrics = {
-        "model": args.model, "labels": len(labels), "epochs": args.epochs, "history": history,
+        "model": args.model, "labels": len(labels), "epochs": args.epochs, "lr": args.lr, "batch": args.batch,
+        "aug": args.aug, "history": history,
         "teacher": args.teacher, "kd_alpha": args.kd_alpha, "kd_temp": args.kd_temp,
         "test": closed_set_metrics(test_logits, test_targets, labels, groups, other_index),
         "open_set": {"auroc": round(auroc(known_test, unseen), 4), "threshold": round(threshold, 4),

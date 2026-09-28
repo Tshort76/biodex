@@ -52,7 +52,14 @@ def golden_inputs(cfg, n: int, size: int) -> tuple[np.ndarray, list[int]]:
     return x.numpy().astype(np.float32), [r["photo_id"] for r in rows]
 
 
-def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float]:
+def softmax(logits: np.ndarray) -> np.ndarray:
+    z = logits - logits.max(axis=1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(axis=1, keepdims=True)
+
+
+def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float, float]:
+    """Returns (top-1 agreement count, max |Δlogit|, max |Δprob|)."""
     from ai_edge_litert.interpreter import Interpreter
     interp = Interpreter(model_path=str(path))
     interp.allocate_tensors()
@@ -63,7 +70,8 @@ def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float]
         interp.invoke()
         got.append(interp.get_tensor(outp["index"])[0])
     got = np.stack(got)
-    return int((got.argmax(1) == expected.argmax(1)).sum()), float(np.abs(got - expected).max())
+    max_abs_prob_delta = float(np.abs(softmax(got) - softmax(expected)).max())
+    return int((got.argmax(1) == expected.argmax(1)).sum()), float(np.abs(got - expected).max()), max_abs_prob_delta
 
 
 def main() -> None:
@@ -103,14 +111,15 @@ def main() -> None:
         expected = wrapped(torch.from_numpy(x)).numpy()
     chosen = None
     for path in candidates:
-        agree, max_delta = parity(path, x, expected)
-        ok = agree == len(x) and max_delta <= (1e-2 if path.name == "species.tflite" else 0.25)
-        print(f"{path.name}: {path.stat().st_size / 1e6:.1f} MB; top-1 agreement {agree}/{len(x)}; max |Δlogit| {max_delta:.4f}; {'PASS' if ok else 'FAIL'}")
+        agree, max_delta, max_prob_delta = parity(path, x, expected)
+        prob_tol = 1e-3 if path.name == "species.tflite" else 2e-2
+        ok = agree == len(x) and max_prob_delta <= prob_tol
+        print(f"{path.name}: {path.stat().st_size / 1e6:.1f} MB; top-1 agreement {agree}/{len(x)}; max |Δlogit| {max_delta:.4f}; max |Δprob| {max_prob_delta:.4f}; {'PASS' if ok else 'FAIL'}")
         if ok and chosen is None:
-            chosen, out, chosen_stats = path, path, (agree, max_delta)
+            chosen, out, chosen_stats = path, path, (agree, max_delta, max_prob_delta)
     if chosen is None:
         sys.exit("golden test FAILED: no converted model matches PyTorch")
-    agree, max_delta = chosen_stats
+    agree, max_delta, max_prob_delta = chosen_stats
 
     golden = args.run / "golden"
     golden.mkdir(exist_ok=True)
@@ -123,7 +132,7 @@ def main() -> None:
         "model": metrics["model"], "file": out.name, "catalogueVersion": catalogue_version,
         "input": {"layout": "NCHW", "size": size, "range": "0-255 RGB", "crop_pct": cfg["crop_pct"], "interpolation": cfg["interpolation"]},
         "threshold": metrics["open_set"]["threshold"], "labels": labels,
-        "golden": {"top1_agreement": f"{agree}/{len(x)}", "max_abs_logit_delta": max_delta},
+        "golden": {"top1_agreement": f"{agree}/{len(x)}", "max_abs_logit_delta": max_delta, "max_abs_prob_delta": max_prob_delta},
     }, indent=1))
 
 
