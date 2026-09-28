@@ -55,7 +55,23 @@ SPLITS = (("train", 0.8), ("val", 0.1), ("test", 0.1))
 OTHER_LABEL = "other"
 OTHER_PER_FAMILY = 4       # lookalike species drawn from each dex family
 OTHER_PER_SPECIES = 25
-OTHER_TEST_SHARE = 0.2     # of lookalike species, held out whole for the open-set test
+OTHER_TEST_SHARE = 0.2     # of ALL other species (lookalike + broad), held out whole for the open-set test
+
+# The broad `other` pool: the most-observed non-dex species region-wide, per iconic taxon
+# (id -> how many species to target from that taxon). Not lookalikes of a dex family —
+# this is what makes the model say "not in your dex" for things nowhere near the 254.
+BROAD_TARGET = {
+    3: 300,       # Aves
+    47158: 400,   # Insecta
+    40151: 80,    # Mammalia
+    26036: 50,    # Reptilia
+    20978: 30,    # Amphibia
+    47178: 100,   # Actinopterygii
+    47119: 80,    # Arachnida
+    47115: 80,    # Mollusca
+    47170: 200,   # Fungi
+}
+BROAD_PER_SPECIES = 20
 
 
 # --------------------------------------------------------------------------
@@ -132,13 +148,44 @@ def drop_shared_photos(rows: list[dict]) -> list[dict]:
     return [r for r in rows if counts[r["photo_id"]] == 1]
 
 
-def choose_lookalikes(candidates: dict[int, list[dict]], dex_taxa: set[int], per_family: int) -> list[dict]:
-    """From species_counts per family, the most-observed species the dex does not hold."""
+def dex_exclusion_sets(taxa: dict[str, dict]) -> tuple[set[int], set[int]]:
+    """(dex taxon ids, ids that appear anywhere in a dex taxon's ancestor chain including itself)."""
+    dex_ids = {t["taxon_id"] for t in taxa.values()}
+    dex_ancestor_ids = dex_ids | {a for t in taxa.values() for a in t.get("ancestor_ids", [])}
+    return dex_ids, dex_ancestor_ids
+
+
+def excluded_by_dex(taxon_id: int, ancestor_ids: list[int], dex_ids: set[int], dex_ancestor_ids: set[int]) -> bool:
+    """True when a species IS a dex taxon, is an ancestor of one (a dex entry sits below it,
+    e.g. a genus or a subspecies), or is a descendant of one (a dex entry sits above it,
+    e.g. the genus Ammopelmatus)."""
+    return taxon_id in dex_ancestor_ids or bool(dex_ids & set(ancestor_ids))
+
+
+def choose_lookalikes(candidates: dict[int, list[dict]], dex_ids: set[int], dex_ancestor_ids: set[int], per_family: int) -> list[dict]:
+    """From species_counts per family, the most-observed species outside the dex's own lineages."""
     chosen: dict[int, dict] = {}
     for family_id in sorted(candidates):
-        rows = [r for r in candidates[family_id] if r["taxon"]["id"] not in dex_taxa]
+        rows = [r for r in candidates[family_id]
+                if not excluded_by_dex(r["taxon"]["id"], r["taxon"].get("ancestor_ids", []), dex_ids, dex_ancestor_ids)]
         for r in sorted(rows, key=lambda r: -r["count"])[:per_family]:
-            chosen.setdefault(r["taxon"]["id"], {"taxon_id": r["taxon"]["id"], "name": r["taxon"]["name"], "family_id": family_id})
+            chosen.setdefault(r["taxon"]["id"], {"taxon_id": r["taxon"]["id"], "name": r["taxon"]["name"],
+                                                  "family_id": family_id, "pool": "lookalike"})
+    return list(chosen.values())
+
+
+def choose_broad(candidates: dict[int, list[dict]], dex_ids: set[int], dex_ancestor_ids: set[int],
+                  targets: dict[int, int], exclude_ids: set[int] = frozenset()) -> list[dict]:
+    """From species_counts per iconic taxon, the most-observed species region-wide outside the
+    dex's own lineages and outside `exclude_ids` (species another pool already took)."""
+    chosen: dict[int, dict] = {}
+    for iconic_id in sorted(candidates):
+        rows = [r for r in candidates[iconic_id]
+                if r["taxon"]["id"] not in exclude_ids
+                and not excluded_by_dex(r["taxon"]["id"], r["taxon"].get("ancestor_ids", []), dex_ids, dex_ancestor_ids)]
+        for r in sorted(rows, key=lambda r: -r["count"])[:targets.get(iconic_id, 0)]:
+            chosen.setdefault(r["taxon"]["id"], {"taxon_id": r["taxon"]["id"], "name": r["taxon"]["name"],
+                                                  "iconic_taxon_id": iconic_id, "pool": "broad"})
     return list(chosen.values())
 
 
@@ -269,22 +316,38 @@ def main() -> None:
         report.append((s["id"], s["taxClass"], len(picked)))
         print(f"{s['id']:<32} {len(picked):>4}   ({api.requests} requests so far)", flush=True)
 
-    # The `other` class: the most-observed non-dex species in each dex species' family, in the region.
+    # The `other` class: lookalikes from each dex species' family, plus a broad regional pool
+    # across whole iconic taxa, so the class covers more than same-family confusions.
+    dex_ids, dex_ancestor_ids = dex_exclusion_sets(taxa)
+
     families = family_ids(api, taxa)
-    dex_taxa = {t["taxon_id"] for t in taxa.values()}
-    candidates = {}
+    lookalike_candidates = {}
     for fam in families:
         res = api.get("observations/species_counts", {**PACIFIC_BBOX, "taxon_id": fam, "quality_grade": "research",
                                                         "photo_license": OPEN_LICENCES, "per_page": 30})["results"]
-        candidates[fam] = [r for r in res if r["taxon"]["rank"] == "species" and r["count"] >= OTHER_PER_SPECIES]
-    lookalikes = choose_lookalikes(candidates, dex_taxa, OTHER_PER_FAMILY)
-    other_train, other_test = partition_other(lookalikes, OTHER_TEST_SHARE)
+        lookalike_candidates[fam] = [r for r in res if r["taxon"]["rank"] == "species" and r["count"] >= OTHER_PER_SPECIES]
+    lookalikes = choose_lookalikes(lookalike_candidates, dex_ids, dex_ancestor_ids, OTHER_PER_FAMILY)
+
+    broad_candidates = {}
+    for iconic_id in sorted(BROAD_TARGET):
+        res = api.get("observations/species_counts", {**PACIFIC_BBOX, "taxon_id": iconic_id, "quality_grade": "research",
+                                                        "photo_license": OPEN_LICENCES, "rank": "species", "per_page": 500})["results"]
+        broad_candidates[iconic_id] = [r for r in res if r["count"] >= BROAD_PER_SPECIES]
+    broad = choose_broad(broad_candidates, dex_ids, dex_ancestor_ids, BROAD_TARGET,
+                          exclude_ids={sp["taxon_id"] for sp in lookalikes})
+
+    other_species = lookalikes + broad
+    other_train, other_test = partition_other(other_species, OTHER_TEST_SHARE)
     for group, split in ((other_train, None), (other_test, "open_test")):
+        by_taxon = Counter()
         for sp in group:
+            per_species = OTHER_PER_SPECIES if sp["pool"] == "lookalike" else BROAD_PER_SPECIES
             obs = api.observations({**base_query(sp["taxon_id"]), **PACIFIC_BBOX}, pages=1)
-            picked = pick(obs, OTHER_PER_SPECIES, PER_OBSERVER)
+            picked = pick(obs, per_species, PER_OBSERVER)
             rows += [manifest_row(o, OTHER_LABEL, split or split_for(o["id"])) for o in picked]
-        print(f"other ({'test' if split else 'train'}): {len(group)} species", flush=True)
+            by_taxon[sp["pool"]] += len(picked)
+        label = "test" if split else "train"
+        print(f"other ({label}): {len(group)} species, {sum(by_taxon.values())} photos {dict(by_taxon)}", flush=True)
 
     rows = drop_shared_photos(rows)
     DATA.mkdir(exist_ok=True)
@@ -296,6 +359,15 @@ def main() -> None:
 
     by_split = Counter(r["split"] for r in rows)
     print(f"\n{len(rows)} photos {dict(by_split)}; {api.requests} API requests")
+    print(f"other pools: {len(lookalikes)} lookalike species, {len(broad)} broad species "
+          f"({len(other_train)} train / {len(other_test)} open_test)")
+    for pool_name in ("lookalike", "broad"):
+        by_taxon_group = Counter()
+        for sp in other_species:
+            if sp["pool"] == pool_name:
+                key = sp.get("family_id", sp.get("iconic_taxon_id"))
+                by_taxon_group[key] += 1
+        print(f"  {pool_name}: {dict(sorted(by_taxon_group.items()))}")
     thin = sorted((n, i, c) for i, c, n in report if n < 200)
     print(f"{len(thin)} species under 200 photos:")
     for n, i, c in thin:

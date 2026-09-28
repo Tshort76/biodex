@@ -111,6 +111,33 @@ def auroc(pos, neg):
     return ((ranks[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg))).item()
 
 
+def sample_weights(labels: list[str], other_label: str, other_share: float) -> list[float]:
+    """Per-row WeightedRandomSampler weight: `other` rows together get `other_share` of the
+    total weight; the dex species split the rest class-balanced, as before `other_share` existed."""
+    counts = Counter(labels)
+    dex_classes = [c for c in counts if c != other_label]
+    dex_share_each = (1 - other_share) / len(dex_classes) if dex_classes else 0.0
+    other_n = counts.get(other_label, 0)
+    return [
+        (other_share / other_n) if label == other_label else (dex_share_each / counts[label])
+        for label in labels
+    ]
+
+
+def open_set_operating_points(known_val, known_test, unseen, open_argmax_is_other, rates):
+    """For each known-val acceptance rate, the threshold that achieves it, the share of
+    open-set (unseen-species) photos flagged at that threshold, and the share of known
+    TEST photos accepted."""
+    points = []
+    for rate in rates:
+        threshold = known_val.quantile(1 - rate).item()
+        open_flagged = (open_argmax_is_other | (unseen < threshold)).float().mean().item()
+        known_test_accepted = (known_test >= threshold).float().mean().item()
+        points.append({"known_val_acceptance": rate, "threshold": round(threshold, 4),
+                        "open_test_flagged": round(open_flagged, 4), "known_test_accepted": round(known_test_accepted, 4)})
+    return points
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="mobilenetv4_conv_medium.e250_r384_in12k_ft_in1k")
@@ -125,6 +152,7 @@ def main() -> None:
     ap.add_argument("--teacher", default=None, help="path to teacher_logits.npy for distillation (default: off)")
     ap.add_argument("--kd-alpha", type=float, default=0.3, help="weight on the hard-label CE term vs. the KD term")
     ap.add_argument("--kd-temp", type=float, default=2.0, help="softmax temperature for the KD term")
+    ap.add_argument("--other-share", type=float, default=0.25, help="share of sampled training weight given to `other`, split class-balanced among the rest")
     args = ap.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -153,8 +181,7 @@ def main() -> None:
     eval_tf = create_transform(**cfg, is_training=False)
     model = model.to(device)
 
-    counts = Counter(r["label"] for r in split["train"])
-    weights = [1.0 / counts[r["label"]] for r in split["train"]]
+    weights = sample_weights([r["label"] for r in split["train"]], OTHER_LABEL, args.other_share)
     sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
     loader_kw = dict(batch_size=args.batch, num_workers=args.workers, persistent_workers=True)
 
@@ -235,15 +262,18 @@ def main() -> None:
     threshold = known_val.quantile(0.05).item()  # accept 95% of known val photos
     known_test = known_score(test_logits[test_targets != other_index], other_index)
     unseen = known_score(open_logits, other_index)
-    unseen_says_other = ((open_logits.argmax(1) == other_index) | (unseen < threshold)).float().mean().item()
+    open_argmax_is_other = open_logits.argmax(1) == other_index
+    unseen_says_other = (open_argmax_is_other | (unseen < threshold)).float().mean().item()
+    operating_points = open_set_operating_points(known_val, known_test, unseen, open_argmax_is_other, (0.90, 0.95, 0.98))
 
     metrics = {
         "model": args.model, "labels": len(labels), "epochs": args.epochs, "lr": args.lr, "batch": args.batch,
-        "aug": args.aug, "history": history,
+        "aug": args.aug, "history": history, "other_share": args.other_share,
         "teacher": args.teacher, "kd_alpha": args.kd_alpha, "kd_temp": args.kd_temp,
         "test": closed_set_metrics(test_logits, test_targets, labels, groups, other_index),
         "open_set": {"auroc": round(auroc(known_test, unseen), 4), "threshold": round(threshold, 4),
-                     "unseen_species_flagged_not_in_dex": round(unseen_says_other, 4), "n_unseen": len(open_rows)},
+                     "unseen_species_flagged_not_in_dex": round(unseen_says_other, 4), "n_unseen": len(open_rows),
+                     "operating_points": operating_points},
         "input": {k: cfg[k] for k in ("input_size", "mean", "std", "interpolation", "crop_pct")},
     }
     (run / "metrics.json").write_text(json.dumps(metrics, indent=1))

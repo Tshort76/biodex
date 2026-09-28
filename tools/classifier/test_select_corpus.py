@@ -4,8 +4,11 @@ import unittest
 
 from select_corpus import (
     best_taxon,
+    choose_broad,
     choose_lookalikes,
+    dex_exclusion_sets,
     drop_shared_photos,
+    excluded_by_dex,
     manifest_row,
     partition_other,
     pick,
@@ -64,12 +67,58 @@ class SharedPhotoTest(unittest.TestCase):
         self.assertEqual(drop_shared_photos(rows), [{"photo_id": 2, "label": "a"}])
 
 
+class ExclusionTest(unittest.TestCase):
+    def test_exact_dex_taxon_is_excluded(self):
+        self.assertTrue(excluded_by_dex(1, [1], dex_ids={1}, dex_ancestor_ids={1}))
+
+    def test_descendant_of_a_genus_level_dex_entry_is_excluded(self):
+        # dex holds the genus (id 5); candidate species 9 carries it in its ancestor chain.
+        self.assertTrue(excluded_by_dex(9, [1, 5, 9], dex_ids={5}, dex_ancestor_ids={1, 5}))
+
+    def test_ancestor_of_a_dex_taxon_is_excluded(self):
+        # dex holds a subspecies (id 9) whose ancestor chain passes through species 5.
+        self.assertTrue(excluded_by_dex(5, [1, 5], dex_ids={9}, dex_ancestor_ids={1, 5, 9}))
+
+    def test_unrelated_species_is_kept(self):
+        self.assertFalse(excluded_by_dex(7, [1, 3, 7], dex_ids={9}, dex_ancestor_ids={1, 2, 9}))
+
+    def test_dex_exclusion_sets_union_ancestor_chains_and_include_dex_ids(self):
+        taxa = {"a": {"taxon_id": 1, "ancestor_ids": [10, 20, 1]}, "b": {"taxon_id": 2, "ancestor_ids": [10, 2]}}
+        dex_ids, dex_ancestor_ids = dex_exclusion_sets(taxa)
+        self.assertEqual(dex_ids, {1, 2})
+        self.assertEqual(dex_ancestor_ids, {1, 2, 10, 20})
+
+
 class OtherClassTest(unittest.TestCase):
     def test_lookalikes_exclude_dex_species_and_take_the_most_observed(self):
-        def row(tid, count):
-            return {"taxon": {"id": tid, "name": f"s{tid}"}, "count": count}
-        chosen = choose_lookalikes({5: [row(1, 900), row(2, 50), row(3, 400), row(4, 10)]}, dex_taxa={1}, per_family=2)
+        def row(tid, count, ancestors=None):
+            return {"taxon": {"id": tid, "name": f"s{tid}", "ancestor_ids": ancestors or [tid]}, "count": count}
+        chosen = choose_lookalikes({5: [row(1, 900), row(2, 50), row(3, 400), row(4, 10)]},
+                                    dex_ids={1}, dex_ancestor_ids={1}, per_family=2)
         self.assertEqual([c["taxon_id"] for c in chosen], [3, 2])
+        self.assertTrue(all(c["pool"] == "lookalike" for c in chosen))
+
+    def test_lookalikes_also_exclude_descendants_and_ancestors_of_dex_taxa(self):
+        def row(tid, count, ancestors):
+            return {"taxon": {"id": tid, "name": f"s{tid}", "ancestor_ids": ancestors}, "count": count}
+        # dex holds genus 1; species 2 is a descendant of it and must be excluded too.
+        chosen = choose_lookalikes({5: [row(2, 900, [1, 2]), row(3, 400, [3])]},
+                                    dex_ids={1}, dex_ancestor_ids={1}, per_family=2)
+        self.assertEqual([c["taxon_id"] for c in chosen], [3])
+
+    def test_broad_pool_caps_per_taxon_and_excludes_dex_lineages(self):
+        def row(tid, count):
+            return {"taxon": {"id": tid, "name": f"s{tid}", "ancestor_ids": [tid]}, "count": count}
+        candidates = {3: [row(1, 900), row(2, 500), row(3, 100)], 47170: [row(4, 700)]}
+        chosen = choose_broad(candidates, dex_ids={2}, dex_ancestor_ids={2}, targets={3: 1, 47170: 1})
+        self.assertEqual({(c["taxon_id"], c["pool"]) for c in chosen}, {(1, "broad"), (4, "broad")})
+
+    def test_broad_pool_dedups_against_species_another_pool_already_took(self):
+        def row(tid, count):
+            return {"taxon": {"id": tid, "name": f"s{tid}", "ancestor_ids": [tid]}, "count": count}
+        candidates = {3: [row(1, 900), row(2, 500)]}
+        chosen = choose_broad(candidates, dex_ids=set(), dex_ancestor_ids=set(), targets={3: 2}, exclude_ids={1})
+        self.assertEqual([c["taxon_id"] for c in chosen], [2])
 
     def test_open_set_species_are_disjoint_from_training_species(self):
         species = [{"taxon_id": i} for i in range(50)]
