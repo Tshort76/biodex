@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -63,9 +64,9 @@ data class EntryDetail(
     val capture: Boolean = false,
 )
 
-/** D78: a photo picked from the grid's ＋, to be named and captured. */
+/** D78: a photo picked from the grid's ＋ — or D83: shared in — to be named and captured. */
 @Serializable
-data class Identify(val photoUri: String, val displayName: String? = null)
+data class Identify(val photoUri: String, val displayName: String? = null, val shared: Boolean = false)
 
 @Serializable
 data class ConfirmSpecies(val draftId: String)
@@ -91,8 +92,18 @@ data object Settings
 data object Licenses
 
 @Composable
-fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
+fun BioDexNavHost(
+    navController: NavHostController = rememberNavController(),
+    /** D83: a photo another app shared in, opened on Identify once and then [onSharedPhotoOpened]. */
+    sharedPhotoUri: String? = null,
+    onSharedPhotoOpened: () -> Unit = {},
+) {
     val container = LocalContext.current.appContainer
+    LaunchedEffect(sharedPhotoUri) {
+        if (sharedPhotoUri == null) return@LaunchedEffect
+        navController.navigate(Identify(sharedPhotoUri, shared = true)) { popUpTo(DexGrid) }
+        onSharedPhotoOpened()
+    }
     // D69: adding a species by name from the grid's search opens the lookup card with that name.
     val addSpecies = { name: String ->
         navController.navigate(ConfirmSpecies(container.addSpeciesDrafts.put(typedName = name)))
@@ -160,18 +171,18 @@ fun BioDexNavHost(navController: NavHostController = rememberNavController()) {
         composable<Identify> { backStackEntry ->
             val route = backStackEntry.toRoute<Identify>()
             IdentifyRoute(
-                photo = PickedPhoto(route.photoUri, route.displayName),
+                photo = PickedPhoto(route.photoUri, route.displayName, route.shared),
                 onBack = { navController.popBackStack() },
                 onCaptured = { speciesId, isFirst ->
                     if (isFirst) revealThenHome(speciesId) else homeTo(speciesId, "+1 photo")
                 },
                 // Q02: a name the dex lacks is added and captured with this photo in one go.
-                onAdd = { name, photoUri, place ->
+                onAdd = { name, photo, place, wild ->
                     navController.navigate(
                         ConfirmSpecies(
                             container.addSpeciesDrafts.put(
                                 typedName = name,
-                                photo = DraftPhoto(photoUri, place),
+                                photo = DraftPhoto(photo.uri, place, wild, photo.shared),
                             ),
                         ),
                     )

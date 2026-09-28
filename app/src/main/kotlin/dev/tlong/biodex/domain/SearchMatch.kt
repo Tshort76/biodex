@@ -13,6 +13,10 @@ import java.text.Normalizer
  * few edits** of exactly: a missing letter, a wrong one, an extra one, or two swapped, up to a
  * budget that grows with the query so a short query stays strict.
  *
+ * Folding drops the spaces, so a match may run across words ("redtailed") — but only one that
+ * starts at a word, or stays inside the word it starts in (D82). Otherwise "orca" is found in
+ * "Castor canadensis", cast·**or ca**·nadensis, and a search for the orca shows the beaver.
+ *
  * Every function here is pure and runs in microseconds on a 12-character name, which is what
  * lets it sit inside a `filter` over 340 species without anyone noticing.
  */
@@ -48,9 +52,47 @@ object SearchMatch {
         val q = fold(query)
         if (q.isEmpty()) return true
         val n = fold(name)
-        if (n.contains(q)) return true
+        if (wordwiseIndexOf(name, n, q) >= 0) return true
         val budget = editBudget(q.length)
-        return budget > 0 && approximatelyContains(n, q, budget)
+        return budget > 0 && approximatelyContainsWordwise(name, n, q, budget)
+    }
+
+    /**
+     * True when [query] appears in [name] after folding, exactly, without starting inside one
+     * word and running into the next. D69's "is this name already in the dex" test.
+     */
+    fun containsWordwise(name: String, query: String): Boolean {
+        val q = fold(query)
+        return q.isEmpty() || wordwiseIndexOf(name, fold(name), q) >= 0
+    }
+
+    /**
+     * The first place [q] occurs in [n] (the folded [name]) that starts at a word, or ends
+     * inside the word it starts in; -1 when there is none.
+     */
+    private fun wordwiseIndexOf(name: String, n: String, q: String): Int {
+        val starts = wordStarts(name)
+        var at = n.indexOf(q)
+        while (at >= 0) {
+            val wordStart = starts.last { it <= at }
+            val wordEnd = starts.firstOrNull { it > at } ?: n.length
+            if (at == wordStart || at + q.length <= wordEnd) return at
+            at = n.indexOf(q, at + 1)
+        }
+        return -1
+    }
+
+    /**
+     * The fuzzy tier under the same rule: within one word, or starting at a word — the window
+     * from a word start is just long enough to hold [q] and its edits.
+     */
+    private fun approximatelyContainsWordwise(name: String, n: String, q: String, budget: Int): Boolean {
+        val starts = wordStarts(name).distinct().filter { it < n.length }
+        val ends = starts.drop(1) + n.length
+        return starts.indices.any { i ->
+            approximatelyContains(n.substring(starts[i], ends[i]), q, budget) ||
+                approximatelyContains(n.substring(starts[i], minOf(n.length, starts[i] + q.length + budget)), q, budget)
+        }
     }
 
     /**
@@ -63,7 +105,7 @@ object SearchMatch {
         val q = fold(query)
         if (q.isEmpty()) return EXACT
         val n = fold(name)
-        val at = n.indexOf(q)
+        val at = wordwiseIndexOf(name, n, q)
         return when {
             n == q -> EXACT
             at == 0 -> PREFIX

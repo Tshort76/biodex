@@ -37,6 +37,9 @@ interface CaptureStore {
     /** M46. Which picture leads the species' tile and hero: the user's own, or the reference. */
     suspend fun setPreferOwnPhoto(speciesId: String, preferOwnPhoto: Boolean)
 
+    /** D80. Whether the sighting was in the wild or in captivity. */
+    suspend fun setCaptureWild(captureId: String, wild: Boolean)
+
     suspend fun updateCaptureReference(captureId: String, photoUri: String, thumbPath: String)
 
     /** D61. Nulls the reference, the thumbnail and any local copy; every other column stays. */

@@ -113,6 +113,8 @@ data class BackupCapture(
     val lng: Double? = null,
     val locationLabel: String? = null,
     val note: String? = null,
+    /** D80. Defaulted, so an archive written before the flag existed imports as all wild. */
+    val wild: Boolean = true,
 )
 
 /** What the user is told, and what the archive records about its own completeness. */

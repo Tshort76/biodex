@@ -19,8 +19,11 @@ import kotlinx.coroutines.flow.flowOf
  * device, no Main dispatcher and no Room — the fake "repository" is three MutableStateFlows.
  */
 
-/** DESIGN.md M14's caught/uncaught filter. Single-select; `ALL` is the mockup's "All" chip. */
-enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT }
+/**
+ * DESIGN.md M14's caught/uncaught filter. Single-select; `ALL` is the mockup's "All" chip.
+ * D80 adds [WILD] (some sighting in the wild) and [CAPTIVE] (caught, but only ever in captivity).
+ */
+enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT, WILD, CAPTIVE }
 
 /**
  * How the grid is ordered (D32). **Not a filter**: it narrows nothing, always has a value,
@@ -153,6 +156,8 @@ internal fun matchesFilters(species: SpeciesSummary, filters: DexGridFilters): B
         CaughtFilter.ALL -> true
         CaughtFilter.CAUGHT -> species.caught
         CaughtFilter.UNCAUGHT -> !species.caught
+        CaughtFilter.WILD -> species.seenWild
+        CaughtFilter.CAPTIVE -> species.caught && !species.seenWild
     }
     val kingdomOk = filters.kingdom == null || species.kingdom == filters.kingdom
     // M23: a plain membership test, which is why the medicinal tag is stored rather than
@@ -254,14 +259,14 @@ fun dexGridUiState(
  * Deliberately a plain folded substring test, not the grid's typo-forgiving [matchesQuery]:
  * "Pacific Wren" is within two edits of "Pacific Tree Frog", so the forgiving match would show a
  * frog and quietly take the add away. A name typed in full that no species contains word for
- * word is a name to add. Case, accents and punctuation still do not count.
+ * word is a name to add. Case, accents and punctuation still do not count, and neither does a
+ * match that straddles two words (D82: "orca" is not in "Castor canadensis").
  */
 internal fun addableNameFor(species: List<SpeciesSummary>, query: String): String? {
-    val folded = SearchMatch.fold(query)
-    if (folded.isEmpty()) return null
+    if (SearchMatch.fold(query).isEmpty()) return null
     val held = species.any { summary ->
-        SearchMatch.fold(summary.commonName).contains(folded) ||
-            summary.scientificName?.let { SearchMatch.fold(it).contains(folded) } == true
+        SearchMatch.containsWordwise(summary.commonName, query) ||
+            summary.scientificName?.let { SearchMatch.containsWordwise(it, query) } == true
     }
     return if (held) null else query.trim()
 }

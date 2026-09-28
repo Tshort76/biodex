@@ -46,6 +46,11 @@ import kotlinx.coroutines.flow.combine
 data class PickedPhoto(
     val uri: String,
     val displayName: String? = null,
+    /**
+     * D83: shared into the app from another one (Google Photos). Its read grant is temporary
+     * and cannot be persisted, so a capture of it keeps a local copy of the full-size photo.
+     */
+    val shared: Boolean = false,
 )
 
 /**

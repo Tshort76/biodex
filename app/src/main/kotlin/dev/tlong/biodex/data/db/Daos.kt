@@ -30,6 +30,8 @@ data class EntryStatusRow(
     val thumbPath: String?,
     /** M46. */
     val preferOwnPhoto: Boolean = false,
+    /** D80: some capture of this species has `wild` set. */
+    val seenWild: Boolean = false,
 )
 
 
@@ -132,6 +134,7 @@ interface EntryDao {
                e.caughtAt AS caughtAt,
                e.preferOwnPhoto AS preferOwnPhoto,
                (SELECT COUNT(*) FROM captures c WHERE c.speciesId = e.speciesId) AS captureCount,
+               EXISTS (SELECT 1 FROM captures cw WHERE cw.speciesId = e.speciesId AND cw.wild = 1) AS seenWild,
                COALESCE(
                    (SELECT cf.thumbPath FROM captures cf
                       WHERE cf.id = e.favoriteCaptureId AND cf.speciesId = e.speciesId),
@@ -214,6 +217,10 @@ interface CaptureDao {
             "locationLabel = COALESCE(locationLabel, :label) WHERE id = :captureId",
     )
     suspend fun fillPlace(captureId: String, lat: Double, lng: Double, label: String?)
+
+    /** D80. */
+    @Query("UPDATE captures SET wild = :wild WHERE id = :captureId")
+    suspend fun setWild(captureId: String, wild: Boolean)
 
     /** D61: the photograph goes, every other column of the sighting stays. */
     @Query(

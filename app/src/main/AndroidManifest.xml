@@ -36,6 +36,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- D83: BioDex in the share sheet, so a photo edited in Google Photos (and named
+                 there with Lens) goes straight to Identify. -->
+            <intent-filter android:label="Register in BioDex">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
         </activity>
 
         <!-- S01's share sheet: a ZIP in cacheDir/exports handed to another app as a

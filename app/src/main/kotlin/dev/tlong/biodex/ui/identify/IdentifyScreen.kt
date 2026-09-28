@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -52,6 +52,7 @@ import dev.tlong.biodex.ui.capture.PlacePromptDialog
 import dev.tlong.biodex.ui.capture.openInLens
 import dev.tlong.biodex.ui.common.PrimaryCta
 import dev.tlong.biodex.ui.common.SilhouetteIcon
+import dev.tlong.biodex.ui.common.WildToggle
 import dev.tlong.biodex.ui.theme.DexTheme
 
 /**
@@ -63,7 +64,7 @@ fun IdentifyRoute(
     photo: PickedPhoto,
     onBack: () -> Unit,
     onCaptured: (speciesId: String, isFirst: Boolean) -> Unit,
-    onAdd: (name: String, photoUri: String, place: PlaceAnswer?) -> Unit,
+    onAdd: (name: String, photo: PickedPhoto, place: PlaceAnswer?, wild: Boolean) -> Unit,
 ) {
     val context = LocalContext.current
     val viewModel: IdentifyViewModel = viewModel(
@@ -87,7 +88,7 @@ fun IdentifyRoute(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is IdentifyEvent.Captured -> onCaptured(event.speciesId, event.isFirst)
-                is IdentifyEvent.Add -> onAdd(event.name, event.photoUri, event.place)
+                is IdentifyEvent.Add -> onAdd(event.name, event.photo, event.place, event.wild)
                 IdentifyEvent.Unreadable -> message = "That photo could not be read — nothing was saved."
             }
         }
@@ -118,11 +119,15 @@ fun IdentifyRoute(
         },
         onQueryChange = viewModel::onQueryChange,
         onSelect = viewModel::onSelect,
-        onAdd = viewModel::onAdd,
-        onCapture = viewModel::onCapture,
+        onWildChange = viewModel::onWildChange,
+        onRegister = viewModel::onRegister,
     )
 }
 
+/**
+ * D81's layout: the photo takes the top of the screen, the name goes under it, and one button
+ * registers — a capture of the species the dex holds, or an add of one it does not.
+ */
 @Composable
 fun IdentifyScreen(
     state: IdentifyUiState,
@@ -131,8 +136,8 @@ fun IdentifyScreen(
     onOpenLens: () -> Unit,
     onQueryChange: (String) -> Unit,
     onSelect: (String) -> Unit,
-    onAdd: () -> Unit,
-    onCapture: () -> Unit,
+    onWildChange: (Boolean) -> Unit,
+    onRegister: () -> Unit,
 ) {
     val colors = DexTheme.colors
     Column(
@@ -164,69 +169,63 @@ fun IdentifyScreen(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // The photo gives way to everything else, so the keyboard shrinks it rather than the list.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .clip(RoundedCornerShape(14.dp))
+                .background(colors.silBg),
+        ) {
             AsyncImage(
                 model = state.photo.uri,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(colors.silBg),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "🔍  Identify with Google Lens",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = colors.accent,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(colors.accentSoft)
-                        .clickable(onClick = onOpenLens)
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
-                )
-                Text(
-                    text = "Copy the name in Lens and come back — it fills in below.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.faint,
-                )
-            }
+            Text(
+                text = "🔍  Google Lens",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.accent,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.card)
+                    .clickable(onClick = onOpenLens)
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+            )
         }
 
         NameField(query = state.query, onQueryChange = onQueryChange)
+        if (state.query.isEmpty()) {
+            Text(
+                text = "Copy the name in Lens and come back — it fills in here.",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.faint,
+            )
+        }
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.weight(1f),
-        ) {
-            items(state.results, key = { it.id }) { species ->
-                SpeciesRow(species, selected = species.id == state.selected?.id, onClick = { onSelect(species.id) })
-            }
-            state.addableName?.let { name ->
-                item {
-                    Text(
-                        text = "Not in your dex. Add “$name” and capture it ›",
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = colors.accent,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(colors.accentSoft)
-                            .clickable(onClick = onAdd)
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                    )
+        if (state.results.isNotEmpty()) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.heightIn(max = 168.dp),
+            ) {
+                items(state.results, key = { it.id }) { species ->
+                    SpeciesRow(species, selected = species.id == state.target?.id, onClick = { onSelect(species.id) })
                 }
             }
         }
+
+        WildToggle(wild = state.wild, onWildChange = onWildChange)
 
         message?.let {
             Text(text = it, style = MaterialTheme.typography.labelSmall, color = colors.warn)
         }
         PrimaryCta(
-            label = if (state.capturing) "Capturing…" else state.captureLabel,
-            enabled = state.canCapture,
-            onClick = onCapture,
+            label = state.registerLabel,
+            enabled = state.canRegister,
+            onClick = onRegister,
         )
     }
 }

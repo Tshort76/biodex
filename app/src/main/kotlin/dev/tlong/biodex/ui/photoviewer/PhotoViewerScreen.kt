@@ -42,6 +42,7 @@ import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.photo.PhotoRef
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.Capture
+import dev.tlong.biodex.ui.common.WildToggle
 import dev.tlong.biodex.ui.theme.BioDexTheme
 import dev.tlong.biodex.ui.theme.DexTheme
 import java.text.SimpleDateFormat
@@ -76,6 +77,7 @@ fun PhotoViewerRoute(
         filesDir = container.appContext.filesDir.absolutePath,
         onBack = onBack,
         onToggleFavorite = viewModel::toggleFavorite,
+        onWildChange = viewModel::setWild,
         onDelete = viewModel::delete,
         onUnlink = viewModel::unlinkPhoto,
         onRelink = {
@@ -94,6 +96,7 @@ fun PhotoViewerScreen(
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
+    onWildChange: (Boolean) -> Unit = {},
     onUnlink: () -> Unit,
     onRelink: () -> Unit,
     onRetry: () -> Unit,
@@ -178,6 +181,8 @@ fun PhotoViewerScreen(
             capture.note?.let {
                 Text(text = it, style = MaterialTheme.typography.bodySmall, color = colors.fg)
             }
+
+            WildToggle(wild = capture.wild, onWildChange = onWildChange)
 
             if (state.hasPhoto) {
                 ActionRow(

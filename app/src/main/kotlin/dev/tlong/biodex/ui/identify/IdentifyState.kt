@@ -6,6 +6,7 @@ import dev.tlong.biodex.ui.capture.PickedPhoto
 import dev.tlong.biodex.ui.grid.addableNameFor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * D78. The Identify screen: one photo in hand, a name to find for it. The screen offers Lens
@@ -21,11 +22,30 @@ data class IdentifyUiState(
     val selected: SpeciesSummary? = null,
     /** D69's rule: the search names no species in the dex, so it is a species to add. */
     val addableName: String? = null,
+    /** The species whose name was typed in full — what Lens usually hands back. */
+    val exactMatch: SpeciesSummary? = null,
+    /** D80. Unticked for a zoo or aquarium; carried onto the capture either way. */
+    val wild: Boolean = true,
     val capturing: Boolean = false,
 ) {
-    val canCapture: Boolean get() = selected != null && !capturing
+    /** D81: the one button registers a species the dex holds, picked or named in full. */
+    val target: SpeciesSummary? get() = selected ?: exactMatch
 
-    val captureLabel: String get() = selected?.let { "Capture — ${it.commonName}" } ?: "Capture"
+    /** With no species to register, Register adds the typed name instead. */
+    val registersNewSpecies: Boolean get() = target == null && addableName != null
+
+    val canRegister: Boolean get() = !capturing && (target != null || addableName != null)
+
+    val registerLabel: String
+        get() {
+            val species = target
+            return when {
+                capturing -> "Registering…"
+                species != null -> "Register — ${species.commonName}"
+                addableName != null -> "Register — add “$addableName”"
+                else -> "Register"
+            }
+        }
 }
 
 fun identifyUiState(
@@ -34,15 +54,19 @@ fun identifyUiState(
     query: Flow<String>,
     selectedId: Flow<String?>,
     capturing: Flow<Boolean>,
+    wild: Flow<Boolean> = flowOf(true),
 ): Flow<IdentifyUiState> =
-    combine(species, query, selectedId, capturing) { all, typed, id, busy ->
+    combine(species, query, selectedId, capturing, wild) { all, typed, id, busy, isWild ->
+        val results = rankedMatches(all, typed)
         IdentifyUiState(
             photo = photo,
             query = typed,
-            results = rankedMatches(all, typed),
+            results = results,
             // From the whole dex, so a selection survives the search being edited.
             selected = all.firstOrNull { it.id == id },
             addableName = addableNameFor(all, typed),
+            exactMatch = results.firstOrNull { bestRank(it, typed) == SearchMatch.EXACT },
+            wild = isWild,
             capturing = busy,
         )
     }

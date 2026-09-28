@@ -177,3 +177,14 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL(SYNC_CAUGHT_AT_SQL)
     }
 }
+
+/**
+ * D80: whether a sighting was in the wild. `NOT NULL DEFAULT 1` here and
+ * `@ColumnInfo(defaultValue = "1")` on [CaptureEntity] must agree, as in [MIGRATION_4_5]; every
+ * sighting already recorded lands wild, which is what nearly all of them were.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `captures` ADD COLUMN `wild` INTEGER NOT NULL DEFAULT 1")
+    }
+}

@@ -75,6 +75,11 @@ class PhotoViewerViewModel(
         }
     }
 
+    /** D80: a sighting marked wild can be corrected to captive, and back. */
+    fun setWild(wild: Boolean) {
+        viewModelScope.launch { registrar.setWild(captureId, wild) }
+    }
+
     /** S07. The caller shows the "this reverts the species to uncaught" warning first. */
     fun delete() {
         viewModelScope.launch {

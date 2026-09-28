@@ -58,6 +58,7 @@ import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
 import dev.tlong.biodex.ui.common.DexFilterChip
+import dev.tlong.biodex.ui.common.PrimaryCta
 import dev.tlong.biodex.ui.common.ProgressPill
 import dev.tlong.biodex.ui.common.RegionPill
 import dev.tlong.biodex.ui.common.SpeciesCell
@@ -179,11 +180,14 @@ fun DexGridScreen(
                     onSort = onSort,
                     onClearFilters = onClearFilters,
                 )
+                // D78, D81: a search the dex does not hold is where a species is added by name —
+                // offered even when near-misses are listed, since none of them is the one typed.
+                if (!state.loading && state.addableName != null) {
+                    AddToDexButton(name = state.addableName, onClick = { onAddSpecies(state.addableName) })
+                }
                 when {
                     state.loading -> CentredNote("Loading the Pacific catalogue…")
-                    // D78: a search the dex does not hold is where a species is added by name.
-                    state.species.isEmpty() && state.addableName != null ->
-                        AddByNameNote(name = state.addableName, onClick = { onAddSpecies(state.addableName) })
+                    state.species.isEmpty() && state.addableName != null -> Unit
                     state.species.isEmpty() -> CentredNote(
                         if (state.isFiltered) "No species match." else "The catalogue is empty.",
                     )
@@ -459,6 +463,17 @@ private fun FilterRow(
                 selected = state.filters.caught == CaughtFilter.UNCAUGHT,
                 onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
             )
+            // D80: seen in the wild, and caught only in a zoo or aquarium.
+            DexFilterChip(
+                label = "Wild",
+                selected = state.filters.caught == CaughtFilter.WILD,
+                onClick = { onCaughtFilter(CaughtFilter.WILD) },
+            )
+            DexFilterChip(
+                label = "Captive",
+                selected = state.filters.caught == CaughtFilter.CAPTIVE,
+                onClick = { onCaughtFilter(CaughtFilter.CAPTIVE) },
+            )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -602,18 +617,19 @@ private fun <T> FilterDropdown(
     }
 }
 
+/** D81: a filled button, because the owner read the old accent-text link as a caption. */
 @Composable
-private fun AddByNameNote(name: String, onClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+private fun AddToDexButton(name: String, onClick: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(bottom = 10.dp),
+    ) {
         Text(
-            text = "Not in your dex. Add “$name” to your dex ›",
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = DexTheme.colors.accent,
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+            text = "“$name” isn’t in your dex.",
+            style = MaterialTheme.typography.bodySmall,
+            color = DexTheme.colors.muted,
         )
+        PrimaryCta(label = "＋ Add to Dex", enabled = true, onClick = onClick)
     }
 }
 

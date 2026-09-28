@@ -197,6 +197,8 @@ data class Capture(
     val locationLabel: String? = null,
     val note: String? = null,
     val createdAt: Long,
+    /** D80. False for a sighting in captivity; true, the default, for one in the wild. */
+    val wild: Boolean = true,
 )
 
 /** The user's relationship to a species; exists once the species has a capture. */
@@ -248,6 +250,8 @@ data class SpeciesSummary(
      * every other, and the summary list is the only place that already holds them all.
      */
     val lineage: Lineage = Lineage.Unknown,
+    /** D80: at least one of this species' sightings was in the wild. False when uncaught. */
+    val seenWild: Boolean = false,
 ) {
     val caught: Boolean get() = caughtAt != null
     val displayNumber: String get() = displayDexNumber(dexNumber, source, kingdom)

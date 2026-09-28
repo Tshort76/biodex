@@ -27,8 +27,16 @@ data class AddSpeciesDraft(
     val isBackfill: Boolean get() = backfillSpeciesId != null
 }
 
-/** A picked photo and its place — null when the photo's EXIF carries one (D60). */
-data class DraftPhoto(val uri: String, val place: PlaceAnswer?)
+/**
+ * A picked photo and its place — null when the photo's EXIF carries one (D60) — with D80's wild
+ * flag and D83's shared-in flag, which keeps a local copy.
+ */
+data class DraftPhoto(
+    val uri: String,
+    val place: PlaceAnswer?,
+    val wild: Boolean = true,
+    val shared: Boolean = false,
+)
 
 class AddSpeciesDraftHolder(private val newId: () -> String = { UUID.randomUUID().toString() }) {
 

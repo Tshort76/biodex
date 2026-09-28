@@ -68,13 +68,30 @@ class IdentifyStateTest {
     }
 
     @Test
-    fun `capturing needs a selection, and names it`() {
-        assertFalse(state().canCapture)
-        assertEquals("Capture", state().captureLabel)
+    fun `register needs a species or a name to add, and says which (D81)`() {
+        assertFalse(state().canRegister)
+        assertEquals("Register", state().registerLabel)
         val chosen = state(selectedId = "western-screech-owl")
-        assertTrue(chosen.canCapture)
-        assertEquals("Capture — Western Screech-Owl", chosen.captureLabel)
-        assertFalse("a capture in flight cannot start twice", state(selectedId = "western-screech-owl", capturing = true).canCapture)
+        assertTrue(chosen.canRegister)
+        assertEquals("Register — Western Screech-Owl", chosen.registerLabel)
+        assertFalse("a capture in flight cannot start twice", state(selectedId = "western-screech-owl", capturing = true).canRegister)
+    }
+
+    @Test
+    fun `a name typed in full registers that species with no tap on the list`() {
+        val s = state(query = "western tanager")
+        assertEquals("western-tanager", s.target?.id)
+        assertFalse(s.registersNewSpecies)
+        assertNull("a partial name picks nothing", state(query = "western").target)
+    }
+
+    @Test
+    fun `a name outside the dex registers as a new species`() {
+        val s = state(query = "Varied Thrush")
+        assertTrue(s.canRegister)
+        assertTrue(s.registersNewSpecies)
+        assertEquals("Register — add “Varied Thrush”", s.registerLabel)
+        assertFalse("a picked species wins over the add", state(query = "Varied Thrush", selectedId = "western-tanager").registersNewSpecies)
     }
 
     @Test

@@ -210,6 +210,8 @@ data class CaptureEntity(
     val note: String? = null,
     /** Registration time. `isFirst` is derived (`MIN(createdAt)` per species), not stored. */
     val createdAt: Long,
+    /** D80. False for an animal seen in captivity — a zoo, an aquarium. Added by [MIGRATION_7_8]. */
+    @ColumnInfo(defaultValue = "1") val wild: Boolean = true,
 )
 
 /** Single-row key/value table; the importer's version handshake lives here. */

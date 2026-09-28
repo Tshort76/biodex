@@ -2,6 +2,7 @@ package dev.tlong.biodex.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -75,6 +76,17 @@ class SearchMatchTest {
         assertTrue("pattern longer than text", SearchMatch.approximatelyContains("ab", "abc", 1))
         assertFalse(SearchMatch.approximatelyContains("", "abc", 2))
         assertTrue(SearchMatch.approximatelyContains("anything", "", 0))
+    }
+
+    @Test
+    fun `a match may not start inside one word and run into the next (D82)`() {
+        assertFalse("cast·or ca·nadensis", SearchMatch.matches("Castor canadensis", "orca"))
+        assertFalse("nor the fuzzy tier", SearchMatch.matches("Castor canadensis", "orcas"))
+        assertNull(SearchMatch.rank("Castor canadensis", "orca"))
+        assertFalse(SearchMatch.containsWordwise("Castor canadensis", "orca"))
+        assertTrue("inside one word is still a match", SearchMatch.matches("Common Nighthawk", "hawk"))
+        assertTrue("from a word start it may cross", SearchMatch.matches("Pacific Tree Frog", "treefrog"))
+        assertTrue(SearchMatch.containsWordwise("Orcinus orca", "orca"))
     }
 
     @Test

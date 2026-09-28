@@ -6,6 +6,15 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v25 — 2026-09-27
+
+- **Added** — every sighting is marked wild or captive. The Identify screen has a "Seen in the wild" checkbox, ticked by default; untick it for a zoo or aquarium. The photo viewer can change it later. Earlier sightings are all wild. (`D80`)
+- **Added** — **Wild** and **Captive** filters beside Caught and Uncaught: Wild shows species you've seen in the wild, Captive the ones you've only seen in captivity. (`M14` revised, `D80`)
+- **Changed** — the Identify screen shows the photo across most of the screen with the name field under it, and the Lens button on the photo. One **Register** button captures the species you pick, or the one whose name you typed in full, or adds the name when the dex doesn't hold it. The separate "Not in your dex" link is gone. (`D81`)
+- **Changed** — "Add “X” to your dex" on the grid is now a **＋ Add to Dex** button, and it shows even when the search also lists near-misses. (`M08` revised, `D81`)
+- **Fixed** — searching "orca" showed the American beaver (its scientific name, *Castor canadensis*, contains "orca" across the space) and offered no way to add the orca. (`M14` revised, `D82`)
+- **Added** — BioDex is in the share sheet as "Register in BioDex". Share a photo from Google Photos, and it opens on the Identify screen, with the name you copied in Lens already filled in. A shared photo keeps its own full-size copy. (`S03` revised, `D83`)
+
 ## v24 — 2026-09-24
 
 - **Changed** — the name you copy in Google Lens fills in the "What is it?" search when you come back; there is no "Use “X”" chip to tap. (`S06` revised, `D79`)

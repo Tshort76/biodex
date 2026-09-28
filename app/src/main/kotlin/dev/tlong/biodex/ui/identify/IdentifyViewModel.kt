@@ -36,7 +36,8 @@ sealed interface IdentifyEvent {
     data class Captured(val speciesId: String, val isFirst: Boolean) : IdentifyEvent
 
     /** The name is new to the dex: the add card takes it, with this photo and its place (Q02). */
-    data class Add(val name: String, val photoUri: String, val place: PlaceAnswer?) : IdentifyEvent
+    data class Add(val name: String, val photo: PickedPhoto, val place: PlaceAnswer?, val wild: Boolean = true) :
+        IdentifyEvent
 
     data object Unreadable : IdentifyEvent
 }
@@ -57,9 +58,13 @@ class IdentifyViewModel(
     private val query = MutableStateFlow("")
     private val selectedId = MutableStateFlow<String?>(null)
 
-    /** Set when Lens opens; the next clipboard read fills the search, and only that one. */
-    private var lensOpened = false
+    /**
+     * Set when Lens opens; the next clipboard read fills the search, and only that one. A photo
+     * shared in (D83) starts set: the usual way here is Lens in Google Photos, copy, then share.
+     */
+    private var lensOpened = photo.shared
     private val capturing = MutableStateFlow(false)
+    private val wild = MutableStateFlow(true)
 
     /** Null while the EXIF read runs; then whether the photo carries coordinates. */
     private val located = MutableStateFlow<Boolean?>(null)
@@ -77,6 +82,7 @@ class IdentifyViewModel(
         query = query,
         selectedId = selectedId,
         capturing = capturing,
+        wild = wild,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IdentifyUiState(photo))
 
     val placePrompt: StateFlow<PlaceSearchState?> = combine(
@@ -118,15 +124,23 @@ class IdentifyViewModel(
         nameFromClipboard(text)?.let { query.value = it }
     }
 
-    fun onCapture() {
-        val species = uiState.value.selected ?: return
-        if (capturing.value) return
-        withPlace { place -> record(species.id, place) }
+    /** D80. */
+    fun onWildChange(value: Boolean) {
+        wild.value = value
     }
 
-    fun onAdd() {
-        val name = uiState.value.addableName ?: return
-        withPlace { place -> events.send(IdentifyEvent.Add(name, photo.uri, place)) }
+    /** D81: capture the species the dex holds, or — when it holds none by that name — add it. */
+    fun onRegister() {
+        val state = uiState.value
+        if (!state.canRegister) return
+        val isWild = state.wild
+        val species = state.target
+        if (species != null) {
+            withPlace { place -> record(species.id, place, isWild) }
+        } else {
+            val name = state.addableName ?: return
+            withPlace { place -> events.send(IdentifyEvent.Add(name, photo, place, isWild)) }
+        }
     }
 
     fun onPlaceQueryChange(value: String) {
@@ -160,7 +174,7 @@ class IdentifyViewModel(
         }
     }
 
-    private suspend fun record(speciesId: String, place: PlaceAnswer?) {
+    private suspend fun record(speciesId: String, place: PlaceAnswer?, wild: Boolean) {
         capturing.value = true
         val result = registrar.register(
             speciesId,
@@ -168,13 +182,15 @@ class IdentifyViewModel(
             locationLabel = place?.label,
             placeLat = place?.lat,
             placeLng = place?.lng,
+            wild = wild,
+            keepCopy = photo.shared,
         )
         when (result) {
             is CaptureRegistrar.RegisterResult.Registered ->
                 events.send(IdentifyEvent.Captured(speciesId, result.isFirst))
             is CaptureRegistrar.RegisterResult.ThumbnailFailed -> events.send(IdentifyEvent.Unreadable)
             // The door's own rule (D60) disagreeing with the EXIF read: ask, rather than fail.
-            CaptureRegistrar.RegisterResult.PlaceMissing -> pending.value = { p -> record(speciesId, p) }
+            CaptureRegistrar.RegisterResult.PlaceMissing -> pending.value = { p -> record(speciesId, p, wild) }
         }
         capturing.value = false
     }

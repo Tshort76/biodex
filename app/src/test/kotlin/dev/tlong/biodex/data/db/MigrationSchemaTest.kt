@@ -175,6 +175,26 @@ class MigrationSchemaTest {
         assertEquals(shape(File("$dir/5.json")), shape(v6))
     }
 
+    /** D80's column, the same `NOT NULL DEFAULT` shape as M46's, defaulting to wild. */
+    @Test
+    fun `the wild column added by MIGRATION_7_8 matches Room's exported v8 schema`() {
+        val v8 = File("schemas/dev.tlong.biodex.data.db.AppDatabase/8.json")
+        assertTrue("schema v8 has not been exported — run assembleDebug", v8.exists())
+        val field = Json.parseToJsonElement(v8.readText())
+            .jsonObject.getValue("database")
+            .jsonObject.getValue("entities")
+            .jsonArray
+            .map { it.jsonObject }
+            .single { it.getValue("tableName").jsonPrimitive.content == "captures" }
+            .getValue("fields").jsonArray
+            .map { it.jsonObject }
+            .single { it.getValue("fieldPath").jsonPrimitive.content == "wild" }
+
+        assertEquals("1", field["defaultValue"]?.jsonPrimitive?.content)
+        assertTrue(field["notNull"]?.jsonPrimitive?.content?.toBoolean() == true)
+        assertEquals("INTEGER", field.getValue("affinity").jsonPrimitive.content)
+    }
+
     @Test
     fun `the speciesId index survives the table recreate`() {
         // Dropping the table drops its indices, so the migration recreates this one by hand.

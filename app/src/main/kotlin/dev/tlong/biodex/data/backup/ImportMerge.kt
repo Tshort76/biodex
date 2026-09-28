@@ -163,6 +163,7 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
                     locationLabel = archived.locationLabel,
                     note = archived.note,
                     createdAt = archived.createdAt,
+                    wild = archived.wild,
                 ),
                 thumbEntry = archived.thumbEntry,
                 photoEntry = archived.photoEntry,

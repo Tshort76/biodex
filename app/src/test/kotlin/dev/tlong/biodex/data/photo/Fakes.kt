@@ -53,6 +53,10 @@ class FakeCaptureStore : CaptureStore {
         entries[speciesId] = entries.getValue(speciesId).copy(preferOwnPhoto = preferOwnPhoto)
     }
 
+    override suspend fun setCaptureWild(captureId: String, wild: Boolean) {
+        captures[captureId] = captures.getValue(captureId).copy(wild = wild)
+    }
+
     override suspend fun updateCaptureReference(
         captureId: String,
         photoUri: String,

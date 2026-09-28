@@ -240,7 +240,19 @@ class CaptureRegistrarTest {
                 localCopyRelativePath("cap-copy"),
                 store.captures.getValue("cap-copy").localCopyPath,
             )
+
+            registrar.register("heron", "content://shared/3", keepCopy = true)
+            assertEquals("a shared-in photo is copied with the setting off (D83)", 2, photos.localCopiesWritten)
         }
+
+    @Test
+    fun `a sighting records whether it was wild, and can be corrected (D80)`() = runBlocking {
+        val zoo = registrar.register("owl", "content://photos/1", wild = false)
+            as CaptureRegistrar.RegisterResult.Registered
+        assertFalse(store.captures.getValue(zoo.captureId).wild)
+        registrar.setWild(zoo.captureId, true)
+        assertTrue(store.captures.getValue(zoo.captureId).wild)
+    }
 
     // -- Deletion (S07) ------------------------------------------------------
 

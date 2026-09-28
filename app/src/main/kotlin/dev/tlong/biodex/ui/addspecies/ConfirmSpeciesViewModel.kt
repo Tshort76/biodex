@@ -222,6 +222,8 @@ class ConfirmSpeciesViewModel(
                     locationLabel = it.place?.label,
                     placeLat = it.place?.lat,
                     placeLng = it.place?.lng,
+                    wild = it.wild,
+                    keepCopy = it.shared,
                 )
             }
             if (result is CaptureRegistrar.RegisterResult.Registered) {
