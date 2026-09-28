@@ -105,6 +105,7 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--workers", type=int, default=10)
     ap.add_argument("--name", default=None)
+    ap.add_argument("--resume", action="store_true", help="resume from run/last.pt if present")
     args = ap.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -115,6 +116,7 @@ def main() -> None:
     rows = load_rows()
     present = {r["label"] for r in rows}
     labels = [s["id"] for s in catalogue if s["id"] in present] + [OTHER_LABEL]
+    (run / "labels.json").write_text(json.dumps(labels, indent=1))
     label_index = {l: i for i, l in enumerate(labels)}
     other_index = label_index[OTHER_LABEL]
     groups = {s["id"]: s["taxClass"] for s in catalogue} | {OTHER_LABEL: OTHER_LABEL}
@@ -142,8 +144,20 @@ def main() -> None:
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / warmup) * 0.5 * (1 + math.cos(math.pi * min(s, steps) / steps)))
     loss_fn = torch.nn.CrossEntropyLoss(label_smoothing=0.1)
 
-    best, history = -1.0, []
-    for epoch in range(args.epochs):
+    best, history, start_epoch = -1.0, [], 0
+    if args.resume:
+        last = run / "last.pt"
+        if last.exists():
+            ck = torch.load(last, map_location=device)
+            model.load_state_dict(ck["model"])
+            opt.load_state_dict(ck["optimizer"])
+            sched.load_state_dict(ck["scheduler"])
+            best, history, start_epoch = ck["best"], ck["history"], ck["epoch"]
+            print(f"resuming from epoch {start_epoch}", flush=True)
+        else:
+            print("--resume set but no last.pt found, starting fresh", flush=True)
+
+    for epoch in range(start_epoch, args.epochs):
         model.train()
         t0, seen, total = time.time(), 0, 0.0
         for x, y in train_loader:
@@ -161,6 +175,11 @@ def main() -> None:
         if m["top1"] > best:
             best = m["top1"]
             torch.save(model.state_dict(), run / "best.pt")
+        ck = {"model": model.state_dict(), "optimizer": opt.state_dict(), "scheduler": sched.state_dict(),
+              "epoch": epoch + 1, "best": best, "history": history}
+        tmp = run / "last.pt.tmp"
+        torch.save(ck, tmp)
+        os.replace(tmp, run / "last.pt")
 
     # Final numbers from the best checkpoint: closed-set on test, open-set on species never trained on.
     model.load_state_dict(torch.load(run / "best.pt", map_location=device))
