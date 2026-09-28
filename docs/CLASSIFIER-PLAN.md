@@ -28,7 +28,21 @@ Corpus: 117,999 CC0/CC-BY photos selected for all 254 species plus 384 lookalike
 | **MNv4, lr 2e-4 — current best (`data/runs/mnv4-lr2e-4`)** | **80.6 %** | **91.0 %** | 15 % (AUROC 0.73) |
 | BioCLIP 2 linear probe (reference; too large for the phone) | 95.9 % | 98.6 % | 69 % (AUROC 0.93) |
 
-The first recipe's learning rate was wrecking the pretrained features (12 % after one epoch; 59 % at 2e-4). The iNat top-3 bar of 90 % is met; the owner-photo gate is not yet run. Weakest groups: fish 61 % top-1, amphibians 71 %; fungi and invertebrates are ~90 %+. The open-set "not in dex" signal does not work yet. Export: the fp32 model (35 MB) matches PyTorch exactly; the int8-weight model (9.5 MB) agrees on 20/20 top-1 but drifts up to 0.12 in probability and fails the golden gate.
+The first recipe's learning rate was wrecking the pretrained features (12 % after one epoch; 59 % at 2e-4).
+
+**"Not in dex" (2026-09-28).** Re-scored on a broader held-out set (6,715 photos of 20 % of all non-dex species, never trained on):
+
+| Model | Top-1 dex | Top-3 dex | Dex photos called "other" | Unseen species flagged |
+|---|---|---|---|---|
+| `mnv4-lr2e-4` (lookalike-only `other`) | 80.6 % | 91.0 % | 0 % | 1.3 % |
+| `mnv4-open` (broad `other`: +1,320 common non-dex Pacific species, 25 % of each batch) | 63.8 % | 73.4 % | 18.5 % | 71.3 % |
+| `mnv4-open`, logit penalty 1 on `other` | 68.2 % | 80.1 % | 8.3 % | 53.9 % |
+| `mnv4-open`, penalty 2 | 69.8 % | 82.9 % | 3.4 % | 36.6 % |
+| BioCLIP 2 probe (reference, too large for the phone) | 95.9 % | 98.6 % | — | ~69 % |
+
+Nearest-neighbour distance on `mnv4-lr2e-4` features flags only 9–20 % (AUROC 0.59–0.67), and the max-probability threshold is no better, so the broad `other` class is the only mechanism that works. It costs ~10 points of species accuracy even with `other` penalised away, and both runs end on a plateau (final loss 1.84 vs 1.37): a 9M-parameter MobileNetV4 lacks the capacity to do both. Export: fp32 passes the golden gate in every run; int8 weights never do.
+
+Weakest groups: fish 61 % top-1, amphibians 71 %; fungi and invertebrates are ~90 %+. The open-set "not in dex" signal does not work yet. Export: the fp32 model (35 MB) matches PyTorch exactly; the int8-weight model (9.5 MB) agrees on 20/20 top-1 but drifts up to 0.12 in probability and fails the golden gate.
 
 ## 2. What the model is
 
