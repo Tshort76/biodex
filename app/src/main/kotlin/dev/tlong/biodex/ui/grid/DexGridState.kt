@@ -21,9 +21,9 @@ import kotlinx.coroutines.flow.flowOf
 
 /**
  * DESIGN.md M14's caught/uncaught filter. Single-select; `ALL` is the mockup's "All" chip.
- * D80 adds [WILD] (some sighting in the wild) and [CAPTIVE] (caught, but only ever in captivity).
+ * D80 adds [WILD] (some sighting in the wild), which leaves the zoo-only catches out (D86).
  */
-enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT, WILD, CAPTIVE }
+enum class CaughtFilter { ALL, CAUGHT, UNCAUGHT, WILD }
 
 /**
  * How the grid is ordered (D32). **Not a filter**: it narrows nothing, always has a value,
@@ -157,7 +157,6 @@ internal fun matchesFilters(species: SpeciesSummary, filters: DexGridFilters): B
         CaughtFilter.CAUGHT -> species.caught
         CaughtFilter.UNCAUGHT -> !species.caught
         CaughtFilter.WILD -> species.seenWild
-        CaughtFilter.CAPTIVE -> species.caught && !species.seenWild
     }
     val kingdomOk = filters.kingdom == null || species.kingdom == filters.kingdom
     // M23: a plain membership test, which is why the medicinal tag is stored rather than

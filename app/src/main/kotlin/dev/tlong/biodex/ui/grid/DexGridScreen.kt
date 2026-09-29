@@ -463,16 +463,11 @@ private fun FilterRow(
                 selected = state.filters.caught == CaughtFilter.UNCAUGHT,
                 onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
             )
-            // D80: seen in the wild, and caught only in a zoo or aquarium.
+            // D80/D86: seen in the wild, which leaves out what was caught only in a zoo.
             DexFilterChip(
                 label = "Wild",
                 selected = state.filters.caught == CaughtFilter.WILD,
                 onClick = { onCaughtFilter(CaughtFilter.WILD) },
-            )
-            DexFilterChip(
-                label = "Captive",
-                selected = state.filters.caught == CaughtFilter.CAPTIVE,
-                onClick = { onCaughtFilter(CaughtFilter.CAPTIVE) },
             )
         }
         Row(

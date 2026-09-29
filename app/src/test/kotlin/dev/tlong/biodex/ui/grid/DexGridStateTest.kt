@@ -167,11 +167,9 @@ class DexGridStateTest {
     }
 
     @Test
-    fun `the wild filter keeps species seen wild, and captive the ones caught only in captivity (D80)`() {
+    fun `the wild filter keeps species seen wild and leaves out the zoo-only catch (D80, D86)`() {
         filters.value = DexGridFilters(caught = CaughtFilter.WILD)
         assertEquals(listOf("Western Screech-Owl"), names())
-        filters.value = DexGridFilters(caught = CaughtFilter.CAPTIVE)
-        assertEquals(listOf("Snow Leopard"), names())
     }
 
     @Test
