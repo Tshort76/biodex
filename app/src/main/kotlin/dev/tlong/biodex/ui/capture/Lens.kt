@@ -39,8 +39,16 @@ private fun lensIntentFor(photoUri: String): Intent =
         "com.google.android.apps.search.lens.LensShareEntryPointActivity",
     )
 
+/**
+ * D85. The question the share carries beside the photo. Lens documents no text input, so this
+ * is best effort: a target that reads `EXTRA_TEXT` gets the question, one that doesn't ignores it.
+ */
+internal const val LENS_QUESTION =
+    "What species is this? Give the subspecies if you can tell, with the common and scientific names."
+
 private fun imageShare(photoUri: String): Intent = Intent(Intent.ACTION_SEND).apply {
     type = "image/*"
     putExtra(Intent.EXTRA_STREAM, Uri.parse(photoUri))
+    putExtra(Intent.EXTRA_TEXT, LENS_QUESTION)
     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 }

@@ -31,7 +31,10 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.BioDex">
+            <!-- D84: singleTask, so every share lands on the one running BioDex through
+                 onNewIntent instead of stacking a fresh copy inside Google Photos' task. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

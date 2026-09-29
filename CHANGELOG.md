@@ -6,6 +6,11 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v25.1 — 2026-09-29
+
+- **Fixed** — sharing five photos from Google Photos left five copies of BioDex running. Every share now opens in the one BioDex that is already running. (`D83` revised, `D84`)
+- **Changed** — the 🔍 hand-off to Google Lens asks for the species and, where Lens can tell, the subspecies. Whether Lens shows the question is not yet confirmed on the phone. (`D85`)
+
 ## v25 — 2026-09-27
 
 - **Added** — every sighting is marked wild or captive. The Identify screen has a "Seen in the wild" checkbox, ticked by default; untick it for a zoo or aquarium. The photo viewer can change it later. Earlier sightings are all wild. (`D80`)
