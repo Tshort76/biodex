@@ -77,11 +77,10 @@ data class ConfirmSpecies(val draftId: String)
 data class PhotoViewer(val captureId: String)
 
 /**
- * D36. [speciesId] is null when opened from the grid's top bar, which anchors on the most
- * recent catch; non-null when opened from a species' own detail screen.
+ * D36. Opened from a species' own detail screen, anchored on that species (D87).
  */
 @Serializable
-data class Nearest(val speciesId: String? = null)
+data class Nearest(val speciesId: String)
 
 @Serializable
 data object Stats
@@ -149,7 +148,6 @@ fun BioDexNavHost(
                 onAddPhoto = pickPhoto,
                 onAddSpecies = addSpecies,
                 onOpenStats = { navController.navigate(Stats) },
-                onOpenNearest = { navController.navigate(Nearest()) },
                 onOpenSettings = { navController.navigate(Settings) },
             )
         }

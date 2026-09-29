@@ -42,7 +42,7 @@ class NearestStateTest {
     private val sciuridae = Lineage("Animalia", "Chordata", "Mammalia", "Rodentia", "Sciuridae")
     private val leporidae = Lineage("Animalia", "Chordata", "Mammalia", "Lagomorpha", "Leporidae")
 
-    private suspend fun state(all: List<SpeciesSummary>, id: String?) =
+    private suspend fun state(all: List<SpeciesSummary>, id: String) =
         nearestUiState(flowOf(all), id).first()
 
     @Test
@@ -83,27 +83,6 @@ class NearestStateTest {
 
         assertTrue(result.missing)
         assertEquals(emptyList<Any>(), result.neighbours)
-    }
-
-    @Test
-    fun `no id anchors on the most recent catch`() = runBlocking {
-        val all = listOf(
-            species("old", dex = 1, caughtAt = 100L, lineage = sciuridae),
-            species("newest", dex = 2, caughtAt = 900L, lineage = leporidae),
-            species("uncaught", dex = 3, lineage = sciuridae),
-        )
-
-        assertEquals("newest", state(all, null).focal?.id)
-    }
-
-    @Test
-    fun `no id and nothing caught falls back to the first classified species`() = runBlocking {
-        val all = listOf(
-            species("unclassified", dex = 1, lineage = Lineage.Unknown),
-            species("classified", dex = 2, lineage = sciuridae),
-        )
-
-        assertEquals("classified", state(all, null).focal?.id)
     }
 
     @Test

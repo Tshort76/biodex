@@ -51,23 +51,13 @@ data class NearestUiState(
         }
 }
 
-/**
- * [speciesId] is null when the screen was opened from the grid's top bar rather than from a
- * species, in which case it anchors on the most recent catch — the thing the user was last
- * out looking at — and falls back to the first classified species in the dex on a collection
- * with nothing in it yet. Deliberately derived rather than remembered: "last species you
- * viewed" would mean a new DataStore key and a write on every detail open, to answer a
- * question the collection already answers.
- */
+/** The species whose entry opened the screen (D87), and the ones closest to it. */
 fun nearestUiState(
     species: Flow<List<SpeciesSummary>>,
-    speciesId: String?,
+    speciesId: String,
 ): Flow<NearestUiState> = species.map { all ->
-    val focal = when (speciesId) {
-        null -> all.filter { it.caught && it.lineage.isKnown }.maxByOrNull { it.caughtAt ?: 0L }
-            ?: all.firstOrNull { it.lineage.isKnown }
-        else -> all.firstOrNull { it.id == speciesId }
-    } ?: return@map NearestUiState(loading = false)
+    val focal = all.firstOrNull { it.id == speciesId }
+        ?: return@map NearestUiState(loading = false)
     val neighbours = TaxonDistance.nearest(focal, all, NEAREST_COUNT)
     NearestUiState(
         focal = focal,

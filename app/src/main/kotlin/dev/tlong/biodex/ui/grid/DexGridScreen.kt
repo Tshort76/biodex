@@ -1,6 +1,5 @@
 package dev.tlong.biodex.ui.grid
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,10 +36,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -79,7 +76,6 @@ fun DexGridRoute(
     /** D69: looks the name up and opens the add screen with it. */
     onAddSpecies: (name: String) -> Unit,
     onOpenStats: () -> Unit,
-    onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
     /** D77: a species just captured on its entry — scrolled to the top once, then cleared. */
     scrollToSpeciesId: String? = null,
@@ -104,7 +100,6 @@ fun DexGridRoute(
         onAddPhoto = onAddPhoto,
         onAddSpecies = onAddSpecies,
         onOpenStats = onOpenStats,
-        onOpenNearest = onOpenNearest,
         onOpenSettings = onOpenSettings,
         scrollToSpeciesId = scrollToSpeciesId,
         note = note,
@@ -126,7 +121,6 @@ fun DexGridScreen(
     onAddPhoto: () -> Unit,
     onAddSpecies: (name: String) -> Unit = {},
     onOpenStats: () -> Unit,
-    onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
     scrollToSpeciesId: String? = null,
     note: String? = null,
@@ -167,7 +161,6 @@ fun DexGridScreen(
                     animals = state.animals,
                     fungi = state.fungi.takeIf { state.showFungiPill },
                     onAddPhoto = onAddPhoto,
-                    onOpenNearest = onOpenNearest,
                     onOpenSettings = onOpenSettings,
                 )
                 SearchField(query = state.query, onQueryChange = onQueryChange)
@@ -235,7 +228,6 @@ private fun GridAppBar(
     animals: Meter,
     fungi: Meter?,
     onAddPhoto: () -> Unit,
-    onOpenNearest: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     Row(
@@ -267,53 +259,11 @@ private fun GridAppBar(
                 glyph = "\uD83C\uDF44",
             )
         }
-        NearestButton(onClick = onOpenNearest)
         AddPhotoButton(onClick = onAddPhoto)
         // Was a TextButton, whose Material minimum size is 58dp wide for a one-glyph label.
         // The ＋ had to come from somewhere: matching the gear to it costs the
         // header less width than it did before, rather than more.
         HeaderIconButton(glyph = "⚙", tint = DexTheme.colors.muted, onClick = onOpenSettings)
-    }
-}
-
-/**
- * D36's entry point: a binary tree, seven nodes and six connections, drawn rather than set
- * as a glyph. There is no character for this that renders the same on every launcher font,
- * and the header's other two controls are single glyphs sized by the type scale — so the
- * drawing is sized to match them by eye at 34dp rather than by any shared metric.
- */
-@Composable
-private fun NearestButton(onClick: () -> Unit) {
-    val tint = DexTheme.colors.muted
-    HeaderIconSlot(onClick = onClick) {
-        Canvas(modifier = Modifier.size(18.dp)) {
-            val w = size.minDimension
-            val dot = w * 0.085f
-            val leafDot = w * 0.072f
-            // Root at the top centre, two children, four leaves — the shape of the icon the
-            // owner asked for, in the proportions that stay legible once it is 18dp wide.
-            val root = Offset(w / 2f, dot * 1.4f)
-            val left = Offset(w * 0.25f, w * 0.5f)
-            val right = Offset(w * 0.75f, w * 0.5f)
-            val leaves = listOf(
-                Offset(w * 0.1f, w - leafDot * 1.4f),
-                Offset(w * 0.4f, w - leafDot * 1.4f),
-                Offset(w * 0.6f, w - leafDot * 1.4f),
-                Offset(w * 0.9f, w - leafDot * 1.4f),
-            )
-            val edge = Stroke(width = w * 0.07f)
-            listOf(
-                root to left, root to right,
-                left to leaves[0], left to leaves[1],
-                right to leaves[2], right to leaves[3],
-            ).forEach { (from, to) ->
-                drawLine(color = tint, start = from, end = to, strokeWidth = edge.width)
-            }
-            drawCircle(color = tint, radius = dot, center = root)
-            drawCircle(color = tint, radius = dot, center = left)
-            drawCircle(color = tint, radius = dot, center = right)
-            leaves.forEach { drawCircle(color = tint, radius = leafDot, center = it) }
-        }
     }
 }
 
@@ -733,7 +683,6 @@ private fun DexGridPreview() {
             onOpenSpecies = {},
             onAddPhoto = {},
             onOpenStats = {},
-            onOpenNearest = {},
             onOpenSettings = {},
         )
     }
@@ -765,7 +714,6 @@ private fun DexGridSearchPreview() {
             onOpenSpecies = {},
             onAddPhoto = {},
             onOpenStats = {},
-            onOpenNearest = {},
             onOpenSettings = {},
         )
     }

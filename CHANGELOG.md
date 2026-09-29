@@ -11,6 +11,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Fixed** — sharing five photos from Google Photos left five copies of BioDex running. Every share now opens in the one BioDex that is already running. (`D83` revised, `D84`)
 - **Changed** — the 🔍 hand-off to Google Lens asks for the species and, where Lens can tell, the subspecies. Whether Lens shows the question is not yet confirmed on the phone. (`D85`)
 - **Removed** — the **Captive** filter. Use **Wild** to leave zoo animals out. (`M14`, `D80` revised, `D86`)
+- **Removed** — the tree button on the grid, which opened Nearest on your latest catch. Open **Nearest species** from a species' entry instead. (`M43` revised, `D87`)
 
 ## v25 — 2026-09-27
 

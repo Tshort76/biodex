@@ -53,14 +53,14 @@ import dev.tlong.biodex.ui.theme.DexTheme
  */
 @Composable
 fun NearestRoute(
-    speciesId: String?,
+    speciesId: String,
     onBack: () -> Unit,
     onOpenSpecies: (String) -> Unit,
 ) {
     val container = LocalContext.current.appContainer
     val viewModel: NearestViewModel = viewModel(
         factory = NearestViewModel.factory(container, speciesId),
-        key = "nearest/${speciesId ?: "recent"}",
+        key = "nearest/$speciesId",
     )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     NearestScreen(state = state, onBack = onBack, onOpenSpecies = onOpenSpecies)

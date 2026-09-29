@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 /** [nearestUiState] plus `stateIn`, and nothing else of substance. */
 class NearestViewModel(
     repository: DexRepository,
-    speciesId: String?,
+    speciesId: String,
 ) : ViewModel() {
 
     val uiState: StateFlow<NearestUiState> = nearestUiState(
@@ -27,7 +27,7 @@ class NearestViewModel(
     )
 
     companion object {
-        fun factory(container: AppContainer, speciesId: String?): ViewModelProvider.Factory =
+        fun factory(container: AppContainer, speciesId: String): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
                     NearestViewModel(
