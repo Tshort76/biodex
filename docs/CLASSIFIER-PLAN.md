@@ -40,7 +40,11 @@ The first recipe's learning rate was wrecking the pretrained features (12 % afte
 | `mnv4-open`, penalty 2 | 69.8 % | 82.9 % | 3.4 % | 36.6 % |
 | BioCLIP 2 probe (reference, too large for the phone) | 95.9 % | 98.6 % | — | ~69 % |
 
-Nearest-neighbour distance on `mnv4-lr2e-4` features flags only 9–20 % (AUROC 0.59–0.67), and the max-probability threshold is no better, so the broad `other` class is the only mechanism that works. It costs ~10 points of species accuracy even with `other` penalised away, and both runs end on a plateau (final loss 1.84 vs 1.37): a 9M-parameter MobileNetV4 lacks the capacity to do both. Export: fp32 passes the golden gate in every run; int8 weights never do.
+| **`cnx-open` — ConvNeXt-Nano (15M params, `convnext_nano.in12k_ft_in1k`), same broad `other` at 15 % of each batch, lr 1e-4, 12 epochs — current best** | 84.6 % | 90.7 % | 6.0 % | 71.0 % |
+| `cnx-open`, penalty 1 on `other` — **proposed operating point** | 86.2 % | 92.7 % | 3.3 % | 62.9 % |
+| `cnx-open`, penalty 2 | 87.1 % | 94.0 % | 1.6 % | 54.8 % |
+
+Nearest-neighbour distance on `mnv4-lr2e-4` features flags only 9–20 % (AUROC 0.59–0.67), and the max-probability threshold is no better, so the broad `other` class is the only mechanism that works. It costs ~10 points of species accuracy even with `other` penalised away, and both runs end on a plateau (final loss 1.84 vs 1.37): a 9M-parameter MobileNetV4 lacks the capacity to do both. ConvNeXt-Nano does: with `other` penalised away it reaches 87.9 % / 95.1 %, and its per-group top-1 is 66 % for fish and 77–98 % for everything else. The penalty (subtracted from the `other` logit on the phone) is the one knob between flagging unseen species and wrongly flagging dex ones; 1 is the proposed default, a collecting game preferring a missed \"not in dex\" on 3 % of dex photos over naming a wrong species for most unseen ones. Export: fp32 passes the golden gate in every run (ConvNeXt 60.6 MB); int8 weights never do (ConvNeXt 15.8 MB, 19/20).
 
 Weakest groups: fish 61 % top-1, amphibians 71 %; fungi and invertebrates are ~90 %+. The open-set "not in dex" signal does not work yet. Export: the fp32 model (35 MB) matches PyTorch exactly; the int8-weight model (9.5 MB) agrees on 20/20 top-1 but drifts up to 0.12 in probability and fails the golden gate.
 
