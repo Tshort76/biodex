@@ -10,6 +10,11 @@ Writes, beside the run's checkpoint:
     golden/             ~20 input tensors and the PyTorch logits for them, for the
                         on-phone parity check (docs/CLASSIFIER-PLAN.md section 5)
 
+An embedding run (distill.py, `"kind": "embedding"` in metrics.json) exports the
+same way with the output L2-normalised inside the graph; the golden test then
+compares name top-1 and the cosine between outputs, and names.json and
+name_embeddings.npy (copied into the run by distill.py) sit beside the model.
+
 Usage (inside the uv env):
     uv run python export.py data/runs/mobilenetv4_conv_medium [--fp32]
 """
@@ -33,14 +38,15 @@ from select_corpus import CATALOGUE, DATA
 class Normalised(torch.nn.Module):
     """The classifier with timm's input normalisation folded in: expects 0-255 RGB."""
 
-    def __init__(self, model, mean, std):
+    def __init__(self, model, mean, std, l2=False):
         super().__init__()
-        self.model = model
+        self.model, self.l2 = model, l2
         self.register_buffer("mean", torch.tensor(mean).view(1, 3, 1, 1) * 255)
         self.register_buffer("std", torch.tensor(std).view(1, 3, 1, 1) * 255)
 
     def forward(self, x):
-        return self.model((x - self.mean) / self.std)
+        y = self.model((x - self.mean) / self.std)
+        return torch.nn.functional.normalize(y, dim=-1) if self.l2 else y
 
 
 def golden_inputs(cfg, n: int, size: int) -> tuple[np.ndarray, list[int]]:
@@ -58,8 +64,7 @@ def softmax(logits: np.ndarray) -> np.ndarray:
     return e / e.sum(axis=1, keepdims=True)
 
 
-def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float, float]:
-    """Returns (top-1 agreement count, max |Δlogit|, max |Δprob|)."""
+def run_tflite(path: Path, x: np.ndarray) -> np.ndarray:
     from ai_edge_litert.interpreter import Interpreter
     interp = Interpreter(model_path=str(path))
     interp.allocate_tensors()
@@ -69,9 +74,21 @@ def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float,
         interp.set_tensor(inp["index"], x[i : i + 1])
         interp.invoke()
         got.append(interp.get_tensor(outp["index"])[0])
-    got = np.stack(got)
+    return np.stack(got)
+
+
+def parity(path: Path, x: np.ndarray, expected: np.ndarray) -> tuple[int, float, float]:
+    """Returns (top-1 agreement count, max |Δlogit|, max |Δprob|)."""
+    got = run_tflite(path, x)
     max_abs_prob_delta = float(np.abs(softmax(got) - softmax(expected)).max())
     return int((got.argmax(1) == expected.argmax(1)).sum()), float(np.abs(got - expected).max()), max_abs_prob_delta
+
+
+def embedding_parity(path: Path, x: np.ndarray, expected: np.ndarray, names: np.ndarray) -> tuple[int, float]:
+    """Returns (name top-1 agreement count, max 1 - cosine between the two output vectors)."""
+    got = run_tflite(path, x)
+    cos = (got * expected).sum(1) / (np.linalg.norm(got, axis=1) * np.linalg.norm(expected, axis=1))
+    return int(((got @ names.T).argmax(1) == (expected @ names.T).argmax(1)).sum()), float((1 - cos).max())
 
 
 def main() -> None:
@@ -84,11 +101,12 @@ def main() -> None:
     import litert_torch  # heavy import, only needed here
 
     metrics = json.loads((args.run / "metrics.json").read_text())
-    labels = json.loads((args.run / "labels.json").read_text())
+    embedding = metrics.get("kind") == "embedding"
+    labels = None if embedding else json.loads((args.run / "labels.json").read_text())
     cfg = metrics["input"]
-    model = timm.create_model(metrics["model"], pretrained=False, num_classes=len(labels))
+    model = timm.create_model(metrics["model"], pretrained=False, num_classes=metrics["dim"] if embedding else len(labels))
     model.load_state_dict(torch.load(args.run / "best.pt", map_location="cpu"))
-    wrapped = Normalised(model.eval(), cfg["mean"], cfg["std"]).eval()
+    wrapped = Normalised(model.eval(), cfg["mean"], cfg["std"], l2=embedding).eval()
 
     size = cfg["input_size"][1]
     sample = (torch.rand(1, 3, size, size) * 255,)
@@ -110,23 +128,41 @@ def main() -> None:
     with torch.no_grad():
         expected = wrapped(torch.from_numpy(x)).numpy()
     chosen = None
+    names = np.load(args.run / "name_embeddings.npy").astype(np.float32) if embedding else None
     for path in candidates:
-        agree, max_delta, max_prob_delta = parity(path, x, expected)
-        prob_tol = 1e-3 if path.name == "species.tflite" else 2e-2
-        ok = agree == len(x) and max_prob_delta <= prob_tol
-        print(f"{path.name}: {path.stat().st_size / 1e6:.1f} MB; top-1 agreement {agree}/{len(x)}; max |Δlogit| {max_delta:.4f}; max |Δprob| {max_prob_delta:.4f}; {'PASS' if ok else 'FAIL'}")
+        fp32 = path.name == "species.tflite"
+        if embedding:
+            agree, max_dcos = embedding_parity(path, x, expected, names)
+            ok = agree == len(x) and max_dcos <= (1e-4 if fp32 else 1e-2)
+            stats = (agree, max_dcos)
+            print(f"{path.name}: {path.stat().st_size / 1e6:.1f} MB; name top-1 agreement {agree}/{len(x)}; max |Δcos| {max_dcos:.2e}; {'PASS' if ok else 'FAIL'}")
+        else:
+            agree, max_delta, max_prob_delta = parity(path, x, expected)
+            ok = agree == len(x) and max_prob_delta <= (1e-3 if fp32 else 2e-2)
+            stats = (agree, max_delta, max_prob_delta)
+            print(f"{path.name}: {path.stat().st_size / 1e6:.1f} MB; top-1 agreement {agree}/{len(x)}; max |Δlogit| {max_delta:.4f}; max |Δprob| {max_prob_delta:.4f}; {'PASS' if ok else 'FAIL'}")
         if ok and chosen is None:
-            chosen, out, chosen_stats = path, path, (agree, max_delta, max_prob_delta)
+            chosen, out, chosen_stats = path, path, stats
     if chosen is None:
         sys.exit("golden test FAILED: no converted model matches PyTorch")
-    agree, max_delta, max_prob_delta = chosen_stats
 
     golden = args.run / "golden"
     golden.mkdir(exist_ok=True)
     np.save(golden / "inputs.npy", x)
-    np.save(golden / "expected_logits.npy", expected)
+    np.save(golden / ("expected_embeddings.npy" if embedding else "expected_logits.npy"), expected)
     (golden / "photo_ids.json").write_text(json.dumps(photo_ids))
 
+    if embedding:
+        agree, max_dcos = chosen_stats
+        (args.run / "model.json").write_text(json.dumps({
+            "kind": "embedding", "model": metrics["model"], "file": out.name, "dim": metrics["dim"],
+            "input": {"layout": "NCHW", "size": size, "range": "0-255 RGB", "crop_pct": cfg["crop_pct"], "interpolation": cfg["interpolation"]},
+            "names": "names.json", "name_embeddings": "name_embeddings.npy", "text_prompt": "a photo of {name}.",
+            "golden": {"top1_agreement": f"{agree}/{len(x)}", "max_dcos": max_dcos},
+        }, indent=1))
+        return
+
+    agree, max_delta, max_prob_delta = chosen_stats
     catalogue_version = json.loads(CATALOGUE.read_text())["catalogueVersion"]
     (args.run / "model.json").write_text(json.dumps({
         "model": metrics["model"], "file": out.name, "catalogueVersion": catalogue_version,
