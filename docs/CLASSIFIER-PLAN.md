@@ -2,6 +2,13 @@
 
 _Draft 2026-09-24, revised the same day after a design review. Phases 0–2 are being built in `tools/classifier/` (its README says how to run them); the app is untouched. Register ids marked `?` are proposed, not assigned._
 
+> **Paused 2026-10-01.** Latest result and diagnosis: §1b. To resume:
+> 1. **Decide the next experiment.** Either broaden distillation to thousands of Pacific species (~20 photos each), training on cosine only or with name terms restricted to trained names; or measure a ViT-B BioCLIP image encoder as the on-phone model.
+> 2. **Data.** All data lives in `tools/classifier/data/`, which is git-ignored and symlinked from worktrees. It holds the photos, the API cache, the BioCLIP embeddings, the runs and the venv. If it is deleted, `select_corpus.py`, `download.py` and `clean.py` rebuild it, which takes hours of API calls and embedding.
+> 3. **Throwaway diagnostics.** These are in `data/scratch/`: `ceiling.py` (BioCLIP's name-matching ceiling), `prior_diag.py` (the trained-name bias in §1b) and `eval_open.py` (the penalty sweep for the `other` class).
+> 4. **Long runs.** Launch them detached (`nohup … & disown`) and caffeinate the machine. Background jobs in Claude Code are killed at their time limit.
+> 5. **Still open with the owner.** The owner's original photos plus the Google Lens hard cases are needed for a real-world evaluation.
+
 ## 1. Verdict
 
 **Feasible, and mostly buildable by Claude.** The four questions that could have killed it have workable answers:
