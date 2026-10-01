@@ -6,18 +6,26 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
+import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
 import dev.tlong.biodex.data.place.PlaceGazetteer
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.PlaceAnswer
+import dev.tlong.biodex.media.NetworkMonitor
 import dev.tlong.biodex.ui.capture.PickedPhoto
 import dev.tlong.biodex.ui.capture.PlaceSearchState
 import dev.tlong.biodex.ui.capture.placeAnswerFor
 import dev.tlong.biodex.ui.capture.placeSearchState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,14 +38,25 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** D88: how long typing must pause before the name is looked up online. */
+private const val LOOKUP_PAUSE_MS = 700L
+
 /** D78: where the Identify screen sends the user next. */
 sealed interface IdentifyEvent {
     /** Recorded against a species the dex held. [isFirst] plays the reveal (M09). */
     data class Captured(val speciesId: String, val isFirst: Boolean) : IdentifyEvent
 
-    /** The name is new to the dex: the add card takes it, with this photo and its place (Q02). */
-    data class Add(val name: String, val photo: PickedPhoto, val place: PlaceAnswer?, val wild: Boolean = true) :
-        IdentifyEvent
+    /**
+     * The name is new to the dex: the add card takes it, with this photo and its place (Q02),
+     * and the lookup this screen already ran (D88).
+     */
+    data class Add(
+        val name: String,
+        val photo: PickedPhoto,
+        val place: PlaceAnswer?,
+        val wild: Boolean = true,
+        val prefetched: LookupOutcome? = null,
+    ) : IdentifyEvent
 
     data object Unreadable : IdentifyEvent
 }
@@ -53,6 +72,8 @@ class IdentifyViewModel(
     private val photos: PhotoGateway,
     private val photo: PickedPhoto,
     private val gazetteer: PlaceGazetteer = PlaceGazetteer.None,
+    private val lookups: SpeciesLookupRepository,
+    private val network: NetworkMonitor,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -76,6 +97,21 @@ class IdentifyViewModel(
     private val events = Channel<IdentifyEvent>(Channel.BUFFERED)
     val eventFlow = events.receiveAsFlow()
 
+    /**
+     * D88. The lookup follows the name once typing pauses, and a newer name cancels an older
+     * lookup — so a paste from Lens, then a fix to it, costs one lookup each and shows the last.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val online: Flow<OnlineLookup> =
+        combine(repository.speciesSummaries(), query, selectedId, ::onlineLookupName)
+            .distinctUntilChanged()
+            .transformLatest { name ->
+                if (name == null) return@transformLatest emit(OnlineLookup.Idle)
+                emit(OnlineLookup.Searching(name))
+                delay(LOOKUP_PAUSE_MS)
+                emit(if (network.online.value) OnlineLookup.Done(name, lookups.lookup(name)) else OnlineLookup.Offline)
+            }
+
     val uiState: StateFlow<IdentifyUiState> = identifyUiState(
         photo = photo,
         species = repository.speciesSummaries(),
@@ -83,6 +119,7 @@ class IdentifyViewModel(
         selectedId = selectedId,
         capturing = capturing,
         wild = wild,
+        online = online,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IdentifyUiState(photo))
 
     val placePrompt: StateFlow<PlaceSearchState?> = combine(
@@ -139,7 +176,8 @@ class IdentifyViewModel(
             withPlace { place -> record(species.id, place, isWild) }
         } else {
             val name = state.addableName ?: return
-            withPlace { place -> events.send(IdentifyEvent.Add(name, photo, place, isWild)) }
+            val prefetched = state.prefetched
+            withPlace { place -> events.send(IdentifyEvent.Add(name, photo, place, isWild, prefetched)) }
         }
     }
 
@@ -204,6 +242,8 @@ class IdentifyViewModel(
                         photos = container.photoGateway,
                         photo = photo,
                         gazetteer = container.placeGazetteer,
+                        lookups = container.speciesLookupRepository,
+                        network = container.networkMonitor,
                     )
                 }
             }

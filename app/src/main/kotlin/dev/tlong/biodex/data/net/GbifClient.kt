@@ -23,7 +23,8 @@ import kotlinx.serialization.json.jsonPrimitive
  * name, and carries GBIF's own confidence and alternatives), and on NONE fall back to
  * `species/search` over the backbone dataset with `qField=VERNACULAR`.
  *
- * The vernacular search is scoped to Animalia or it returns fungi and bacteria. Slice 12 ran a
+ * The vernacular search is scoped to Animalia and Fungi — the two kingdoms the dex keeps — or it
+ * returns plants and bacteria (D88). Slice 12 ran a
  * second pass against Plantae; that leg went with the plants (D59), and a scientific name that
  * resolves to Plantae is dropped by [classify] so the flow lands on "no match" rather than on
  * a card for a kingdom the app no longer keeps.
@@ -41,16 +42,16 @@ class GbifClient(private val fetcher: JsonFetcher) {
         }
         if (matched != null) return LookupResult.Found(matched)
 
-        val animals = when (val response = fetcher.get(vernacularSearchUrl(query))) {
+        val found = when (val response = fetcher.get(vernacularSearchUrl(query))) {
             is FetchResult.Body -> parseGbifVernacularSearch(response.text, query)
             FetchResult.NotFound -> emptyList()
             is FetchResult.Failed -> return LookupResult.Failed(response.reason)
         }
-        if (animals.any { it.matchKind == MatchKind.VERNACULAR_EXACT }) {
-            return LookupResult.Found(GbifMatch(animals.first(), animals.drop(1)))
+        if (found.any { it.matchKind == MatchKind.VERNACULAR_EXACT }) {
+            return LookupResult.Found(GbifMatch(found.first(), found.drop(1)))
         }
 
-        val candidates = rankVernacularCandidates(animals)
+        val candidates = rankVernacularCandidates(found)
         return if (candidates.isEmpty()) {
             LookupResult.NotFound
         } else {
@@ -63,8 +64,9 @@ class GbifClient(private val fetcher: JsonFetcher) {
 /** GBIF's own backbone taxonomy — the dataset `species/match` resolves against. */
 private const val BACKBONE_DATASET = "d7dddbf4-2cf0-4f39-9b2a-bb099caae36c"
 
-/** Animalia. Without it a vernacular search happily returns fungi and bacteria. */
+/** Animalia and Fungi. Without them a vernacular search happily returns plants and bacteria. */
 private const val ANIMALIA_KEY = 1
+private const val FUNGI_KEY = 5
 
 /** More than the card can show; the extras only widen the "other matches" list. */
 internal const val GBIF_CANDIDATE_LIMIT = 6
@@ -74,7 +76,7 @@ internal fun matchUrl(name: String): String =
 
 internal fun vernacularSearchUrl(name: String): String =
     "https://api.gbif.org/v1/species/search?qField=VERNACULAR&rank=SPECIES&status=ACCEPTED" +
-        "&datasetKey=$BACKBONE_DATASET&highertaxonKey=$ANIMALIA_KEY" +
+        "&datasetKey=$BACKBONE_DATASET&highertaxonKey=$ANIMALIA_KEY&highertaxonKey=$FUNGI_KEY" +
         "&limit=$GBIF_CANDIDATE_LIMIT&q=" + name.urlEncoded()
 
 private fun String.urlEncoded(): String = URLEncoder.encode(this, "UTF-8")
@@ -113,10 +115,16 @@ data class SpeciesCandidate(
             MatchKind.FUZZY -> "close match ($confidence%) — check this"
             MatchKind.HIGHER_RANK -> "matched a broader group — check this"
             MatchKind.VERNACULAR_OTHER -> "name appears in this species' common names"
+            MatchKind.WEB_SEARCH -> "found by searching Wikipedia — check this"
         }
+
+    /** EXACT and VERNACULAR_EXACT: the name was this species' own. Anything else is a guess. */
+    val isNameMatch: Boolean
+        get() = matchKind == MatchKind.EXACT || matchKind == MatchKind.VERNACULAR_EXACT
 }
 
-enum class MatchKind { EXACT, FUZZY, HIGHER_RANK, VERNACULAR_EXACT, VERNACULAR_OTHER }
+/** [WEB_SEARCH] is D88's fallback: Wikipedia's search named the taxon, and GBIF confirmed it. */
+enum class MatchKind { EXACT, FUZZY, HIGHER_RANK, VERNACULAR_EXACT, VERNACULAR_OTHER, WEB_SEARCH }
 
 data class GbifMatch(
     val best: SpeciesCandidate,
@@ -145,7 +153,7 @@ internal fun taxClassFor(gbifClass: String?, phylum: String?): TaxClass {
  * `Kingdom.fromWireName`. **Plantae is null** — the app does not keep plants (D59) and a
  * candidate from that kingdom is dropped rather than misfiled. Anything else — Chromista,
  * Bacteria — falls back to animal, the same stance that enum already takes, and cannot arrive
- * from the vernacular search at all because it is scoped to Animalia.
+ * from the vernacular search at all because it is scoped to Animalia and Fungi.
  */
 internal fun gbifKingdom(value: String?): Kingdom? = when (value?.trim()?.lowercase()) {
     "plantae" -> null

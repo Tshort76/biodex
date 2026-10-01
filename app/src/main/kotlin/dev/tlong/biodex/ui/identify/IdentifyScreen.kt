@@ -45,7 +45,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import dev.tlong.biodex.appContainer
-import dev.tlong.biodex.domain.PlaceAnswer
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.capture.PickedPhoto
 import dev.tlong.biodex.ui.capture.PlacePromptDialog
@@ -64,7 +63,7 @@ fun IdentifyRoute(
     photo: PickedPhoto,
     onBack: () -> Unit,
     onCaptured: (speciesId: String, isFirst: Boolean) -> Unit,
-    onAdd: (name: String, photo: PickedPhoto, place: PlaceAnswer?, wild: Boolean) -> Unit,
+    onAdd: (IdentifyEvent.Add) -> Unit,
 ) {
     val context = LocalContext.current
     val viewModel: IdentifyViewModel = viewModel(
@@ -88,7 +87,7 @@ fun IdentifyRoute(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is IdentifyEvent.Captured -> onCaptured(event.speciesId, event.isFirst)
-                is IdentifyEvent.Add -> onAdd(event.name, event.photo, event.place, event.wild)
+                is IdentifyEvent.Add -> onAdd(event)
                 IdentifyEvent.Unreadable -> message = "That photo could not be read — nothing was saved."
             }
         }
@@ -206,6 +205,8 @@ fun IdentifyScreen(
             )
         }
 
+        onlineLine(state)?.let { OnlineRow(it) }
+
         if (state.results.isNotEmpty()) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -254,6 +255,36 @@ private fun NameField(query: String, onQueryChange: (String) -> Unit) {
             textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
             cursorBrush = SolidColor(colors.accent),
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** D88: what the online lookup found, with its picture so it can be held up against the photo. */
+@Composable
+private fun OnlineRow(line: OnlineLine) {
+    val colors = DexTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        line.imageUrl?.let { url ->
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                // D30: a Wikimedia picture is fitted, never cropped to fill.
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.silBg),
+            )
+        }
+        Text(
+            text = line.text,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (line.warning) colors.warn else colors.muted,
+            modifier = Modifier.weight(1f),
         )
     }
 }

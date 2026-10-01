@@ -42,6 +42,26 @@ class WikipediaClient(private val fetcher: JsonFetcher) {
         return lastFailure?.let { LookupResult.Failed(it) } ?: LookupResult.NotFound
     }
 
+    /**
+     * D88. Which taxon a loose name means, by Wikipedia's search, which forgives far more than
+     * GBIF's: "cross orb weaver spider" leads to *Araneus diadematus*, where GBIF finds nothing.
+     * The scientific name is the article's Wikidata taxon name (P225), so a search hit that is
+     * not about an organism — a sports team, a disambiguation page — has none and is skipped.
+     */
+    suspend fun taxonFor(query: String): LookupResult<WikipediaTaxon> {
+        val hits = when (val response = fetcher.get(searchUrl(query.trim()))) {
+            is FetchResult.Body -> parseWikipediaSearch(response.text)
+            FetchResult.NotFound -> emptyList()
+            is FetchResult.Failed -> return LookupResult.Failed(response.reason)
+        }
+        for (hit in hits) {
+            val response = fetcher.get(wikidataTaxonNameUrl(hit.wikidataId))
+            val name = (response as? FetchResult.Body)?.let { parseWikidataTaxonName(it.text) } ?: continue
+            return LookupResult.Found(WikipediaTaxon(scientificName = name, title = hit.title))
+        }
+        return LookupResult.NotFound
+    }
+
     private suspend fun enrich(summary: WikipediaSummary): WikipediaFacts {
         val habitat = habitatFor(summary)
         val attribution = summary.imageUrl?.let { commonsAttribution(it) }
@@ -104,6 +124,11 @@ data class WikipediaFacts(
     val infoUrl: String?,
 )
 
+/** D88: the article a search led to, and the taxon name its Wikidata item carries. */
+data class WikipediaTaxon(val scientificName: String, val title: String)
+
+internal data class WikipediaSearchHit(val title: String, val wikidataId: String)
+
 internal data class WikipediaSummary(
     val title: String,
     val extract: String?,
@@ -131,7 +156,36 @@ internal fun commonsImageInfoUrl(fileName: String): String =
     "$COMMONS_API?action=query&prop=imageinfo&iiprop=extmetadata&format=json&formatversion=2" +
         "&titles=" + "File:$fileName".enc()
 
+/** Three hits: past the third, a search for a species has wandered off it. */
+private const val SEARCH_LIMIT = 3
+
+internal fun searchUrl(query: String): String =
+    "$WIKI_API?action=query&format=json&formatversion=2&generator=search&gsrlimit=$SEARCH_LIMIT" +
+        "&prop=pageprops&ppprop=wikibase_item&gsrsearch=" + query.enc()
+
+internal fun wikidataTaxonNameUrl(itemId: String): String =
+    "https://www.wikidata.org/w/api.php?action=wbgetclaims&format=json&property=P225&entity=" + itemId.enc()
+
 private fun String.enc(): String = URLEncoder.encode(this, "UTF-8")
+
+/** Search hits in Wikipedia's own order, each with the Wikidata item that describes it. */
+internal fun parseWikipediaSearch(body: String): List<WikipediaSearchHit> {
+    val pages = body.asJsonObject()?.obj("query")?.array("pages") ?: return emptyList()
+    return pages
+        .mapNotNull { it as? JsonObject }
+        .sortedBy { it.int("index") ?: Int.MAX_VALUE }
+        .mapNotNull { page ->
+            val title = page.string("title") ?: return@mapNotNull null
+            val item = page.obj("pageprops")?.string("wikibase_item") ?: return@mapNotNull null
+            WikipediaSearchHit(title, item)
+        }
+}
+
+/** P225, the taxon name; null for an item that is not a taxon. */
+internal fun parseWikidataTaxonName(body: String): String? {
+    val claim = body.asJsonObject()?.obj("claims")?.array("P225")?.firstOrNull() as? JsonObject ?: return null
+    return claim.obj("mainsnak")?.obj("datavalue")?.string("value")
+}
 
 internal fun parseWikipediaSummary(body: String): WikipediaSummary? {
     val root = body.asJsonObject() ?: return null

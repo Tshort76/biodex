@@ -482,9 +482,7 @@ private fun CandidateRow(
         Text(
             text = candidate.confidenceLabel,
             style = MaterialTheme.typography.labelSmall,
-            color = if (candidate.matchKind == MatchKind.EXACT ||
-                candidate.matchKind == MatchKind.VERNACULAR_EXACT
-            ) {
+            color = if (candidate.isNameMatch) {
                 colors.ok
             } else {
                 colors.warn

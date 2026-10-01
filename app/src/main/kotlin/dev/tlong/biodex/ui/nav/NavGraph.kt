@@ -180,12 +180,13 @@ fun BioDexNavHost(
                     if (isFirst) revealThenHome(speciesId) else homeTo(speciesId, "+1 photo")
                 },
                 // Q02: a name the dex lacks is added and captured with this photo in one go.
-                onAdd = { name, photo, place, wild ->
+                onAdd = { add ->
                     navController.navigate(
                         ConfirmSpecies(
                             container.addSpeciesDrafts.put(
-                                typedName = name,
-                                photo = DraftPhoto(photo.uri, place, wild),
+                                typedName = add.name,
+                                prefetched = add.prefetched,
+                                photo = DraftPhoto(add.photo.uri, add.place, add.wild),
                             ),
                         ),
                     )

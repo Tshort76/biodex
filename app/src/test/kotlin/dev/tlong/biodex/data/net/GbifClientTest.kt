@@ -267,4 +267,11 @@ class GbifClientTest {
         assertEquals("Fungi", match.best.lineage.kingdom)
         assertEquals("Amanitaceae", match.best.lineage.family)
     }
+
+    @Test
+    fun `the vernacular search asks GBIF for animals and fungi (D88)`() {
+        val url = vernacularSearchUrl("chanterelle")
+        assertTrue(url.contains("highertaxonKey=1&"))
+        assertTrue(url.contains("highertaxonKey=5&"))
+    }
 }

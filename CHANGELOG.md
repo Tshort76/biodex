@@ -6,6 +6,13 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v26 — 2026-09-30
+
+- **Changed** — the Identify screen looks the name up online as soon as you stop typing, and says what it found under the name, with its picture, or that nothing goes by that name. Fix the name and it looks again. "Where was this?" still comes only when you press Register, so the name is settled first. If the lookup's scientific name is a species in your dex, Register captures that species; otherwise the add card opens on the lookup already done. (`M08` revised, `D88`)
+- **Fixed** — "cross orb weaver spider" did not find the Cross Orbweaver. A dex name said in full inside a longer search is found now, so "mallard duck" finds the Mallard too. (`M14` revised, `D88`)
+- **Fixed** — a loose name that GBIF could not place, like "cross orb weaver spider", now finds its species through Wikipedia's search, marked "found by searching Wikipedia — check this". Mushrooms can be added by their common name too. (`M18` revised, `D88`)
+- **Added** — 111 more species: 84 animals (#225–#308: 17 birds, 10 mammals, 3 reptiles, 4 fish, 32 insects, 18 other invertebrates) and 27 fungi (F031–F057). The dex now holds 308 animals and 57 fungi. Fourteen of the new animals carry the Food source tag; three of the new fungi carry a one-line caution. Catalogue version 9.
+
 ## v25.1 — 2026-09-29
 
 - **Fixed** — sharing five photos from Google Photos left five copies of BioDex running. Every share now opens in the one BioDex that is already running. (`D83` revised, `D84`)

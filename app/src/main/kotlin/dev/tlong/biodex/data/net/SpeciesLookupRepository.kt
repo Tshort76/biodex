@@ -17,18 +17,44 @@ class SpeciesLookupRepository(
     private val wikipedia: WikipediaClient,
 ) {
 
-    /** The whole lookup for a typed name. [LookupOutcome] is what the confirm card renders. */
-    suspend fun lookup(name: String): LookupOutcome =
-        when (val match = gbif.match(name)) {
-            is LookupResult.Found -> LookupOutcome.Resolved(
-                candidates = match.value.candidates,
-                selectedIndex = 0,
-                details = detailsFor(match.value.best, name),
-            )
-
-            LookupResult.NotFound -> LookupOutcome.NoMatch
-            is LookupResult.Failed -> LookupOutcome.Failed(match.reason)
+    /**
+     * The whole lookup for a typed name. [LookupOutcome] is what the confirm card renders.
+     *
+     * D88: when GBIF has no species by exactly that name, Wikipedia's search is asked which
+     * taxon the name means, and its answer — confirmed against GBIF — leads the candidates.
+     * Lens and photo captions name things loosely ("cross orb weaver spider"), and GBIF's
+     * vernacular search wants a name it holds word for word.
+     */
+    suspend fun lookup(name: String): LookupOutcome {
+        val match = gbif.match(name)
+        if (match is LookupResult.Failed) return LookupOutcome.Failed(match.reason)
+        val fromGbif = match.valueOrNull()?.candidates.orEmpty()
+        val candidates = if (fromGbif.firstOrNull()?.isNameMatch == true) {
+            fromGbif
+        } else {
+            (listOfNotNull(webCandidate(name)) + fromGbif).distinctBy { it.scientificName }.take(GBIF_CANDIDATE_LIMIT)
         }
+        if (candidates.isEmpty()) return LookupOutcome.NoMatch
+        return LookupOutcome.Resolved(
+            candidates = candidates,
+            selectedIndex = 0,
+            details = detailsFor(candidates.first(), name),
+        )
+    }
+
+    /**
+     * D88's fallback: the taxon Wikipedia's search leads to, when GBIF holds it as a species.
+     * A genus or family is dropped — "banana slug" leads to *Ariolimax*, which is not one
+     * thing to catch. Any failure here only means no extra candidate.
+     */
+    private suspend fun webCandidate(name: String): SpeciesCandidate? {
+        val taxon = wikipedia.taxonFor(name).valueOrNull() ?: return null
+        val best = gbif.match(taxon.scientificName).valueOrNull()?.best ?: return null
+        if (!best.isNameMatch || best.rank?.uppercase() !in SPECIES_RANKS) return null
+        // A title that is not the science is the article's common name: "Fly agaric".
+        val title = taxon.title.takeUnless { it.equals(best.scientificName, ignoreCase = true) }
+        return best.copy(matchKind = MatchKind.WEB_SEARCH, commonName = best.commonName ?: title)
+    }
 
     /**
      * The "not this one? other matches" path (M19). Picking a different candidate re-runs the
@@ -58,6 +84,9 @@ class SpeciesLookupRepository(
             )
         }
 }
+
+/** A rank GBIF leaves out is given the benefit of the doubt; one above species is not. */
+private val SPECIES_RANKS = setOf(null, "SPECIES", "SUBSPECIES", "VARIETY", "FORM")
 
 /** What one candidate's supporting sources produced, plus which of them could not be reached. */
 data class CandidateDetails(

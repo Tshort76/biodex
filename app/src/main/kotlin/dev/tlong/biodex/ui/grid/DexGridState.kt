@@ -259,13 +259,14 @@ fun dexGridUiState(
  * "Pacific Wren" is within two edits of "Pacific Tree Frog", so the forgiving match would show a
  * frog and quietly take the add away. A name typed in full that no species contains word for
  * word is a name to add. Case, accents and punctuation still do not count, and neither does a
- * match that straddles two words (D82: "orca" is not in "Castor canadensis").
+ * match that straddles two words (D82: "orca" is not in "Castor canadensis"). A held name said
+ * in full inside a longer query is held too (D88: "cross orb weaver spider").
  */
 internal fun addableNameFor(species: List<SpeciesSummary>, query: String): String? {
     if (SearchMatch.fold(query).isEmpty()) return null
+    fun names(name: String) = SearchMatch.containsWordwise(name, query) || SearchMatch.nameWithinQuery(name, query)
     val held = species.any { summary ->
-        SearchMatch.containsWordwise(summary.commonName, query) ||
-            summary.scientificName?.let { SearchMatch.containsWordwise(it, query) } == true
+        names(summary.commonName) || summary.scientificName?.let(::names) == true
     }
     return if (held) null else query.trim()
 }

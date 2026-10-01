@@ -1,0 +1,38 @@
+{
+    "batchcomplete": true,
+    "continue": {
+        "gsroffset": 3,
+        "continue": "gsroffset||"
+    },
+    "query": {
+        "pages": [
+            {
+                "pageid": 905350,
+                "ns": 0,
+                "title": "Araneus diadematus",
+                "index": 1,
+                "pageprops": {
+                    "wikibase_item": "Q337509"
+                }
+            },
+            {
+                "pageid": 6003832,
+                "ns": 0,
+                "title": "Zygiella x-notata",
+                "index": 3,
+                "pageprops": {
+                    "wikibase_item": "Q205920"
+                }
+            },
+            {
+                "pageid": 28854206,
+                "ns": 0,
+                "title": "Darwin's bark spider",
+                "index": 2,
+                "pageprops": {
+                    "wikibase_item": "Q285304"
+                }
+            }
+        ]
+    }
+}

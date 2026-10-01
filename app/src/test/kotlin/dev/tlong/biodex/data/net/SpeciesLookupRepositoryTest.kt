@@ -74,6 +74,55 @@ class SpeciesLookupRepositoryTest {
         assertEquals(LookupOutcome.NoMatch, repository(FakeFetcher(stubs)).lookup("zzqqxx"))
     }
 
+    private val spiderStubs = mapOf(
+        matchUrl("cross orb weaver spider") to FetchResult.Body(Fixtures.read("gbif_match_cross_orb_weaver_spider.json")),
+        vernacularSearchUrl("cross orb weaver spider") to
+            FetchResult.Body(Fixtures.read("gbif_search_cross_orb_weaver_spider.json")),
+        searchUrl("cross orb weaver spider") to FetchResult.Body(Fixtures.read("wiki_search_cross_orb_weaver_spider.json")),
+        wikidataTaxonNameUrl("Q337509") to FetchResult.Body(Fixtures.read("wikidata_p225_araneus_diadematus.json")),
+        matchUrl("Araneus diadematus") to FetchResult.Body(Fixtures.read("gbif_match_araneus_diadematus.json")),
+    )
+
+    @Test
+    fun `a loose name GBIF cannot place is found through Wikipedia's search (D88)`() = runBlocking {
+        val resolved = repository(FakeFetcher(spiderStubs)).lookup("cross orb weaver spider") as LookupOutcome.Resolved
+
+        assertEquals("Araneus diadematus", resolved.selected.scientificName)
+        assertEquals(MatchKind.WEB_SEARCH, resolved.selected.matchKind)
+        assertEquals(TaxClass.OTHER_INVERTEBRATE, resolved.selected.taxClass)
+    }
+
+    @Test
+    fun `a search hit that is not a taxon is skipped, and nothing found is NoMatch (D88)`() = runBlocking {
+        val stubs = spiderStubs + (wikidataTaxonNameUrl("Q337509") to FetchResult.Body("""{"claims":{}}"""))
+        val fetcher = FakeFetcher(stubs)
+
+        assertEquals(LookupOutcome.NoMatch, repository(fetcher).lookup("cross orb weaver spider"))
+        assertEquals(
+            "every hit is tried, in Wikipedia's order",
+            listOf("Q337509", "Q285304", "Q205920").map(::wikidataTaxonNameUrl),
+            fetcher.requested.filter { it.startsWith("https://www.wikidata.org") },
+        )
+    }
+
+    @Test
+    fun `a web hit GBIF places above species rank is no candidate (D88)`() = runBlocking {
+        val genus = """{"matchType":"EXACT","rank":"GENUS","canonicalName":"Araneus","kingdom":"Animalia",""" +
+            """"phylum":"Arthropoda","class":"Arachnida","confidence":99}"""
+        val stubs = spiderStubs + (matchUrl("Araneus diadematus") to FetchResult.Body(genus))
+
+        assertEquals(LookupOutcome.NoMatch, repository(FakeFetcher(stubs)).lookup("cross orb weaver spider"))
+    }
+
+    @Test
+    fun `an exact GBIF name never asks Wikipedia's search`() = runBlocking {
+        val fetcher = FakeFetcher(fullStubs)
+
+        repository(fetcher).lookup("Varied Thrush")
+
+        assertFalse(fetcher.requested.contains(searchUrl("Varied Thrush")))
+    }
+
     @Test
     fun `picking a different candidate re-keys Wikipedia on that species`() = runBlocking {
         val fetcher = FakeFetcher(fullStubs)

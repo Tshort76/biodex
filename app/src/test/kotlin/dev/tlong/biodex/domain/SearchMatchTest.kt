@@ -90,9 +90,25 @@ class SearchMatchTest {
     }
 
     @Test
+    fun `a dex name inside a longer query is found, as whole words (D88)`() {
+        listOf(
+            Triple("Cross Orbweaver", "cross orb weaver spider", true),
+            Triple("Mallard", "Mallard duck", true),
+            Triple("Araneus diadematus", "araneus diadematus spider", true),
+            Triple("Cross Orbweaver", "cross orbweavr spider", true),
+            Triple("Mink", "minke whale", false),
+            Triple("Elk", "elk herd", false),
+        ).forEach { (name, query, expected) ->
+            assertEquals("$name in $query", expected, SearchMatch.matches(name, query))
+        }
+        assertFalse("a typo is not WITHIN", SearchMatch.nameWithinQuery("Cross Orbweaver", "cross orbweavr spider"))
+    }
+
+    @Test
     fun `rank orders exact, prefix, word start, contains, then near (D74)`() {
         listOf(
             Triple("Western Tanager", "western tanager", SearchMatch.EXACT),
+            Triple("Western Tanager", "male western tanager", SearchMatch.WITHIN),
             Triple("Western Tanager", "west", SearchMatch.PREFIX),
             Triple("Western Tanager", "tanager", SearchMatch.WORD),
             Triple("Black-spot Chestnut", "spot", SearchMatch.WORD),

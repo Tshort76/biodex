@@ -1,6 +1,11 @@
 package dev.tlong.biodex.ui.identify
 
+import dev.tlong.biodex.data.net.CandidateDetails
+import dev.tlong.biodex.data.net.LookupOutcome
+import dev.tlong.biodex.data.net.MatchKind
+import dev.tlong.biodex.data.net.SpeciesCandidate
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.LookupFields
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
@@ -48,6 +53,7 @@ class IdentifyStateTest {
         query: String = "",
         selectedId: String? = null,
         capturing: Boolean = false,
+        online: OnlineLookup = OnlineLookup.Idle,
     ) = runBlocking {
         identifyUiState(
             photo = photo,
@@ -55,7 +61,44 @@ class IdentifyStateTest {
             query = MutableStateFlow(query),
             selectedId = MutableStateFlow(selectedId),
             capturing = MutableStateFlow(capturing),
+            online = MutableStateFlow(online),
         ).first()
+    }
+
+    private fun found(name: String, scientific: String) = OnlineLookup.Done(
+        name,
+        LookupOutcome.Resolved(
+            candidates = listOf(SpeciesCandidate(scientific, taxClass = TaxClass.BIRD, matchKind = MatchKind.WEB_SEARCH)),
+            selectedIndex = 0,
+            details = CandidateDetails(LookupFields(scientificName = scientific)),
+        ),
+    )
+
+    @Test
+    fun `a name the dex holds is not looked up online, anything else is (D88)`() {
+        listOf(
+            "Varied Thrush" to "Varied Thrush",
+            " western " to "western",
+            "western tanager" to null,
+            "a male western tanager" to null,
+            "  " to null,
+        ).forEach { (query, expected) -> assertEquals("query=$query", expected, onlineLookupName(catalogue, query, null)) }
+        assertNull("a picked species needs no lookup", onlineLookupName(catalogue, "Varied Thrush", "western-tanager"))
+    }
+
+    @Test
+    fun `a lookup that resolves to a held scientific name registers that species (D88)`() {
+        val s = state(query = "louisiana tanager", online = found("louisiana tanager", "Piranga ludoviciana Wilson, 1811"))
+        assertEquals("western-tanager", s.target?.id)
+        assertFalse(s.registersNewSpecies)
+        assertNull("a lookup for an older name says nothing", state(query = "tanager x", online = found("louisiana tanager", "Piranga ludoviciana")).onlineMatch)
+    }
+
+    @Test
+    fun `the add carries the lookup only when it was for the name being added (D88)`() {
+        val lookup = found("Varied Thrush", "Ixoreus naevius")
+        assertEquals(lookup.outcome, state(query = "Varied Thrush", online = lookup).prefetched)
+        assertNull(state(query = "Varied Thrus", online = lookup).prefetched)
     }
 
     @Test
@@ -83,6 +126,7 @@ class IdentifyStateTest {
         assertEquals("western-tanager", s.target?.id)
         assertFalse(s.registersNewSpecies)
         assertNull("a partial name picks nothing", state(query = "western").target)
+        assertEquals("a longer name that holds it picks it (D88)", "western-tanager", state(query = "western tanager bird").target?.id)
     }
 
     @Test
