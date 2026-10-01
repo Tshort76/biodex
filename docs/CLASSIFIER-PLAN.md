@@ -48,6 +48,29 @@ Nearest-neighbour distance on `mnv4-lr2e-4` features flags only 9–20 % (AUROC 
 
 Weakest groups: fish 61 % top-1, amphibians 71 %; fungi and invertebrates are ~90 %+. The open-set "not in dex" signal does not work yet. Export: the fp32 model (35 MB) matches PyTorch exactly; the int8-weight model (9.5 MB) agrees on 20/20 top-1 but drifts up to 0.12 in probability and fails the golden gate.
 
+## 1b. Naming species outside the dex (2026-10-01)
+
+The 255-way design above can only say "not in dex"; it never names a non-dex animal, which is most of the value. So the design moved to **name matching**: the phone model maps a photo to a 768-d vector, and the answer is the nearest of a list of BioCLIP 2 text embeddings ("a photo of {name}.") for 1,962 names. The list can grow without retraining. `names.py` builds the list; `distill.py` trains the student (ConvNeXt-Nano) to reproduce BioCLIP 2's image embedding.
+
+**Ceiling.** BioCLIP 2 itself, matched against the same 1,945–1,962 names, gets 84–85 % top-1 and ~93 % top-3 on held-out species it was never shown in this project.
+
+**First student (`data/runs/cnx-embed`, 12 epochs, cosine + name KD + name CE):**
+
+| Test photos | Student top-1 / top-3 | BioCLIP 2 top-1 / top-3 |
+|---|---|---|
+| Dex species | 86.6 % / 93.6 % | 89.3 % / 96.0 % |
+| `other` species seen in training | 56.9 % / 81.4 % | 85.6 % / 94.2 % |
+| **Species never trained on (`open_test`)** | **11.4 % / 44.6 %** | **84.7 % / 93.0 %** |
+
+Export passes the golden gate at both fp32 (61.9 MB) and, for the first time, int8 weights (16.1 MB, 20/20, max Δcos 1.6e-4).
+
+**Why it fails on unseen species — two causes:**
+
+1. **Bias toward trained names.** The KD and CE terms score each photo against all 1,962 names, and the 345 names with no training photos are never the target, so the student learns to rank them low: 87 % of its top-1 answers on unseen species are trained names (BioCLIP's: 13 %). A post-hoc boost on untrained names trades rather than fixes: +0.02 lifts unseen to 36 % but drops dex to 84 %.
+2. **The student only imitates BioCLIP on what it has seen.** Even restricted to the untrained names, it gets 65 % against BioCLIP's 93 %. Embedding quality on unseen kinds of animal is the real limit.
+
+Distillation needs no labels, only photos for BioCLIP to embed, so the fix is breadth: distil on photos of every species a Pacific user is likely to meet (thousands, ~20 each) and drop or restrict the name terms to trained names. Alternative if breadth is not enough: run a smaller BioCLIP image encoder (ViT-B) on the phone directly.
+
 ## 2. What the model is
 
 - **A 255-way image classifier**: the 254 catalogue species plus one `other` class. The photo is classified whole, in one pass. Not a detector (§7).
