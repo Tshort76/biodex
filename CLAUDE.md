@@ -17,7 +17,7 @@ A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-worl
 ```bash
 make            # list targets
 make doctor     # check the toolchain; names whatever is missing
-make check      # JVM + catalogue + place-list tests, no phone  (the usual pre-commit gate)
+make check      # JVM + catalogue, place-list, dexdb and classifier tests, no phone  (the usual pre-commit gate)
 make test       # JVM tests only
 make install    # build and install onto an attached phone
 make test-device   # instrumented tests; UNINSTALLS the app — refuses while photos are registered
@@ -42,7 +42,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
-Counts as of the last commit: **432 JVM, 44 instrumented, 36 Python.**
+Counts as of the last commit: **432 JVM, 44 instrumented, 55 Python.**
 
 ## The design registers — the convention to respect
 
@@ -102,6 +102,10 @@ Rules the build **enforces rather than trusts**, and they should stay that way:
 - `uses` is `edible` or empty. (`medicinal` and the Dr. Duke's join behind it left with the plants in v21.)
 
 The input files are split so a fungus edit and an animal edit never touch the same file. Edit them with **surgical string replacements** — a full `json.dump` rewrite reformats the whole file and buries a 3-line change in a 300-line diff. Use `ensure_ascii=False` when matching text, since the files store `—` and `'` raw.
+
+## The species classifier (paused)
+
+`tools/classifier/` is a paused experiment to replace the Google Lens hand-off with an on-device model. No app code uses it yet, and Identify still goes to Lens. `docs/CLASSIFIER-PLAN.md` holds the design, the results and how to resume, and `tools/classifier/README.md` says how to run it. `tools/classifier/data/` is git-ignored and holds photos, embeddings and checkpoints (gigabytes when populated); keep scripts and anything large there. `tools/classifier/resources/` is committed and holds only small results. Its corpus was built against catalogue v8, so resuming starts with a fresh `select_corpus.py`.
 
 ## Tone of the product
 
