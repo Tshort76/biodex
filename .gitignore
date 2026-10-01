@@ -19,6 +19,9 @@ local.properties
 tools/catalogue/cache/
 tools/places/cache/
 
+# Classifier corpus, photos, checkpoints and venv — never committed (tools/classifier/README.md)
+tools/classifier/data
+
 # Python bytecode from the tools/ scripts
 __pycache__/
 

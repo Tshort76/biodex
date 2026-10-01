@@ -1,0 +1,30 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+reference: 1200 animal, 1200 sign photos
+  embedded 0/2400
+probe, 5-fold cross-validated: {'animal_photos_kept': 0.988, 'sign_photos_rejected': 0.633, 'n_animal': 1200, 'n_sign': 1200}
+  embedded 0/143441
+  embedded 6400/143441
+  embedded 12800/143441
+  embedded 19200/143441
+  embedded 25600/143441
+  embedded 32000/143441
+  embedded 38400/143441
+  embedded 44800/143441
+  embedded 51200/143441
+  embedded 57600/143441
+  embedded 64000/143441
+  embedded 70400/143441
+  embedded 76800/143441
+  embedded 83200/143441
+  embedded 89600/143441
+  embedded 96000/143441
+  embedded 102400/143441
+  embedded 108800/143441
+  embedded 115200/143441
+  embedded 121600/143441
+  embedded 128000/143441
+  embedded 134400/143441
+  embedded 140800/143441
+kept 137183 / 143441; rejected 6258
+BioCLIP 2 zero-shot on the test split (254-way): {'top1': 0.9461, 'top3': 0.982, 'n': 10852}

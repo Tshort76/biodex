@@ -1,0 +1,58 @@
+{'train': 104322, 'test': 13035, 'val': 13111, 'open_test': 6715} 1962 names
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 9.168, 'val_cos': 0.6792, 'val_top1': 0.6285, 'val_top3': 0.7848, 'secs': 1619}
+{'epoch': 2, 'loss': 5.1112, 'val_cos': 0.7608, 'val_top1': 0.7009, 'val_top3': 0.8412, 'secs': 1605}
+{'epoch': 3, 'loss': 4.1932, 'val_cos': 0.7946, 'val_top1': 0.7195, 'val_top3': 0.8546, 'secs': 1606}
+{'epoch': 4, 'loss': 3.6348, 'val_cos': 0.8168, 'val_top1': 0.7446, 'val_top3': 0.8745, 'secs': 1594}
+{'epoch': 5, 'loss': 3.2314, 'val_cos': 0.8309, 'val_top1': 0.7568, 'val_top3': 0.8792, 'secs': 1593}
+{'epoch': 6, 'loss': 2.9044, 'val_cos': 0.8474, 'val_top1': 0.7683, 'val_top3': 0.8871, 'secs': 1594}
+{'epoch': 7, 'loss': 2.6419, 'val_cos': 0.853, 'val_top1': 0.7798, 'val_top3': 0.8934, 'secs': 1593}
+{'epoch': 8, 'loss': 2.4376, 'val_cos': 0.86, 'val_top1': 0.7867, 'val_top3': 0.8991, 'secs': 1608}
+{'epoch': 9, 'loss': 2.2843, 'val_cos': 0.8636, 'val_top1': 0.796, 'val_top3': 0.9041, 'secs': 1595}
+{'epoch': 10, 'loss': 2.1728, 'val_cos': 0.8669, 'val_top1': 0.798, 'val_top3': 0.905, 'secs': 1595}
+{'epoch': 11, 'loss': 2.115, 'val_cos': 0.8685, 'val_top1': 0.8041, 'val_top3': 0.9076, 'secs': 1594}
+{'epoch': 12, 'loss': 2.0887, 'val_cos': 0.8689, 'val_top1': 0.8044, 'val_top3': 0.9079, 'secs': 1594}
+{
+ "test_catalogue": {
+  "n": 10397,
+  "student": {
+   "top1": 0.8663,
+   "top3": 0.936,
+   "top5": 0.9524
+  },
+  "teacher": {
+   "top1": 0.8929,
+   "top3": 0.9597,
+   "top5": 0.9757
+  },
+  "cos_to_teacher": 0.8904
+ },
+ "test_other": {
+  "n": 2638,
+  "student": {
+   "top1": 0.5686,
+   "top3": 0.8143,
+   "top5": 0.8764
+  },
+  "teacher": {
+   "top1": 0.8563,
+   "top3": 0.9424,
+   "top5": 0.9606
+  },
+  "cos_to_teacher": 0.7901
+ },
+ "open_test": {
+  "n": 6715,
+  "student": {
+   "top1": 0.1138,
+   "top3": 0.4459,
+   "top5": 0.6113
+  },
+  "teacher": {
+   "top1": 0.8471,
+   "top3": 0.9297,
+   "top5": 0.9453
+  },
+  "cos_to_teacher": 0.7749
+ }
+}

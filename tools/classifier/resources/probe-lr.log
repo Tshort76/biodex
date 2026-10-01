@@ -1,0 +1,68 @@
+{'train': 88887, 'test': 11140, 'val': 11115, 'open_test': 1836} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+{'epoch': 1, 'loss': 4.1139, 'val_top1': 0.5883, 'val_top3': 0.7842, 'secs': 455}
+{
+ "test": {
+  "top1": 0.5920938732326633,
+  "top3": 0.7785899778782341,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.435,
+    "top3": 0.724
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.502,
+    "top3": 0.711
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.793,
+    "top3": 0.924
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.342,
+    "top3": 0.58
+   },
+   "insect": {
+    "n": 1485,
+    "top1": 0.772,
+    "top3": 0.884
+   },
+   "mammal": {
+    "n": 1357,
+    "top1": 0.567,
+    "top3": 0.76
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.705,
+    "top3": 0.899
+   },
+   "other_fungus": {
+    "n": 196,
+    "top1": 0.923,
+    "top3": 0.964
+   },
+   "other_invertebrate": {
+    "n": 853,
+    "top1": 0.776,
+    "top3": 0.891
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.571,
+    "top3": 0.81
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.5895,
+  "threshold": 0.0901,
+  "unseen_species_flagged_not_in_dex": 0.0556,
+  "n_unseen": 1836
+ }
+}

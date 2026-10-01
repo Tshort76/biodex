@@ -1,0 +1,15 @@
+{
+ "labels": 255,
+ "n_train": 88887,
+ "test": {
+  "top1": 0.9585,
+  "top3": 0.9861,
+  "n": 10397
+ },
+ "open_set": {
+  "auroc": 0.9276,
+  "threshold": 0.7926,
+  "unseen_species_flagged_not_in_dex": 0.6852,
+  "n_unseen": 1836
+ }
+}

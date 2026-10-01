@@ -1,0 +1,92 @@
+{'train': 88887, 'test': 11140, 'val': 11115, 'open_test': 1836} 255 labels
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 10.6373, 'val_top1': 0.1338, 'val_top3': 0.244, 'secs': 453}
+{'epoch': 2, 'loss': 10.8115, 'val_top1': 0.3223, 'val_top3': 0.5048, 'secs': 439}
+{'epoch': 3, 'loss': 10.0203, 'val_top1': 0.2979, 'val_top3': 0.4761, 'secs': 439}
+{'epoch': 4, 'loss': 9.6139, 'val_top1': 0.3336, 'val_top3': 0.5159, 'secs': 439}
+{'epoch': 5, 'loss': 9.898, 'val_top1': 0.2025, 'val_top3': 0.3587, 'secs': 439}
+{'epoch': 6, 'loss': 9.983, 'val_top1': 0.2329, 'val_top3': 0.3889, 'secs': 438}
+{'epoch': 7, 'loss': 9.0397, 'val_top1': 0.3606, 'val_top3': 0.5376, 'secs': 438}
+{'epoch': 8, 'loss': 7.7641, 'val_top1': 0.4428, 'val_top3': 0.6179, 'secs': 438}
+{'epoch': 9, 'loss': 6.9787, 'val_top1': 0.4845, 'val_top3': 0.6676, 'secs': 438}
+{'epoch': 10, 'loss': 6.6469, 'val_top1': 0.5025, 'val_top3': 0.6888, 'secs': 438}
+{'epoch': 11, 'loss': 5.9951, 'val_top1': 0.5444, 'val_top3': 0.7201, 'secs': 439}
+{'epoch': 12, 'loss': 5.866, 'val_top1': 0.5588, 'val_top3': 0.7274, 'secs': 439}
+{'epoch': 13, 'loss': 5.4285, 'val_top1': 0.5813, 'val_top3': 0.746, 'secs': 438}
+{'epoch': 14, 'loss': 4.951, 'val_top1': 0.5968, 'val_top3': 0.7647, 'secs': 438}
+{'epoch': 15, 'loss': 4.6739, 'val_top1': 0.6164, 'val_top3': 0.7782, 'secs': 438}
+{'epoch': 16, 'loss': 4.3222, 'val_top1': 0.6367, 'val_top3': 0.7912, 'secs': 438}
+{'epoch': 17, 'loss': 4.0744, 'val_top1': 0.6425, 'val_top3': 0.7991, 'secs': 438}
+{'epoch': 18, 'loss': 3.8612, 'val_top1': 0.6617, 'val_top3': 0.8118, 'secs': 438}
+{'epoch': 19, 'loss': 3.6613, 'val_top1': 0.6678, 'val_top3': 0.8159, 'secs': 438}
+{'epoch': 20, 'loss': 3.5052, 'val_top1': 0.6773, 'val_top3': 0.8195, 'secs': 497}
+{'epoch': 21, 'loss': 3.4035, 'val_top1': 0.6862, 'val_top3': 0.8232, 'secs': 455}
+{'epoch': 22, 'loss': 3.2914, 'val_top1': 0.6935, 'val_top3': 0.8291, 'secs': 443}
+{'epoch': 23, 'loss': 3.2311, 'val_top1': 0.698, 'val_top3': 0.8295, 'secs': 447}
+{'epoch': 24, 'loss': 3.2054, 'val_top1': 0.695, 'val_top3': 0.8306, 'secs': 441}
+{'epoch': 25, 'loss': 3.1845, 'val_top1': 0.6919, 'val_top3': 0.8273, 'secs': 441}
+{
+ "test": {
+  "top1": 0.685486197941714,
+  "top3": 0.823795325574685,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.565,
+    "top3": 0.786
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.642,
+    "top3": 0.792
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.869,
+    "top3": 0.966
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.449,
+    "top3": 0.701
+   },
+   "insect": {
+    "n": 1485,
+    "top1": 0.81,
+    "top3": 0.879
+   },
+   "mammal": {
+    "n": 1357,
+    "top1": 0.637,
+    "top3": 0.798
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.831,
+    "top3": 0.934
+   },
+   "other_fungus": {
+    "n": 196,
+    "top1": 0.944,
+    "top3": 0.974
+   },
+   "other_invertebrate": {
+    "n": 853,
+    "top1": 0.805,
+    "top3": 0.893
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.601,
+    "top3": 0.779
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.6757,
+  "threshold": 0.2812,
+  "unseen_species_flagged_not_in_dex": 0.1111,
+  "n_unseen": 1836
+ }
+}

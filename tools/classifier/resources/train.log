@@ -1,0 +1,83 @@
+{'train': 88887, 'test': 11140, 'val': 11115, 'open_test': 1836} 255 labels
+{'train': 88887, 'test': 11140, 'val': 11115, 'open_test': 1836} 255 labels
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 4.5342, 'val_top1': 0.1219, 'val_top3': 0.2423, 'secs': 764}
+{'epoch': 2, 'loss': 3.8894, 'val_top1': 0.1904, 'val_top3': 0.3524, 'secs': 450}
+{'epoch': 3, 'loss': 3.508, 'val_top1': 0.2171, 'val_top3': 0.3862, 'secs': 457}
+{'epoch': 4, 'loss': 3.2427, 'val_top1': 0.2966, 'val_top3': 0.4552, 'secs': 445}
+{'epoch': 5, 'loss': 3.0104, 'val_top1': 0.3931, 'val_top3': 0.5818, 'secs': 445}
+{'epoch': 6, 'loss': 2.8022, 'val_top1': 0.4943, 'val_top3': 0.6829, 'secs': 448}
+{'epoch': 7, 'loss': 2.6128, 'val_top1': 0.5485, 'val_top3': 0.7306, 'secs': 444}
+{'epoch': 8, 'loss': 2.444, 'val_top1': 0.5987, 'val_top3': 0.7685, 'secs': 442}
+{'epoch': 9, 'loss': 2.2948, 'val_top1': 0.6329, 'val_top3': 0.8035, 'secs': 442}
+{'epoch': 10, 'loss': 2.1372, 'val_top1': 0.6767, 'val_top3': 0.8294, 'secs': 441}
+{'epoch': 11, 'loss': 2.0183, 'val_top1': 0.6985, 'val_top3': 0.8476, 'secs': 441}
+{'epoch': 12, 'loss': 1.9136, 'val_top1': 0.7193, 'val_top3': 0.8597, 'secs': 441}
+{'epoch': 13, 'loss': 1.8298, 'val_top1': 0.7343, 'val_top3': 0.8659, 'secs': 442}
+{'epoch': 14, 'loss': 1.7782, 'val_top1': 0.7405, 'val_top3': 0.87, 'secs': 444}
+{'epoch': 15, 'loss': 1.7661, 'val_top1': 0.7403, 'val_top3': 0.871, 'secs': 466}
+{
+ "test": {
+  "top1": 0.7366548042704626,
+  "top3": 0.8708281234971627,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.622,
+    "top3": 0.851
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.688,
+    "top3": 0.833
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.878,
+    "top3": 0.97
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.541,
+    "top3": 0.767
+   },
+   "insect": {
+    "n": 1485,
+    "top1": 0.879,
+    "top3": 0.939
+   },
+   "mammal": {
+    "n": 1357,
+    "top1": 0.689,
+    "top3": 0.847
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.868,
+    "top3": 0.956
+   },
+   "other_fungus": {
+    "n": 196,
+    "top1": 0.949,
+    "top3": 0.98
+   },
+   "other_invertebrate": {
+    "n": 853,
+    "top1": 0.841,
+    "top3": 0.93
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.67,
+    "top3": 0.867
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.6998,
+  "threshold": 0.1566,
+  "unseen_species_flagged_not_in_dex": 0.1198,
+  "n_unseen": 1836
+ }
+}

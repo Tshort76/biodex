@@ -1,0 +1,4708 @@
+{
+ "canada-goose": {
+  "taxon_id": 7089,
+  "name": "Branta canadensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   6888,
+   6912,
+   7086,
+   7089
+  ]
+ },
+ "mallard": {
+  "taxon_id": 6930,
+  "name": "Anas platyrhynchos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   6888,
+   6912,
+   6922,
+   6930
+  ]
+ },
+ "california-quail": {
+  "taxon_id": 1409,
+  "name": "Callipepla californica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   573,
+   1278,
+   1405,
+   1409
+  ]
+ },
+ "wild-turkey": {
+  "taxon_id": 906,
+  "name": "Meleagris gallopavo",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   573,
+   574,
+   905,
+   906
+  ]
+ },
+ "rock-pigeon": {
+  "taxon_id": 3017,
+  "name": "Columba livia",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   2708,
+   2715,
+   3000,
+   3017
+  ]
+ },
+ "mourning-dove": {
+  "taxon_id": 3454,
+  "name": "Zenaida macroura",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   2708,
+   2715,
+   3438,
+   3454
+  ]
+ },
+ "annas-hummingbird": {
+  "taxon_id": 6317,
+  "name": "Calypte anna",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   1583761,
+   5562,
+   1542290,
+   1542294,
+   6315,
+   6317
+  ]
+ },
+ "rufous-hummingbird": {
+  "taxon_id": 6363,
+  "name": "Selasphorus rufus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   1583761,
+   5562,
+   1542290,
+   1542294,
+   6358,
+   6363
+  ]
+ },
+ "american-coot": {
+  "taxon_id": 473,
+  "name": "Fulica americana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   4,
+   154,
+   472,
+   473
+  ]
+ },
+ "killdeer": {
+  "taxon_id": 4793,
+  "name": "Charadrius vociferus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   4783,
+   4784,
+   4793
+  ]
+ },
+ "black-oystercatcher": {
+  "taxon_id": 4838,
+  "name": "Haematopus bachmani",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   71325,
+   4837,
+   4838
+  ]
+ },
+ "western-gull": {
+  "taxon_id": 4345,
+  "name": "Larus occidentalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   4342,
+   447155,
+   4343,
+   4345
+  ]
+ },
+ "tufted-puffin": {
+  "taxon_id": 4509,
+  "name": "Fratercula cirrhata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   71295,
+   4503,
+   4509
+  ]
+ },
+ "brown-pelican": {
+  "taxon_id": 4328,
+  "name": "Pelecanus occidentalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4323,
+   4324,
+   4328
+  ]
+ },
+ "double-crested-cormorant": {
+  "taxon_id": 1454382,
+  "name": "Nannopterum auritum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71268,
+   4262,
+   1289332,
+   1454382
+  ]
+ },
+ "great-blue-heron": {
+  "taxon_id": 4956,
+  "name": "Ardea herodias",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4929,
+   597395,
+   4950,
+   4956
+  ]
+ },
+ "turkey-vulture": {
+  "taxon_id": 4756,
+  "name": "Cathartes aura",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   559244,
+   71306,
+   4755,
+   4756
+  ]
+ },
+ "osprey": {
+  "taxon_id": 116999,
+  "name": "Pandion haliaetus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71261,
+   200958,
+   71725,
+   116999
+  ]
+ },
+ "bald-eagle": {
+  "taxon_id": 5305,
+  "name": "Haliaeetus leucocephalus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71261,
+   5067,
+   1542783,
+   5303,
+   5305
+  ]
+ },
+ "red-tailed-hawk": {
+  "taxon_id": 5212,
+  "name": "Buteo jamaicensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71261,
+   5067,
+   1542783,
+   5179,
+   5212
+  ]
+ },
+ "golden-eagle": {
+  "taxon_id": 5074,
+  "name": "Aquila chrysaetos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71261,
+   5067,
+   1541534,
+   5068,
+   5074
+  ]
+ },
+ "great-horned-owl": {
+  "taxon_id": 20044,
+  "name": "Bubo virginianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   19350,
+   19728,
+   20034,
+   20044
+  ]
+ },
+ "western-screech-owl": {
+  "taxon_id": 19743,
+  "name": "Megascops kennicottii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   19350,
+   19728,
+   19729,
+   19743
+  ]
+ },
+ "american-kestrel": {
+  "taxon_id": 4665,
+  "name": "Falco sparverius",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67570,
+   4637,
+   4638,
+   4665
+  ]
+ },
+ "belted-kingfisher": {
+  "taxon_id": 2548,
+  "name": "Megaceryle alcyon",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   2114,
+   2314,
+   1542374,
+   2547,
+   2548
+  ]
+ },
+ "acorn-woodpecker": {
+  "taxon_id": 18209,
+  "name": "Melanerpes formicivorus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653311,
+   18158,
+   18209
+  ]
+ },
+ "northern-flicker": {
+  "taxon_id": 18236,
+  "name": "Colaptes auratus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653312,
+   18230,
+   18236
+  ]
+ },
+ "pileated-woodpecker": {
+  "taxon_id": 17855,
+  "name": "Dryocopus pileatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653312,
+   17834,
+   17855
+  ]
+ },
+ "black-phoebe": {
+  "taxon_id": 17013,
+  "name": "Sayornis nigricans",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   980017,
+   17007,
+   17013
+  ]
+ },
+ "stellers-jay": {
+  "taxon_id": 8234,
+  "name": "Cyanocitta stelleri",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7823,
+   8228,
+   8234
+  ]
+ },
+ "california-scrub-jay": {
+  "taxon_id": 506118,
+  "name": "Aphelocoma californica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7823,
+   7824,
+   506118
+  ]
+ },
+ "american-crow": {
+  "taxon_id": 8021,
+  "name": "Corvus brachyrhynchos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7823,
+   7998,
+   8021
+  ]
+ },
+ "common-raven": {
+  "taxon_id": 8010,
+  "name": "Corvus corax",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7823,
+   7998,
+   8010
+  ]
+ },
+ "clarks-nutcracker": {
+  "taxon_id": 8520,
+  "name": "Nucifraga columbiana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7823,
+   8518,
+   8520
+  ]
+ },
+ "chestnut-backed-chickadee": {
+  "taxon_id": 144820,
+  "name": "Poecile rufescens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   13547,
+   144351,
+   144820
+  ]
+ },
+ "mountain-chickadee": {
+  "taxon_id": 144816,
+  "name": "Poecile gambeli",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   13547,
+   144351,
+   144816
+  ]
+ },
+ "bushtit": {
+  "taxon_id": 7266,
+  "name": "Psaltriparus minimus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7264,
+   7265,
+   7266
+  ]
+ },
+ "violet-green-swallow": {
+  "taxon_id": 11931,
+  "name": "Tachycineta thalassina",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11853,
+   11925,
+   11931
+  ]
+ },
+ "bewicks-wren": {
+  "taxon_id": 7576,
+  "name": "Thryomanes bewickii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   15964,
+   7575,
+   7576
+  ]
+ },
+ "american-dipper": {
+  "taxon_id": 7643,
+  "name": "Cinclus mexicanus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7640,
+   7641,
+   7643
+  ]
+ },
+ "american-robin": {
+  "taxon_id": 12727,
+  "name": "Turdus migratorius",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   15977,
+   12705,
+   12727
+  ]
+ },
+ "northern-mockingbird": {
+  "taxon_id": 14886,
+  "name": "Mimus polyglottos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   59911,
+   14877,
+   14886
+  ]
+ },
+ "european-starling": {
+  "taxon_id": 14850,
+  "name": "Sturnus vulgaris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   14841,
+   14842,
+   14850
+  ]
+ },
+ "house-finch": {
+  "taxon_id": 199840,
+  "name": "Haemorhous mexicanus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   9079,
+   199910,
+   199840
+  ]
+ },
+ "lesser-goldfinch": {
+  "taxon_id": 145308,
+  "name": "Spinus psaltria",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   9079,
+   144410,
+   145308
+  ]
+ },
+ "spotted-towhee": {
+  "taxon_id": 9420,
+  "name": "Pipilo maculatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   559248,
+   9405,
+   9420
+  ]
+ },
+ "dark-eyed-junco": {
+  "taxon_id": 10094,
+  "name": "Junco hyemalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   559248,
+   10093,
+   10094
+  ]
+ },
+ "white-crowned-sparrow": {
+  "taxon_id": 9176,
+  "name": "Zonotrichia leucophrys",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   559248,
+   9175,
+   9176
+  ]
+ },
+ "song-sparrow": {
+  "taxon_id": 9100,
+  "name": "Melospiza melodia",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   559248,
+   9091,
+   9100
+  ]
+ },
+ "red-winged-blackbird": {
+  "taxon_id": 9744,
+  "name": "Agelaius phoeniceus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11989,
+   9740,
+   9744
+  ]
+ },
+ "western-meadowlark": {
+  "taxon_id": 9535,
+  "name": "Sturnella neglecta",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11989,
+   9526,
+   9535
+  ]
+ },
+ "western-tanager": {
+  "taxon_id": 9919,
+  "name": "Piranga ludoviciana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   71305,
+   9913,
+   9919
+  ]
+ },
+ "virginia-opossum": {
+  "taxon_id": 42652,
+  "name": "Didelphis virginiana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848319,
+   42540,
+   42541,
+   846215,
+   846338,
+   42646,
+   42652
+  ]
+ },
+ "american-pika": {
+  "taxon_id": 43188,
+  "name": "Ochotona princeps",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43094,
+   43169,
+   43170,
+   1431517,
+   43188
+  ]
+ },
+ "black-tailed-jackrabbit": {
+  "taxon_id": 43130,
+  "name": "Lepus californicus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43094,
+   43095,
+   43117,
+   43130
+  ]
+ },
+ "western-gray-squirrel": {
+  "taxon_id": 46023,
+  "name": "Sciurus griseus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   45933,
+   332614,
+   339575,
+   45994,
+   1431498,
+   46023
+  ]
+ },
+ "california-ground-squirrel": {
+  "taxon_id": 180007,
+  "name": "Otospermophilus beecheyi",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   45933,
+   339572,
+   209650,
+   179939,
+   180007
+  ]
+ },
+ "douglas-squirrel": {
+  "taxon_id": 46259,
+  "name": "Tamiasciurus douglasii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   45933,
+   332614,
+   339575,
+   46257,
+   46259
+  ]
+ },
+ "yellow-bellied-marmot": {
+  "taxon_id": 46086,
+  "name": "Marmota flaviventris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   45933,
+   339572,
+   209650,
+   46078,
+   1431486,
+   46086
+  ]
+ },
+ "american-beaver": {
+  "taxon_id": 43794,
+  "name": "Castor canadensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870764,
+   43791,
+   43792,
+   43794
+  ]
+ },
+ "coyote": {
+  "taxon_id": 42051,
+  "name": "Canis latrans",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   42043,
+   42044,
+   42051
+  ]
+ },
+ "gray-fox": {
+  "taxon_id": 42076,
+  "name": "Urocyon cinereoargenteus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   42043,
+   42075,
+   42076
+  ]
+ },
+ "american-black-bear": {
+  "taxon_id": 41638,
+  "name": "Ursus americanus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41636,
+   846255,
+   41637,
+   41638
+  ]
+ },
+ "raccoon": {
+  "taxon_id": 41663,
+  "name": "Procyon lotor",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41660,
+   41661,
+   41663
+  ]
+ },
+ "striped-skunk": {
+  "taxon_id": 41880,
+  "name": "Mephitis mephitis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41871,
+   846224,
+   41878,
+   41880
+  ]
+ },
+ "north-american-river-otter": {
+  "taxon_id": 41777,
+  "name": "Lontra canadensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41770,
+   526556,
+   41775,
+   41777
+  ]
+ },
+ "sea-otter": {
+  "taxon_id": 41860,
+  "name": "Enhydra lutris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41770,
+   526556,
+   41859,
+   41860
+  ]
+ },
+ "harbor-seal": {
+  "taxon_id": 41708,
+  "name": "Phoca vitulina",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   372843,
+   41687,
+   1691817,
+   1691820,
+   41707,
+   41708
+  ]
+ },
+ "california-sea-lion": {
+  "taxon_id": 41740,
+  "name": "Zalophus californianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   372843,
+   41736,
+   41737,
+   41740
+  ]
+ },
+ "bobcat": {
+  "taxon_id": 41976,
+  "name": "Lynx rufus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41944,
+   846179,
+   41973,
+   41976
+  ]
+ },
+ "mule-deer": {
+  "taxon_id": 42220,
+  "name": "Odocoileus hemionus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   152870,
+   424850,
+   42158,
+   846185,
+   846324,
+   42219,
+   42220
+  ]
+ },
+ "roosevelt-elk": {
+  "taxon_id": 566550,
+  "name": "Cervus canadensis roosevelti",
+  "rank": "subspecies",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   152870,
+   424850,
+   42158,
+   846198,
+   846317,
+   42205,
+   204114,
+   566550
+  ]
+ },
+ "western-pond-turtle": {
+  "taxon_id": 73592,
+  "name": "Actinemys marmorata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   39532,
+   39760,
+   797516,
+   71788,
+   73592
+  ]
+ },
+ "western-fence-lizard": {
+  "taxon_id": 36204,
+  "name": "Sceloporus occidentalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563907,
+   1567779,
+   36074,
+   797562,
+   36141,
+   36204
+  ]
+ },
+ "common-side-blotched-lizard": {
+  "taxon_id": 36094,
+  "name": "Uta stansburiana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563907,
+   1567779,
+   36074,
+   797562,
+   36090,
+   36094
+  ]
+ },
+ "desert-horned-lizard": {
+  "taxon_id": 243904,
+  "name": "Phrynosoma platyrhinos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563907,
+   1567779,
+   36074,
+   797579,
+   36299,
+   243904
+  ]
+ },
+ "western-skink": {
+  "taxon_id": 37769,
+  "name": "Plestiodon skiltonianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563904,
+   36982,
+   787700,
+   37763,
+   37769
+  ]
+ },
+ "southern-alligator-lizard": {
+  "taxon_id": 32055,
+  "name": "Elgaria multicarinata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563906,
+   31888,
+   797512,
+   32049,
+   32055
+  ]
+ },
+ "common-garter-snake": {
+  "taxon_id": 28362,
+  "name": "Thamnophis sirtalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   26504,
+   532896,
+   28339,
+   28362
+  ]
+ },
+ "gopher-snake": {
+  "taxon_id": 29044,
+  "name": "Pituophis catenifer",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   26504,
+   797520,
+   29033,
+   29044
+  ]
+ },
+ "western-rattlesnake": {
+  "taxon_id": 48268,
+  "name": "Crotalus oreganus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   30667,
+   797576,
+   30692,
+   48268
+  ]
+ },
+ "rough-skinned-newt": {
+  "taxon_id": 27826,
+  "name": "Taricha granulosa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   27701,
+   787591,
+   27816,
+   27826
+  ]
+ },
+ "california-newt": {
+  "taxon_id": 27818,
+  "name": "Taricha torosa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   27701,
+   787591,
+   27816,
+   27818
+  ]
+ },
+ "ensatina": {
+  "taxon_id": 27250,
+  "name": "Ensatina eschscholtzii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   26909,
+   787551,
+   27248,
+   27250
+  ]
+ },
+ "coastal-giant-salamander": {
+  "taxon_id": 26822,
+  "name": "Dicamptodon tenebrosus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   26720,
+   26816,
+   26822
+  ]
+ },
+ "pacific-chorus-frog": {
+  "taxon_id": 24259,
+  "name": "Pseudacris regilla",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   20979,
+   1658175,
+   24253,
+   24259
+  ]
+ },
+ "american-bullfrog": {
+  "taxon_id": 65979,
+  "name": "Lithobates catesbeianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   20979,
+   25473,
+   60340,
+   65979
+  ]
+ },
+ "western-toad": {
+  "taxon_id": 64970,
+  "name": "Anaxyrus boreas",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   20979,
+   21359,
+   64747,
+   64970
+  ]
+ },
+ "chinook-salmon": {
+  "taxon_id": 54191,
+  "name": "Oncorhynchus tshawytscha",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   54191
+  ]
+ },
+ "coho-salmon": {
+  "taxon_id": 53692,
+  "name": "Oncorhynchus kisutch",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   53692
+  ]
+ },
+ "rainbow-trout": {
+  "taxon_id": 47516,
+  "name": "Oncorhynchus mykiss",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   47516
+  ]
+ },
+ "cutthroat-trout": {
+  "taxon_id": 68075,
+  "name": "Oncorhynchus clarkii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   68075
+  ]
+ },
+ "tidepool-sculpin": {
+  "taxon_id": 67629,
+  "name": "Oligocottus maculosus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303567,
+   86030,
+   67630,
+   67629
+  ]
+ },
+ "opaleye": {
+  "taxon_id": 81963,
+  "name": "Girella nigricans",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   1303731,
+   1303756,
+   516965,
+   51359,
+   81963
+  ]
+ },
+ "garibaldi": {
+  "taxon_id": 53693,
+  "name": "Hypsypops rubicundus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   1303737,
+   48313,
+   1303641,
+   53694,
+   53693
+  ]
+ },
+ "blue-rockfish": {
+  "taxon_id": 64471,
+  "name": "Sebastes mystinus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303568,
+   47285,
+   788495,
+   47762,
+   64471
+  ]
+ },
+ "leopard-shark": {
+  "taxon_id": 52297,
+  "name": "Triakis semifasciata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   196614,
+   47273,
+   551307,
+   551308,
+   48069,
+   49965,
+   788462,
+   52298,
+   52297
+  ]
+ },
+ "bat-ray": {
+  "taxon_id": 51491,
+  "name": "Myliobatis californica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   196614,
+   47273,
+   448201,
+   196615,
+   49298,
+   49312,
+   51491
+  ]
+ },
+ "western-tiger-swallowtail": {
+  "taxon_id": 47226,
+  "name": "Papilio rutulus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47223,
+   49973,
+   207785,
+   47225,
+   545186,
+   47226
+  ]
+ },
+ "anise-swallowtail": {
+  "taxon_id": 51097,
+  "name": "Papilio zelicaon",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47223,
+   49973,
+   207785,
+   47225,
+   545183,
+   51097
+  ]
+ },
+ "monarch": {
+  "taxon_id": 48662,
+  "name": "Danaus plexippus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   61244,
+   134169,
+   522900,
+   48663,
+   48662
+  ]
+ },
+ "california-sister": {
+  "taxon_id": 67560,
+  "name": "Adelpha californica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   134171,
+   134175,
+   48661,
+   67560
+  ]
+ },
+ "painted-lady": {
+  "taxon_id": 48548,
+  "name": "Vanessa cardui",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   202067,
+   202066,
+   48507,
+   48548
+  ]
+ },
+ "mourning-cloak": {
+  "taxon_id": 56832,
+  "name": "Nymphalis antiopa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   202067,
+   202066,
+   49921,
+   56832
+  ]
+ },
+ "cabbage-white": {
+  "taxon_id": 55626,
+  "name": "Pieris rapae",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   48508,
+   209720,
+   321384,
+   475032,
+   55690,
+   55626
+  ]
+ },
+ "common-green-darner": {
+  "taxon_id": 67731,
+  "name": "Anax junius",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47792,
+   47927,
+   1317180,
+   51469,
+   51468,
+   67731
+  ]
+ },
+ "flame-skimmer": {
+  "taxon_id": 47817,
+  "name": "Libellula saturata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47792,
+   47927,
+   1317176,
+   47819,
+   47818,
+   47817
+  ]
+ },
+ "blue-dasher": {
+  "taxon_id": 59774,
+  "name": "Pachydiplax longipennis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47792,
+   47927,
+   1317176,
+   47819,
+   59775,
+   59774
+  ]
+ },
+ "yellow-faced-bumble-bee": {
+  "taxon_id": 57689,
+  "name": "Bombus vosnesenskii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   47222,
+   630955,
+   47221,
+   199939,
+   538883,
+   52775,
+   538900,
+   57689
+  ]
+ },
+ "valley-carpenter-bee": {
+  "taxon_id": 244216,
+  "name": "Xylocopa sonorina",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   47222,
+   630955,
+   47221,
+   244505,
+   574159,
+   51111,
+   557049,
+   244216
+  ]
+ },
+ "convergent-lady-beetle": {
+  "taxon_id": 48987,
+  "name": "Hippodamia convergens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47208,
+   71130,
+   372852,
+   471714,
+   48486,
+   333790,
+   333796,
+   48988,
+   48987
+  ]
+ },
+ "ten-lined-june-beetle": {
+  "taxon_id": 84612,
+  "name": "Polyphylla decemlineata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47208,
+   71130,
+   702480,
+   48202,
+   48201,
+   48200,
+   347605,
+   84572,
+   1699434,
+   84612
+  ]
+ },
+ "jerusalem-cricket": {
+  "taxon_id": 86400,
+  "name": "Ammopelmatus",
+  "rank": "genus",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47651,
+   132694,
+   488701,
+   53896,
+   53897,
+   345039,
+   1228213,
+   86400
+  ]
+ },
+ "banana-slug": {
+  "taxon_id": 47776,
+  "name": "Ariolimax columbianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47114,
+   551391,
+   775797,
+   775800,
+   775812,
+   47485,
+   781349,
+   781350,
+   487049,
+   629866,
+   916897,
+   47777,
+   47776
+  ]
+ },
+ "ochre-sea-star": {
+  "taxon_id": 49699,
+  "name": "Pisaster ochraceus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47549,
+   481959,
+   47668,
+   533697,
+   47672,
+   47671,
+   48834,
+   49699
+  ]
+ },
+ "giant-green-anemone": {
+  "taxon_id": 51659,
+  "name": "Anthopleura xanthogrammica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47534,
+   47533,
+   202756,
+   47797,
+   813978,
+   813994,
+   47796,
+   49052,
+   51659
+  ]
+ },
+ "purple-sea-urchin": {
+  "taxon_id": 48035,
+  "name": "Strongylocentrotus purpuratus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47549,
+   774753,
+   47548,
+   475988,
+   552153,
+   774993,
+   85508,
+   814155,
+   814173,
+   48037,
+   48036,
+   48035
+  ]
+ },
+ "dungeness-crab": {
+  "taxon_id": 63697,
+  "name": "Metacarcinus magister",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   47187,
+   774775,
+   144113,
+   47186,
+   118451,
+   121639,
+   706185,
+   447514,
+   47829,
+   47828,
+   116719,
+   63697
+  ]
+ },
+ "striped-shore-crab": {
+  "taxon_id": 47188,
+  "name": "Pachygrapsus crassipes",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   47187,
+   774775,
+   144113,
+   47186,
+   118451,
+   121639,
+   706185,
+   706188,
+   47191,
+   47190,
+   47189,
+   47188
+  ]
+ },
+ "western-black-widow": {
+  "taxon_id": 47382,
+  "name": "Latrodectus hesperus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   245097,
+   47119,
+   47118,
+   120474,
+   342614,
+   319384,
+   47371,
+   1472111,
+   47370,
+   47382
+  ]
+ },
+ "wood-duck": {
+  "taxon_id": 7107,
+  "name": "Aix sponsa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   6888,
+   6912,
+   7105,
+   7107
+  ]
+ },
+ "bufflehead": {
+  "taxon_id": 6993,
+  "name": "Bucephala albeola",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   6888,
+   6912,
+   6989,
+   6993
+  ]
+ },
+ "common-merganser": {
+  "taxon_id": 7004,
+  "name": "Mergus merganser",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   6888,
+   6912,
+   6995,
+   7004
+  ]
+ },
+ "pied-billed-grebe": {
+  "taxon_id": 4246,
+  "name": "Podilymbus podiceps",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67563,
+   4203,
+   4245,
+   4246
+  ]
+ },
+ "western-grebe": {
+  "taxon_id": 4235,
+  "name": "Aechmophorus occidentalis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67563,
+   4203,
+   4233,
+   4235
+  ]
+ },
+ "american-white-pelican": {
+  "taxon_id": 4334,
+  "name": "Pelecanus erythrorhynchos",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4323,
+   4324,
+   4334
+  ]
+ },
+ "great-egret": {
+  "taxon_id": 144455,
+  "name": "Ardea alba",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4929,
+   597395,
+   4950,
+   144455
+  ]
+ },
+ "snowy-egret": {
+  "taxon_id": 4940,
+  "name": "Egretta thula",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4929,
+   597395,
+   4933,
+   4940
+  ]
+ },
+ "green-heron": {
+  "taxon_id": 5020,
+  "name": "Butorides virescens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67566,
+   4929,
+   597395,
+   5019,
+   5020
+  ]
+ },
+ "brandts-cormorant": {
+  "taxon_id": 1289607,
+  "name": "Urile penicillatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71268,
+   4262,
+   1289334,
+   1289607
+  ]
+ },
+ "sandhill-crane": {
+  "taxon_id": 508048,
+  "name": "Antigone canadensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   4,
+   23,
+   508044,
+   508048
+  ]
+ },
+ "sanderling": {
+  "taxon_id": 3849,
+  "name": "Calidris alba",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   3835,
+   3836,
+   3849
+  ]
+ },
+ "california-gull": {
+  "taxon_id": 4385,
+  "name": "Larus californicus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   4342,
+   447155,
+   4343,
+   4385
+  ]
+ },
+ "heermanns-gull": {
+  "taxon_id": 4353,
+  "name": "Larus heermanni",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   4342,
+   447155,
+   4343,
+   4353
+  ]
+ },
+ "caspian-tern": {
+  "taxon_id": 144537,
+  "name": "Hydroprogne caspia",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67561,
+   4342,
+   373567,
+   144326,
+   144537
+  ]
+ },
+ "band-tailed-pigeon": {
+  "taxon_id": 3108,
+  "name": "Patagioenas fasciata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   2708,
+   2715,
+   3078,
+   3108
+  ]
+ },
+ "eurasian-collared-dove": {
+  "taxon_id": 2969,
+  "name": "Streptopelia decaocto",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   2708,
+   2715,
+   2926,
+   2969
+  ]
+ },
+ "barn-owl": {
+  "taxon_id": 20445,
+  "name": "Tyto alba",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   19350,
+   20413,
+   20414,
+   20445
+  ]
+ },
+ "downy-woodpecker": {
+  "taxon_id": 792988,
+  "name": "Dryobates pubescens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653311,
+   792976,
+   792988
+  ]
+ },
+ "hairy-woodpecker": {
+  "taxon_id": 1651487,
+  "name": "Leuconotopicus villosus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653311,
+   1649809,
+   1651487
+  ]
+ },
+ "red-breasted-sapsucker": {
+  "taxon_id": 18464,
+  "name": "Sphyrapicus ruber",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   17550,
+   17599,
+   1653299,
+   1653311,
+   18459,
+   18464
+  ]
+ },
+ "coopers-hawk": {
+  "taxon_id": 1579017,
+  "name": "Astur cooperii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   71261,
+   5067,
+   1541538,
+   1577581,
+   1579017
+  ]
+ },
+ "peregrine-falcon": {
+  "taxon_id": 4647,
+  "name": "Falco peregrinus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   67570,
+   4637,
+   4638,
+   4647
+  ]
+ },
+ "barn-swallow": {
+  "taxon_id": 11901,
+  "name": "Hirundo rustica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11853,
+   11880,
+   11901
+  ]
+ },
+ "cliff-swallow": {
+  "taxon_id": 11858,
+  "name": "Petrochelidon pyrrhonota",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11853,
+   979618,
+   11858
+  ]
+ },
+ "black-capped-chickadee": {
+  "taxon_id": 144815,
+  "name": "Poecile atricapillus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   13547,
+   144351,
+   144815
+  ]
+ },
+ "red-breasted-nuthatch": {
+  "taxon_id": 14823,
+  "name": "Sitta canadensis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   14799,
+   14800,
+   14823
+  ]
+ },
+ "cedar-waxwing": {
+  "taxon_id": 7428,
+  "name": "Bombycilla cedrorum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   7423,
+   7427,
+   7428
+  ]
+ },
+ "american-goldfinch": {
+  "taxon_id": 145310,
+  "name": "Spinus tristis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   9079,
+   144410,
+   145310
+  ]
+ },
+ "house-sparrow": {
+  "taxon_id": 13858,
+  "name": "Passer domesticus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   13685,
+   13847,
+   13858
+  ]
+ },
+ "brewers-blackbird": {
+  "taxon_id": 10325,
+  "name": "Euphagus cyanocephalus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   11989,
+   10321,
+   10325
+  ]
+ },
+ "yellow-rumped-warbler": {
+  "taxon_id": 145245,
+  "name": "Setophaga coronata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   3,
+   7251,
+   71349,
+   10246,
+   145245
+  ]
+ },
+ "mountain-lion": {
+  "taxon_id": 42007,
+  "name": "Puma concolor",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41944,
+   846179,
+   42006,
+   42007
+  ]
+ },
+ "gray-whale": {
+  "taxon_id": 41478,
+  "name": "Eschrichtius robustus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   152870,
+   925158,
+   152871,
+   424321,
+   41476,
+   41477,
+   41478
+  ]
+ },
+ "northern-elephant-seal": {
+  "taxon_id": 41728,
+  "name": "Mirounga angustirostris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   372843,
+   41687,
+   1691813,
+   1691815,
+   41727,
+   41728
+  ]
+ },
+ "harbor-porpoise": {
+  "taxon_id": 41440,
+  "name": "Phocoena phocoena",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   152870,
+   925158,
+   152871,
+   424322,
+   1317261,
+   41437,
+   41438,
+   41440
+  ]
+ },
+ "townsends-chipmunk": {
+  "taxon_id": 225756,
+  "name": "Neotamias townsendii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   45933,
+   339572,
+   1279829,
+   197808,
+   225756
+  ]
+ },
+ "bushy-tailed-woodrat": {
+  "taxon_id": 44761,
+  "name": "Neotoma cinerea",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870778,
+   488924,
+   55986,
+   325776,
+   735166,
+   44737,
+   1431441,
+   44761
+  ]
+ },
+ "deer-mouse": {
+  "taxon_id": 44396,
+  "name": "Peromyscus maniculatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870778,
+   488924,
+   55986,
+   325776,
+   1596087,
+   44349,
+   44396
+  ]
+ },
+ "little-brown-bat": {
+  "taxon_id": 40346,
+  "name": "Myotis lucifugus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   40268,
+   446946,
+   446959,
+   40269,
+   846269,
+   40270,
+   1431384,
+   40346
+  ]
+ },
+ "mountain-beaver": {
+  "taxon_id": 43736,
+  "name": "Aplodontia rufa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   129411,
+   43734,
+   43735,
+   43736
+  ]
+ },
+ "north-american-porcupine": {
+  "taxon_id": 44026,
+  "name": "Erethizon dorsatum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870765,
+   870767,
+   870774,
+   44010,
+   846222,
+   44025,
+   44026
+  ]
+ },
+ "snowshoe-hare": {
+  "taxon_id": 43132,
+  "name": "Lepus americanus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43094,
+   43095,
+   43117,
+   1431525,
+   43132
+  ]
+ },
+ "muskrat": {
+  "taxon_id": 45763,
+  "name": "Ondatra zibethicus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870778,
+   488924,
+   55986,
+   179534,
+   1317289,
+   45762,
+   45763
+  ]
+ },
+ "american-mink": {
+  "taxon_id": 1264432,
+  "name": "Neogale vison",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848324,
+   41573,
+   41770,
+   526558,
+   1264428,
+   1264432
+  ]
+ },
+ "bottas-pocket-gopher": {
+  "taxon_id": 1624661,
+  "name": "Megascapheus bottae",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   40151,
+   848317,
+   848320,
+   848323,
+   43698,
+   870764,
+   44027,
+   1317270,
+   846288,
+   1624593,
+   1624760,
+   1624661
+  ]
+ },
+ "sockeye-salmon": {
+  "taxon_id": 69922,
+  "name": "Oncorhynchus nerka",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   69922
+  ]
+ },
+ "pink-salmon": {
+  "taxon_id": 107570,
+  "name": "Oncorhynchus gorbuscha",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   107570
+  ]
+ },
+ "chum-salmon": {
+  "taxon_id": 107572,
+  "name": "Oncorhynchus keta",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   47521,
+   1555655,
+   47520,
+   342904,
+   47522,
+   107572
+  ]
+ },
+ "pacific-herring": {
+  "taxon_id": 117571,
+  "name": "Clupea pallasii",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   49235,
+   1416129,
+   49236,
+   87532,
+   117571
+  ]
+ },
+ "northern-anchovy": {
+  "taxon_id": 63770,
+  "name": "Engraulis mordax",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   49235,
+   1416129,
+   51911,
+   1416134,
+   51912,
+   63770
+  ]
+ },
+ "lingcod": {
+  "taxon_id": 52539,
+  "name": "Ophiodon elongatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303567,
+   48454,
+   788593,
+   52540,
+   52539
+  ]
+ },
+ "cabezon": {
+  "taxon_id": 47638,
+  "name": "Scorpaenichthys marmoratus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303567,
+   1363726,
+   47647,
+   47638
+  ]
+ },
+ "kelp-greenling": {
+  "taxon_id": 68596,
+  "name": "Hexagrammos decagrammus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303567,
+   48454,
+   788594,
+   68595,
+   68596
+  ]
+ },
+ "black-rockfish": {
+  "taxon_id": 47760,
+  "name": "Sebastes melanops",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   47233,
+   1303568,
+   47285,
+   788495,
+   47762,
+   47760
+  ]
+ },
+ "starry-flounder": {
+  "taxon_id": 83170,
+  "name": "Platichthys stellatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   1303727,
+   1303751,
+   47525,
+   559182,
+   83171,
+   83170
+  ]
+ },
+ "barred-surfperch": {
+  "taxon_id": 117551,
+  "name": "Amphistichus argenteus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   1303737,
+   63687,
+   86422,
+   117551
+  ]
+ },
+ "california-grunion": {
+  "taxon_id": 117572,
+  "name": "Leuresthes tenuis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   85506,
+   1689516,
+   85612,
+   788679,
+   89504,
+   117572
+  ]
+ },
+ "white-sturgeon": {
+  "taxon_id": 1633211,
+  "name": "Sinosturio transmontanus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   49824,
+   49825,
+   1633129,
+   1633211
+  ]
+ },
+ "largemouth-bass": {
+  "taxon_id": 49587,
+  "name": "Micropterus salmoides",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   47178,
+   1632273,
+   1303731,
+   1303755,
+   49588,
+   1303639,
+   49589,
+   1546275,
+   49587
+  ]
+ },
+ "northern-alligator-lizard": {
+  "taxon_id": 32064,
+  "name": "Elgaria coerulea",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85552,
+   1563906,
+   31888,
+   797512,
+   32049,
+   32064
+  ]
+ },
+ "california-kingsnake": {
+  "taxon_id": 146199,
+  "name": "Lampropeltis californiae",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   26504,
+   797520,
+   29768,
+   1676766,
+   146199
+  ]
+ },
+ "rubber-boa": {
+  "taxon_id": 243962,
+  "name": "Charina bottae",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   32080,
+   1666447,
+   32103,
+   243962
+  ]
+ },
+ "ring-necked-snake": {
+  "taxon_id": 26575,
+  "name": "Diadophis punctatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   26504,
+   797518,
+   26574,
+   26575
+  ]
+ },
+ "western-yellow-bellied-racer": {
+  "taxon_id": 27137,
+  "name": "Coluber constrictor",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   26172,
+   85553,
+   26504,
+   797520,
+   27030,
+   27137
+  ]
+ },
+ "pond-slider": {
+  "taxon_id": 39782,
+  "name": "Trachemys scripta",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   26036,
+   39532,
+   39760,
+   797544,
+   39776,
+   39782
+  ]
+ },
+ "northern-red-legged-frog": {
+  "taxon_id": 25545,
+  "name": "Rana aurora",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   20979,
+   25473,
+   25474,
+   25545
+  ]
+ },
+ "cascades-frog": {
+  "taxon_id": 25592,
+  "name": "Rana cascadae",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   20979,
+   25473,
+   25474,
+   25592
+  ]
+ },
+ "long-toed-salamander": {
+  "taxon_id": 26754,
+  "name": "Ambystoma macrodactylum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   26720,
+   26721,
+   26754
+  ]
+ },
+ "arboreal-salamander": {
+  "taxon_id": 27427,
+  "name": "Aneides lugubris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   26909,
+   787551,
+   27422,
+   27427
+  ]
+ },
+ "california-slender-salamander": {
+  "taxon_id": 27459,
+  "name": "Batrachoseps attenuatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   2,
+   355675,
+   20978,
+   26718,
+   26909,
+   787564,
+   27444,
+   27459
+  ]
+ },
+ "western-honey-bee": {
+  "taxon_id": 47219,
+  "name": "Apis mellifera",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   47222,
+   630955,
+   47221,
+   199939,
+   538904,
+   47220,
+   578086,
+   47219
+  ]
+ },
+ "western-yellowjacket": {
+  "taxon_id": 61355,
+  "name": "Vespula pensylvanica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   48740,
+   52747,
+   84738,
+   61356,
+   61355
+  ]
+ },
+ "bald-faced-hornet": {
+  "taxon_id": 52911,
+  "name": "Dolichovespula maculata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   48740,
+   52747,
+   84738,
+   52912,
+   52911
+  ]
+ },
+ "western-carpenter-ant": {
+  "taxon_id": 68954,
+  "name": "Camponotus modoc",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47201,
+   124417,
+   326777,
+   1269340,
+   47336,
+   244834,
+   334375,
+   62781,
+   519191,
+   68954
+  ]
+ },
+ "pacific-dampwood-termite": {
+  "taxon_id": 121383,
+  "name": "Zootermopsis angusticollis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   81769,
+   129743,
+   118903,
+   857908,
+   121381,
+   121383
+  ]
+ },
+ "green-lacewing": {
+  "taxon_id": 311581,
+  "name": "Chrysoperla carnea",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   48763,
+   483236,
+   52425,
+   338941,
+   209849,
+   59441,
+   858297,
+   311581
+  ]
+ },
+ "common-water-strider": {
+  "taxon_id": 59651,
+  "name": "Aquarius remigis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47744,
+   61267,
+   372861,
+   59654,
+   59653,
+   366568,
+   936827,
+   59652,
+   1144391,
+   59651
+  ]
+ },
+ "large-milkweed-bug": {
+  "taxon_id": 55556,
+  "name": "Oncopeltus fasciatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47744,
+   61267,
+   372868,
+   466233,
+   55558,
+   130314,
+   55559,
+   888838,
+   55556
+  ]
+ },
+ "field-cricket": {
+  "taxon_id": 122193,
+  "name": "Gryllus pennsylvanicus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47651,
+   132694,
+   358855,
+   50158,
+   52884,
+   122461,
+   523728,
+   1243638,
+   71251,
+   713241,
+   122193
+  ]
+ },
+ "european-mantis": {
+  "taxon_id": 53905,
+  "name": "Mantis religiosa",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   48112,
+   1097011,
+   1097013,
+   1097016,
+   48111,
+   570063,
+   56564,
+   53905
+  ]
+ },
+ "isabella-tiger-moth": {
+  "taxon_id": 59675,
+  "name": "Pyrrharctia isabella",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47607,
+   121850,
+   47606,
+   82089,
+   123834,
+   59676,
+   59675
+  ]
+ },
+ "ceanothus-silkmoth": {
+  "taxon_id": 50913,
+  "name": "Hyalophora euryalus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47214,
+   47918,
+   124126,
+   125063,
+   50914,
+   50913
+  ]
+ },
+ "white-lined-sphinx": {
+  "taxon_id": 49348,
+  "name": "Hyles lineata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47214,
+   47213,
+   124071,
+   124065,
+   124055,
+   49349,
+   49348
+  ]
+ },
+ "common-whitetail": {
+  "taxon_id": 84549,
+  "name": "Plathemis lydia",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47792,
+   47927,
+   1317176,
+   47819,
+   84550,
+   84549
+  ]
+ },
+ "pacific-forktail": {
+  "taxon_id": 62229,
+  "name": "Ischnura cervula",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47792,
+   47928,
+   426081,
+   47925,
+   52054,
+   62229
+  ]
+ },
+ "lorquins-admiral": {
+  "taxon_id": 50880,
+  "name": "Limenitis lorquini",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   134171,
+   134175,
+   50881,
+   50880
+  ]
+ },
+ "california-tortoiseshell": {
+  "taxon_id": 49920,
+  "name": "Nymphalis californica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47157,
+   47224,
+   47922,
+   202067,
+   202066,
+   49921,
+   49920
+  ]
+ },
+ "western-tiger-beetle": {
+  "taxon_id": 52620,
+  "name": "Cicindela oregona",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   372739,
+   47158,
+   184884,
+   47208,
+   340471,
+   372884,
+   149026,
+   373661,
+   373919,
+   49568,
+   736941,
+   52620
+  ]
+ },
+ "california-mussel": {
+  "taxon_id": 62806,
+  "name": "Mytilus californianus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47584,
+   1051154,
+   372769,
+   775839,
+   775840,
+   50600,
+   871438,
+   62807,
+   62806
+  ]
+ },
+ "pacific-oyster": {
+  "taxon_id": 605992,
+  "name": "Magallana gigas",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47584,
+   1051154,
+   372769,
+   47583,
+   196208,
+   47582,
+   871441,
+   605990,
+   605992
+  ]
+ },
+ "gooseneck-barnacle": {
+  "taxon_id": 48786,
+  "name": "Pollicipes polymerus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   1091452,
+   144117,
+   210289,
+   464038,
+   1040842,
+   1044946,
+   48787,
+   48788,
+   48786
+  ]
+ },
+ "acorn-barnacle": {
+  "taxon_id": 81610,
+  "name": "Balanus glandula",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   1091452,
+   144117,
+   210289,
+   464038,
+   1040842,
+   49068,
+   47661,
+   49128,
+   49129,
+   81610
+  ]
+ },
+ "giant-pacific-octopus": {
+  "taxon_id": 48863,
+  "name": "Enteroctopus dofleini",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47459,
+   372759,
+   339397,
+   47458,
+   699949,
+   699692,
+   699691,
+   48864,
+   48863
+  ]
+ },
+ "red-rock-crab": {
+  "taxon_id": 47826,
+  "name": "Cancer productus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   47187,
+   774775,
+   144113,
+   47186,
+   118451,
+   121639,
+   706185,
+   447514,
+   47829,
+   47828,
+   47827,
+   47826
+  ]
+ },
+ "bat-star": {
+  "taxon_id": 48830,
+  "name": "Patiria miniata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47549,
+   481959,
+   47668,
+   533710,
+   49501,
+   48831,
+   48832,
+   48830
+  ]
+ },
+ "sunflower-sea-star": {
+  "taxon_id": 47673,
+  "name": "Pycnopodia helianthoides",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47549,
+   481959,
+   47668,
+   533697,
+   47672,
+   47671,
+   814227,
+   47674,
+   47673
+  ]
+ },
+ "moon-jelly": {
+  "taxon_id": 48328,
+  "name": "Aurelia aurita",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47534,
+   48332,
+   551480,
+   48331,
+   48330,
+   1067493,
+   48329,
+   48328
+  ]
+ },
+ "pacific-sand-dollar": {
+  "taxon_id": 117696,
+  "name": "Dendraster excentricus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47549,
+   774753,
+   47548,
+   475988,
+   552152,
+   774996,
+   1383598,
+   1383599,
+   814154,
+   814159,
+   814178,
+   117701,
+   117702,
+   117696
+  ]
+ },
+ "black-turban-snail": {
+  "taxon_id": 460365,
+  "name": "Tegula funebralis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47114,
+   85549,
+   775849,
+   474466,
+   474464,
+   53831,
+   460365
+  ]
+ },
+ "pacific-razor-clam": {
+  "taxon_id": 117615,
+  "name": "Siliqua patula",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47584,
+   1051154,
+   1051155,
+   551316,
+   551317,
+   775851,
+   372888,
+   85983,
+   871389,
+   117625,
+   117615
+  ]
+ },
+ "opalescent-nudibranch": {
+  "taxon_id": 494603,
+  "name": "Hermissenda opalescens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47115,
+   47114,
+   551391,
+   775797,
+   775799,
+   775801,
+   47113,
+   1644037,
+   564817,
+   870988,
+   47210,
+   494603
+  ]
+ },
+ "cross-orbweaver": {
+  "taxon_id": 52628,
+  "name": "Araneus diadematus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   245097,
+   47119,
+   47118,
+   120474,
+   342614,
+   319384,
+   47535,
+   417879,
+   52629,
+   52628
+  ]
+ },
+ "common-pill-bug": {
+  "taxon_id": 56083,
+  "name": "Armadillidium vulgare",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   1,
+   47120,
+   85493,
+   473790,
+   47187,
+   774775,
+   144114,
+   48147,
+   84718,
+   343783,
+   343798,
+   48296,
+   48295,
+   56083
+  ]
+ },
+ "pacific-golden-chanterelle": {
+  "taxon_id": 120443,
+  "name": "Cantharellus formosus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47350,
+   48423,
+   47348,
+   1374657,
+   120443
+  ]
+ },
+ "king-bolete": {
+  "taxon_id": 48701,
+  "name": "Boletus edulis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   48427,
+   48702,
+   1135850,
+   48703,
+   48701
+  ]
+ },
+ "fly-agaric": {
+  "taxon_id": 48715,
+  "name": "Amanita muscaria",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785522,
+   118249,
+   1149497,
+   48419,
+   1142599,
+   954920,
+   1155969,
+   48715
+  ]
+ },
+ "western-destroying-angel": {
+  "taxon_id": 67356,
+  "name": "Amanita ocreata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785522,
+   118249,
+   1149497,
+   48419,
+   1142598,
+   926048,
+   67356
+  ]
+ },
+ "death-cap": {
+  "taxon_id": 52135,
+  "name": "Amanita phalloides",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785522,
+   118249,
+   1149497,
+   48419,
+   1142598,
+   926048,
+   52135
+  ]
+ },
+ "panther-cap": {
+  "taxon_id": 48418,
+  "name": "Amanita pantherina",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785522,
+   118249,
+   1149497,
+   48419,
+   1142599,
+   954920,
+   1144756,
+   48418
+  ]
+ },
+ "shaggy-mane": {
+  "taxon_id": 47392,
+  "name": "Coprinus comatus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   516951,
+   47393,
+   47392
+  ]
+ },
+ "deadly-galerina": {
+  "taxon_id": 154735,
+  "name": "Galerina marginata",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   416512,
+   118297,
+   1366589,
+   1672638,
+   154735
+  ]
+ },
+ "western-jack-o-lantern": {
+  "taxon_id": 67752,
+  "name": "Omphalotus olivascens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785516,
+   64013,
+   64014,
+   67752
+  ]
+ },
+ "sulphur-tuft": {
+  "taxon_id": 48767,
+  "name": "Hypholoma fasciculare",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   48768,
+   48769,
+   48767
+  ]
+ },
+ "honey-mushroom": {
+  "taxon_id": 55950,
+  "name": "Armillaria mellea",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785516,
+   55931,
+   55930,
+   55950
+  ]
+ },
+ "meadow-mushroom": {
+  "taxon_id": 143563,
+  "name": "Agaricus campestris",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   47394,
+   1641209,
+   49548,
+   824801,
+   844123,
+   143563
+  ]
+ },
+ "yellow-staining-mushroom": {
+  "taxon_id": 118394,
+  "name": "Agaricus xanthodermus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   47394,
+   1641209,
+   49548,
+   824804,
+   793870,
+   118394
+  ]
+ },
+ "fairy-ring-mushroom": {
+  "taxon_id": 118240,
+  "name": "Marasmius oreades",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785516,
+   49545,
+   1565334,
+   54067,
+   1565338,
+   1366790,
+   1580813,
+   118240
+  ]
+ },
+ "candy-cap": {
+  "taxon_id": 55276,
+  "name": "Lactarius rubidus",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   48341,
+   48340,
+   54597,
+   1046273,
+   55276
+  ]
+ },
+ "american-matsutake": {
+  "taxon_id": 62483,
+  "name": "Tricholoma magnivelare",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   787526,
+   47498,
+   1612773,
+   62484,
+   1444961,
+   1377700,
+   62483
+  ]
+ },
+ "yellowfoot-chanterelle": {
+  "taxon_id": 350511,
+  "name": "Craterellus tubaeformis",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47350,
+   48423,
+   48611,
+   1398880,
+   350511
+  ]
+ },
+ "short-stemmed-russula": {
+  "taxon_id": 118179,
+  "name": "Russula brevipes",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   48341,
+   48340,
+   48339,
+   1167951,
+   1397334,
+   118179
+  ]
+ },
+ "turkey-tail": {
+  "taxon_id": 54134,
+  "name": "Trametes versicolor",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47380,
+   47379,
+   47378,
+   1153556,
+   54134
+  ]
+ },
+ "artists-conk": {
+  "taxon_id": 48473,
+  "name": "Ganoderma applanatum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47380,
+   47379,
+   48475,
+   559675,
+   48473
+  ]
+ },
+ "red-belted-conk": {
+  "taxon_id": 1098280,
+  "name": "Fomitopsis pinicola",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47380,
+   55974,
+   118056,
+   1098279,
+   1098280
+  ]
+ },
+ "conifer-chicken-of-the-woods": {
+  "taxon_id": 118057,
+  "name": "Laetiporus conifericola",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   47380,
+   895657,
+   48431,
+   118057
+  ]
+ },
+ "oyster-mushroom": {
+  "taxon_id": 136399,
+  "name": "Pleurotus pulmonarius",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   905657,
+   48495,
+   48496,
+   1196165,
+   136399
+  ]
+ },
+ "angel-wings": {
+  "taxon_id": 48509,
+  "name": "Pleurocybella porrigens",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   1508994,
+   1128529,
+   48510,
+   48509
+  ]
+ },
+ "black-morel": {
+  "taxon_id": 487375,
+  "name": "Morchella importuna",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   48250,
+   372740,
+   152032,
+   48717,
+   56831,
+   56830,
+   1062676,
+   487375
+  ]
+ },
+ "false-morel": {
+  "taxon_id": 85120,
+  "name": "Gyromitra esculenta",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   48250,
+   372740,
+   152032,
+   48717,
+   85119,
+   1613024,
+   85118,
+   85120
+  ]
+ },
+ "lobster-mushroom": {
+  "taxon_id": 48215,
+  "name": "Hypomyces lactifluorum",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   48250,
+   372740,
+   53539,
+   794115,
+   48248,
+   48247,
+   48246,
+   48215
+  ]
+ },
+ "witchs-butter": {
+  "taxon_id": 48529,
+  "name": "Tremella mesenterica",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   83737,
+   48530,
+   48531,
+   48532,
+   48529
+  ]
+ },
+ "western-giant-puffball": {
+  "taxon_id": 69818,
+  "name": "Calvatia booniana",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   47169,
+   492000,
+   50814,
+   1094814,
+   47167,
+   785517,
+   48445,
+   57693,
+   1649462,
+   69818
+  ]
+ },
+ "orange-peel-fungus": {
+  "taxon_id": 48716,
+  "name": "Aleuria aurantia",
+  "rank": "species",
+  "ancestor_ids": [
+   48460,
+   47170,
+   48250,
+   372740,
+   152032,
+   48717,
+   48718,
+   48719,
+   48716
+  ]
+ }
+}

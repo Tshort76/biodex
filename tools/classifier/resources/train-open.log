@@ -1,0 +1,108 @@
+{'train': 104322, 'test': 13035, 'val': 13111, 'open_test': 6715} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 4.1222, 'val_top1': 0.2531, 'val_top3': 0.5531, 'secs': 874}
+{'epoch': 2, 'loss': 3.3815, 'val_top1': 0.1695, 'val_top3': 0.3647, 'secs': 910}
+{'epoch': 3, 'loss': 3.1647, 'val_top1': 0.3422, 'val_top3': 0.5864, 'secs': 916}
+{'epoch': 4, 'loss': 3.0952, 'val_top1': 0.2721, 'val_top3': 0.5147, 'secs': 882}
+{'epoch': 5, 'loss': 2.9038, 'val_top1': 0.3919, 'val_top3': 0.6104, 'secs': 873}
+{'epoch': 6, 'loss': 2.8551, 'val_top1': 0.4361, 'val_top3': 0.6461, 'secs': 867}
+{'epoch': 7, 'loss': 2.6864, 'val_top1': 0.4825, 'val_top3': 0.6792, 'secs': 853}
+{'epoch': 8, 'loss': 2.4769, 'val_top1': 0.4898, 'val_top3': 0.694, 'secs': 1362}
+{'epoch': 9, 'loss': 2.4759, 'val_top1': 0.4901, 'val_top3': 0.7162, 'secs': 526}
+{'epoch': 10, 'loss': 2.5641, 'val_top1': 0.3722, 'val_top3': 0.6063, 'secs': 530}
+{'epoch': 11, 'loss': 2.3664, 'val_top1': 0.53, 'val_top3': 0.7293, 'secs': 528}
+{'epoch': 12, 'loss': 2.3021, 'val_top1': 0.5397, 'val_top3': 0.7361, 'secs': 529}
+{'epoch': 13, 'loss': 2.1582, 'val_top1': 0.5991, 'val_top3': 0.7879, 'secs': 531}
+{'epoch': 14, 'loss': 2.1095, 'val_top1': 0.5927, 'val_top3': 0.7759, 'secs': 526}
+{'epoch': 15, 'loss': 2.045, 'val_top1': 0.6088, 'val_top3': 0.7942, 'secs': 527}
+{'epoch': 16, 'loss': 1.9574, 'val_top1': 0.6333, 'val_top3': 0.8087, 'secs': 528}
+{'epoch': 17, 'loss': 1.9104, 'val_top1': 0.6283, 'val_top3': 0.8093, 'secs': 528}
+{'epoch': 18, 'loss': 1.873, 'val_top1': 0.6403, 'val_top3': 0.817, 'secs': 523}
+{'epoch': 19, 'loss': 1.8555, 'val_top1': 0.6404, 'val_top3': 0.8184, 'secs': 526}
+{'epoch': 20, 'loss': 1.8419, 'val_top1': 0.6402, 'val_top3': 0.819, 'secs': 523}
+{
+ "test": {
+  "top1": 0.6376839472924882,
+  "top3": 0.8136000769452727,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.537,
+    "top3": 0.749
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.592,
+    "top3": 0.774
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.785,
+    "top3": 0.954
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.427,
+    "top3": 0.667
+   },
+   "insect": {
+    "n": 1487,
+    "top1": 0.773,
+    "top3": 0.905
+   },
+   "mammal": {
+    "n": 1358,
+    "top1": 0.568,
+    "top3": 0.77
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.769,
+    "top3": 0.927
+   },
+   "other_fungus": {
+    "n": 195,
+    "top1": 0.897,
+    "top3": 0.974
+   },
+   "other_invertebrate": {
+    "n": 851,
+    "top1": 0.766,
+    "top3": 0.902
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.567,
+    "top3": 0.781
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.816,
+  "threshold": 0.078,
+  "unseen_species_flagged_not_in_dex": 0.7132,
+  "n_unseen": 6715,
+  "operating_points": [
+   {
+    "known_val_acceptance": 0.9,
+    "threshold": 0.1245,
+    "open_test_flagged": 0.7159,
+    "known_test_accepted": 0.903
+   },
+   {
+    "known_val_acceptance": 0.95,
+    "threshold": 0.078,
+    "open_test_flagged": 0.7132,
+    "known_test_accepted": 0.9527
+   },
+   {
+    "known_val_acceptance": 0.98,
+    "threshold": 0.0428,
+    "open_test_flagged": 0.713,
+    "known_test_accepted": 0.9795
+   }
+  ]
+ }
+}

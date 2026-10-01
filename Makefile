@@ -21,7 +21,7 @@ ADB := $(SDK_DIR)/platform-tools/adb
 PKG := dev.tlong.biodex
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor debug release install test test-device check catalogue catalogue-test places places-test dexdb-test screenshot clean
+.PHONY: help doctor debug release install test test-device check catalogue catalogue-test places places-test dexdb-test classifier-test screenshot clean
 
 help: ## List the targets
 	@echo "BioDex â€” make targets"
@@ -86,7 +86,7 @@ test-device: ## Run the instrumented tests (needs a phone; UNINSTALLS the app â€
 	@echo "Note: that run uninstalled BioDex from the phone. 'make install' puts it back,"
 	@echo "but every registered photo needs re-linking from its entry's photo viewer."
 
-check: catalogue-test places-test dexdb-test ## Everything runnable without a phone: JVM tests + catalogue, place-list and dexdb tests
+check: catalogue-test places-test dexdb-test classifier-test ## Everything runnable without a phone: JVM tests + catalogue, place-list and dexdb tests
 	@$(GRADLE) testDebugUnitTest --rerun-tasks
 
 catalogue: ## Rebuild the bundled catalogue asset (network on a cold cache; slow)
@@ -104,6 +104,9 @@ places-test: ## Run the place-list pipeline's Python tests
 
 dexdb-test: ## Run the tests for tools/phone/dexdb.py, which removes test rows from the phone's database
 	@cd tools/phone && python3 -m unittest test_dexdb
+
+classifier-test: ## Run the classifier corpus-selection tests (standard library only)
+	@cd tools/classifier && python3 -m unittest test_select_corpus
 
 screenshot: ## Grab the phone's screen to shot.png
 	@$(ADB) exec-out screencap -p > shot.png && echo "wrote shot.png"

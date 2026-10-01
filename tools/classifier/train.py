@@ -1,0 +1,285 @@
+#!/usr/bin/env python3
+"""Fine-tune the species classifier on the cleaned corpus.
+
+A 255-way head (the catalogue species that have photos, plus `other`) on a
+timm backbone pretrained on ImageNet. Class-balanced sampling, label smoothing,
+random-resized-crop down to a quarter of the frame (the owner's photos are
+snaps at a distance, not close-ups). fp32 on MPS.
+
+Writes data/runs/<name>/: best.pt, labels.json, metrics.json.
+
+Usage (inside the uv env):
+    uv run python train.py [--model mobilenetv4_conv_medium.e250_r384_in12k_ft_in1k] [--epochs 20]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import time
+from collections import Counter, defaultdict
+
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
+import numpy as np
+import timm
+import torch
+import torch.nn.functional as F
+from PIL import Image
+from timm.data import create_transform, resolve_data_config
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+
+from select_corpus import CATALOGUE, DATA, RESOURCES, OTHER_LABEL
+
+
+class Photos(Dataset):
+    def __init__(self, rows, label_index, transform):
+        self.rows, self.label_index, self.transform = rows, label_index, transform
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __getitem__(self, i):
+        r = self.rows[i]
+        img = Image.open(DATA / "images" / f"{r['photo_id']}.jpg").convert("RGB")
+        return self.transform(img), self.label_index[r["label"]]
+
+
+class DistillPhotos(Photos):
+    """Like Photos, but also yields the teacher's logits for that photo."""
+
+    def __init__(self, rows, label_index, transform, teacher_logits, teacher_row):
+        super().__init__(rows, label_index, transform)
+        self.teacher_logits, self.teacher_row = teacher_logits, teacher_row
+
+    def __getitem__(self, i):
+        x, y = super().__getitem__(i)
+        t = self.teacher_logits[self.teacher_row[self.rows[i]["photo_id"]]]
+        return x, y, torch.from_numpy(t.astype("float32"))
+
+
+def load_rows() -> list[dict]:
+    rows = [json.loads(line) for line in open(DATA / "manifest.jsonl")]
+    rows = [r for r in rows if (DATA / "images" / f"{r['photo_id']}.jpg").exists()]
+    clean = DATA / "clean.jsonl"
+    if clean.exists():
+        keep = {c["photo_id"] for c in map(json.loads, open(clean)) if c["keep"]}
+        rows = [r for r in rows if r["photo_id"] in keep]
+    return rows
+
+
+def evaluate(model, loader, device, other_index):
+    """Logits for a whole split, in loader order."""
+    model.eval()
+    out, targets = [], []
+    with torch.no_grad():
+        for x, y in loader:
+            out.append(model(x.to(device)).float().cpu())
+            targets.append(y)
+    return torch.cat(out), torch.cat(targets)
+
+
+def closed_set_metrics(logits, targets, labels, groups, other_index):
+    known = targets != other_index
+    top3 = logits.topk(3, dim=1).indices
+    hit1 = (top3[:, 0] == targets) & known
+    hit3 = (top3 == targets[:, None]).any(1) & known
+    m = {"top1": hit1.sum().item() / known.sum().item(), "top3": hit3.sum().item() / known.sum().item(), "n": known.sum().item()}
+    by_group = defaultdict(lambda: [0, 0, 0])
+    for t, h1, h3 in zip(targets.tolist(), hit1.tolist(), hit3.tolist()):
+        if t == other_index:
+            continue
+        g = by_group[groups[labels[t]]]
+        g[0] += 1; g[1] += h1; g[2] += h3
+    m["by_group"] = {g: {"n": n, "top1": round(a / n, 3), "top3": round(b / n, 3)} for g, (n, a, b) in sorted(by_group.items())}
+    return m
+
+
+def known_score(logits, other_index):
+    """Confidence that the photo is a dex species: the best dex-species probability."""
+    p = logits.softmax(1)
+    p[:, other_index] = 0
+    return p.max(1).values
+
+
+def auroc(pos, neg):
+    """Probability a random known photo outscores a random unseen-species photo."""
+    scores = torch.cat([pos, neg])
+    ranks = scores.argsort().argsort().float() + 1
+    return ((ranks[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg))).item()
+
+
+def sample_weights(labels: list[str], other_label: str, other_share: float) -> list[float]:
+    """Per-row WeightedRandomSampler weight: `other` rows together get `other_share` of the
+    total weight; the dex species split the rest class-balanced, as before `other_share` existed."""
+    counts = Counter(labels)
+    dex_classes = [c for c in counts if c != other_label]
+    dex_share_each = (1 - other_share) / len(dex_classes) if dex_classes else 0.0
+    other_n = counts.get(other_label, 0)
+    return [
+        (other_share / other_n) if label == other_label else (dex_share_each / counts[label])
+        for label in labels
+    ]
+
+
+def open_set_operating_points(known_val, known_test, unseen, open_argmax_is_other, rates):
+    """For each known-val acceptance rate, the threshold that achieves it, the share of
+    open-set (unseen-species) photos flagged at that threshold, and the share of known
+    TEST photos accepted."""
+    points = []
+    for rate in rates:
+        threshold = known_val.quantile(1 - rate).item()
+        open_flagged = (open_argmax_is_other | (unseen < threshold)).float().mean().item()
+        known_test_accepted = (known_test >= threshold).float().mean().item()
+        points.append({"known_val_acceptance": rate, "threshold": round(threshold, 4),
+                        "open_test_flagged": round(open_flagged, 4), "known_test_accepted": round(known_test_accepted, 4)})
+    return points
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", default="mobilenetv4_conv_medium.e250_r384_in12k_ft_in1k")
+    ap.add_argument("--size", type=int, default=256, help="input side in pixels")
+    ap.add_argument("--epochs", type=int, default=20)
+    ap.add_argument("--batch", type=int, default=96)
+    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--aug", choices=("strong", "light"), default="strong", help="strong = rand-augment + quarter-frame crop (default); light = crop + flip only")
+    ap.add_argument("--workers", type=int, default=10)
+    ap.add_argument("--name", default=None)
+    ap.add_argument("--resume", action="store_true", help="resume from run/last.pt if present")
+    ap.add_argument("--teacher", default=None, help="path to teacher_logits.npy for distillation (default: off)")
+    ap.add_argument("--kd-alpha", type=float, default=0.3, help="weight on the hard-label CE term vs. the KD term")
+    ap.add_argument("--kd-temp", type=float, default=2.0, help="softmax temperature for the KD term")
+    ap.add_argument("--other-share", type=float, default=0.25, help="share of sampled training weight given to `other`, split class-balanced among the rest")
+    args = ap.parse_args()
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    run = DATA / "runs" / (args.name or args.model.split(".")[0])
+    run.mkdir(parents=True, exist_ok=True)
+
+    catalogue = json.loads(CATALOGUE.read_text())["species"]
+    rows = load_rows()
+    present = {r["label"] for r in rows}
+    labels = [s["id"] for s in catalogue if s["id"] in present] + [OTHER_LABEL]
+    (run / "labels.json").write_text(json.dumps(labels, indent=1))
+    label_index = {l: i for i, l in enumerate(labels)}
+    other_index = label_index[OTHER_LABEL]
+    groups = {s["id"]: s["taxClass"] for s in catalogue} | {OTHER_LABEL: OTHER_LABEL}
+    split = defaultdict(list)
+    for r in rows:
+        split[r["split"]].append(r)
+    print({k: len(v) for k, v in split.items()}, f"{len(labels)} labels", flush=True)
+
+    model = timm.create_model(args.model, pretrained=True, num_classes=len(labels))
+    cfg = resolve_data_config({"input_size": (3, args.size, args.size)}, model=model)
+    if args.aug == "light":
+        train_tf = create_transform(**cfg, is_training=True, scale=(0.5, 1.0), auto_augment=None, re_prob=0.0)
+    else:
+        train_tf = create_transform(**cfg, is_training=True, scale=(0.25, 1.0), auto_augment="rand-m6-mstd0.5-inc1")
+    eval_tf = create_transform(**cfg, is_training=False)
+    model = model.to(device)
+
+    weights = sample_weights([r["label"] for r in split["train"]], OTHER_LABEL, args.other_share)
+    sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+    loader_kw = dict(batch_size=args.batch, num_workers=args.workers, persistent_workers=True)
+
+    teacher_logits = None
+    if args.teacher:
+        teacher_labels = json.loads((RESOURCES / "teacher_labels.json").read_text())
+        assert teacher_labels == labels, "teacher label order does not match this run's labels"
+        teacher_logits = np.load(args.teacher)
+        teacher_row = {pid: i for i, pid in enumerate(json.loads((DATA / "bioclip_rows.json").read_text()))}
+        train_ds = DistillPhotos(split["train"], label_index, train_tf, teacher_logits, teacher_row)
+    else:
+        train_ds = Photos(split["train"], label_index, train_tf)
+    train_loader = DataLoader(train_ds, sampler=sampler, drop_last=True, **loader_kw)
+    val_loader = DataLoader(Photos(split["val"], label_index, eval_tf), **loader_kw)
+
+    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
+    steps = args.epochs * len(train_loader)
+    warmup = len(train_loader)
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / warmup) * 0.5 * (1 + math.cos(math.pi * min(s, steps) / steps)))
+    loss_fn = torch.nn.CrossEntropyLoss(label_smoothing=0.1)
+
+    best, history, start_epoch = -1.0, [], 0
+    if args.resume:
+        last = run / "last.pt"
+        if last.exists():
+            ck = torch.load(last, map_location=device)
+            model.load_state_dict(ck["model"])
+            opt.load_state_dict(ck["optimizer"])
+            sched.load_state_dict(ck["scheduler"])
+            best, history, start_epoch = ck["best"], ck["history"], ck["epoch"]
+            print(f"resuming from epoch {start_epoch}", flush=True)
+        else:
+            print("--resume set but no last.pt found, starting fresh", flush=True)
+
+    for epoch in range(start_epoch, args.epochs):
+        model.train()
+        t0, seen, total = time.time(), 0, 0.0
+        for batch in train_loader:
+            if args.teacher:
+                x, y, t = batch
+                t = t.to(device)
+            else:
+                x, y = batch
+            x, y = x.to(device), y.to(device)
+            logits = model(x)
+            if args.teacher:
+                ce = torch.nn.functional.cross_entropy(logits, y, label_smoothing=0.1)
+                kd = F.kl_div(F.log_softmax(logits / args.kd_temp, 1), F.softmax(t / args.kd_temp, 1), reduction="batchmean")
+                loss = args.kd_alpha * ce + (1 - args.kd_alpha) * (args.kd_temp ** 2) * kd
+            else:
+                loss = loss_fn(logits, y)
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            opt.step()
+            sched.step()
+            seen += len(y); total += loss.item() * len(y)
+        logits, targets = evaluate(model, val_loader, device, other_index)
+        m = closed_set_metrics(logits, targets, labels, groups, other_index)
+        history.append({"epoch": epoch + 1, "loss": round(total / seen, 4), "val_top1": round(m["top1"], 4), "val_top3": round(m["top3"], 4), "secs": round(time.time() - t0)})
+        print(history[-1], flush=True)
+        if m["top1"] > best:
+            best = m["top1"]
+            torch.save(model.state_dict(), run / "best.pt")
+        ck = {"model": model.state_dict(), "optimizer": opt.state_dict(), "scheduler": sched.state_dict(),
+              "epoch": epoch + 1, "best": best, "history": history}
+        tmp = run / "last.pt.tmp"
+        torch.save(ck, tmp)
+        os.replace(tmp, run / "last.pt")
+
+    # Final numbers from the best checkpoint: closed-set on test, open-set on species never trained on.
+    model.load_state_dict(torch.load(run / "best.pt", map_location=device))
+    test_logits, test_targets = evaluate(model, DataLoader(Photos(split["test"], label_index, eval_tf), **loader_kw), device, other_index)
+    open_rows = [{**r, "label": OTHER_LABEL} for r in split["open_test"]]
+    open_logits, _ = evaluate(model, DataLoader(Photos(open_rows, label_index, eval_tf), **loader_kw), device, other_index)
+    val_logits, val_targets = evaluate(model, val_loader, device, other_index)
+
+    known_val = known_score(val_logits[val_targets != other_index], other_index)
+    threshold = known_val.quantile(0.05).item()  # accept 95% of known val photos
+    known_test = known_score(test_logits[test_targets != other_index], other_index)
+    unseen = known_score(open_logits, other_index)
+    open_argmax_is_other = open_logits.argmax(1) == other_index
+    unseen_says_other = (open_argmax_is_other | (unseen < threshold)).float().mean().item()
+    operating_points = open_set_operating_points(known_val, known_test, unseen, open_argmax_is_other, (0.90, 0.95, 0.98))
+
+    metrics = {
+        "model": args.model, "labels": len(labels), "epochs": args.epochs, "lr": args.lr, "batch": args.batch,
+        "aug": args.aug, "history": history, "other_share": args.other_share,
+        "teacher": args.teacher, "kd_alpha": args.kd_alpha, "kd_temp": args.kd_temp,
+        "test": closed_set_metrics(test_logits, test_targets, labels, groups, other_index),
+        "open_set": {"auroc": round(auroc(known_test, unseen), 4), "threshold": round(threshold, 4),
+                     "unseen_species_flagged_not_in_dex": round(unseen_says_other, 4), "n_unseen": len(open_rows),
+                     "operating_points": operating_points},
+        "input": {k: cfg[k] for k in ("input_size", "mean", "std", "interpolation", "crop_pct")},
+    }
+    (run / "metrics.json").write_text(json.dumps(metrics, indent=1))
+    (run / "labels.json").write_text(json.dumps(labels, indent=1))
+    print(json.dumps({k: metrics[k] for k in ("test", "open_set")}, indent=1))
+
+
+if __name__ == "__main__":
+    main()

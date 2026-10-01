@@ -1,0 +1,5 @@
+Wed Sep 30 18:09:48 MDT 2026 starting
+Wed Sep 30 23:31:20 MDT 2026 exit 0
+Total time: 50.16 ms
+species.int8.tflite: 16.1 MB; name top-1 agreement 20/20; max |Δcos| 1.58e-04; PASS
+species.tflite: 61.9 MB; name top-1 agreement 20/20; max |Δcos| 1.19e-07; PASS

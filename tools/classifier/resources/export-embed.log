@@ -1,0 +1,54 @@
+W0930 23:31:06.964000 26952 torch/distributed/elastic/multiprocessing/redirects.py:35] NOTE: Redirects are currently not supported in MacOs.
+W0930 23:31:06.983000 26952 torch/utils/_pytree.py:630] <enum 'KernelPreference'> is an Enum subclass and is now natively supported by torch.compile as an opaque value type. Calling register_constant() on Enum subclasses is deprecated and will be an error in a future release.
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mTorch Export: serving_default[0m
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mTorch Export: serving_default[0m > 
+[1;39mExportedProgram Run Decompositions[0m
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/copyreg.py:99: FutureWarning: `isinstance(treespec, LeafSpec)` is deprecated, use `isinstance(treespec, TreeSpec) and treespec.is_leaf()` instead.
+  return cls.__new__(cls, *args)
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mTorch Export: serving_default[0m[2m > [0m
+[1;2;39mExportedProgram Run Decompositions[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mTorch Export: serving_default[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mRun FX Passes[0m
+[1;2;39m([0m[1;2;39m00:01[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mRun FX Passes[0m > [1;39mExportedProgram Run [0m
+[1;39mDecompositions[0m
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/copyreg.py:99: FutureWarning: `isinstance(treespec, LeafSpec)` is deprecated, use `isinstance(treespec, TreeSpec) and treespec.is_leaf()` instead.
+  return cls.__new__(cls, *args)
+[1;2;39m([0m[1;2;39m00:01[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mRun FX Passes[0m[2m > [0m[1;2;39mExportedProgram Run [0m
+[1;2;39mDecompositions[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:01[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mRun FX Passes[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:01[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mLower to MLIR: serving_default[0m
+[1;2;39m([0m[1;2;39m00:01[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mLower to MLIR: serving_default[0m > 
+[1;39mExportedProgram Run Decompositions[0m
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/copyreg.py:99: FutureWarning: `isinstance(treespec, LeafSpec)` is deprecated, use `isinstance(treespec, TreeSpec) and treespec.is_leaf()` instead.
+  return cls.__new__(cls, *args)
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mLower to MLIR: serving_default[0m[2m > [0m
+[1;2;39mExportedProgram Run Decompositions[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mLower to MLIR: serving_default[0m > 
+[1;39mExportedProgram Run Decompositions[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mLower to MLIR: serving_default[0m[2m > [0m
+[1;2;39mExportedProgram Run Decompositions[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mLower to MLIR: serving_default[0m > [1;39mCreate [0m
+[1;39mMLIR Module[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mLower to MLIR: serving_default[0m[2m > [0m[1;2;39mCreate [0m
+[1;2;39mMLIR Module[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mLower to MLIR: serving_default[0m [1;2m([0m[2m+[0m[1;2;39m00:01[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mMerge MLIR Modules[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mMerge MLIR Modules[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:02[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mLiteRT-Torch Convert[0m > [1;39mRun LiteRT Converter Passes[0m
+[1;2;39m([0m[1;2;39m00:03[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m[2m > [0m[1;2;39mRun LiteRT Converter Passes[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:03[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mLiteRT-Torch Convert[0m [1;2m([0m[2m+[0m[1;2;39m00:03[0m[1;2m)[0m
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;36m[[0m[1;36mSTART[0m[1;36m][0m [1;39mWrite Model to data/runs/cnx-embed/species.tflite[0m
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1790832670.565601 57921304 flatbuffer_export.cc:4342] Estimated count of arithmetic ops: 6.411 G  ops, equivalently 3.206 G  MACs
+[1;2;39m([0m[1;2;39m00:00[0m[1;2;39m)[0m [1;32m[[0m[1;32m DONE[0m[1;32m][0m [1;2;39mWrite Model to data/runs/cnx-embed/species.tflite[0m [1;2m([0m[2m+[0m[1;2;39m00:00[0m[1;2m)[0m
+Generating Quantization Parameters::   0%|          | 0/394 [00:00<?, ?it/s]Generating Quantization Parameters:: 100%|██████████| 394/394 [00:00<00:00, 12535.70it/s]
+Applying Transformations to tensors::   0%|          | 0/554 [00:00<?, ?it/s]Applying Transformations to tensors:: 100%|██████████| 554/554 [00:00<00:00, 550235.48it/s]
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+Model name: data/runs/cnx-embed/species.tflite
+Original model size: 59.08 MiB
+Quantized model size: 15.35 MiB
+Quantization Ratio: 0.26 (3.8x smaller)
+Total time: 50.16 ms
+species.int8.tflite: 16.1 MB; name top-1 agreement 20/20; max |Δcos| 1.58e-04; PASS
+species.tflite: 61.9 MB; name top-1 agreement 20/20; max |Δcos| 1.19e-07; PASS

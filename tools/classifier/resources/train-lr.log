@@ -1,0 +1,88 @@
+{'train': 88887, 'test': 11140, 'val': 11115, 'open_test': 1836} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 4.2167, 'val_top1': 0.4363, 'val_top3': 0.6379, 'secs': 455}
+{'epoch': 2, 'loss': 2.8553, 'val_top1': 0.5553, 'val_top3': 0.7343, 'secs': 445}
+{'epoch': 3, 'loss': 2.6028, 'val_top1': 0.5851, 'val_top3': 0.7673, 'secs': 439}
+{'epoch': 4, 'loss': 2.4514, 'val_top1': 0.609, 'val_top3': 0.774, 'secs': 439}
+{'epoch': 5, 'loss': 2.3358, 'val_top1': 0.6301, 'val_top3': 0.798, 'secs': 439}
+{'epoch': 6, 'loss': 2.2247, 'val_top1': 0.6451, 'val_top3': 0.8091, 'secs': 439}
+{'epoch': 7, 'loss': 2.115, 'val_top1': 0.6758, 'val_top3': 0.8266, 'secs': 439}
+{'epoch': 8, 'loss': 2.0106, 'val_top1': 0.7005, 'val_top3': 0.8463, 'secs': 439}
+{'epoch': 9, 'loss': 1.9226, 'val_top1': 0.7141, 'val_top3': 0.8597, 'secs': 439}
+{'epoch': 10, 'loss': 1.8327, 'val_top1': 0.7366, 'val_top3': 0.8692, 'secs': 439}
+{'epoch': 11, 'loss': 1.7499, 'val_top1': 0.7433, 'val_top3': 0.8735, 'secs': 439}
+{'epoch': 12, 'loss': 1.6722, 'val_top1': 0.7651, 'val_top3': 0.8852, 'secs': 439}
+{'epoch': 13, 'loss': 1.5988, 'val_top1': 0.7757, 'val_top3': 0.8914, 'secs': 439}
+{'epoch': 14, 'loss': 1.5374, 'val_top1': 0.7855, 'val_top3': 0.8961, 'secs': 439}
+{'epoch': 15, 'loss': 1.4917, 'val_top1': 0.7925, 'val_top3': 0.8989, 'secs': 439}
+{'epoch': 16, 'loss': 1.4407, 'val_top1': 0.7975, 'val_top3': 0.9021, 'secs': 439}
+{'epoch': 17, 'loss': 1.4116, 'val_top1': 0.8031, 'val_top3': 0.9077, 'secs': 10898}
+{'epoch': 18, 'loss': 1.3911, 'val_top1': 0.8066, 'val_top3': 0.9082, 'secs': 10609}
+{'epoch': 19, 'loss': 1.3737, 'val_top1': 0.8069, 'val_top3': 0.9088, 'secs': 448}
+{'epoch': 20, 'loss': 1.3703, 'val_top1': 0.8087, 'val_top3': 0.9094, 'secs': 448}
+{
+ "test": {
+  "top1": 0.8057131864961047,
+  "top3": 0.9096854861979418,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.714,
+    "top3": 0.898
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.766,
+    "top3": 0.883
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.903,
+    "top3": 0.979
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.609,
+    "top3": 0.84
+   },
+   "insect": {
+    "n": 1485,
+    "top1": 0.919,
+    "top3": 0.955
+   },
+   "mammal": {
+    "n": 1357,
+    "top1": 0.763,
+    "top3": 0.886
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.895,
+    "top3": 0.965
+   },
+   "other_fungus": {
+    "n": 196,
+    "top1": 0.985,
+    "top3": 0.99
+   },
+   "other_invertebrate": {
+    "n": 853,
+    "top1": 0.913,
+    "top3": 0.958
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.775,
+    "top3": 0.917
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.7304,
+  "threshold": 0.2012,
+  "unseen_species_flagged_not_in_dex": 0.1487,
+  "n_unseen": 1836
+ }
+}

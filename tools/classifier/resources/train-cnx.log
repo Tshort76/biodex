@@ -1,0 +1,110 @@
+{'train': 104322, 'test': 13035, 'val': 13111, 'open_test': 6715} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+--resume set but no last.pt found, starting fresh
+{'epoch': 1, 'loss': 2.9291, 'val_top1': 0.6766, 'val_top3': 0.8634, 'secs': 1618}
+{'epoch': 2, 'loss': 1.8738, 'val_top1': 0.7311, 'val_top3': 0.8859, 'secs': 9359}
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 52 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+{'train': 104322, 'test': 13035, 'val': 13111, 'open_test': 6715} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+resuming from epoch 2
+{'epoch': 3, 'loss': 1.6935, 'val_top1': 0.79, 'val_top3': 0.9051, 'secs': 1655}
+{'epoch': 4, 'loss': 1.5789, 'val_top1': 0.7941, 'val_top3': 0.9128, 'secs': 1747}
+{'epoch': 5, 'loss': 1.4891, 'val_top1': 0.8039, 'val_top3': 0.9184, 'secs': 1659}
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 28 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+{'train': 104322, 'test': 13035, 'val': 13111, 'open_test': 6715} 255 labels
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+resuming from epoch 5
+{'epoch': 6, 'loss': 1.4097, 'val_top1': 0.8078, 'val_top3': 0.9261, 'secs': 1672}
+{'epoch': 7, 'loss': 1.3329, 'val_top1': 0.8253, 'val_top3': 0.9301, 'secs': 1653}
+{'epoch': 8, 'loss': 1.2722, 'val_top1': 0.838, 'val_top3': 0.9372, 'secs': 1655}
+{'epoch': 9, 'loss': 1.2237, 'val_top1': 0.8422, 'val_top3': 0.9406, 'secs': 1658}
+{'epoch': 10, 'loss': 1.1906, 'val_top1': 0.8423, 'val_top3': 0.9408, 'secs': 1658}
+{'epoch': 11, 'loss': 1.1724, 'val_top1': 0.8462, 'val_top3': 0.943, 'secs': 1641}
+{'epoch': 12, 'loss': 1.1621, 'val_top1': 0.8482, 'val_top3': 0.9439, 'secs': 1642}
+{
+ "test": {
+  "top1": 0.8463979994229105,
+  "top3": 0.9401750504953352,
+  "n": 10397,
+  "by_group": {
+   "amphibian": {
+    "n": 490,
+    "top1": 0.773,
+    "top3": 0.918
+   },
+   "bird": {
+    "n": 4101,
+    "top1": 0.824,
+    "top3": 0.925
+   },
+   "bracket": {
+    "n": 237,
+    "top1": 0.899,
+    "top3": 0.979
+   },
+   "fish": {
+    "n": 412,
+    "top1": 0.663,
+    "top3": 0.859
+   },
+   "insect": {
+    "n": 1487,
+    "top1": 0.925,
+    "top3": 0.98
+   },
+   "mammal": {
+    "n": 1358,
+    "top1": 0.823,
+    "top3": 0.926
+   },
+   "mushroom": {
+    "n": 545,
+    "top1": 0.903,
+    "top3": 0.971
+   },
+   "other_fungus": {
+    "n": 195,
+    "top1": 0.979,
+    "top3": 0.995
+   },
+   "other_invertebrate": {
+    "n": 851,
+    "top1": 0.925,
+    "top3": 0.98
+   },
+   "reptile": {
+    "n": 721,
+    "top1": 0.825,
+    "top3": 0.935
+   }
+  }
+ },
+ "open_set": {
+  "auroc": 0.901,
+  "threshold": 0.1819,
+  "unseen_species_flagged_not_in_dex": 0.7162,
+  "n_unseen": 6715,
+  "operating_points": [
+   {
+    "known_val_acceptance": 0.9,
+    "threshold": 0.3339,
+    "open_test_flagged": 0.7418,
+    "known_test_accepted": 0.9062
+   },
+   {
+    "known_val_acceptance": 0.95,
+    "threshold": 0.1819,
+    "open_test_flagged": 0.7162,
+    "known_test_accepted": 0.9538
+   },
+   {
+    "known_val_acceptance": 0.98,
+    "threshold": 0.0882,
+    "open_test_flagged": 0.7108,
+    "known_test_accepted": 0.9811
+   }
+  ]
+ }
+}
