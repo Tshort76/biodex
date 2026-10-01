@@ -4,6 +4,7 @@ import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.domain.Kingdom
+import dev.tlong.biodex.domain.SearchMatch
 import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
@@ -19,8 +20,10 @@ import dev.tlong.biodex.domain.storedDexNumber
  * and hand the resulting [ImportPlan] to a [CatalogueStore] to apply in one transaction.
  *
  * The invariants, restated as the rules this function follows:
- *  - A row with `source = 'user'` is never upserted, never deleted, and never has its
- *    ecosystem links rewritten. The plan simply never names it.
+ *  - A row with `source = 'user'` is never upserted and never has its ecosystem links
+ *    rewritten. It is deleted only when it is **merged** (D89): the asset now carries the
+ *    same species — same genus and species name — so its sightings and its entry move onto
+ *    the curated row first, and only then does the user row go. Nothing caught is lost.
  *  - `entries` and `captures` are never named by a plan at all, so import cannot reach
  *    them — except through a cascade, which is why the deletion rule below exists.
  *  - A curated species missing from a new asset is deleted only when it has no entry.
@@ -41,6 +44,7 @@ object CatalogueReconciler {
         val id: String,
         val source: SpeciesSource,
         val hasEntry: Boolean,
+        val scientificName: String? = null,
     )
 
     data class ImportPlan(
@@ -52,6 +56,8 @@ object CatalogueReconciler {
         /** speciesId → the ecosystem ids that replace its current links. */
         val membershipReplacements: Map<String, List<String>>,
         val speciesDeletions: List<String>,
+        /** D89: user species id → the curated species id it is folded into. */
+        val merges: Map<String, String> = emptyMap(),
     )
 
     sealed interface ImportDecision {
@@ -120,7 +126,25 @@ object CatalogueReconciler {
             speciesUpserts = speciesUpserts,
             membershipReplacements = membershipReplacements,
             speciesDeletions = speciesDeletions,
+            merges = merges(importable, existing),
         )
+    }
+
+    /**
+     * D89. Each user species whose genus and species name the asset now carries, mapped to the
+     * curated species it becomes.
+     */
+    private fun merges(importable: List<CatalogueSpecies>, existing: List<ExistingSpecies>): Map<String, String> {
+        val curatedByName = importable
+            .mapNotNull { s -> s.scientificName?.let { SearchMatch.binomial(it) to s.id } }
+            .toMap()
+        return existing
+            .filter { it.source == SpeciesSource.USER }
+            .mapNotNull { user ->
+                val into = user.scientificName?.let { curatedByName[SearchMatch.binomial(it)] }
+                into?.let { user.id to it }
+            }
+            .toMap()
     }
 }
 

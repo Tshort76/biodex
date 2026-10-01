@@ -22,6 +22,13 @@ import java.text.Normalizer
  */
 object SearchMatch {
 
+    /**
+     * Genus and species, folded — the key two names of one species share whatever authorship
+     * or subspecies rides after them ("Piranga ludoviciana Wilson, 1811" is Piranga ludoviciana).
+     */
+    fun binomial(scientificName: String): String =
+        scientificName.trim().split(Regex("\\s+")).take(2).joinToString("") { fold(it) }
+
     /** Lower-case letters and digits only; accents folded to their base letter. */
     fun fold(text: String): String {
         val decomposed = Normalizer.normalize(text, Normalizer.Form.NFD)

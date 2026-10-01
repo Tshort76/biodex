@@ -97,16 +97,34 @@ class CatalogueReconcilerTest {
     }
 
     @Test
+    fun `a user species the asset now carries is merged into it, by genus and species (D89)`() {
+        val plan = CatalogueReconciler.plan(
+            document = document(species = listOf(assetSpecies("titmouse"), assetSpecies("towhee"))),
+            existing = listOf(
+                ExistingSpecies("user-1", SpeciesSource.USER, hasEntry = true, scientificName = "Genus titmouse Smith, 1850"),
+                ExistingSpecies("user-2", SpeciesSource.USER, hasEntry = true, scientificName = "Genus wren"),
+                ExistingSpecies("user-3", SpeciesSource.USER, hasEntry = false, scientificName = null),
+                ExistingSpecies("towhee", SpeciesSource.CURATED, hasEntry = false, scientificName = "Genus towhee"),
+            ),
+        )
+
+        assertEquals(mapOf("user-1" to "titmouse"), plan.merges)
+    }
+
+    @Test
     fun `an asset id colliding with an existing user row leaves that row alone`() {
         // Curated ids are slugs and user ids are user-<UUID>, so this cannot happen by
         // accident — the rule is here so that if it ever does, the user's row wins.
         val plan = CatalogueReconciler.plan(
             document = document(species = listOf(assetSpecies("varied-thrush"))),
-            existing = listOf(ExistingSpecies("varied-thrush", SpeciesSource.USER, hasEntry = true)),
+            existing = listOf(
+                ExistingSpecies("varied-thrush", SpeciesSource.USER, hasEntry = true, scientificName = "Genus varied-thrush"),
+            ),
         )
 
         assertEquals(emptyList<String>(), plan.speciesUpserts.map { it.id })
         assertEquals(emptyList<String>(), plan.speciesDeletions)
+        assertEquals("never merged into itself, which would delete it", emptyMap<String, String>(), plan.merges)
         assertNull(plan.membershipReplacements["varied-thrush"])
     }
 

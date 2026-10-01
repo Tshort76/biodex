@@ -12,6 +12,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Fixed** — "cross orb weaver spider" did not find the Cross Orbweaver. A dex name said in full inside a longer search is found now, so "mallard duck" finds the Mallard too. (`M14` revised, `D88`)
 - **Fixed** — a loose name that GBIF could not place, like "cross orb weaver spider", now finds its species through Wikipedia's search, marked "found by searching Wikipedia — check this". Mushrooms can be added by their common name too. (`M18` revised, `D88`)
 - **Added** — 111 more species: 84 animals (#225–#308: 17 birds, 10 mammals, 3 reptiles, 4 fish, 32 insects, 18 other invertebrates) and 27 fungi (F031–F057). The dex now holds 308 animals and 57 fungi. Fourteen of the new animals carry the Food source tag; three of the new fungi carry a one-line caution. Catalogue version 9.
+- **Fixed** — 13 of the new species were ones you had already added yourself, so each showed twice. A species you added now merges into the catalogue species with the same scientific name: your sightings and photos move to it, and your copy goes. Catalogue version 10. (`D89`)
 
 ## v25.1 — 2026-09-29
 

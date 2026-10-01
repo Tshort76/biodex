@@ -113,12 +113,9 @@ internal fun onlineMatchFor(species: List<SpeciesSummary>, lookup: OnlineLookup,
     val done = lookup as? OnlineLookup.Done ?: return null
     if (done.name != query.trim()) return null
     val resolved = (done.outcome as? LookupOutcome.Resolved)?.selected?.scientificName ?: return null
-    return species.firstOrNull { s -> s.scientificName?.let { binomial(it) == binomial(resolved) } == true }
+    val key = SearchMatch.binomial(resolved)
+    return species.firstOrNull { s -> s.scientificName?.let(SearchMatch::binomial) == key }
 }
-
-/** Genus and species, folded — so authorship or a subspecies does not hide the same animal. */
-private fun binomial(name: String): String =
-    name.trim().split(Regex("\\s+")).take(2).joinToString("") { SearchMatch.fold(it) }
 
 /** D88. One line on what the lookup found, for under the name; null while there is nothing to say. */
 data class OnlineLine(val text: String, val imageUrl: String? = null, val warning: Boolean = false)

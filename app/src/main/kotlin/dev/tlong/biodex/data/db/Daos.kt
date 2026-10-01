@@ -222,6 +222,10 @@ interface CaptureDao {
     @Query("UPDATE captures SET wild = :wild WHERE id = :captureId")
     suspend fun setWild(captureId: String, wild: Boolean)
 
+    /** D89: every sighting of one species becomes a sighting of another. */
+    @Query("UPDATE captures SET speciesId = :toSpeciesId WHERE speciesId = :fromSpeciesId")
+    suspend fun moveToSpecies(fromSpeciesId: String, toSpeciesId: String)
+
     /** D61: the photograph goes, every other column of the sighting stays. */
     @Query(
         "UPDATE captures SET photoUri = NULL, thumbPath = NULL, localCopyPath = NULL " +

@@ -31,7 +31,7 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
     override suspend fun existingSpecies(regionId: String): List<ExistingSpecies> {
         val caught = db.entryDao().speciesIdsWithEntries().toSet()
         return db.speciesDao().speciesOnce(regionId).map {
-            ExistingSpecies(id = it.id, source = it.source, hasEntry = it.id in caught)
+            ExistingSpecies(id = it.id, source = it.source, hasEntry = it.id in caught, scientificName = it.scientificName)
         }
     }
 
@@ -42,6 +42,27 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
         db.regionDao().upsertAll(listOf(plan.region))
         db.ecosystemDao().upsertAll(plan.ecosystems)
         db.speciesDao().upsertAll(plan.speciesUpserts)
+
+        // D89: the curated row exists now, so each merged user species hands it its entry and
+        // its sightings before it goes. The user's choices on the entry win where the curated
+        // row has none; the caught date is re-derived from the moved photos below.
+        for ((from, into) in plan.merges) {
+            val moving = db.entryDao().entryOnce(from)
+            if (moving != null) {
+                val held = db.entryDao().entryOnce(into)
+                db.entryDao().upsert(
+                    held?.copy(
+                        favoriteCaptureId = held.favoriteCaptureId ?: moving.favoriteCaptureId,
+                        preferOwnPhoto = held.preferOwnPhoto || moving.preferOwnPhoto,
+                    ) ?: moving.copy(speciesId = into),
+                )
+            }
+            db.captureDao().moveToSpecies(from, into)
+        }
+        if (plan.merges.isNotEmpty()) {
+            db.speciesDao().deleteByIds(plan.merges.keys.toList())
+            db.entryDao().syncAllCaughtAt()
+        }
 
         if (plan.speciesDeletions.isNotEmpty()) {
             db.speciesDao().deleteByIds(plan.speciesDeletions)
