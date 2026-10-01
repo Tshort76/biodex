@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 8,
+  "catalogueVersion": 9,
   "regionId": "pacific",
   "regionName": "Pacific USA",
   "ecosystems": [
@@ -22,6 +22,8 @@
     "animals and plants in mind and the fungi cluster in the two forest ones, which is",
     "the expected shape rather than a reason to add an eighth.",
     "Version 8 removes the 80 plants (DESIGN.md D59); the app deletes every plant row,",
-    "curated or user-added, when it upgrades. The ecosystems are unchanged."
+    "curated or user-added, when it upgrades. The ecosystems are unchanged.",
+    "Version 9 adds 84 animals and 27 fungi (308 animals, 57 fungi), appended after the",
+    "existing dex numbers. The ecosystems are unchanged."
   ]
 }

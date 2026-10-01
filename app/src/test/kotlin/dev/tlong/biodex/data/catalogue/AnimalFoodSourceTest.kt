@@ -31,6 +31,11 @@ class AnimalFoodSourceTest {
         "Ten-lined June Beetle", "Valley Carpenter Bee", "Western Gray Squirrel",
         "Western Honey Bee", "White Sturgeon", "Wild Turkey", "Wood Duck",
         "Yellow-faced Bumble Bee",
+        // The v9 expansion.
+        "American Wigeon", "Black-tailed Bumble Bee", "Bluegill", "Brown Trout",
+        "Brush Rabbit", "California Halibut", "Desert Cottontail", "Eastern Fox Squirrel",
+        "Eastern Gray Squirrel", "Gambel's Quail", "Pronghorn", "Red Sea Urchin",
+        "Snow Goose", "Striped Bass",
     )
 
     @Test

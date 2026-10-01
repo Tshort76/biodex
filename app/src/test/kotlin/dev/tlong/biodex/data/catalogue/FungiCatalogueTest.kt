@@ -41,13 +41,13 @@ class FungiCatalogueTest {
     )
 
     @Test
-    fun `the asset ships thirty fungi across the three growth forms`() {
-        assertEquals(30, fungi.size)
+    fun `the asset ships fifty-seven fungi across the three growth forms`() {
+        assertEquals(57, fungi.size)
         assertEquals(
-            mapOf("mushroom" to 18, "bracket" to 6, "other_fungus" to 6),
+            mapOf("mushroom" to 33, "bracket" to 10, "other_fungus" to 14),
             fungi.groupingBy { it.taxClass }.eachCount(),
         )
-        assertEquals((1..30).toList(), fungi.map { it.dexNumber }.sorted())
+        assertEquals((1..57).toList(), fungi.map { it.dexNumber }.sorted())
     }
 
     @Test
@@ -97,14 +97,14 @@ class FungiCatalogueTest {
 
         assertTrue(outcome is ImportOutcome.Imported)
         val imported = store.species.values.filter { it.kingdom == Kingdom.FUNGUS }
-        assertEquals(30, imported.size)
+        assertEquals(57, imported.size)
         assertTrue(imported.all { it.taxClass.kingdom == Kingdom.FUNGUS })
         assertTrue(imported.all { it.source == SpeciesSource.CURATED })
         assertTrue(imported.all { it.uses.isEmpty() })
         // 11.1: the asset numbers each kingdom from 1 and the importer applies the base, so
-        // the fungi occupy 4001..4030 and cannot collide with the plants at 2001..2080.
+        // the fungi occupy 4001..4057 and cannot collide with the plants at 2001..2080.
         assertEquals(
-            (FUNGUS_DEX_NUMBER_BASE + 1..FUNGUS_DEX_NUMBER_BASE + 30).toList(),
+            (FUNGUS_DEX_NUMBER_BASE + 1..FUNGUS_DEX_NUMBER_BASE + 57).toList(),
             imported.map { it.dexNumber }.sorted(),
         )
         val chanterelle = store.species.getValue("pacific-golden-chanterelle")

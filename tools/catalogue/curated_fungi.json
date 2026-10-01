@@ -1,10 +1,12 @@
 {
   "_notes": [
-    "The 30 Pacific USA fungi (DESIGN-identification.md 8.1, S15), in dex order by",
+    "The 57 Pacific USA fungi (DESIGN-identification.md 8.1, S15), in dex order by",
     "growth form:",
     "  1-18   mushrooms (cap and stem)",
     "  19-24  brackets (shelf and conk)",
     "  25-30  other fungi (cup, coral, puffball, jelly, morel)",
+    "  31-45  mushrooms, 46-49 brackets, 50-57 other fungi  (the +27 expansion, catalogue",
+    "  v9; appended, never interleaved, because a shipped dexNumber must never move)",
     "fungusClass is one of mushroom / bracket / other_fungus and is editorial judgment",
     "(growth form, not taxonomy — DESIGN.md D13). Ecosystem tags are judgment too,",
     "never fetched.",
@@ -171,6 +173,141 @@
     { "dexNumber": 30, "commonName": "Orange Peel Fungus", "scientificName": "Aleuria aurantia",
       "fungusClass": "other_fungus",
       "ecosystemIds": ["coastal-rainforest", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 31, "commonName": "Hedgehog Mushroom", "scientificName": "Hydnum repandum",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "usesNote": null },
+
+    { "dexNumber": 32, "commonName": "Shrimp Russula", "scientificName": "Russula xerampelina",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 33, "commonName": "Coccora", "scientificName": "Amanita calyptroderma",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["oak-chaparral", "coastal-rainforest"],
+      "usesNote": null },
+
+    { "dexNumber": 34, "commonName": "Smith's Amanita", "scientificName": "Amanita smithiana",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest"],
+      "usesNote": "Caution: poisonous — it can cause kidney failure days after a meal." },
+
+    { "dexNumber": 35, "commonName": "Green-spored Parasol", "scientificName": "Chlorophyllum molybdites",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["urban-suburban"],
+      "usesNote": "Caution: poisonous — it causes hours of severe vomiting and diarrhoea." },
+
+    { "dexNumber": 36, "commonName": "Common Ink Cap", "scientificName": "Coprinopsis atramentaria",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland"],
+      "usesNote": "Caution: poisonous with alcohol, even a drink taken days later." },
+
+    { "dexNumber": 37, "commonName": "Mica Cap", "scientificName": "Coprinellus micaceus",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["urban-suburban", "riparian-wetland", "oak-chaparral"],
+      "usesNote": null },
+
+    { "dexNumber": 38, "commonName": "Lawn Mower's Mushroom", "scientificName": "Panaeolina foenisecii",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 39, "commonName": "Deer Mushroom", "scientificName": "Pluteus cervinus",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 40, "commonName": "Blewit", "scientificName": "Lepista nuda",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "urban-suburban", "oak-chaparral"],
+      "usesNote": null },
+
+    { "dexNumber": 41, "commonName": "Western Amethyst Laccaria", "scientificName": "Laccaria amethysteo-occidentalis",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 42, "commonName": "Admirable Bolete", "scientificName": "Aureoboletus mirabilis",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest"],
+      "usesNote": null },
+
+    { "dexNumber": 43, "commonName": "Witch's Hat", "scientificName": "Hygrocybe conica",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 44, "commonName": "Bleeding Tooth Fungus", "scientificName": "Hydnellum peckii",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 45, "commonName": "Woolly Pine Spike", "scientificName": "Chroogomphus tomentosus",
+      "fungusClass": "mushroom",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 46, "commonName": "Split Gill", "scientificName": "Schizophyllum commune",
+      "fungusClass": "bracket",
+      "ecosystemIds": ["urban-suburban", "oak-chaparral", "coastal-rainforest"],
+      "usesNote": null },
+
+    { "dexNumber": 47, "commonName": "Dyer's Polypore", "scientificName": "Phaeolus schweinitzii",
+      "fungusClass": "bracket",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 48, "commonName": "Western Varnish Shelf", "scientificName": "Ganoderma oregonense",
+      "fungusClass": "bracket",
+      "ecosystemIds": ["coastal-rainforest"],
+      "usesNote": null },
+
+    { "dexNumber": 49, "commonName": "False Turkey Tail", "scientificName": "Stereum ostrea",
+      "fungusClass": "bracket",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 50, "commonName": "Red Cage", "scientificName": "Clathrus ruber",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["urban-suburban", "oak-chaparral"],
+      "usesNote": null },
+
+    { "dexNumber": 51, "commonName": "Octopus Stinkhorn", "scientificName": "Clathrus archeri",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["urban-suburban", "coastal-rainforest"],
+      "usesNote": null },
+
+    { "dexNumber": 52, "commonName": "Gem-studded Puffball", "scientificName": "Lycoperdon perlatum",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 53, "commonName": "Collared Earthstar", "scientificName": "Geastrum triplex",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["oak-chaparral", "coastal-rainforest", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 54, "commonName": "Common Bird's Nest", "scientificName": "Crucibulum laeve",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["coastal-rainforest", "urban-suburban"],
+      "usesNote": null },
+
+    { "dexNumber": 55, "commonName": "Candlesnuff Fungus", "scientificName": "Xylaria hypoxylon",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["coastal-rainforest", "oak-chaparral"],
+      "usesNote": null },
+
+    { "dexNumber": 56, "commonName": "Cauliflower Mushroom", "scientificName": "Sparassis radicata",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
+      "usesNote": null },
+
+    { "dexNumber": 57, "commonName": "Apricot Jelly", "scientificName": "Guepinia helvelloides",
+      "fungusClass": "other_fungus",
+      "ecosystemIds": ["coastal-rainforest", "alpine"],
       "usesNote": null }
   ]
 }

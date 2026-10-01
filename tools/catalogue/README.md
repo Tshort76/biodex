@@ -1,13 +1,13 @@
 # Catalogue pipeline
 
-Builds the bundled Pacific USA catalogue asset the app ships with — 224 animals
-and 30 fungi. (80 plants and a Dr. Duke's ethnobotanical join were part of it
+Builds the bundled Pacific USA catalogue asset the app ships with — 308 animals
+and 57 fungi. (80 plants and a Dr. Duke's ethnobotanical join were part of it
 from catalogue v2 to v7; they left in v8 — DESIGN.md D59, ARCHITECTURE.md 12.2.)
 
 ```
 tools/catalogue/region.json            (header + the seven ecosystems)
-tools/catalogue/curated_animals.json   (hand-authored input, 224 animals)
-tools/catalogue/curated_fungi.json     (hand-authored input, 30 fungi)
+tools/catalogue/curated_animals.json   (hand-authored input, 308 animals)
+tools/catalogue/curated_fungi.json     (hand-authored input, 57 fungi)
         │
         ├─ GBIF        accepted scientific name, kingdom, rank, class
         ├─ Wikipedia   habitat prose, description lede, canonical image, page link
@@ -153,7 +153,7 @@ Whenever the report flags a `SYNONYM` status, check which article the asset's
 
 ## Fungi
 
-The 30 fungi live in `curated_fungi.json` and take the GBIF, Wikipedia and
+The 57 fungi live in `curated_fungi.json` and take the GBIF, Wikipedia and
 Commons steps unchanged — GBIF's backbone and Wikipedia both cover fungi well,
 and every one of the 30 matched EXACT at species rank on the first run.
 
@@ -230,7 +230,7 @@ human or by nobody.
 
 Before writing, and exiting non-zero on any failure:
 
-- every species the curated inputs list, and no more (224 animals and 30
+- every species the curated inputs list, and no more (308 animals and 57
   fungi today — the counts come from the inputs, not from literals);
 - animal and fungus dex numbers exactly 1–N each, no duplicates in either,
   unique ids across both;
@@ -293,7 +293,7 @@ re-imports when `catalogueVersion` changes, so **bump `catalogueVersion` in
 importer never touches the user's entries, captures or user-added species, and
 never deletes a caught species (ARCHITECTURE.md 3.3).
 
-The asset numbers each kingdom from 1 — animals 1–224, fungi 1–30 — and the
-app's importer applies the stored per-kingdom base (animals 1–224, fungi
-4001–4030; the 2001–2080 block held the plants until v8 and stays empty), so the
+The asset numbers each kingdom from 1 — animals 1–308, fungi 1–57 — and the
+app's importer applies the stored per-kingdom base (animals 1–308, fungi
+4001–4057; the 2001–2080 block held the plants until v8 and stays empty), so the
 curator never types 4007. The display prefixes are `#047` and `F007`.
