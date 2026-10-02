@@ -95,6 +95,25 @@ class IdentifyStateTest {
     }
 
     @Test
+    fun `search online is offered for an unheld name until it runs or answers (D90)`() {
+        assertTrue(state(query = "Varied Thrush").canSearchOnline)
+        assertFalse("the dex holds it", state(query = "western tanager").canSearchOnline)
+        assertFalse(state(query = "Varied Thrush", online = OnlineLookup.Searching("Varied Thrush")).canSearchOnline)
+        assertFalse(state(query = "Varied Thrush", online = found("Varied Thrush", "Ixoreus naevius")).canSearchOnline)
+        val failed = OnlineLookup.Done("Varied Thrush", LookupOutcome.Failed("timeout"))
+        assertTrue("a failure can be retried", state(query = "Varied Thrush", online = failed).canSearchOnline)
+        assertTrue(state(query = "Varied Thrush", online = OnlineLookup.Offline("Varied Thrush")).canSearchOnline)
+    }
+
+    @Test
+    fun `an answer for a name since edited away is not shown (D90)`() {
+        val lookup = found("Varied Thrush", "Ixoreus naevius")
+        assertEquals(OnlineLookup.Idle, state(query = "Varied Thrus", online = lookup).online)
+        val picked = state(query = "Varied Thrush", selectedId = "western-tanager", online = lookup)
+        assertEquals("a picked species hides the lookup", OnlineLookup.Idle, picked.online)
+    }
+
+    @Test
     fun `the add carries the lookup only when it was for the name being added (D88)`() {
         val lookup = found("Varied Thrush", "Ixoreus naevius")
         assertEquals(lookup.outcome, state(query = "Varied Thrush", online = lookup).prefetched)

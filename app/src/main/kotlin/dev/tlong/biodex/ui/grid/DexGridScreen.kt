@@ -86,6 +86,11 @@ fun DexGridRoute(
     val container = LocalContext.current.appContainer
     val viewModel: DexGridViewModel = viewModel(factory = DexGridViewModel.factory(container))
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // D77 (revised): home from a capture is a fresh start, and a search left in the box would
+    // hide the species being scrolled to.
+    LaunchedEffect(scrollToSpeciesId) {
+        if (scrollToSpeciesId != null) viewModel.onQueryChange("")
+    }
 
     DexGridScreen(
         state = state,

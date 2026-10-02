@@ -21,10 +21,8 @@ import dev.tlong.biodex.ui.capture.placeSearchState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,9 +35,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-/** D88: how long typing must pause before the name is looked up online. */
-private const val LOOKUP_PAUSE_MS = 700L
 
 /** D78: where the Identify screen sends the user next. */
 sealed interface IdentifyEvent {
@@ -77,6 +72,9 @@ class IdentifyViewModel(
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
+
+    /** D90: the name asked about online, numbered so asking again after a failure runs again. */
+    private val asked = MutableStateFlow<Pair<String, Int>?>(null)
     private val selectedId = MutableStateFlow<String?>(null)
 
     /**
@@ -98,19 +96,16 @@ class IdentifyViewModel(
     val eventFlow = events.receiveAsFlow()
 
     /**
-     * D88. The lookup follows the name once typing pauses, and a newer name cancels an older
-     * lookup — so a paste from Lens, then a fix to it, costs one lookup each and shows the last.
+     * D90. The lookup runs when asked — the Search online button, the keyboard's search key, or
+     * a name arriving from Lens — never per keystroke. A newer ask cancels an older lookup.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val online: Flow<OnlineLookup> =
-        combine(repository.speciesSummaries(), query, selectedId, ::onlineLookupName)
-            .distinctUntilChanged()
-            .transformLatest { name ->
-                if (name == null) return@transformLatest emit(OnlineLookup.Idle)
-                emit(OnlineLookup.Searching(name))
-                delay(LOOKUP_PAUSE_MS)
-                emit(if (network.online.value) OnlineLookup.Done(name, lookups.lookup(name)) else OnlineLookup.Offline)
-            }
+        asked.transformLatest { ask ->
+            val name = ask?.first ?: return@transformLatest emit(OnlineLookup.Idle)
+            emit(OnlineLookup.Searching(name))
+            emit(if (network.online.value) OnlineLookup.Done(name, lookups.lookup(name)) else OnlineLookup.Offline(name))
+        }
 
     val uiState: StateFlow<IdentifyUiState> = identifyUiState(
         photo = photo,
@@ -143,6 +138,15 @@ class IdentifyViewModel(
         query.value = value
     }
 
+    /** D90. */
+    fun onSearchOnline() {
+        uiState.value.onlineName?.let(::ask)
+    }
+
+    private fun ask(name: String) {
+        asked.value = name to (asked.value?.second ?: 0) + 1
+    }
+
     fun onSelect(speciesId: String) {
         selectedId.value = if (selectedId.value == speciesId) null else speciesId
     }
@@ -158,7 +162,12 @@ class IdentifyViewModel(
     fun onClipboard(text: String?) {
         if (!lensOpened) return
         lensOpened = false
-        nameFromClipboard(text)?.let { query.value = it }
+        val name = nameFromClipboard(text) ?: return
+        query.value = name
+        // D90: a name from Lens is one paste, not typing, so it is looked up without a tap.
+        viewModelScope.launch {
+            onlineLookupName(repository.speciesSummaries().first(), name, selectedId.value)?.let(::ask)
+        }
     }
 
     /** D80. */

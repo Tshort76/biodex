@@ -6,6 +6,11 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v26.1 — 2026-10-01
+
+- **Changed** — the Identify screen no longer searches online every time you stop typing. Press **Search online** beside the name, or the keyboard's search key. A name copied in Lens is still looked up as soon as you come back. (`D88` revised, `D90`)
+- **Changed** — after you register a photo, the grid comes back with its search cleared, so the species you just caught is in view. (`D77` revised, `D91`)
+
 ## v26 — 2026-09-30
 
 - **Changed** — the Identify screen looks the name up online as soon as you stop typing, and says what it found under the name, with its picture, or that nothing goes by that name. Fix the name and it looks again. "Where was this?" still comes only when you press Register, so the name is settled first. If the lookup's scientific name is a species in your dex, Register captures that species; otherwise the add card opens on the lookup already done. (`M08` revised, `D88`)

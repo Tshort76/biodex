@@ -28,6 +28,8 @@ data class IdentifyUiState(
     /** D80. Unticked for a zoo or aquarium; carried onto the capture either way. */
     val wild: Boolean = true,
     val capturing: Boolean = false,
+    /** D88: the name the online lookup would ask about; null when there is nothing to ask. */
+    val onlineName: String? = null,
     /** D88: what the online lookup made of the name, before any place is asked for. */
     val online: OnlineLookup = OnlineLookup.Idle,
     /** D88: the dex species the online lookup named — by its scientific name, not the typed one. */
@@ -45,6 +47,15 @@ data class IdentifyUiState(
 
     val canRegister: Boolean get() = !capturing && (target != null || addableName != null)
 
+    /** D90: the lookup runs on a tap, so offer one unless it is running or has answered for this name. */
+    val canSearchOnline: Boolean
+        get() = onlineName != null && when (val lookup = online) {
+            OnlineLookup.Idle -> true
+            is OnlineLookup.Searching -> false
+            is OnlineLookup.Done -> lookup.outcome is LookupOutcome.Failed
+            is OnlineLookup.Offline -> true
+        }
+
     val registerLabel: String
         get() {
             val species = target
@@ -58,8 +69,7 @@ data class IdentifyUiState(
 }
 
 /**
- * D88. The online lookup's progress for one name. It runs on the Identify screen, as the name is
- * typed, so a wrong name is found out and fixed before the place prompt rather than after it.
+ * D88. The online lookup's progress for one name, run on the Identify screen when asked (D90).
  */
 sealed interface OnlineLookup {
     data object Idle : OnlineLookup
@@ -68,8 +78,16 @@ sealed interface OnlineLookup {
 
     data class Done(val name: String, val outcome: LookupOutcome) : OnlineLookup
 
-    data object Offline : OnlineLookup
+    data class Offline(val name: String) : OnlineLookup
 }
+
+private val OnlineLookup.name: String?
+    get() = when (this) {
+        OnlineLookup.Idle -> null
+        is OnlineLookup.Searching -> name
+        is OnlineLookup.Done -> name
+        is OnlineLookup.Offline -> name
+    }
 
 fun identifyUiState(
     photo: PickedPhoto,
@@ -89,11 +107,14 @@ fun identifyUiState(
             // From the whole dex, so a selection survives the search being edited.
             selected = all.firstOrNull { it.id == id },
             addableName = addableNameFor(all, typed),
+            onlineName = onlineLookupName(all, typed, id),
             exactMatch = results.firstOrNull { (bestRank(it, typed) ?: Int.MAX_VALUE) <= SearchMatch.WITHIN },
             wild = isWild,
             capturing = busy,
         ) to all
-    }.combine(online) { (state, all), lookup ->
+    }.combine(online) { (state, all), asked ->
+        // D90: an answer about a name since edited away says nothing about the one in the field.
+        val lookup = asked.takeIf { it.name == state.onlineName } ?: OnlineLookup.Idle
         state.copy(online = lookup, onlineMatch = onlineMatchFor(all, lookup, state.query))
     }
 
@@ -122,7 +143,7 @@ data class OnlineLine(val text: String, val imageUrl: String? = null, val warnin
 
 fun onlineLine(state: IdentifyUiState): OnlineLine? = when (val lookup = state.online) {
     OnlineLookup.Idle -> null
-    OnlineLookup.Offline -> OnlineLine("Offline — the name is checked online when you add it.")
+    is OnlineLookup.Offline -> OnlineLine("Offline — the name is checked online when you add it.")
     is OnlineLookup.Searching -> OnlineLine("Searching online for “${lookup.name}”…")
     is OnlineLookup.Done -> when (val outcome = lookup.outcome) {
         is LookupOutcome.Resolved -> {

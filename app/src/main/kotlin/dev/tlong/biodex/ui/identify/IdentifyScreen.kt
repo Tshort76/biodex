@@ -21,6 +21,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,6 +120,7 @@ fun IdentifyRoute(
             openInLens(context, photo.uri)
         },
         onQueryChange = viewModel::onQueryChange,
+        onSearchOnline = viewModel::onSearchOnline,
         onSelect = viewModel::onSelect,
         onWildChange = viewModel::onWildChange,
         onRegister = viewModel::onRegister,
@@ -134,6 +138,7 @@ fun IdentifyScreen(
     onBack: () -> Unit,
     onOpenLens: () -> Unit,
     onQueryChange: (String) -> Unit,
+    onSearchOnline: () -> Unit,
     onSelect: (String) -> Unit,
     onWildChange: (Boolean) -> Unit,
     onRegister: () -> Unit,
@@ -196,7 +201,12 @@ fun IdentifyScreen(
             )
         }
 
-        NameField(query = state.query, onQueryChange = onQueryChange)
+        NameField(
+            query = state.query,
+            onQueryChange = onQueryChange,
+            canSearchOnline = state.canSearchOnline,
+            onSearchOnline = onSearchOnline,
+        )
         if (state.query.isEmpty()) {
             Text(
                 text = "Copy the name in Lens and come back — it fills in here.",
@@ -232,30 +242,55 @@ fun IdentifyScreen(
 }
 
 @Composable
-private fun NameField(query: String, onQueryChange: (String) -> Unit) {
+private fun NameField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    canSearchOnline: Boolean,
+    onSearchOnline: () -> Unit,
+) {
     val colors = DexTheme.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.codeBg)
-            .padding(horizontal = 12.dp, vertical = 11.dp),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (query.isEmpty()) {
-            Text(
-                text = "Type or paste its name",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.faint,
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(colors.codeBg)
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+        ) {
+            if (query.isEmpty()) {
+                Text(
+                    text = "Type or paste its name",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
+                cursorBrush = SolidColor(colors.accent),
+                // D90: the keyboard's search key asks online, as the button does.
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { if (canSearchOnline) onSearchOnline() }),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
-        BasicTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
-            cursorBrush = SolidColor(colors.accent),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (canSearchOnline) {
+            Text(
+                text = "Search online",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.accent,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.card)
+                    .clickable(onClick = onSearchOnline)
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+            )
+        }
     }
 }
 
