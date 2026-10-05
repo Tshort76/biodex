@@ -10,6 +10,7 @@ import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.photo.PhotoGateway
+import dev.tlong.biodex.data.photo.PlaceNamer
 import dev.tlong.biodex.data.place.PlaceGazetteer
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.PlaceAnswer
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** D78: where the Identify screen sends the user next. */
 sealed interface IdentifyEvent {
@@ -69,6 +71,7 @@ class IdentifyViewModel(
     private val gazetteer: PlaceGazetteer = PlaceGazetteer.None,
     private val lookups: SpeciesLookupRepository,
     private val network: NetworkMonitor,
+    private val placeNamer: PlaceNamer = PlaceNamer.None,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -87,6 +90,10 @@ class IdentifyViewModel(
 
     /** Null while the EXIF read runs; then whether the photo carries coordinates. */
     private val located = MutableStateFlow<Boolean?>(null)
+
+    /** D92: the question to copy for Lens — null until the photo's place is named, or when it has none. */
+    private val _lensPrompt = MutableStateFlow<String?>(null)
+    val lensPrompt: StateFlow<String?> = _lensPrompt
 
     /** The action waiting on the place prompt; null when none is. */
     private val pending = MutableStateFlow<(suspend (PlaceAnswer?) -> Unit)?>(null)
@@ -131,6 +138,11 @@ class IdentifyViewModel(
         viewModelScope.launch {
             val facts = withContext(Dispatchers.IO) { photos.readExif(photo.uri) }
             located.value = facts.lat != null && facts.lng != null
+            val lat = facts.lat ?: return@launch
+            val lng = facts.lng ?: return@launch
+            _lensPrompt.value = lensPromptFor(
+                withContext(Dispatchers.IO) { withTimeoutOrNull(PLACE_NAME_TIMEOUT_MS) { placeNamer.nameFor(lat, lng) } },
+            )
         }
     }
 
@@ -161,6 +173,8 @@ class IdentifyViewModel(
      */
     fun onClipboard(text: String?) {
         if (!lensOpened) return
+        // D92: still the question copied for Lens — nothing was copied there yet, so keep waiting.
+        if (text != null && text == _lensPrompt.value) return
         lensOpened = false
         val name = nameFromClipboard(text) ?: return
         query.value = name
@@ -242,6 +256,8 @@ class IdentifyViewModel(
     }
 
     companion object {
+        private const val PLACE_NAME_TIMEOUT_MS = 3_000L
+
         fun factory(container: AppContainer, photo: PickedPhoto): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
@@ -253,6 +269,7 @@ class IdentifyViewModel(
                         gazetteer = container.placeGazetteer,
                         lookups = container.speciesLookupRepository,
                         network = container.networkMonitor,
+                        placeNamer = container.placeNamer,
                     )
                 }
             }

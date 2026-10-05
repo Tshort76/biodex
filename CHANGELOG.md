@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v26.2 — 2026-10-05
+
+- **Added** — when a photo carries its location, Identify's 🔍 Google Lens button copies "What species and subspecies is this? Photographed near …" with the place's name. Paste it into Lens's Ask box to help Lens narrow the species. The question is never mistaken for a name on the way back. (`D85` revised, `D92`)
+
 ## v26.1 — 2026-10-01
 
 - **Changed** — the Identify screen no longer searches online every time you stop typing. Press **Search online** beside the name, or the keyboard's search key. A name copied in Lens is still looked up as soon as you come back. (`D88` revised, `D90`)

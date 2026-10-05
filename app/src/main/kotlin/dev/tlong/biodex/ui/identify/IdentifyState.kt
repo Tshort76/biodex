@@ -183,3 +183,12 @@ internal fun nameFromClipboard(clip: String?): String? {
     if (text.isEmpty() || text.length > 60 || text.none { it.isLetter() } || "://" in text) return null
     return text
 }
+
+/**
+ * D92. The question copied for Lens when it opens, for the owner to paste into its "Ask about
+ * this image" box — Lens's share entry reads only the image (D85), and the place is what helps
+ * it most. Null when the photo's place has no name, since the bare question adds nothing.
+ */
+internal fun lensPromptFor(placeName: String?): String? =
+    placeName?.trim()?.takeIf { it.isNotEmpty() }
+        ?.let { "What species and subspecies is this? Photographed near $it." }

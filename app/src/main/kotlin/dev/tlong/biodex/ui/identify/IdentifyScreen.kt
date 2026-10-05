@@ -75,6 +75,7 @@ fun IdentifyRoute(
     )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val placePrompt by viewModel.placePrompt.collectAsStateWithLifecycle()
+    val lensPrompt by viewModel.lensPrompt.collectAsStateWithLifecycle()
     var message by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Lens hands nothing back; the name returns on the clipboard, and fills the search. Android lets only the app
@@ -117,8 +118,9 @@ fun IdentifyRoute(
         onBack = leave,
         onOpenLens = {
             viewModel.onLensOpened()
-            openInLens(context, photo.uri)
+            openInLens(context, photo.uri, lensPrompt)
         },
+        placeForLens = lensPrompt != null,
         onQueryChange = viewModel::onQueryChange,
         onSearchOnline = viewModel::onSearchOnline,
         onSelect = viewModel::onSelect,
@@ -142,6 +144,7 @@ fun IdentifyScreen(
     onSelect: (String) -> Unit,
     onWildChange: (Boolean) -> Unit,
     onRegister: () -> Unit,
+    placeForLens: Boolean = false,
 ) {
     val colors = DexTheme.colors
     Column(
@@ -209,7 +212,11 @@ fun IdentifyScreen(
         )
         if (state.query.isEmpty()) {
             Text(
-                text = "Copy the name in Lens and come back — it fills in here.",
+                text = if (placeForLens) {
+                    "Lens gets the place on your clipboard — paste it into Ask. Copy the name there and come back."
+                } else {
+                    "Copy the name in Lens and come back — it fills in here."
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.faint,
             )

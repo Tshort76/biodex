@@ -17,6 +17,7 @@ import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.net.WikipediaClient
 import dev.tlong.biodex.data.photo.AndroidPhotoGateway
 import dev.tlong.biodex.data.photo.AndroidPlaceNamer
+import dev.tlong.biodex.data.photo.PlaceNamer
 import dev.tlong.biodex.data.place.AssetPlaceGazetteer
 import dev.tlong.biodex.data.place.PlaceGazetteer
 import dev.tlong.biodex.data.photo.CaptureRegistrar
@@ -80,9 +81,12 @@ class AppContainer(val appContext: Context) {
             store = dexRepository,
             photos = photoGateway,
             keepLocalCopy = settings::keepLocalCopyNow,
-            places = AndroidPlaceNamer(appContext),
+            places = placeNamer,
         )
     }
+
+    /** D56: names a photo's GPS, for a sighting's label and for the question copied for Lens (D92). */
+    val placeNamer: PlaceNamer by lazy { AndroidPlaceNamer(appContext) }
 
     /**
      * ARCHITECTURE.md 5.2's single client. The User-Agent interceptor is not politeness:

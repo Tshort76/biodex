@@ -185,4 +185,19 @@ class IdentifyStateTest {
         )
         cases.forEach { (clip, name) -> assertEquals("clip=$clip", name, nameFromClipboard(clip)) }
     }
+
+    @Test
+    fun `the question for Lens carries the place, and there is none without one`() {
+        assertEquals(
+            "What species and subspecies is this? Photographed near Point Reyes Station, California.",
+            lensPromptFor(" Point Reyes Station, California "),
+        )
+        assertNull(lensPromptFor(null))
+        assertNull(lensPromptFor("  "))
+    }
+
+    @Test
+    fun `the question copied for Lens is not taken for a name`() {
+        assertNull(nameFromClipboard(lensPromptFor("Point Reyes Station, California")))
+    }
 }

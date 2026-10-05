@@ -1,6 +1,8 @@
 package dev.tlong.biodex.ui.capture
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -8,9 +10,14 @@ import android.net.Uri
 /**
  * D72/D78. Opens [photoUri] in Google Lens, or — on a phone without the Google app — the share
  * sheet Lens would otherwise be picked from. Lens returns nothing to the caller: the name comes
- * back through the clipboard (D78).
+ * back through the clipboard (D78). [prompt], when there is one, goes on the clipboard first for
+ * pasting into Lens's question box, since Lens ignores text sent with the image (D85, D92).
  */
-fun openInLens(context: Context, photoUri: String) {
+fun openInLens(context: Context, photoUri: String, prompt: String? = null) {
+    prompt?.let {
+        context.getSystemService(ClipboardManager::class.java)
+            ?.setPrimaryClip(ClipData.newPlainText("Question for Lens", it))
+    }
     try {
         context.startActivity(lensIntentFor(photoUri))
     } catch (_: ActivityNotFoundException) {
