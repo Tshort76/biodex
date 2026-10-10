@@ -71,15 +71,22 @@ object SearchMatch {
      * spider" for the Cross Orbweaver, "mallard duck" for the Mallard — and the name the dex
      * holds is in there. Whole words, so "Mink" is not in "minke whale"; four letters at least,
      * so a three-letter name does not ride along in every query that mentions it.
+     *
+     * The name has to lead the query (D93): a word before it usually names a narrower species,
+     * and "zebra jumping spider" is not the dex's Jumping Spider.
      */
     fun nameWithinQuery(name: String, query: String): Boolean =
-        nameWithinQuery(query, fold(query), fold(name), 0)
+        nameWithinQuery(query, fold(query), fold(name), 0, leading = true)
 
-    /** [nameWithinQuery] within [budget] edits, the first letter held fixed so a match is anchored. */
-    private fun nameWithinQuery(query: String, q: String, n: String, budget: Int): Boolean {
+    /**
+     * [nameWithinQuery] within [budget] edits, the first letter held fixed so a match is
+     * anchored. Without [leading] the name may sit anywhere, which is what the grid's filter
+     * wants: the Jumping Spider is still shown for "zebra jumping spider".
+     */
+    private fun nameWithinQuery(query: String, q: String, n: String, budget: Int, leading: Boolean = false): Boolean {
         if (n.length < 4 || n.length >= q.length) return false
         val bounds = (wordStarts(query) + q.length).distinct().filter { it <= q.length }
-        return bounds.any { start ->
+        return (if (leading) listOf(0) else bounds).any { start ->
             bounds.any { end ->
                 end > start && end - start <= n.length + budget && n.length <= end - start + budget &&
                     q.substring(start, end).let { run ->
@@ -129,9 +136,9 @@ object SearchMatch {
 
     /**
      * How well [query] matches [name], best first, or null when [matches] would say no:
-     * [EXACT] the whole name; [WITHIN] the whole name inside a longer query (D88); [PREFIX] its
-     * start; [WORD] the start of a later word ("tanager"
-     * in "Western Tanager"); [CONTAINS] anywhere; [NEAR] only within the edit budget. The
+     * [EXACT] the whole name; [WITHIN] the whole name leading a longer query (D88, D93);
+     * [PREFIX] its start; [WORD] the start of a later word ("tanager" in "Western Tanager");
+     * [CONTAINS] anywhere; [NEAR] only within the edit budget. The
      * Register screen sorts by it so the name typed in full leads the list (D74).
      */
     fun rank(name: String, query: String): Int? {
@@ -141,7 +148,7 @@ object SearchMatch {
         val at = wordwiseIndexOf(name, n, q)
         return when {
             n == q -> EXACT
-            nameWithinQuery(query, q, n, 0) -> WITHIN
+            nameWithinQuery(query, q, n, 0, leading = true) -> WITHIN
             at == 0 -> PREFIX
             at > 0 && wordStarts(name).any { n.startsWith(q, it) } -> WORD
             at > 0 -> CONTAINS

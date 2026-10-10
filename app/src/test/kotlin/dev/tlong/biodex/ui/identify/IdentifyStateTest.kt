@@ -80,7 +80,8 @@ class IdentifyStateTest {
             "Varied Thrush" to "Varied Thrush",
             " western " to "western",
             "western tanager" to null,
-            "a male western tanager" to null,
+            "western tanager bird" to null,
+            "a male western tanager" to "a male western tanager",
             "  " to null,
         ).forEach { (query, expected) -> assertEquals("query=$query", expected, onlineLookupName(catalogue, query, null)) }
         assertNull("a picked species needs no lookup", onlineLookupName(catalogue, "Varied Thrush", "western-tanager"))
@@ -146,6 +147,7 @@ class IdentifyStateTest {
         assertFalse(s.registersNewSpecies)
         assertNull("a partial name picks nothing", state(query = "western").target)
         assertEquals("a longer name that holds it picks it (D88)", "western-tanager", state(query = "western tanager bird").target?.id)
+        assertTrue("a word before it names another species (D93)", state(query = "zebra western tanager").registersNewSpecies)
     }
 
     @Test

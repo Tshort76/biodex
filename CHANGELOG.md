@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v26.3 — 2026-10-10
+
+- **Fixed** — a species in your dex no longer takes over a longer name that ends with it. Searching "zebra jumping spider" while you hold a "Jumping Spider" now offers to add the zebra jumping spider, on the grid and on Identify, instead of registering the photo to the Jumping Spider. Extra words *after* a held name ("mallard duck") still find it. (`M14`, `D88` revised, `D93`)
+
 ## v26.2 — 2026-10-05
 
 - **Added** — when a photo carries its location, Identify's 🔍 Google Lens button copies "What species and subspecies is this? Photographed near …" with the place's name. Paste it into Lens's Ask box to help Lens narrow the species. The question is never mistaken for a name on the way back. (`D85` revised, `D92`)

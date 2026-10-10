@@ -105,10 +105,17 @@ class SearchMatchTest {
     }
 
     @Test
+    fun `a dex name with words before it is listed but is not the query's species (D93)`() {
+        assertFalse(SearchMatch.nameWithinQuery("Jumping Spider", "zebra jumping spider"))
+        assertTrue(SearchMatch.nameWithinQuery("Jumping Spider", "jumping spider sp"))
+        assertEquals("still listed, as NEAR", SearchMatch.NEAR, SearchMatch.rank("Jumping Spider", "zebra jumping spider"))
+    }
+
+    @Test
     fun `rank orders exact, prefix, word start, contains, then near (D74)`() {
         listOf(
             Triple("Western Tanager", "western tanager", SearchMatch.EXACT),
-            Triple("Western Tanager", "male western tanager", SearchMatch.WITHIN),
+            Triple("Western Tanager", "western tanager male", SearchMatch.WITHIN),
             Triple("Western Tanager", "west", SearchMatch.PREFIX),
             Triple("Western Tanager", "tanager", SearchMatch.WORD),
             Triple("Black-spot Chestnut", "spot", SearchMatch.WORD),

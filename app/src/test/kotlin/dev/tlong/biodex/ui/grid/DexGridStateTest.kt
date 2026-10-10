@@ -142,12 +142,16 @@ class DexGridStateTest {
         assertEquals(null, state().addableName)
         query.value = "varied thrush"
         assertEquals("the user's own species count as held", null, state().addableName)
+        query.value = "varied thrush bird"
+        assertEquals("a held name leading a longer query is held (D88)", null, state().addableName)
     }
 
     @Test
     fun `a name the dex does not hold is offered to ＋, trimmed`() {
         query.value = "  Pacific Wren "
         assertEquals("Pacific Wren", state().addableName)
+        query.value = "northern varied thrush"
+        assertEquals("a word before a held name names another species (D93)", "northern varied thrush", state().addableName)
     }
 
     @Test

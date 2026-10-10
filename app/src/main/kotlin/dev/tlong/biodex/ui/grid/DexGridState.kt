@@ -260,7 +260,8 @@ fun dexGridUiState(
  * frog and quietly take the add away. A name typed in full that no species contains word for
  * word is a name to add. Case, accents and punctuation still do not count, and neither does a
  * match that straddles two words (D82: "orca" is not in "Castor canadensis"). A held name said
- * in full inside a longer query is held too (D88: "cross orb weaver spider").
+ * in full at the start of a longer query is held too (D88: "cross orb weaver spider"), but not
+ * one with words before it (D93: "zebra jumping spider" is not the Jumping Spider).
  */
 internal fun addableNameFor(species: List<SpeciesSummary>, query: String): String? {
     if (SearchMatch.fold(query).isEmpty()) return null
