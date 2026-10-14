@@ -11,6 +11,7 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 - **Added** — a second dex, the **Argentina BioDex**: 303 species common around Buenos Aires, Puerto Madryn, Bariloche, El Calafate, El Chaltén, Mendoza, Salta and Iguazú — 273 animals (168 birds, 39 mammals, 11 reptiles, 7 amphibians, 17 fish, 19 insects, 12 other invertebrates) and 30 fungi, over nine ecosystems. Twenty-seven of the animals carry the Food source tag; five fungi carry a one-line caution. Tap the region pill beside "BioDex" to switch dexes. The app remembers your choice, and Stats, Identify and adding a species follow it. (`C03`, `D94`)
 - **Changed** — a species you add goes into the dex on screen. A species found in both regions, such as the House Sparrow, is a separate entry in each. (`D94`)
 - **Changed** — "Where was this?" now suggests places in Argentina too, and a backup covers both dexes. (`D68`, `D94`)
+- **Fixed** — about one tile in seven fetched its picture at 3840px, because Wikipedia served it from a second image host the grid did not shrink, so those tiles loaded slowly. Every tile now fetches the small 960px version.
 
 ## v26.3 — 2026-10-10
 

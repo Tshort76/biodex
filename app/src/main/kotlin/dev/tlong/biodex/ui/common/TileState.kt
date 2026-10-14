@@ -84,13 +84,16 @@ fun tileImageSources(species: SpeciesSummary): List<TileImage> {
  *
  * Two shapes are rewritten, both under `upload.wikimedia.org/wikipedia/commons/`: an original
  * `…/commons/h/hh/Name.jpg` becomes `…/commons/thumb/h/hh/Name.jpg/960px-Name.jpg`, and a
- * thumbnail's `NNNNpx-` prefix is swapped for `960px-`. Anything else — the one `wikipedia/en`
+ * thumbnail's `NNNNpx-` prefix is swapped for `960px-`. A thumbnail Wikipedia served from the
+ * `thumb.wikimedia.org` host is the same file, and is read as if it came from `upload`.
+ * Anything else — the one `wikipedia/en`
  * picture, a user-added species' image from elsewhere — is returned unchanged.
  */
 fun gridThumbnailUrl(imageUrl: String): String {
     val prefix = "https://upload.wikimedia.org/wikipedia/commons/"
-    if (!imageUrl.startsWith(prefix)) return imageUrl
-    val path = imageUrl.removePrefix(prefix)
+    val url = imageUrl.replaceFirst("https://thumb.wikimedia.org/", "https://upload.wikimedia.org/")
+    if (!url.startsWith(prefix)) return imageUrl
+    val path = url.removePrefix(prefix)
     if (path.startsWith("thumb/")) {
         return prefix + path.replace(Regex("""/\d+px-([^/]+)$"""), "/${GRID_THUMB_WIDTH}px-$1")
     }

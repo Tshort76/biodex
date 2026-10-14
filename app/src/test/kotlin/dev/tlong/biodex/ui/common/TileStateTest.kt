@@ -171,6 +171,10 @@ class TileStateTest {
             "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/960px-GreatBlueHeronInARiver.jpg",
             gridThumbnailUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/3840px-GreatBlueHeronInARiver.jpg"),
         )
+        assertEquals(
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/960px-GreatBlueHeronInARiver.jpg",
+            gridThumbnailUrl("https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/GreatBlueHeronInARiver.jpg/3840px-GreatBlueHeronInARiver.jpg"),
+        )
     }
 
     @Test

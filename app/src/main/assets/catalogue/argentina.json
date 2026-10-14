@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 1,
+  "catalogueVersion": 2,
   "regionId": "argentina",
   "regionName": "Argentina",
   "rangeGridWidth": 128,
@@ -29188,9 +29188,9 @@
       ],
       "habitatText": "The preferred natural habitat of L. darwinii is shrubland, at altitudes from sea level to 3,000 m.",
       "description": "Liolaemus darwinii, commonly known as Darwin's tree iguana, is a species of lizard in the family Liolaemidae. It is endemic to Argentina.",
-      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Liolaemus_darwinii_distribution.svg/960px-Liolaemus_darwinii_distribution.svg.png",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Lagartija_Austral_o_Liolaemus_darwinii.jpg",
       "infoUrl": "https://en.wikipedia.org/wiki/Liolaemus_darwinii",
-      "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Latin_America_-_First_level_political_divisions.svg : selfmade derivative wor…",
+      "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · AnuPrieto",
       "silhouetteRes": "sil_reptile",
       "kingdom": "animal",
       "uses": [],
@@ -29220,10 +29220,10 @@
         "taxClass": "gbif:class:Squamata",
         "wikipediaTitle": "wikipedia:scientific:Liolaemus darwinii",
         "description": "wikipedia:summary",
-        "imageUrl": "wikipedia:summary:originalimage",
+        "imageUrl": "override",
         "infoUrl": "wikipedia:summary",
         "habitatText": "wikipedia:section:Habitat",
-        "imageAttribution": "wikimedia:imageinfo:extmetadata"
+        "imageAttribution": "override"
       }
     },
     {
@@ -31421,9 +31421,9 @@
       ],
       "habitatText": "The Argentine hake is a species of merluccid hake found in the southwestern Atlantic Ocean, specifically along the coast of Argentina and Uruguay. Like many of its congeners, it is of commercial importance.",
       "description": "The Argentine hake is a species of merluccid hake found in the southwestern Atlantic Ocean, specifically along the coast of Argentina and Uruguay. Like many of its congeners, it is of commercial importance.",
-      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/Argentine_hake%2C_capture_production%2C_thousand_tonnes%2C_1950-2022.svg/960px-Argentine_hake%2C_capture_production%2C_thousand_tonnes%2C_1950-2022.svg.png",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/5/59/Merluccius_hubbsi.jpg",
       "infoUrl": "https://en.wikipedia.org/wiki/Argentine_hake",
-      "imageAttribution": "Wikimedia Commons · CC BY-SA 4.0 · Pamdex",
+      "imageAttribution": "Wikimedia Commons · CC BY-SA 3.0 · Pablopayetta",
       "silhouetteRes": "sil_fish",
       "kingdom": "animal",
       "uses": [
@@ -31459,10 +31459,10 @@
         "taxClass": "gbif:phylum:Chordata:no-class",
         "wikipediaTitle": "wikipedia:scientific:Argentine hake",
         "description": "wikipedia:summary",
-        "imageUrl": "wikipedia:summary:originalimage",
+        "imageUrl": "override",
         "infoUrl": "wikipedia:summary",
         "habitatText": "wikipedia:lede",
-        "imageAttribution": "wikimedia:imageinfo:extmetadata"
+        "imageAttribution": "override"
       }
     },
     {
