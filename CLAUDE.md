@@ -21,7 +21,7 @@ make check      # JVM + catalogue, place-list, dexdb and classifier tests, no ph
 make test       # JVM tests only
 make install    # build and install onto an attached phone
 make test-device   # instrumented tests; UNINSTALLS the app — refuses while photos are registered
-make catalogue  # regenerate the bundled catalogue asset
+make catalogue  # regenerate both regions' catalogue assets (Pacific first; slow on a cold cache)
 make places     # regenerate the bundled place list (71 MB GeoNames dump on a cold cache)
 ```
 
@@ -35,11 +35,11 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew compileDebugKotlin   # faste
 
 Environment, if you bypass `make`: JDK 17 via `/usr/libexec/java_home -v 17`, and `ANDROID_HOME` from `sdk.dir` in `local.properties` — which is git-ignored, so a fresh clone has none and nothing builds until it is written. `docs/BUILD.md` covers setup and signing.
 
-Three traps worth knowing before you trust a green run:
+Four traps worth knowing before you trust a green run:
 
 - **`testDebugUnitTest` does not treat the catalogue asset as an input.** Change `pacific.json` or anything under `tools/catalogue/` and Gradle reports `BUILD SUCCESSFUL in 3s` off stale results. `make check` passes `--rerun-tasks` for exactly this reason; plain `make test` does not.
 - **A content change needs a `catalogueVersion` bump in that region's `region.json`** (`tools/catalogue/region.json` or `tools/catalogue/argentina/region.json`; each region keeps its own version). The app imports the asset only when the number differs from the one in its database, so a changed asset under the old number installs and does nothing. The build now refuses to write in that case and says so.
-- **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
+- **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run with a whole cache makes zero HTTP requests (see Operational notes for when it is not whole); `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
 Counts as of the last commit: **447 JVM, 44 instrumented, 55 Python.**
@@ -65,10 +65,10 @@ app/src/main/kotlin/dev/tlong/biodex/
 │   ├── db/             Room: AppDatabase, entities, DAOs, converters
 │   ├── catalogue/      asset JSON models + first-run/upgrade importer & reconciler
 │   ├── photo/          picker handling, grant persistence, thumbnails, URI states
-│   ├── identify/       Pl@ntNet identification (plants only, opt-in per photo)
+│   ├── place/          bundled place gazetteer for "Where was this?" (D68)
 │   ├── net/            GbifClient, WikipediaClient
 │   ├── backup/         export/import ZIP
-│   ├── settings/       DataStore-backed prefs (holds the Pl@ntNet key)
+│   ├── settings/       prefs: sort order, active region, local-copy setting
 │   └── repo/           DexRepository, SpeciesLookupRepository, registrars
 ├── domain/             plain models the UI consumes + DexProgressMath
 ├── media/              Coil loader, image cache, NetworkMonitor
@@ -117,6 +117,16 @@ This is a collecting game, not a field guide. The user has corrected this twice:
 - The release keystore and `keystore.properties` live outside the repository and are git-ignored — see README, "Building a release APK". Never echo the store or key password into a transcript. A clone without `keystore.properties` still builds; it just produces an unsigned release APK.
 - R8 is deliberately off for release; the comment in `app/build.gradle.kts` explains why (silent runtime failures in serialization paths).
 
+## Operational notes
+
+Lessons that cost real time and live nowhere else in the tree. Each is dated so a stale one can be recognised.
+
+- **More than one device is often attached.** Other sessions run an emulator, so `adb` and `make install` fail with "more than one device" or reach the wrong one. Set `ANDROID_SERIAL` to the phone's serial from `adb devices -l`. The phone is also unplugged between asks: check `adb get-state` first, because a pull from a missing device writes empty files over the target. (2026-10-14)
+- **The JVM catalogue tests cannot see SQLite constraints.** `FakeCatalogueStore` models cascades and nothing else, so a plan the reconciler gets right can still fail in Room. Room's `@Upsert` falls back to an `UPDATE` by primary key when *any* unique index conflicts, so a conflicting new row is silently not inserted, and the failure surfaces later as an unrelated foreign-key error. That is how the v28.1 install crashed (D96). To tell a planning bug from a store bug, dump the phone's `species` and `species_regions` to JSON and run `CatalogueReconciler.plan` over the shipped assets in a throwaway JVM test. (2026-10-14)
+- **The catalogue cache is local and can be partly missing.** `tools/catalogue/cache/` never expires, but it is git-ignored, so a rebuild that should be instant can refetch for 15 minutes and bring in upstream drift: new lead photos, refreshed range maps, reworded descriptions. After any rebuild, diff the asset per field against `HEAD` before committing, and mention real drift in the CHANGELOG. (2026-10-14)
+- **Wikimedia renders each thumbnail on first request and rate-limits.** A fresh tile can show a silhouette once and fill in on the next view; that is not a bug. Pre-warming thumbnails from the build machine hits HTTP 429 after about 20 requests, so do not try. Lead images served from `thumb.wikimedia.org` are rewritten to the 960px `upload.wikimedia.org` rendition by `gridThumbnailUrl`. (2026-10-13)
+- **A Wikipedia lead image is sometimes a chart or a map.** Check new species' pictures and pin a photograph through `overrides` where needed (the Argentine Hake, Darwin's Tree Iguana). (2026-10-13)
+
 ## Git
 
 Pushes go over SSH. If a push fails with a 403, the remote is resolving to the wrong account — check `git remote -v` and the local SSH config rather than retrying.
@@ -132,6 +142,8 @@ Verification on a real device is a normal part of finishing UI work here, since 
 **An uninstall costs the user their photos, and no file-level backup fully prevents it.** `make test-device` uninstalls the app, and so does every launcher-icon check below. Two things die with it. The thumbnails under `files/thumbnails/` are what the grid draws, so a database restored without them leaves every caught species drawing a silhouette. And the stored `content://media/picker/...` URIs are grants held by the *installed package*, so they are revoked no matter what is restored — the photos are still in the user's gallery, but the app cannot read them until each capture is re-linked from the photo viewer. **Prefer the app's own export** (Settings → export) over anything done with `adb`, and treat "uninstall" as a request the user has to agree to, not a step.
 
 If you do copy the data out by hand, take **`databases/` and `files/` together** — the thumbnails are half of it. Checkpoint the database's WAL locally (`PRAGMA wal_checkpoint(TRUNCATE)`, which also removes the sidecar files) so one file carries everything, then with the app force-stopped delete the `-wal`/`-shm` a fresh install made and push it back through `run-as` — using an **absolute** path, since `run-as ... sh -c 'cat > databases/x'` fails on a relative one.
+
+**Before installing a schema migration or a catalogue change**, copy `databases/` and `files/` to `.phone-backups/<label>/` (git-ignored) and dry-run any new migration's SQL on a copy of the pulled database with `sqlite3` — `PRAGMA foreign_key_check` and `PRAGMA integrity_check` after it. Then install, launch, and read `adb logcat -d | grep CatalogueImporter`: each region logs one `Imported` or `already imported` line, and a `FATAL` there means the import rolled back (it is one transaction) and the database is as it was.
 
 **Removing test rows from the phone** — `tools/phone/dexdb.py` (`list`, `show`, `remove <species>`, `drop-capture <id>`; dry run unless `--apply`) pulls the database, edits it locally and pushes it back with the app stopped. It removes only a species the owner added, and saves the database it replaced under `.phone-backups/`. Use it to clean up after a test capture or add rather than asking the owner to; never on a species or sighting the owner made for real.
 

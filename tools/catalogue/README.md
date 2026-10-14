@@ -32,9 +32,13 @@ and builds never touch the network.
 make catalogue-argentina    # or: make catalogue, which builds both regions
 ```
 
-Its `region.json` carries `"idPrefix": "ar-"`, which the build puts on every species id,
-because both regions share one species table and a slug such as `house-sparrow` exists in
-each. Ecosystem ids share a table too and carry the prefix by hand. The rules above and
+Its `region.json` carries `"idPrefix": "ar-"`, which the build puts on every species id so
+an Argentine slug cannot collide with a different Pacific species, and
+`"sharesIdsWith": "pacific.json"`, which overrides the prefix for any species the Pacific
+asset already carries (matched by scientific name): that species takes the Pacific id, and
+the app lists the one row in both dexes (DESIGN.md D95). So **build `pacific.json` first**;
+`make catalogue` does. Ecosystem ids share a table too and carry the prefix by hand. Each
+region keeps its own `catalogueVersion`, and bumping one re-imports that region alone. The rules above and
 below hold unchanged; the edible rule becomes "hunted or fished legally in Argentina and
 commonly eaten there". Six Argentine names are pinned with `wikipediaTitle`, and four
 with an `overrides.scientificName`, where GBIF lumps a species into a neighbour (the
@@ -65,7 +69,9 @@ A cold run takes roughly 25–30 minutes: it sleeps between requests to be polit
 to Wikipedia (1 s) and GBIF (0.5 s).
 
 **Every HTTP response is cached** under `cache/<sha1-of-url>.json`, so a second
-run makes zero requests and finishes in seconds. `cache/` is disposable — delete
+run makes zero requests and finishes in seconds — when the cache is whole. It never
+expires but is local and git-ignored, and a partly missing cache refetches and brings in
+upstream drift, so diff the asset against `HEAD` after any rebuild. `cache/` is disposable — delete
 it for a genuinely cold run. It also holds `cache/report.txt`, the coverage
 report from the last run.
 
