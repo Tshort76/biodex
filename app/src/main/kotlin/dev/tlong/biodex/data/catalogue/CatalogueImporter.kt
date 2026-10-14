@@ -73,7 +73,7 @@ class CatalogueImporter(
             is ReadResult.Ok -> parsed.document
         }
 
-        val existing = store.existingSpecies(document.regionId)
+        val existing = store.existingSpecies()
         return when (
             val decision =
                 CatalogueReconciler.decide(store.catalogueVersion(document.regionId), document, existing)

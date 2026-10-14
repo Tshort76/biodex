@@ -188,3 +188,25 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         db.execSQL("ALTER TABLE `captures` ADD COLUMN `wild` INTEGER NOT NULL DEFAULT 1")
     }
 }
+
+/**
+ * D95: a region becomes a filter over one set of species. Every existing row is listed in its
+ * own region under its own number, so each dex reads exactly as before.
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `species_regions` (`speciesId` TEXT NOT NULL, " +
+                "`regionId` TEXT NOT NULL, `dexNumber` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`speciesId`, `regionId`), FOREIGN KEY(`speciesId`) " +
+                "REFERENCES `species`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_species_regions_regionId` ON `species_regions` (`regionId`)",
+        )
+        db.execSQL(
+            "INSERT INTO `species_regions` (`speciesId`, `regionId`, `dexNumber`) " +
+                "SELECT `id`, `regionId`, `dexNumber` FROM `species`",
+        )
+    }
+}

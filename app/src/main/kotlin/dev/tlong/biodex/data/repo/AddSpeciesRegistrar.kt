@@ -21,7 +21,10 @@ import java.util.UUID
  */
 class AddSpeciesRegistrar(
     private val store: UserSpeciesStore,
-    /** D94: read on every add, so a species lands in whichever regional dex is on screen. */
+    /**
+     * D94: read on every add, so a species lands in whichever regional dex is on screen. In the
+     * All view ([ALL_REGIONS_ID], D95) it joins no regional dex and shows in All alone.
+     */
     private val regionId: () -> String = { DEFAULT_REGION_ID },
     private val newSpeciesId: () -> String = { "user-" + UUID.randomUUID().toString() },
 ) {
@@ -46,7 +49,7 @@ class AddSpeciesRegistrar(
         val record = UserSpeciesRecord(
             id = newSpeciesId(),
             regionId = region,
-            dexNumber = nextUserDexNumber(store.maxUserDexNumber(region)),
+            dexNumber = nextUserDexNumber(store.maxUserDexNumber()),
             detailsPending = detailsPendingFor(normalized),
             fields = normalized,
             userEditedFields = userEditedFields,

@@ -15,12 +15,9 @@ class UserNameSweep(private val db: AppDatabase) {
 
     /** Returns how many rows were respelled, across every region (D94). */
     suspend fun run(): Int {
-        val corrections = db.regionDao().regionsOnce().flatMap { region ->
-            nameCorrections(
-                db.speciesDao().userSpeciesOnce(region.id)
-                    .map { NamedSpecies(it.id, it.commonName, it.scientificName) },
-            )
-        }
+        val corrections = nameCorrections(
+            db.speciesDao().userSpeciesOnce().map { NamedSpecies(it.id, it.commonName, it.scientificName) },
+        )
         if (corrections.isEmpty()) return 0
         db.withTransaction {
             for (c in corrections) db.speciesDao().rename(c.id, c.commonName, c.scientificName)

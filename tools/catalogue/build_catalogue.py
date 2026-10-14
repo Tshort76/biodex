@@ -718,6 +718,21 @@ def slugify(name: str) -> str:
     return text.strip("-")
 
 
+def apply_shared_ids(built, region):
+    """D95: a species another region's asset already carries takes that region's id.
+
+    One species is one row in the app, whichever dexes list it, so a catch counts in every
+    region. The match is on the scientific name GBIF resolved, which both builds share.
+    """
+    shared = region.get("sharesIdsWith")
+    if not shared:
+        return
+    other = json.loads((ASSET_DIR / shared).read_text(encoding="utf-8"))
+    by_name = {s["scientificName"]: s["id"] for s in other["species"]}
+    for record in built:
+        record["id"] = by_name.get(record["scientificName"], record["id"])
+
+
 USES_SECTION_WORDS = ("uses", "culinary", "edib", "medicin", "ethnobot")
 
 
@@ -1435,6 +1450,7 @@ def main():
     id_prefix = region.get("idPrefix", "")
     for record in built:
         record["id"] = id_prefix + record["id"]
+    apply_shared_ids(built, region)
 
     # Lift the pipeline-only facts out of the records before anything is written.
     internals = {}

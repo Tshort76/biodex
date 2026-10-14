@@ -95,7 +95,7 @@ class ConfirmSpeciesViewModel(
     private fun start(draft: AddSpeciesDraft) = viewModelScope.launch {
         ecosystems = repository.ecosystems().first()
         held = repository.speciesSummaries().first()
-        nextDexNumber = nextUserDexNumber(repository.maxUserDexNumber(repository.activeRegionNow()))
+        nextDexNumber = nextUserDexNumber(repository.maxUserDexNumber())
         existing = draft.backfillSpeciesId?.let { repository.userSpecies(it) }
         if (draft.isBackfill && existing == null) {
             _uiState.value = ConfirmSpeciesUiState.Missing

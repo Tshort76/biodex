@@ -49,14 +49,21 @@ const val SYNC_CAUGHT_AT_SQL =
 @Dao
 interface SpeciesDao {
 
-    @Query("SELECT * FROM species WHERE regionId = :regionId ORDER BY dexNumber ASC")
-    fun observeSpecies(regionId: String): Flow<List<SpeciesEntity>>
+    /** D95: every species; a region's dex is a filter over this through `species_regions`. */
+    @Query("SELECT * FROM species ORDER BY regionId, dexNumber ASC")
+    fun observeAllSpecies(): Flow<List<SpeciesEntity>>
+
+    /** The species a region's dex lists (D95), whichever region is their home. */
+    @Query(
+        """
+        SELECT s.* FROM species s INNER JOIN species_regions r ON r.speciesId = s.id
+        WHERE r.regionId = :regionId ORDER BY r.dexNumber ASC
+        """,
+    )
+    suspend fun speciesOnce(regionId: String): List<SpeciesEntity>
 
     @Query("SELECT * FROM species WHERE id = :speciesId")
     fun observeSpeciesById(speciesId: String): Flow<SpeciesEntity?>
-
-    @Query("SELECT * FROM species WHERE regionId = :regionId ORDER BY dexNumber ASC")
-    suspend fun speciesOnce(regionId: String): List<SpeciesEntity>
 
     /** D94: a backup carries every region's species, not only the one on screen. */
     @Query("SELECT * FROM species ORDER BY regionId, dexNumber ASC")
@@ -66,16 +73,16 @@ interface SpeciesDao {
     @Query("SELECT * FROM species WHERE id = :speciesId")
     suspend fun speciesOnceById(speciesId: String): SpeciesEntity?
 
-    @Query("SELECT COUNT(*) FROM species WHERE regionId = :regionId AND source = 'curated'")
-    fun observeCuratedCount(regionId: String): Flow<Int>
-
-    /** Slice 7 allocates the next U-number from this. Null when no user species exist yet. */
-    @Query("SELECT MAX(dexNumber) FROM species WHERE regionId = :regionId AND source = 'user'")
-    suspend fun maxUserDexNumber(regionId: String): Int?
+    /**
+     * Slice 7 allocates the next U-number from this. Null when no user species exist yet.
+     * Across every region (D95), so the All view never shows two species under one U-number.
+     */
+    @Query("SELECT MAX(dexNumber) FROM species WHERE source = 'user'")
+    suspend fun maxUserDexNumber(): Int?
 
     /** D45's sweep reads only the rows the user added; curated spelling is the catalogue's. */
-    @Query("SELECT * FROM species WHERE regionId = :regionId AND source = 'user'")
-    suspend fun userSpeciesOnce(regionId: String): List<SpeciesEntity>
+    @Query("SELECT * FROM species WHERE source = 'user'")
+    suspend fun userSpeciesOnce(): List<SpeciesEntity>
 
     /** D45: names only — every other column, `userEditedFields` included, is left alone. */
     @Query("UPDATE species SET commonName = :commonName, scientificName = :scientificName WHERE id = :id")
@@ -101,6 +108,15 @@ interface EcosystemDao {
     @Query("SELECT * FROM ecosystems WHERE regionId = :regionId ORDER BY sortOrder ASC")
     suspend fun ecosystemsOnce(regionId: String): List<EcosystemEntity>
 
+    /** D95's All view: every region's ecosystems, region by region. */
+    @Query(
+        """
+        SELECT e.* FROM ecosystems e LEFT JOIN regions r ON r.id = e.regionId
+        ORDER BY r.sortOrder ASC, e.sortOrder ASC
+        """,
+    )
+    fun observeAllEcosystems(): Flow<List<EcosystemEntity>>
+
     @Query("SELECT * FROM ecosystems")
     suspend fun allEcosystemsOnce(): List<EcosystemEntity>
 
@@ -110,29 +126,34 @@ interface EcosystemDao {
     @Upsert
     suspend fun upsertAll(ecosystems: List<EcosystemEntity>)
 
+    /** Every region's links: a shared species carries ecosystems from each dex that lists it. */
+    /** One region's links: those to its own ecosystems. */
     @Query(
         """
         SELECT x.* FROM species_ecosystems x
-        INNER JOIN species s ON s.id = x.speciesId
-        WHERE s.regionId = :regionId
-        """,
-    )
-    fun observeMemberships(regionId: String): Flow<List<SpeciesEcosystemCrossRef>>
-
-    @Query(
-        """
-        SELECT x.* FROM species_ecosystems x
-        INNER JOIN species s ON s.id = x.speciesId
-        WHERE s.regionId = :regionId
+        INNER JOIN ecosystems e ON e.id = x.ecosystemId
+        WHERE e.regionId = :regionId
         """,
     )
     suspend fun membershipsOnce(regionId: String): List<SpeciesEcosystemCrossRef>
+
+    @Query("SELECT * FROM species_ecosystems")
+    fun observeAllMemberships(): Flow<List<SpeciesEcosystemCrossRef>>
 
     @Upsert
     suspend fun upsertMemberships(rows: List<SpeciesEcosystemCrossRef>)
 
     @Query("DELETE FROM species_ecosystems WHERE speciesId IN (:speciesIds)")
     suspend fun deleteMembershipsFor(speciesIds: List<String>)
+
+    /** D95: a region's import rewrites its own ecosystems' links and leaves another region's. */
+    @Query(
+        """
+        DELETE FROM species_ecosystems WHERE speciesId IN (:speciesIds)
+        AND ecosystemId IN (SELECT id FROM ecosystems WHERE regionId = :regionId)
+        """,
+    )
+    suspend fun deleteRegionMembershipsFor(speciesIds: List<String>, regionId: String)
 }
 
 @Dao
@@ -302,4 +323,25 @@ interface MetaDao {
 
     @Upsert
     suspend fun put(meta: MetaEntity)
+}
+
+/** D95: which dexes list each species. */
+@Dao
+interface SpeciesRegionDao {
+
+    @Query("SELECT * FROM species_regions")
+    fun observeAll(): Flow<List<SpeciesRegionEntity>>
+
+    @Query("SELECT * FROM species_regions")
+    suspend fun allOnce(): List<SpeciesRegionEntity>
+
+    @Query("DELETE FROM species_regions WHERE regionId = :regionId")
+    suspend fun deleteRegion(regionId: String)
+
+    @Upsert
+    suspend fun upsertAll(rows: List<SpeciesRegionEntity>)
+
+    /** A user species' listing: written once, and never moved to a curated number. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(row: SpeciesRegionEntity)
 }

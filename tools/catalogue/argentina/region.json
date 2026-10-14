@@ -1,8 +1,9 @@
 {
-  "catalogueVersion": 2,
+  "catalogueVersion": 3,
   "regionId": "argentina",
   "regionName": "Argentina",
   "idPrefix": "ar-",
+  "sharesIdsWith": "pacific.json",
   "ecosystems": [
     { "id": "ar-pampas",          "name": "Pampas & Delta Wetlands",           "sortOrder": 1 },
     { "id": "ar-coast",           "name": "Patagonian Coast & Sea",            "sortOrder": 2 },
@@ -21,10 +22,13 @@
     "'idPrefix' goes on every species id the build writes, because the species table is",
     "shared with the Pacific region and a slug such as 'house-sparrow' exists in both.",
     "Ecosystem ids carry the same prefix by hand, since they share a table too.",
+    "'sharesIdsWith' overrides the prefix for a species pacific.json already carries: it",
+    "takes the Pacific id, so one species is one row and a catch counts in both (D95).",
     "The ecosystems follow the trip: Buenos Aires (pampas, delta, cities), Puerto Madryn",
     "(coast, steppe), Bariloche and El Chaltén (Andean forest), El Calafate (steppe),",
     "Mendoza (monte, high Andes), Salta (yungas, puna, monte) and Iguazú (Atlantic forest).",
     "Version 2 pins photographs for the Argentine Hake and Darwin's Tree Iguana, whose",
-    "articles lead with a catch chart and a range map."
+    "articles lead with a catch chart and a range map. Version 3 shares the 29 species",
+    "both regions list with the Pacific (D95)."
   ]
 }

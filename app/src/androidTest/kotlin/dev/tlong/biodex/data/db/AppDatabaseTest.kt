@@ -84,7 +84,7 @@ class AppDatabaseTest {
             ),
         )
 
-        val ids = db.speciesDao().observeSpecies("pacific").first().map { it.id }
+        val ids = db.speciesDao().observeAllSpecies().first().map { it.id }
         assertEquals(listOf("heron", "owl", "user-1"), ids)
     }
 
@@ -175,17 +175,17 @@ class AppDatabaseTest {
 
     @Test
     fun theNextUserDexNumberIsDerivedFromTheHighestExistingOne() = runBlocking {
-        assertNull(db.speciesDao().maxUserDexNumber("pacific"))
+        assertNull(db.speciesDao().maxUserDexNumber())
 
         db.speciesDao().upsertAll(
             listOf(
                 species("heron", 3),
                 species("user-1", 1001, SpeciesSource.USER),
-                species("user-2", 1002, SpeciesSource.USER),
+                species("user-2", 1002, SpeciesSource.USER).copy(regionId = "argentina"),
             ),
         )
 
-        assertEquals(1002, db.speciesDao().maxUserDexNumber("pacific"))
+        assertEquals(1002, db.speciesDao().maxUserDexNumber())
     }
 
     // -----------------------------------------------------------------------
@@ -211,7 +211,7 @@ class AppDatabaseTest {
         // One sortable column still orders the whole grid: animals, then fungi.
         assertEquals(
             listOf("heron", "agaric"),
-            db.speciesDao().speciesOnce("pacific").map { it.id },
+            db.speciesDao().allSpeciesOnce().map { it.id },
         )
 
         // The enum stores its wire name, so a row read raw matches the asset's vocabulary.

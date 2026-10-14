@@ -17,7 +17,8 @@ interface CatalogueStore {
     /** The region's imported catalogue version, or null when it has never been imported (D94). */
     suspend fun catalogueVersion(regionId: String): Int?
 
-    suspend fun existingSpecies(regionId: String): List<ExistingSpecies>
+    /** Every species in every region (D95): which dexes list a row decides what an import may do. */
+    suspend fun existingSpecies(): List<ExistingSpecies>
 
     /** Applies the whole plan atomically. */
     suspend fun apply(plan: ImportPlan)
@@ -28,10 +29,19 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
     override suspend fun catalogueVersion(regionId: String): Int? =
         db.metaDao().value(MetaEntity.catalogueVersionKey(regionId))?.trim()?.toIntOrNull()
 
-    override suspend fun existingSpecies(regionId: String): List<ExistingSpecies> {
+    override suspend fun existingSpecies(): List<ExistingSpecies> {
         val caught = db.entryDao().speciesIdsWithEntries().toSet()
-        return db.speciesDao().speciesOnce(regionId).map {
-            ExistingSpecies(id = it.id, source = it.source, hasEntry = it.id in caught, scientificName = it.scientificName)
+        val listings = db.speciesRegionDao().allOnce()
+            .groupBy({ it.speciesId }, { it.regionId to it.dexNumber })
+        return db.speciesDao().allSpeciesOnce().map {
+            ExistingSpecies(
+                id = it.id,
+                source = it.source,
+                hasEntry = it.id in caught,
+                scientificName = it.scientificName,
+                homeRegionId = it.regionId,
+                regions = listings[it.id].orEmpty().toMap(),
+            )
         }
     }
 
@@ -68,9 +78,12 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
             db.speciesDao().deleteByIds(plan.speciesDeletions)
         }
 
+        db.speciesRegionDao().deleteRegion(plan.regionId)
+        db.speciesRegionDao().upsertAll(plan.regionMembers)
+
         val touched = plan.membershipReplacements.keys.toList()
         if (touched.isNotEmpty()) {
-            db.ecosystemDao().deleteMembershipsFor(touched)
+            db.ecosystemDao().deleteRegionMembershipsFor(touched, plan.regionId)
             val rows = plan.membershipReplacements.flatMap { (speciesId, ecosystemIds) ->
                 ecosystemIds.map { SpeciesEcosystemCrossRef(speciesId, it) }
             }

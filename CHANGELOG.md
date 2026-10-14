@@ -6,6 +6,12 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28 — 2026-10-14
+
+- **Changed** — a species is one species wherever you find it. The 29 species both dexes list, such as the Great Egret, the Barn Swallow and the Orca, are now one entry, so catching one in either region marks it caught in both. A shared species keeps the Pacific's name, so Argentina's Puma reads as the Mountain Lion. (`D95`)
+- **Added** — **All regions** in the region menu lists every species in both dexes, numbered once: the Pacific's species first, then those only Argentina lists. Its meters and Stats count every species once. (`D95`)
+- **Changed** — a species you add is numbered across both dexes, so no two share a `U` number. One added while All regions is on screen joins neither regional dex and shows in All regions only. (`D95`)
+
 ## v27 — 2026-10-13
 
 - **Added** — a second dex, the **Argentina BioDex**: 303 species common around Buenos Aires, Puerto Madryn, Bariloche, El Calafate, El Chaltén, Mendoza, Salta and Iguazú — 273 animals (168 birds, 39 mammals, 11 reptiles, 7 amphibians, 17 fish, 19 insects, 12 other invertebrates) and 30 fungi, over nine ecosystems. Twenty-seven of the animals carry the Food source tag; five fungi carry a one-line caution. Tap the region pill beside "BioDex" to switch dexes. The app remembers your choice, and Stats, Identify and adding a species follow it. (`C03`, `D94`)

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships two curated regions, each its own dex, switched from the region pill on the grid (`DESIGN.md` D94): the Pacific USA BioDex (308 animals, 57 fungi) and the Argentina BioDex (273 animals, 30 fungi). (Plants were a kingdom from v4 to v20 and were removed at the owner's request — `ARCHITECTURE.md` §12.2, `DESIGN.md` D59; do not bring them back.) Species start as silhouettes and unlock when the user registers a photo.
+A single-user Android app (Kotlin, Jetpack Compose, Room) that turns a real-world life list into a Pokédex. It ships two curated regions, each its own dex, switched from the region pill on the grid (`DESIGN.md` D94); a region is a filter over one set of species, so a species both list is one row and one catch, and the picker's All regions shows every species (D95): the Pacific USA BioDex (308 animals, 57 fungi) and the Argentina BioDex (273 animals, 30 fungi). (Plants were a kingdom from v4 to v20 and were removed at the owner's request — `ARCHITECTURE.md` §12.2, `DESIGN.md` D59; do not bring them back.) Species start as silhouettes and unlock when the user registers a photo.
 
 `README.md` is written for the user; `docs/BUILD.md` covers setup and signing, and `make` is the entry point for every routine build command.
 
@@ -42,7 +42,7 @@ Three traps worth knowing before you trust a green run:
 - **A full catalogue build exceeds the default 2-minute Bash timeout.** Pass a longer one (600000 ms). Responses cache under `tools/catalogue/cache/`, so a re-run makes zero HTTP requests; `--refresh` bypasses it.
 - **`make test-device` uninstalls the app when it finishes**, so it now refuses to start while the phone holds registered photos and tells you what an uninstall costs; `make test-device CONFIRM=uninstall` overrides it. `make install` puts the app back, but every photo still needs re-linking — see "Driving the phone".
 
-Counts as of the last commit: **443 JVM, 44 instrumented, 55 Python.**
+Counts as of the last commit: **446 JVM, 44 instrumented, 55 Python.**
 
 ## The design registers — the convention to respect
 
@@ -93,7 +93,7 @@ val uiState: StateFlow<DexGridUiState> = dexGridUiState(…).stateIn(viewModelSc
 
 ## The catalogue
 
-`app/src/main/assets/catalogue/pacific.json` is **generated and committed**, so no build touches the network. It is built by `tools/catalogue/build_catalogue.py` from three hand-authored inputs (`region.json` plus `curated_animals.json` and `curated_fungi.json`) joined against GBIF, Wikipedia and Wikimedia Commons. Argentina's three inputs live in `tools/catalogue/argentina/` and build `argentina.json` (`make catalogue-argentina`). Its `region.json` carries `idPrefix: "ar-"`, which the build puts on every species id, because both regions share the species table and slugs such as `house-sparrow` exist in each. Its ecosystem ids carry the prefix by hand.
+`app/src/main/assets/catalogue/pacific.json` is **generated and committed**, so no build touches the network. It is built by `tools/catalogue/build_catalogue.py` from three hand-authored inputs (`region.json` plus `curated_animals.json` and `curated_fungi.json`) joined against GBIF, Wikipedia and Wikimedia Commons. Argentina's three inputs live in `tools/catalogue/argentina/` and build `argentina.json` (`make catalogue-argentina`). Its `region.json` carries `idPrefix: "ar-"`, which the build puts on every species id so an Argentine slug cannot collide with a different Pacific species, and `sharesIdsWith: "pacific.json"`, which overrides the prefix for a species the Pacific asset already carries (matched by scientific name): that species takes the Pacific id, and the app lists the one row in both dexes through `species_regions` (D95). Its ecosystem ids carry the prefix by hand. Build `pacific.json` before `argentina.json`, since the second reads the first.
 
 Rules the build **enforces rather than trusts**, and they should stay that way:
 

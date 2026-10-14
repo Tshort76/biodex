@@ -3,6 +3,8 @@ package dev.tlong.biodex.data.repo
 import dev.tlong.biodex.data.db.EntryStatusRow
 import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.data.db.SpeciesRegionEntity
+import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
 import org.junit.Assert.assertEquals
@@ -22,9 +24,10 @@ class SummaryAssemblyTest {
         id: String,
         dexNumber: Int,
         source: SpeciesSource = SpeciesSource.CURATED,
+        regionId: String = "pacific",
     ) = SpeciesEntity(
         id = id,
-        regionId = "pacific",
+        regionId = regionId,
         dexNumber = dexNumber,
         source = source,
         commonName = id,
@@ -96,5 +99,28 @@ class SummaryAssemblyTest {
         )
 
         assertEquals(listOf("#003", "#021", "U01"), summaries.map { it.displayNumber })
+    }
+
+    @Test
+    fun `a regional dex lists its own species under its own numbers, and All numbers them once (D95)`() {
+        val species = listOf(
+            species("egret", 5),
+            species("hornero", 1, regionId = "argentina"),
+            species("mine", 9001, SpeciesSource.USER),
+            species("puffball", 4001, regionId = "argentina").copy(kingdom = Kingdom.FUNGUS, taxClass = TaxClass.MUSHROOM),
+        )
+        val listings = listOf(
+            SpeciesRegionEntity("egret", "pacific", 5),
+            SpeciesRegionEntity("egret", "argentina", 2),
+            SpeciesRegionEntity("hornero", "argentina", 1),
+            SpeciesRegionEntity("mine", "pacific", 9001),
+            SpeciesRegionEntity("puffball", "argentina", 4001),
+        )
+        fun view(regionId: String) =
+            dexView(regionId, species, listings, listOf("pacific", "argentina")).map { it.id to it.dexNumber }
+
+        assertEquals(listOf("egret" to 5, "mine" to 9001), view("pacific"))
+        assertEquals(listOf("hornero" to 1, "egret" to 2, "puffball" to 4001), view("argentina"))
+        assertEquals(listOf("egret" to 1, "hornero" to 2, "puffball" to 4001, "mine" to 9001), view(ALL_REGIONS_ID))
     }
 }

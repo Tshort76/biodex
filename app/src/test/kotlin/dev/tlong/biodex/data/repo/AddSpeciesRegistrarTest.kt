@@ -20,8 +20,8 @@ class FakeUserSpeciesStore : UserSpeciesStore {
     val species = linkedMapOf<String, UserSpeciesRecord>()
     val memberships = mutableMapOf<String, List<String>>()
 
-    override suspend fun maxUserDexNumber(regionId: String): Int? =
-        species.values.filter { it.regionId == regionId }.maxOfOrNull { it.dexNumber }
+    override suspend fun maxUserDexNumber(): Int? =
+        species.values.maxOfOrNull { it.dexNumber }
 
     override suspend fun userSpecies(speciesId: String): UserSpeciesRecord? = species[speciesId]
 
@@ -68,7 +68,7 @@ class AddSpeciesRegistrarTest {
     }
 
     @Test
-    fun `a species lands in the region on screen when it is added, numbered within it (D94)`() = runBlocking {
+    fun `a species lands in the region on screen when it is added (D94)`() = runBlocking {
         var onScreen = "pacific"
         val switching = AddSpeciesRegistrar(
             store = store,
@@ -82,7 +82,6 @@ class AddSpeciesRegistrarTest {
 
         val record = store.species.getValue(created.speciesId)
         assertEquals("argentina", record.regionId)
-        assertEquals(9001, created.dexNumber)
     }
 
     @Test

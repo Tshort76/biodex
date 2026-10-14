@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
+import dev.tlong.biodex.data.repo.ALL_REGIONS_ID
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Meter
 import dev.tlong.biodex.domain.Region
@@ -301,6 +302,7 @@ private fun GridAppBar(
 /**
  * D94: the region pill is the switch between regional dexes. With one region bundled it is the
  * plain pill it always was; with more, a ▾ says it opens, and the menu ticks the one on screen.
+ * D95: All regions sits at the foot of the menu.
  */
 @Composable
 private fun RegionPicker(
@@ -324,10 +326,12 @@ private fun RegionPicker(
         ) {
             regions.forEach { region ->
                 val isSelected = region.id == activeRegionId
+                // D95: the All view is not a regional dex, so it reads as itself.
+                val name = if (region.id == ALL_REGIONS_ID) region.name else "${region.name} BioDex"
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = if (isSelected) "✓  ${region.name} BioDex" else "${region.name} BioDex",
+                            text = if (isSelected) "✓  $name" else name,
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (isSelected) colors.accent else colors.fg,
                         )

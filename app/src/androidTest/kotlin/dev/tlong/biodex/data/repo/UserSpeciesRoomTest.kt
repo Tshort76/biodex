@@ -83,14 +83,14 @@ class UserSpeciesRoomTest {
 
     @Test
     fun userNumbersIgnoreTheCuratedCatalogue() = runBlocking {
-        assertNull(repository.maxUserDexNumber("pacific"))
+        assertNull(repository.maxUserDexNumber())
 
         repository.upsertUserSpecies(
             record("user-1", 9001, SpeciesFields(commonName = "Varied Thrush")),
             listOf("coastal-rainforest"),
         )
 
-        assertEquals(9001, repository.maxUserDexNumber("pacific"))
+        assertEquals(9001, repository.maxUserDexNumber())
     }
 
     @Test

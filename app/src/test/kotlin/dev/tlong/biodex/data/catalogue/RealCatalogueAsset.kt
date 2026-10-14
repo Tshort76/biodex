@@ -35,6 +35,9 @@ object RealCatalogueAsset {
         if (requested in CATALOGUE_ASSET_PATHS) fileFor(requested).inputStream() else null
     }
 
+    fun documentFor(assetPath: String): CatalogueDocument =
+        catalogueJson.decodeFromString(fileFor(assetPath).readText())
+
     val document: CatalogueDocument by lazy {
         catalogueJson.decodeFromString(path.readText())
     }

@@ -8,6 +8,7 @@ import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.MetaEntity
 import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.data.db.SpeciesRegionEntity
 import dev.tlong.biodex.domain.SpeciesSource
 
 /**
@@ -25,6 +26,8 @@ class FakeCatalogueStore : CatalogueStore {
     val ecosystems = linkedMapOf<String, EcosystemEntity>()
     val regions = linkedMapOf<String, RegionEntity>()
     val memberships = mutableSetOf<Pair<String, String>>()
+    /** D95's `species_regions`. */
+    val listings = mutableSetOf<SpeciesRegionEntity>()
     val entries = linkedMapOf<String, EntryEntity>()
     val captures = mutableListOf<CaptureEntity>()
     val meta = mutableMapOf<String, String>()
@@ -36,19 +39,34 @@ class FakeCatalogueStore : CatalogueStore {
     override suspend fun catalogueVersion(regionId: String): Int? =
         meta[MetaEntity.catalogueVersionKey(regionId)]?.trim()?.toIntOrNull()
 
-    override suspend fun existingSpecies(regionId: String): List<ExistingSpecies> =
-        species.values
-            .filter { it.regionId == regionId }
-            .map { ExistingSpecies(it.id, it.source, entries.containsKey(it.id)) }
+    override suspend fun existingSpecies(): List<ExistingSpecies> =
+        species.values.map { row ->
+            ExistingSpecies(
+                id = row.id,
+                source = row.source,
+                hasEntry = entries.containsKey(row.id),
+                scientificName = row.scientificName,
+                homeRegionId = row.regionId,
+                regions = listings.filter { it.speciesId == row.id }.associate { it.regionId to it.dexNumber },
+            )
+        }
 
+    /** The same order as `RoomCatalogueStore.apply`, merges included. */
     override suspend fun apply(plan: ImportPlan) {
         applyCount++
         regions[plan.region.id] = plan.region
         plan.ecosystems.forEach { ecosystems[it.id] = it }
         plan.speciesUpserts.forEach { species[it.id] = it }
+        plan.merges.forEach { (from, into) ->
+            entries.remove(from)?.let { moving -> entries.putIfAbsent(into, moving.copy(speciesId = into)) }
+            captures.replaceAll { if (it.speciesId == from) it.copy(speciesId = into) else it }
+            cascadeDeleteSpecies(from)
+        }
         plan.speciesDeletions.forEach { cascadeDeleteSpecies(it) }
+        listings.removeAll { it.regionId == plan.regionId }
+        listings += plan.regionMembers
         plan.membershipReplacements.forEach { (speciesId, ecosystemIds) ->
-            memberships.removeAll { it.first == speciesId }
+            memberships.removeAll { it.first == speciesId && ecosystems[it.second]?.regionId == plan.regionId }
             ecosystemIds.forEach { memberships += speciesId to it }
         }
         meta[MetaEntity.catalogueVersionKey(plan.regionId)] = plan.catalogueVersion.toString()
@@ -58,13 +76,21 @@ class FakeCatalogueStore : CatalogueStore {
     private fun cascadeDeleteSpecies(speciesId: String) {
         species.remove(speciesId)
         memberships.removeAll { it.first == speciesId }
+        listings.removeAll { it.speciesId == speciesId }
         entries.remove(speciesId)
         captures.removeAll { it.speciesId == speciesId }
     }
 
+    fun listedIn(regionId: String): Set<String> =
+        listings.filter { it.regionId == regionId }.map { it.speciesId }.toSet()
+
     // --- seeding helpers -----------------------------------------------------------
 
-    fun seedSpecies(vararg rows: SpeciesEntity) = rows.forEach { species[it.id] = it }
+    /** Each row listed in its home region, as `MIGRATION_8_9` leaves every row. */
+    fun seedSpecies(vararg rows: SpeciesEntity) = rows.forEach {
+        species[it.id] = it
+        listings += SpeciesRegionEntity(it.id, it.regionId, it.dexNumber)
+    }
 
     fun seedCaught(speciesId: String, captureId: String = "$speciesId-capture") {
         entries[speciesId] = EntryEntity(speciesId, caughtAt = 1_700_000_000_000L)

@@ -28,8 +28,9 @@ import androidx.room.TypeConverters
         CaptureEntity::class,
         MetaEntity::class,
         RegionEntity::class,
+        SpeciesRegionEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -41,13 +42,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun captureDao(): CaptureDao
     abstract fun metaDao(): MetaDao
     abstract fun regionDao(): RegionDao
+    abstract fun speciesRegionDao(): SpeciesRegionDao
 
     companion object {
         const val NAME = "biodex.db"
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .build()
     }
 }

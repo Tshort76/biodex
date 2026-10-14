@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 2,
+  "catalogueVersion": 3,
   "regionId": "argentina",
   "regionName": "Argentina",
   "rangeGridWidth": 128,
@@ -1010,7 +1010,7 @@
       }
     },
     {
-      "id": "ar-rock-pigeon",
+      "id": "rock-pigeon",
       "dexNumber": 7,
       "commonName": "Rock Pigeon",
       "scientificName": "Columba livia",
@@ -1995,7 +1995,7 @@
       }
     },
     {
-      "id": "ar-house-sparrow",
+      "id": "house-sparrow",
       "dexNumber": 8,
       "commonName": "House Sparrow",
       "scientificName": "Passer domesticus",
@@ -9076,7 +9076,7 @@
       }
     },
     {
-      "id": "ar-great-egret",
+      "id": "great-egret",
       "dexNumber": 54,
       "commonName": "Great Egret",
       "scientificName": "Ardea alba",
@@ -10002,7 +10002,7 @@
       }
     },
     {
-      "id": "ar-snowy-egret",
+      "id": "snowy-egret",
       "dexNumber": 55,
       "commonName": "Snowy Egret",
       "scientificName": "Egretta thula",
@@ -10550,7 +10550,7 @@
       }
     },
     {
-      "id": "ar-black-crowned-night-heron",
+      "id": "black-crowned-night-heron",
       "dexNumber": 57,
       "commonName": "Black-crowned Night Heron",
       "scientificName": "Nycticorax nycticorax",
@@ -14634,7 +14634,7 @@
       }
     },
     {
-      "id": "ar-turkey-vulture",
+      "id": "turkey-vulture",
       "dexNumber": 80,
       "commonName": "Turkey Vulture",
       "scientificName": "Cathartes aura",
@@ -21878,7 +21878,7 @@
       }
     },
     {
-      "id": "ar-peregrine-falcon",
+      "id": "peregrine-falcon",
       "dexNumber": 165,
       "commonName": "Peregrine Falcon",
       "scientificName": "Falco peregrinus",
@@ -22674,7 +22674,7 @@
       }
     },
     {
-      "id": "ar-american-kestrel",
+      "id": "american-kestrel",
       "dexNumber": 166,
       "commonName": "American Kestrel",
       "scientificName": "Falco sparverius",
@@ -23214,7 +23214,7 @@
       }
     },
     {
-      "id": "ar-barn-swallow",
+      "id": "barn-swallow",
       "dexNumber": 168,
       "commonName": "Barn Swallow",
       "scientificName": "Hirundo rustica",
@@ -26147,7 +26147,7 @@
       }
     },
     {
-      "id": "ar-orca",
+      "id": "orca",
       "dexNumber": 179,
       "commonName": "Orca",
       "scientificName": "Orcinus orca",
@@ -26930,7 +26930,7 @@
       }
     },
     {
-      "id": "ar-puma",
+      "id": "mountain-lion",
       "dexNumber": 189,
       "commonName": "Puma",
       "scientificName": "Puma concolor",
@@ -29981,7 +29981,7 @@
       }
     },
     {
-      "id": "ar-rainbow-trout",
+      "id": "rainbow-trout",
       "dexNumber": 226,
       "commonName": "Rainbow Trout",
       "scientificName": "Oncorhynchus mykiss",
@@ -30204,7 +30204,7 @@
       }
     },
     {
-      "id": "ar-brown-trout",
+      "id": "brown-trout",
       "dexNumber": 227,
       "commonName": "Brown Trout",
       "scientificName": "Salmo trutta",
@@ -30562,7 +30562,7 @@
       }
     },
     {
-      "id": "ar-chinook-salmon",
+      "id": "chinook-salmon",
       "dexNumber": 229,
       "commonName": "Chinook Salmon",
       "scientificName": "Oncorhynchus tshawytscha",
@@ -31944,7 +31944,7 @@
       }
     },
     {
-      "id": "ar-gulf-fritillary",
+      "id": "gulf-fritillary",
       "dexNumber": 244,
       "commonName": "Gulf Fritillary",
       "scientificName": "Dione vanillae",
@@ -32933,7 +32933,7 @@
       }
     },
     {
-      "id": "ar-argentine-ant",
+      "id": "argentine-ant",
       "dexNumber": 254,
       "commonName": "Argentine Ant",
       "scientificName": "Linepithema humile",
@@ -33190,7 +33190,7 @@
       }
     },
     {
-      "id": "ar-western-honey-bee",
+      "id": "western-honey-bee",
       "dexNumber": 256,
       "commonName": "Western Honey Bee",
       "scientificName": "Apis mellifera",
@@ -35072,7 +35072,7 @@
       }
     },
     {
-      "id": "ar-fly-agaric",
+      "id": "fly-agaric",
       "dexNumber": 1,
       "commonName": "Fly Agaric",
       "scientificName": "Amanita muscaria",
@@ -35368,7 +35368,7 @@
       }
     },
     {
-      "id": "ar-death-cap",
+      "id": "death-cap",
       "dexNumber": 2,
       "commonName": "Death Cap",
       "scientificName": "Amanita phalloides",
@@ -35775,7 +35775,7 @@
       }
     },
     {
-      "id": "ar-shaggy-ink-cap",
+      "id": "shaggy-mane",
       "dexNumber": 5,
       "commonName": "Shaggy Ink Cap",
       "scientificName": "Coprinus comatus",
@@ -36363,7 +36363,7 @@
       }
     },
     {
-      "id": "ar-green-spored-parasol",
+      "id": "green-spored-parasol",
       "dexNumber": 8,
       "commonName": "Green-spored Parasol",
       "scientificName": "Chlorophyllum molybdites",
@@ -36482,7 +36482,7 @@
       }
     },
     {
-      "id": "ar-sulphur-tuft",
+      "id": "sulphur-tuft",
       "dexNumber": 9,
       "commonName": "Sulphur Tuft",
       "scientificName": "Hypholoma fasciculare",
@@ -36745,7 +36745,7 @@
       }
     },
     {
-      "id": "ar-fairy-ring-champignon",
+      "id": "fairy-ring-mushroom",
       "dexNumber": 11,
       "commonName": "Fairy Ring Champignon",
       "scientificName": "Marasmius oreades",
@@ -37209,7 +37209,7 @@
       }
     },
     {
-      "id": "ar-turkey-tail",
+      "id": "turkey-tail",
       "dexNumber": 15,
       "commonName": "Turkey Tail",
       "scientificName": "Trametes versicolor",
@@ -37461,7 +37461,7 @@
       }
     },
     {
-      "id": "ar-splitgill",
+      "id": "split-gill",
       "dexNumber": 16,
       "commonName": "Splitgill",
       "scientificName": "Schizophyllum commune",
@@ -37744,7 +37744,7 @@
       }
     },
     {
-      "id": "ar-artists-bracket",
+      "id": "artists-conk",
       "dexNumber": 17,
       "commonName": "Artist's Bracket",
       "scientificName": "Ganoderma applanatum",
@@ -38563,7 +38563,7 @@
       }
     },
     {
-      "id": "ar-collared-earthstar",
+      "id": "collared-earthstar",
       "dexNumber": 26,
       "commonName": "Collared Earthstar",
       "scientificName": "Geastrum triplex",
@@ -38734,7 +38734,7 @@
       }
     },
     {
-      "id": "ar-common-puffball",
+      "id": "gem-studded-puffball",
       "dexNumber": 28,
       "commonName": "Common Puffball",
       "scientificName": "Lycoperdon perlatum",
@@ -39088,7 +39088,7 @@
       }
     },
     {
-      "id": "ar-orange-peel-fungus",
+      "id": "orange-peel-fungus",
       "dexNumber": 30,
       "commonName": "Orange Peel Fungus",
       "scientificName": "Aleuria aurantia",

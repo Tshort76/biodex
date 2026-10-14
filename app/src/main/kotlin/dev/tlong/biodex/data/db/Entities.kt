@@ -92,6 +92,32 @@ data class SpeciesEntity(
 )
 
 /**
+ * D95: which regional dexes list a species, and under what number. A species is one row
+ * whichever dexes carry it, so a catch counts in every region; a region is a filter over this
+ * table. `species.regionId` and `species.dexNumber` remain the *home* region (the one whose
+ * catalogue writes the row's text) and its number there. Added by [MIGRATION_8_9].
+ */
+@Entity(
+    tableName = "species_regions",
+    primaryKeys = ["speciesId", "regionId"],
+    indices = [Index(value = ["regionId"])],
+    foreignKeys = [
+        ForeignKey(
+            entity = SpeciesEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["speciesId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class SpeciesRegionEntity(
+    val speciesId: String,
+    val regionId: String,
+    /** Stored form, kingdom base included — the number this species carries in that dex. */
+    val dexNumber: Int,
+)
+
+/**
  * The regions the catalogue knows, seeded by the importer from the asset's `regionId` and
  * `regionName` — one row per bundled asset (`pacific` / "Pacific USA", `argentina` /
  * "Argentina", D94), ordered by [sortOrder] in the region picker. The table exists so the

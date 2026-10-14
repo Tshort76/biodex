@@ -3,6 +3,7 @@ package dev.tlong.biodex.data.catalogue
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.data.db.SpeciesRegionEntity
 import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.SearchMatch
 import dev.tlong.biodex.domain.SpeciesUse
@@ -33,6 +34,11 @@ import dev.tlong.biodex.domain.storedDexNumber
  *  - The asset numbers each kingdom from 1, and the stored number carries the kingdom's
  *    base — the plant range is what keeps the unique `(regionId, dexNumber)` index from
  *    rejecting plant 47 because animal 47 already exists (11.1).
+ *  - D95: one species is one row, whichever dexes list it, and `species_regions` says which.
+ *    A region's import replaces that region's listing and its own ecosystems' links, and
+ *    writes a row's text only when it is the row's home region (or the home no longer lists
+ *    it). A curated row only this region listed, which the asset now carries under another
+ *    id — the old `ar-` duplicate of a Pacific species — is merged like a user row.
  *  - `kingdom == taxClass.kingdom` holds on every row this plans. The declared kingdom wins
  *    a disagreement and the class falls back to that kingdom's default, so a curator typo
  *    costs one species its growth form rather than costing the whole import.
@@ -45,6 +51,10 @@ object CatalogueReconciler {
         val source: SpeciesSource,
         val hasEntry: Boolean,
         val scientificName: String? = null,
+        /** `species.regionId`: the region whose catalogue writes this row's text (D95). */
+        val homeRegionId: String = "pacific",
+        /** D95: every dex that lists this species → its stored number there. */
+        val regions: Map<String, Int> = mapOf(homeRegionId to 0),
     )
 
     data class ImportPlan(
@@ -58,6 +68,8 @@ object CatalogueReconciler {
         val speciesDeletions: List<String>,
         /** D89: user species id → the curated species id it is folded into. */
         val merges: Map<String, String> = emptyMap(),
+        /** D95: this region's whole listing, which replaces the stored one. */
+        val regionMembers: List<SpeciesRegionEntity> = emptyList(),
     )
 
     sealed interface ImportDecision {
@@ -78,6 +90,7 @@ object CatalogueReconciler {
         }
 
     fun plan(document: CatalogueDocument, existing: List<ExistingSpecies>): ImportPlan {
+        val regionId = document.regionId
         val existingById = existing.associateBy { it.id }
         val declaredEcosystemIds = document.ecosystems.map { it.id }.toSet()
 
@@ -86,8 +99,14 @@ object CatalogueReconciler {
             existingById[assetSpecies.id]?.source != SpeciesSource.USER
         }
         val assetIds = importable.map { it.id }.toSet()
+        val entities = importable.map { it.toEntity(regionId) }
 
-        val speciesUpserts = importable.map { it.toEntity(document.regionId) }
+        // D95: a species another dex is home to keeps that dex's text; this one only lists it.
+        val speciesUpserts = entities.filter { entity ->
+            val held = existingById[entity.id]
+            held == null || held.homeRegionId == regionId || held.homeRegionId !in held.regions
+        }
+        val listed = existing.filter { regionId in it.regions }
 
         // Unknown ecosystem ids are dropped rather than allowed to fail the whole import
         // on a foreign-key violation; the pipeline validates them, this is the backstop.
@@ -97,9 +116,19 @@ object CatalogueReconciler {
                 .distinct()
         }
 
-        val speciesDeletions = existing
-            .filter { it.source == SpeciesSource.CURATED && it.id !in assetIds && !it.hasEntry }
-            .map { it.id }
+        val merges = merges(importable, listed, regionId, assetIds)
+        // Dropped from this dex: a row another dex still lists only loses this listing, and a
+        // caught one keeps it, because deleting a caught species would cascade to its captures.
+        val dropped = listed.filter {
+            it.source == SpeciesSource.CURATED && it.id !in assetIds && it.id !in merges
+        }
+        val speciesDeletions = dropped.filter { it.regions.size == 1 && !it.hasEntry }.map { it.id }
+        val kept = listed.filter {
+            it.id !in assetIds && it.id !in merges && it.id !in speciesDeletions &&
+                (it.source == SpeciesSource.USER || it.regions.size == 1)
+        }
+        val regionMembers = entities.map { SpeciesRegionEntity(it.id, regionId, it.dexNumber) } +
+            kept.map { SpeciesRegionEntity(it.id, regionId, it.regions.getValue(regionId)) }
 
         return ImportPlan(
             regionId = document.regionId,
@@ -126,20 +155,30 @@ object CatalogueReconciler {
             speciesUpserts = speciesUpserts,
             membershipReplacements = membershipReplacements,
             speciesDeletions = speciesDeletions,
-            merges = merges(importable, existing),
+            merges = merges,
+            regionMembers = regionMembers,
         )
     }
 
     /**
      * D89. Each user species whose genus and species name the asset now carries, mapped to the
-     * curated species it becomes.
+     * curated species it becomes — and, D95, each curated row only this region listed that
+     * the asset now carries under another region's id.
      */
-    private fun merges(importable: List<CatalogueSpecies>, existing: List<ExistingSpecies>): Map<String, String> {
+    private fun merges(
+        importable: List<CatalogueSpecies>,
+        listed: List<ExistingSpecies>,
+        regionId: String,
+        assetIds: Set<String>,
+    ): Map<String, String> {
         val curatedByName = importable
             .mapNotNull { s -> s.scientificName?.let { SearchMatch.binomial(it) to s.id } }
             .toMap()
-        return existing
-            .filter { it.source == SpeciesSource.USER }
+        return listed
+            .filter {
+                it.source == SpeciesSource.USER ||
+                    (it.id !in assetIds && it.regions.keys == setOf(regionId))
+            }
             .mapNotNull { user ->
                 val into = user.scientificName?.let { curatedByName[SearchMatch.binomial(it)] }
                 into?.let { user.id to it }

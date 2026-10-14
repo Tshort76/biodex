@@ -13,8 +13,8 @@ import dev.tlong.biodex.domain.UserSpeciesRecord
  */
 interface UserSpeciesStore {
 
-    /** Null when no user-added species exists yet; the first one becomes 1001 (U01). */
-    suspend fun maxUserDexNumber(regionId: String): Int?
+    /** Null when no user-added species exists yet; the first one becomes 9001 (U01). Global (D95). */
+    suspend fun maxUserDexNumber(): Int?
 
     suspend fun userSpecies(speciesId: String): UserSpeciesRecord?
 

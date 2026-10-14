@@ -16,6 +16,7 @@ import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.EntryStatusRow
 import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.data.db.SpeciesRegionEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
 import dev.tlong.biodex.data.photo.CaptureStore
 import dev.tlong.biodex.data.photo.PlaceBackfillPlan
@@ -36,6 +37,7 @@ import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
+import dev.tlong.biodex.domain.storedDexNumber
 import dev.tlong.biodex.domain.UserSpeciesRecord
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +51,13 @@ import kotlinx.coroutines.flow.map
 
 /** The region a fresh install opens on, and the region of any row written before D94. */
 const val DEFAULT_REGION_ID = "pacific"
+
+/**
+ * D95: the region picker's All view — every species in every dex. Never a row in `regions`;
+ * a species added while it is on screen takes it as its home and joins no regional dex.
+ */
+const val ALL_REGIONS_ID = "all"
+const val ALL_REGIONS_NAME = "All regions"
 
 /**
  * The surface every screen consumes (ARCHITECTURE.md 3.1, 6.3). Slice 3 exposed reads only;
@@ -71,48 +80,63 @@ class DexRepository(
 
     private val entryStatusFlow: Flow<List<EntryStatusRow>> = db.entryDao().observeEntryStatuses()
 
-    private fun membershipFlow(regionId: String): Flow<List<SpeciesEcosystemCrossRef>> =
-        db.ecosystemDao().observeMemberships(regionId)
+    private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
+        db.ecosystemDao().observeAllMemberships()
 
-    /** The active region's id, for the writes that stamp it on a new row. */
-    fun activeRegionNow(): String = activeRegion.value
+    /** D95: the species the dex on screen lists, each under its number there. */
+    private val dexSpeciesFlow: Flow<List<SpeciesEntity>> = activeRegion.flatMapLatest { regionId ->
+        combine(
+            db.speciesDao().observeAllSpecies(),
+            db.speciesRegionDao().observeAll(),
+            db.regionDao().observeRegions(),
+        ) { species, listings, regions ->
+            dexView(regionId, species, listings, regions.map { it.id })
+        }
+    }
 
-    /** D94: every bundled region, in picker order. */
+    private fun ecosystemRows(regionId: String): Flow<List<EcosystemEntity>> =
+        if (regionId == ALL_REGIONS_ID) {
+            // Region by region, renumbered so a sort by `sortOrder` keeps that order.
+            db.ecosystemDao().observeAllEcosystems()
+                .map { rows -> rows.mapIndexed { i, row -> row.copy(sortOrder = i + 1) } }
+        } else {
+            db.ecosystemDao().observeEcosystems(regionId)
+        }
+
+    /** D94: every bundled region, in picker order, then D95's All view when there are two. */
     fun regions(): Flow<List<Region>> =
-        db.regionDao().observeRegions().map { rows -> rows.map { Region(it.id, it.name) } }
+        db.regionDao().observeRegions().map { rows ->
+            val regional = rows.map { Region(it.id, it.name) }
+            if (regional.size < 2) regional else regional + Region(ALL_REGIONS_ID, ALL_REGIONS_NAME)
+        }
 
     /**
      * D34's shared map outline, decoded once per emission of the region row. Every species'
      * map is drawn over this same grid; only the shading differs.
      */
-    fun rangeGrid(): Flow<RangeGrid> = activeRegion.flatMapLatest { regionId ->
-        db.regionDao().observeRegion(regionId).map { region ->
-            RangeGrid.fromMask(region?.landMask, region?.rangeGridWidth ?: 0, region?.rangeGridHeight ?: 0)
-        }
+    fun rangeGrid(): Flow<RangeGrid> = db.regionDao().observeRegions().map { regions ->
+        // D95: every region draws the same world grid, so the first one's serves every dex.
+        val region = regions.firstOrNull()
+        RangeGrid.fromMask(region?.landMask, region?.rangeGridWidth ?: 0, region?.rangeGridHeight ?: 0)
     }
 
     /** Every species in dex order — curated first, user-added trailing (M01/M02). */
-    fun speciesSummaries(): Flow<List<SpeciesSummary>> = activeRegion.flatMapLatest { regionId ->
-        combine(
-            db.speciesDao().observeSpecies(regionId),
-            membershipFlow(regionId),
-            entryStatusFlow,
-        ) { species, memberships, statuses ->
+    fun speciesSummaries(): Flow<List<SpeciesSummary>> =
+        combine(dexSpeciesFlow, membershipFlow, entryStatusFlow) { species, memberships, statuses ->
             assembleSummaries(species, memberships, statuses)
         }
-    }
 
     fun ecosystems(): Flow<List<Ecosystem>> = activeRegion.flatMapLatest { regionId ->
-        db.ecosystemDao().observeEcosystems(regionId).map { rows -> rows.map { it.toDomain() } }
+        ecosystemRows(regionId).map { rows -> rows.map { it.toDomain() } }
     }
 
     /** Shared by the grid header and the Stats screen (6.3). */
     fun dexProgress(): Flow<DexProgress> = activeRegion.flatMapLatest { regionId ->
         combine(
-            db.speciesDao().observeSpecies(regionId),
-            membershipFlow(regionId),
+            dexSpeciesFlow,
+            membershipFlow,
             entryStatusFlow,
-            db.ecosystemDao().observeEcosystems(regionId),
+            ecosystemRows(regionId),
             db.regionDao().observeRegion(regionId),
         ) { species, memberships, statuses, ecosystems, region ->
             val caught = statuses.map { it.speciesId }.toSet()
@@ -120,7 +144,7 @@ class DexRepository(
                 regionId = regionId,
                 // Empty until the first import seeds the row; the header simply shows no
                 // region pill for those few hundred milliseconds rather than an id.
-                regionName = region?.name.orEmpty(),
+                regionName = if (regionId == ALL_REGIONS_ID) ALL_REGIONS_NAME else region?.name.orEmpty(),
                 species = species.map {
                     DexProgressMath.SpeciesRow(
                         id = it.id,
@@ -138,13 +162,17 @@ class DexRepository(
         }
     }
 
-    /** Scoped to the species' own region, so an entry stays whole whichever dex is on screen. */
+    /**
+     * Numbered as the dex on screen numbers it, or by its home dex when that one does not list
+     * it — a detail opened from Recent or Nearest stays whole whichever dex is on screen.
+     */
     fun speciesDetail(speciesId: String): Flow<SpeciesDetail?> =
         db.speciesDao().observeSpeciesById(speciesId).flatMapLatest { species ->
             if (species == null) return@flatMapLatest flowOf(null)
-            combine(membershipFlow(species.regionId), entryStatusFlow) { memberships, statuses ->
+            combine(dexSpeciesFlow, membershipFlow, entryStatusFlow) { dex, memberships, statuses ->
+                val listed = dex.firstOrNull { it.id == speciesId } ?: species
                 SpeciesDetail(
-                    summary = assembleSummaries(listOf(species), memberships, statuses).first(),
+                    summary = assembleSummaries(listOf(listed), memberships, statuses).first(),
                     habitatText = species.habitatText,
                     description = species.description,
                     imageUrl = species.imageUrl,
@@ -277,8 +305,8 @@ class DexRepository(
     // `domain/UserSpecies.kt`; this half only reads and writes rows.
     // -----------------------------------------------------------------------
 
-    override suspend fun maxUserDexNumber(regionId: String): Int? =
-        db.speciesDao().maxUserDexNumber(regionId)
+    override suspend fun maxUserDexNumber(): Int? =
+        db.speciesDao().maxUserDexNumber()
 
     override suspend fun userSpecies(speciesId: String): UserSpeciesRecord? {
         val row = db.speciesDao().speciesOnceById(speciesId) ?: return null
@@ -289,6 +317,7 @@ class DexRepository(
     override suspend fun upsertUserSpecies(record: UserSpeciesRecord, ecosystemIds: List<String>?) {
         db.withTransaction {
             db.speciesDao().upsert(record.toEntity())
+            listUserSpecies(record.id, record.regionId, record.dexNumber)
             if (ecosystemIds != null) {
                 // Replaced wholesale for this one species: the card's multi-select is the whole
                 // truth about its ecosystems, and a null list means "leave them alone" (a
@@ -300,6 +329,13 @@ class DexRepository(
                     )
                 }
             }
+        }
+    }
+
+    /** D95: a user species is listed in its home dex, unless it was added in the All view. */
+    private suspend fun listUserSpecies(speciesId: String, regionId: String, dexNumber: Int) {
+        if (regionId != ALL_REGIONS_ID) {
+            db.speciesRegionDao().insertIfAbsent(SpeciesRegionEntity(speciesId, regionId, dexNumber))
         }
     }
 
@@ -346,7 +382,9 @@ class DexRepository(
             // Species first: both captures and entries carry a foreign key to it.
             // An archive written before D94 names no region per species; all of it is Pacific.
             plan.speciesToInsert.forEach {
-                db.speciesDao().upsert(it.toEntity(it.regionId ?: DEFAULT_REGION_ID))
+                val regionId = it.regionId ?: DEFAULT_REGION_ID
+                db.speciesDao().upsert(it.toEntity(regionId))
+                listUserSpecies(it.id, regionId, it.dexNumber)
             }
             plan.memberships.forEach { (speciesId, ecosystemIds) ->
                 if (ecosystemIds.isNotEmpty()) {
@@ -520,6 +558,39 @@ internal fun Capture.toEntity() = CaptureEntity(
     createdAt = createdAt,
     wild = wild,
 )
+
+/**
+ * D95: the species one dex shows, each carrying its number in that dex. A regional dex is the
+ * rows `species_regions` lists for it. The All view is every row, numbered national-dex style:
+ * per kingdom, each curated species in the order of the first region (by [regionOrder]) that
+ * lists it, then its number there. A user species keeps its U-number, which is global.
+ */
+internal fun dexView(
+    regionId: String,
+    species: List<SpeciesEntity>,
+    listings: List<SpeciesRegionEntity>,
+    regionOrder: List<String>,
+): List<SpeciesEntity> {
+    if (regionId != ALL_REGIONS_ID) {
+        val numbers = listings.filter { it.regionId == regionId }.associate { it.speciesId to it.dexNumber }
+        return species.mapNotNull { row -> numbers[row.id]?.let { row.copy(dexNumber = it) } }
+            .sortedBy { it.dexNumber }
+    }
+    val rank = regionOrder.withIndex().associate { (i, id) -> id to i }
+    val firstListing = listings.groupBy { it.speciesId }.mapValues { (_, rows) ->
+        rows.minWith(compareBy({ rank[it.regionId] ?: Int.MAX_VALUE }, { it.dexNumber }))
+    }
+    val (curated, user) = species.partition { it.source == SpeciesSource.CURATED }
+    val numbered = curated.groupBy { it.kingdom }.flatMap { (kingdom, rows) ->
+        rows.sortedWith(
+            compareBy(
+                { firstListing[it.id]?.let { l -> rank[l.regionId] } ?: Int.MAX_VALUE },
+                { firstListing[it.id]?.dexNumber ?: it.dexNumber },
+            ),
+        ).mapIndexed { i, row -> row.copy(dexNumber = storedDexNumber(kingdom, i + 1)) }
+    }
+    return (numbered + user).sortedBy { it.dexNumber }
+}
 
 /**
  * Grid-cell assembly, kept pure and package-visible so the JVM tests can check the
