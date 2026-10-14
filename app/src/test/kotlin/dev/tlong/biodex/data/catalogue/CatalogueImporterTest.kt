@@ -1,6 +1,7 @@
 package dev.tlong.biodex.data.catalogue
 
 import dev.tlong.biodex.data.db.MetaEntity
+import dev.tlong.biodex.data.db.SpeciesRegionEntity
 import dev.tlong.biodex.domain.SpeciesSource
 import java.io.ByteArrayInputStream
 import kotlinx.coroutines.runBlocking
@@ -135,6 +136,24 @@ class CatalogueImporterTest {
         assertEquals(10, store.listedIn("argentina").size)
         // Each region's links survive the other's import.
         assertEquals(6, store.memberships.count { it.first == "great-blue-heron" })
+    }
+
+    @Test
+    fun `a species added in one dex merges into another's catalogue entry and stays listed (D96)`() = runBlocking {
+        val store = FakeCatalogueStore()
+        importerFor(store).import()
+        val binomial = store.species.getValue("great-blue-heron").scientificName
+        store.seedSpecies(userSpecies("user-heron", 9007).copy(scientificName = binomial))
+        store.seedCaught("user-heron")
+
+        CatalogueImporter(textReader("catalogue/argentina.json", argentinaText()), store, "catalogue/argentina.json", 1)
+            .import()
+        val pacificV2 = catalogueJson.encodeToString(fixtureDocument().copy(catalogueVersion = 2))
+        CatalogueImporter(textReader(fixturePath, pacificV2), store, fixturePath).import()
+
+        assertTrue("user-heron" !in store.species)
+        assertEquals(setOf("ar-great-blue-heron"), store.captures.map { it.speciesId }.toSet())
+        assertTrue(SpeciesRegionEntity("ar-great-blue-heron", "pacific", 9007) in store.listings)
     }
 
     @Test

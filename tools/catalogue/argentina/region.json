@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 3,
+  "catalogueVersion": 4,
   "regionId": "argentina",
   "regionName": "Argentina",
   "idPrefix": "ar-",
@@ -29,6 +29,8 @@
     "Mendoza (monte, high Andes), Salta (yungas, puna, monte) and Iguazú (Atlantic forest).",
     "Version 2 pins photographs for the Argentine Hake and Darwin's Tree Iguana, whose",
     "articles lead with a catch chart and a range map. Version 3 shares the 29 species",
-    "both regions list with the Pacific (D95)."
+    "both regions list with the Pacific (D95). Version 4 renames Pleurotus ostreatus the",
+    "Pearl Oyster Mushroom, apart from the Pacific's Oyster Mushroom, and re-runs the",
+    "import so it merges the species the owner added in the Pacific dex (D96)."
   ]
 }

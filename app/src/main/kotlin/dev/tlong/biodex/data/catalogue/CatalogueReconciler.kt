@@ -9,6 +9,7 @@ import dev.tlong.biodex.domain.SearchMatch
 import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.TaxClass
+import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.storedDexNumber
 
@@ -70,6 +71,8 @@ object CatalogueReconciler {
         val merges: Map<String, String> = emptyMap(),
         /** D95: this region's whole listing, which replaces the stored one. */
         val regionMembers: List<SpeciesRegionEntity> = emptyList(),
+        /** D96: a merged user species' listings in other dexes, moved onto the row it became. */
+        val carriedListings: List<SpeciesRegionEntity> = emptyList(),
     )
 
     sealed interface ImportDecision {
@@ -116,16 +119,25 @@ object CatalogueReconciler {
                 .distinct()
         }
 
-        val merges = merges(importable, listed, regionId, assetIds)
+        val merges = merges(importable, existing, regionId, assetIds)
+        val carriedListings = existing.filter { it.id in merges }.flatMap { from ->
+            (from.regions - regionId).map { (region, number) ->
+                SpeciesRegionEntity(merges.getValue(from.id), region, number)
+            }
+        }
         // Dropped from this dex: a row another dex still lists only loses this listing, and a
         // caught one keeps it, because deleting a caught species would cascade to its captures.
         val dropped = listed.filter {
             it.source == SpeciesSource.CURATED && it.id !in assetIds && it.id !in merges
         }
         val speciesDeletions = dropped.filter { it.regions.size == 1 && !it.hasEntry }.map { it.id }
+        // A U-number listing is the user's own (D96), so no import takes it away.
         val kept = listed.filter {
             it.id !in assetIds && it.id !in merges && it.id !in speciesDeletions &&
-                (it.source == SpeciesSource.USER || it.regions.size == 1)
+                (
+                    it.source == SpeciesSource.USER || it.regions.size == 1 ||
+                        it.regions.getValue(regionId) > USER_DEX_NUMBER_BASE
+                    )
         }
         val regionMembers = entities.map { SpeciesRegionEntity(it.id, regionId, it.dexNumber) } +
             kept.map { SpeciesRegionEntity(it.id, regionId, it.regions.getValue(regionId)) }
@@ -157,24 +169,25 @@ object CatalogueReconciler {
             speciesDeletions = speciesDeletions,
             merges = merges,
             regionMembers = regionMembers,
+            carriedListings = carriedListings,
         )
     }
 
     /**
      * D89. Each user species whose genus and species name the asset now carries, mapped to the
-     * curated species it becomes — and, D95, each curated row only this region listed that
-     * the asset now carries under another region's id.
+     * curated species it becomes, whichever dex it was added in (D96) — and, D95, each curated
+     * row only this region listed that the asset now carries under another region's id.
      */
     private fun merges(
         importable: List<CatalogueSpecies>,
-        listed: List<ExistingSpecies>,
+        existing: List<ExistingSpecies>,
         regionId: String,
         assetIds: Set<String>,
     ): Map<String, String> {
         val curatedByName = importable
             .mapNotNull { s -> s.scientificName?.let { SearchMatch.binomial(it) to s.id } }
             .toMap()
-        return listed
+        return existing
             .filter {
                 it.source == SpeciesSource.USER ||
                     (it.id !in assetIds && it.regions.keys == setOf(regionId))

@@ -252,6 +252,8 @@ class DexProgressMathTest {
         assertEquals("F030", displayDexNumber(4030, SpeciesSource.CURATED, Kingdom.FUNGUS))
         assertEquals("U01", displayDexNumber(9001, SpeciesSource.USER, Kingdom.ANIMAL))
         assertEquals("U12", displayDexNumber(9012, SpeciesSource.USER, Kingdom.FUNGUS))
+        // D96: a merged user species keeps its U-number on the catalogue row it became.
+        assertEquals("U07", displayDexNumber(9007, SpeciesSource.CURATED, Kingdom.ANIMAL))
     }
 
     @Test

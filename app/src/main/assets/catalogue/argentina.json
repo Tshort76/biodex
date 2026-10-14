@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": 3,
+  "catalogueVersion": 4,
   "regionId": "argentina",
   "regionName": "Argentina",
   "rangeGridWidth": 128,
@@ -36042,9 +36042,9 @@
       }
     },
     {
-      "id": "ar-oyster-mushroom",
+      "id": "ar-pearl-oyster-mushroom",
       "dexNumber": 6,
-      "commonName": "Oyster Mushroom",
+      "commonName": "Pearl Oyster Mushroom",
       "scientificName": "Pleurotus ostreatus",
       "taxClass": "mushroom",
       "kingdom": "fungus",
@@ -36201,7 +36201,7 @@
         "taxClass": "curated",
         "silhouetteRes": "curated",
         "uses": "none:fungi-carry-no-uses",
-        "wikipediaTitle": "wikipedia:scientific:Pleurotus ostreatus",
+        "wikipediaTitle": "wikipedia:pinned:Pleurotus ostreatus",
         "description": "wikipedia:summary",
         "imageUrl": "wikipedia:summary:originalimage",
         "infoUrl": "wikipedia:summary",

@@ -145,8 +145,8 @@
       "ecosystemIds": ["coastal-rainforest"],
       "usesNote": "Caution: poisonous — implicated in seventeen deaths in Japan in 2004." },
 
-    { "dexNumber": 25, "commonName": "Black Morel", "scientificName": "Morchella importuna",
-      "fungusClass": "other_fungus",
+    { "dexNumber": 25, "commonName": "Landscape Morel", "scientificName": "Morchella importuna",
+      "fungusClass": "other_fungus", "wikipediaTitle": "Morchella importuna",
       "ecosystemIds": ["urban-suburban", "riparian-wetland"],
       "usesNote": null },
 

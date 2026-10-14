@@ -129,9 +129,12 @@ fun storedDexNumber(kingdom: Kingdom, dexNumber: Int): Int = when (kingdom) {
     Kingdom.FUNGUS -> FUNGUS_DEX_NUMBER_BASE + dexNumber
 }
 
-/** `#021` animal, `F007` fungus, `U01` user-added (M02). */
+/**
+ * `#021` animal, `F007` fungus, `U01` user-added (M02). A U-number stays a U-number on a
+ * catalogue species too: it is the number a merged user species kept in its own dex (D96).
+ */
 fun displayDexNumber(dexNumber: Int, source: SpeciesSource, kingdom: Kingdom): String =
-    when (source) {
+    when (if (dexNumber > USER_DEX_NUMBER_BASE) SpeciesSource.USER else source) {
         SpeciesSource.USER ->
             "U" + (dexNumber - USER_DEX_NUMBER_BASE).toString().padStart(2, '0')
 

@@ -6,6 +6,12 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.1 — 2026-10-14
+
+- **Fixed** — the Chilean Flamingo and the Hairy Curtain Crust, which you had added yourself in the Pacific dex, appeared twice in All regions beside Argentina's catalogue entries for them. Each is now merged into the catalogue entry, sighting and all, and stays in your Pacific dex as before. (`D96`)
+- **Changed** — two fungi that shared a name with a different species in the other dex are renamed: the Pacific's Black Morel (*Morchella importuna*) is the Landscape Morel, and Argentina's Oyster Mushroom (*Pleurotus ostreatus*) is the Pearl Oyster Mushroom. (`D96`)
+- **Changed** — the rebuild refreshed 54 Pacific range maps and picked up new lead photos for four species from Wikipedia.
+
 ## v28 — 2026-10-14
 
 - **Changed** — a species is one species wherever you find it. The 29 species both dexes list, such as the Great Egret, the Barn Swallow and the Orca, are now one entry, so catching one in either region marks it caught in both. A shared species keeps the Pacific's name, so Argentina's Puma reads as the Mountain Lion. (`D95`)

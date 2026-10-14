@@ -65,6 +65,9 @@ class FakeCatalogueStore : CatalogueStore {
         plan.speciesDeletions.forEach { cascadeDeleteSpecies(it) }
         listings.removeAll { it.regionId == plan.regionId }
         listings += plan.regionMembers
+        plan.carriedListings
+            .filter { c -> listings.none { it.speciesId == c.speciesId && it.regionId == c.regionId } }
+            .forEach { listings += it }
         plan.membershipReplacements.forEach { (speciesId, ecosystemIds) ->
             memberships.removeAll { it.first == speciesId && ecosystems[it.second]?.regionId == plan.regionId }
             ecosystemIds.forEach { memberships += speciesId to it }

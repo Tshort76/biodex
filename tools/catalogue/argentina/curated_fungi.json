@@ -15,7 +15,7 @@
     { "dexNumber": 3, "commonName": "Slippery Jack", "scientificName": "Suillus luteus", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-cities"] },
     { "dexNumber": 4, "commonName": "Saffron Milk Cap", "scientificName": "Lactarius deliciosus", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-cities"] },
     { "dexNumber": 5, "commonName": "Shaggy Ink Cap", "scientificName": "Coprinus comatus", "fungusClass": "mushroom", "ecosystemIds": ["ar-cities", "ar-pampas"] },
-    { "dexNumber": 6, "commonName": "Oyster Mushroom", "scientificName": "Pleurotus ostreatus", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas", "ar-andean-forest"] },
+    { "dexNumber": 6, "commonName": "Pearl Oyster Mushroom", "scientificName": "Pleurotus ostreatus", "fungusClass": "mushroom", "wikipediaTitle": "Pleurotus ostreatus", "ecosystemIds": ["ar-pampas", "ar-andean-forest"] },
     { "dexNumber": 7, "commonName": "Parasol Mushroom", "scientificName": "Macrolepiota procera", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas"] },
     { "dexNumber": 8, "commonName": "Green-spored Parasol", "scientificName": "Chlorophyllum molybdites", "fungusClass": "mushroom", "ecosystemIds": ["ar-cities", "ar-pampas"], "usesNote": "Caution: poisonous — it causes hours of severe vomiting and diarrhoea." },
     { "dexNumber": 9, "commonName": "Sulphur Tuft", "scientificName": "Hypholoma fasciculare", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-pampas"], "usesNote": "Caution: poisonous, and the symptoms arrive five to ten hours late." },

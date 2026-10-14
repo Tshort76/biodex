@@ -80,6 +80,7 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
 
         db.speciesRegionDao().deleteRegion(plan.regionId)
         db.speciesRegionDao().upsertAll(plan.regionMembers)
+        plan.carriedListings.forEach { db.speciesRegionDao().insertIfAbsent(it) }
 
         val touched = plan.membershipReplacements.keys.toList()
         if (touched.isNotEmpty()) {
