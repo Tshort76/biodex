@@ -14,7 +14,6 @@ import dev.tlong.biodex.data.db.CaptureEntity
 import dev.tlong.biodex.data.db.EcosystemEntity
 import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.EntryStatusRow
-import dev.tlong.biodex.data.db.RegionEntity
 import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
@@ -30,6 +29,7 @@ import dev.tlong.biodex.domain.Kingdom
 import dev.tlong.biodex.domain.Lineage
 import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.RangeGrid
+import dev.tlong.biodex.domain.Region
 import dev.tlong.biodex.domain.keptUsesNote
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesFields
@@ -37,12 +37,17 @@ import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.USER_DEX_NUMBER_BASE
 import dev.tlong.biodex.domain.UserSpeciesRecord
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/** v1 ships exactly one region (DESIGN.md §2); it is a parameter so C03 stays a content problem. */
+/** The region a fresh install opens on, and the region of any row written before D94. */
 const val DEFAULT_REGION_ID = "pacific"
 
 /**
@@ -53,43 +58,62 @@ const val DEFAULT_REGION_ID = "pacific"
  * Search and filtering are deliberately *not* here: section 6.2 puts them in the ViewModel,
  * composed over these cold flows in memory.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class DexRepository(
     private val db: AppDatabase,
-    private val regionId: String = DEFAULT_REGION_ID,
+    /**
+     * D94: the regional dex on screen. Every region-scoped read below switches with it, each
+     * through one `flatMapLatest` so a screen never sees one region's species with another's
+     * ecosystems.
+     */
+    private val activeRegion: StateFlow<String> = MutableStateFlow(DEFAULT_REGION_ID),
 ) : CaptureStore, UserSpeciesStore, BackupStore {
 
-    private val speciesFlow: Flow<List<SpeciesEntity>> = db.speciesDao().observeSpecies(regionId)
-    private val membershipFlow: Flow<List<SpeciesEcosystemCrossRef>> =
-        db.ecosystemDao().observeMemberships(regionId)
     private val entryStatusFlow: Flow<List<EntryStatusRow>> = db.entryDao().observeEntryStatuses()
-    private val ecosystemFlow: Flow<List<EcosystemEntity>> =
-        db.ecosystemDao().observeEcosystems(regionId)
-    private val regionFlow: Flow<RegionEntity?> = db.regionDao().observeRegion(regionId)
+
+    private fun membershipFlow(regionId: String): Flow<List<SpeciesEcosystemCrossRef>> =
+        db.ecosystemDao().observeMemberships(regionId)
+
+    /** The active region's id, for the writes that stamp it on a new row. */
+    fun activeRegionNow(): String = activeRegion.value
+
+    /** D94: every bundled region, in picker order. */
+    fun regions(): Flow<List<Region>> =
+        db.regionDao().observeRegions().map { rows -> rows.map { Region(it.id, it.name) } }
 
     /**
      * D34's shared map outline, decoded once per emission of the region row. Every species'
      * map is drawn over this same grid; only the shading differs.
      */
-    fun rangeGrid(): Flow<RangeGrid> = regionFlow.map { region ->
-        RangeGrid.fromMask(region?.landMask, region?.rangeGridWidth ?: 0, region?.rangeGridHeight ?: 0)
+    fun rangeGrid(): Flow<RangeGrid> = activeRegion.flatMapLatest { regionId ->
+        db.regionDao().observeRegion(regionId).map { region ->
+            RangeGrid.fromMask(region?.landMask, region?.rangeGridWidth ?: 0, region?.rangeGridHeight ?: 0)
+        }
     }
 
     /** Every species in dex order — curated first, user-added trailing (M01/M02). */
-    fun speciesSummaries(): Flow<List<SpeciesSummary>> =
-        combine(speciesFlow, membershipFlow, entryStatusFlow) { species, memberships, statuses ->
+    fun speciesSummaries(): Flow<List<SpeciesSummary>> = activeRegion.flatMapLatest { regionId ->
+        combine(
+            db.speciesDao().observeSpecies(regionId),
+            membershipFlow(regionId),
+            entryStatusFlow,
+        ) { species, memberships, statuses ->
             assembleSummaries(species, memberships, statuses)
         }
+    }
 
-    fun ecosystems(): Flow<List<Ecosystem>> = ecosystemFlow.map { rows -> rows.map { it.toDomain() } }
+    fun ecosystems(): Flow<List<Ecosystem>> = activeRegion.flatMapLatest { regionId ->
+        db.ecosystemDao().observeEcosystems(regionId).map { rows -> rows.map { it.toDomain() } }
+    }
 
     /** Shared by the grid header and the Stats screen (6.3). */
-    fun dexProgress(): Flow<DexProgress> =
+    fun dexProgress(): Flow<DexProgress> = activeRegion.flatMapLatest { regionId ->
         combine(
-            speciesFlow,
-            membershipFlow,
+            db.speciesDao().observeSpecies(regionId),
+            membershipFlow(regionId),
             entryStatusFlow,
-            ecosystemFlow,
-            regionFlow,
+            db.ecosystemDao().observeEcosystems(regionId),
+            db.regionDao().observeRegion(regionId),
         ) { species, memberships, statuses, ecosystems, region ->
             val caught = statuses.map { it.speciesId }.toSet()
             DexProgressMath.compute(
@@ -112,25 +136,23 @@ class DexRepository(
                 ecosystems = ecosystems.map { it.toDomain() },
             )
         }
+    }
 
+    /** Scoped to the species' own region, so an entry stays whole whichever dex is on screen. */
     fun speciesDetail(speciesId: String): Flow<SpeciesDetail?> =
-        combine(
-            db.speciesDao().observeSpeciesById(speciesId),
-            membershipFlow,
-            entryStatusFlow,
-        ) { species, memberships, statuses ->
-            species?.let {
-                val summaries = assembleSummaries(listOf(it), memberships, statuses)
+        db.speciesDao().observeSpeciesById(speciesId).flatMapLatest { species ->
+            if (species == null) return@flatMapLatest flowOf(null)
+            combine(membershipFlow(species.regionId), entryStatusFlow) { memberships, statuses ->
                 SpeciesDetail(
-                    summary = summaries.first(),
-                    habitatText = it.habitatText,
-                    description = it.description,
-                    imageUrl = it.imageUrl,
-                    infoUrl = it.infoUrl,
-                    imageAttribution = it.imageAttribution,
-                    usesNote = it.usesNote,
-                    userEditedFields = it.userEditedFields,
-                    rangeCells = it.rangeCells,
+                    summary = assembleSummaries(listOf(species), memberships, statuses).first(),
+                    habitatText = species.habitatText,
+                    description = species.description,
+                    imageUrl = species.imageUrl,
+                    infoUrl = species.infoUrl,
+                    imageAttribution = species.imageAttribution,
+                    usesNote = species.usesNote,
+                    userEditedFields = species.userEditedFields,
+                    rangeCells = species.rangeCells,
                 )
             }
         }
@@ -286,12 +308,13 @@ class DexRepository(
     // half reads rows and applies a plan.
     // -----------------------------------------------------------------------
 
+    /** D94: every region's rows, each species carrying its own region id. */
     override suspend fun backupSnapshot(): BackupSnapshot {
-        val species = db.speciesDao().speciesOnce(regionId)
-        val ecosystemsBySpecies = db.ecosystemDao().membershipsOnce(regionId)
+        val species = db.speciesDao().allSpeciesOnce()
+        val ecosystemsBySpecies = db.ecosystemDao().allMembershipsOnce()
             .groupBy({ it.speciesId }, { it.ecosystemId })
         return BackupSnapshot(
-            regionId = regionId,
+            regionId = DEFAULT_REGION_ID,
             species = species.map { it.toBackup(ecosystemsBySpecies[it.id].orEmpty()) },
             entries = db.entryDao().entriesOnce().map {
                 BackupEntry(it.speciesId, it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
@@ -301,7 +324,9 @@ class DexRepository(
     }
 
     override suspend fun localSnapshot(): LocalSnapshot {
-        val species = db.speciesDao().speciesOnce(regionId)
+        // Across every region: a U-number free in all of them is free in the one the species
+        // lands in, so the restore never needs to know which region it is filling.
+        val species = db.speciesDao().allSpeciesOnce()
         return LocalSnapshot(
             speciesSources = species.associate { it.id to it.source },
             usedUserDexNumbers = species.filter { it.dexNumber > USER_DEX_NUMBER_BASE }
@@ -312,14 +337,17 @@ class DexRepository(
                 .associate {
                     it.speciesId to LocalEntry(it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
                 },
-            ecosystemIds = db.ecosystemDao().ecosystemsOnce(regionId).map { it.id }.toSet(),
+            ecosystemIds = db.ecosystemDao().allEcosystemsOnce().map { it.id }.toSet(),
         )
     }
 
     override suspend fun applyImport(plan: ImportPlan) {
         db.withTransaction {
             // Species first: both captures and entries carry a foreign key to it.
-            plan.speciesToInsert.forEach { db.speciesDao().upsert(it.toEntity(regionId)) }
+            // An archive written before D94 names no region per species; all of it is Pacific.
+            plan.speciesToInsert.forEach {
+                db.speciesDao().upsert(it.toEntity(it.regionId ?: DEFAULT_REGION_ID))
+            }
             plan.memberships.forEach { (speciesId, ecosystemIds) ->
                 if (ecosystemIds.isNotEmpty()) {
                     db.ecosystemDao().upsertMemberships(
@@ -346,6 +374,7 @@ class DexRepository(
 
 internal fun SpeciesEntity.toBackup(ecosystemIds: List<String>) = BackupSpecies(
     id = id,
+    regionId = regionId,
     source = source.wireName,
     dexNumber = dexNumber,
     commonName = commonName,

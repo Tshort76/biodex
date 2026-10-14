@@ -31,6 +31,11 @@ class SpeciesBackupMappingTest {
     )
 
     @Test
+    fun `an export names the species' own region, so a restore puts it back there (D94)`() {
+        assertEquals("argentina", thrush.copy(regionId = "argentina").toBackup(emptyList()).regionId)
+    }
+
+    @Test
     fun `a classification survives export and import`() {
         val restored = thrush.toBackup(ecosystemIds = emptyList()).toEntity("pacific")
 

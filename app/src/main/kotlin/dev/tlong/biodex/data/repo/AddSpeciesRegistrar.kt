@@ -21,7 +21,8 @@ import java.util.UUID
  */
 class AddSpeciesRegistrar(
     private val store: UserSpeciesStore,
-    private val regionId: String = DEFAULT_REGION_ID,
+    /** D94: read on every add, so a species lands in whichever regional dex is on screen. */
+    private val regionId: () -> String = { DEFAULT_REGION_ID },
     private val newSpeciesId: () -> String = { "user-" + UUID.randomUUID().toString() },
 ) {
 
@@ -41,10 +42,11 @@ class AddSpeciesRegistrar(
         // applied here and not only on the card, so nothing that reaches the store can
         // violate them.
         val normalized = fields.normalized()
+        val region = regionId()
         val record = UserSpeciesRecord(
             id = newSpeciesId(),
-            regionId = regionId,
-            dexNumber = nextUserDexNumber(store.maxUserDexNumber(regionId)),
+            regionId = region,
+            dexNumber = nextUserDexNumber(store.maxUserDexNumber(region)),
             detailsPending = detailsPendingFor(normalized),
             fields = normalized,
             userEditedFields = userEditedFields,

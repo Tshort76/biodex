@@ -171,6 +171,9 @@ object UsesNote {
     private val CAUTION = Regex("""(^|[.!?\n]\s*)caution:""", RegexOption.IGNORE_CASE)
 }
 
+/** D94: a regional dex the user can switch to — one per bundled catalogue asset. */
+data class Region(val id: String, val name: String)
+
 data class Ecosystem(
     val id: String,
     val regionId: String,

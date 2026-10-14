@@ -53,6 +53,61 @@ class CatalogueImporterTest {
         assertEquals(3, store.memberships.count { it.first == "great-blue-heron" })
     }
 
+    /** D94: the fixture moved to a second region, ids prefixed the way the pipeline does it. */
+    private fun argentinaText(version: Int = 1): String {
+        val pacific = fixtureDocument()
+        val document = pacific.copy(
+            catalogueVersion = version,
+            regionId = "argentina",
+            regionName = "Argentina",
+            ecosystems = pacific.ecosystems.map { it.copy(id = "ar-" + it.id) },
+            species = pacific.species.map { s ->
+                s.copy(id = "ar-" + s.id, ecosystemIds = s.ecosystemIds.map { "ar-$it" })
+            },
+        )
+        return catalogueJson.encodeToString(document)
+    }
+
+    @Test
+    fun `a second region imports beside the first under its own version (D94)`() = runBlocking {
+        val store = FakeCatalogueStore()
+        importerFor(store).import()
+
+        val argentina = CatalogueImporter(
+            textReader("catalogue/argentina.json", argentinaText()),
+            store,
+            "catalogue/argentina.json",
+            regionSortOrder = 1,
+        ).import()
+
+        assertEquals(ImportOutcome.Imported(1, 10, 0, 7), argentina)
+        assertEquals(10, store.species.values.count { it.regionId == "pacific" })
+        assertEquals(10, store.species.values.count { it.regionId == "argentina" })
+        assertEquals("1", store.meta[MetaEntity.KEY_CATALOGUE_VERSION])
+        assertEquals("1", store.meta[MetaEntity.catalogueVersionKey("argentina")])
+        assertEquals(listOf("pacific" to 0, "argentina" to 1), store.regions.values.map { it.id to it.sortOrder })
+        // The Pacific's version is its own, so the second region's import left it current.
+        assertEquals(ImportOutcome.UpToDate, importerFor(store).import())
+    }
+
+    @Test
+    fun `every shipped region imports beside the others without a shared id (D94)`() = runBlocking {
+        val store = FakeCatalogueStore()
+        val reader = RealCatalogueAsset.allRegionsReader()
+
+        val outcomes = CATALOGUE_ASSET_PATHS.mapIndexed { index, path ->
+            CatalogueImporter(reader, store, path, regionSortOrder = index).import()
+        }
+
+        val imported = outcomes.map { it as ImportOutcome.Imported }
+        // A shared id would have overwritten a row, so the store would hold fewer than were sent.
+        assertEquals(imported.sumOf { it.speciesUpserted }, store.species.size)
+        assertEquals(imported.sumOf { it.ecosystems }, store.ecosystems.size)
+        assertEquals(listOf("pacific", "argentina"), store.regions.values.map { it.id })
+        assertTrue(store.species.values.filter { it.regionId == "argentina" }.all { it.id.startsWith("ar-") })
+        assertTrue(store.ecosystems.values.filter { it.regionId == "argentina" }.all { it.id.startsWith("ar-") })
+    }
+
     @Test
     fun `a second run at the same version writes nothing`() = runBlocking {
         val store = FakeCatalogueStore()

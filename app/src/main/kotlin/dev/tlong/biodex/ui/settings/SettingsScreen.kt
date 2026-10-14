@@ -353,8 +353,8 @@ fun SettingsScreen(
                 Text(
                     // §7's redline, true again since D59: nothing the user photographs
                     // leaves the phone.
-                    text = "BioDex 1.0 — Pacific USA BioDex, a personal life list of the " +
-                        "region's animals and fungi. Species text and images come from " +
+                    text = "BioDex 1.0 — the Pacific USA and Argentina BioDexes, a personal " +
+                        "life list of each region's animals and fungi. Species text and images come from " +
                         "Wikipedia and Wikimedia Commons, and names from GBIF. Your photos " +
                         "never leave the phone.",
                     style = MaterialTheme.typography.bodySmall,

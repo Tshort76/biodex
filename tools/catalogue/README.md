@@ -23,6 +23,24 @@ the ecosystems; the two species files own nothing else.
 The app never runs this. It runs on the build machine, its output is committed,
 and builds never touch the network.
 
+## A second region: Argentina
+
+`argentina/` holds the Argentina BioDex's own `region.json`, `curated_animals.json` and
+`curated_fungi.json` (DESIGN.md D94), built to `argentina.json` by the same script:
+
+```bash
+make catalogue-argentina    # or: make catalogue, which builds both regions
+```
+
+Its `region.json` carries `"idPrefix": "ar-"`, which the build puts on every species id,
+because both regions share one species table and a slug such as `house-sparrow` exists in
+each. Ecosystem ids share a table too and carry the prefix by hand. The rules above and
+below hold unchanged; the edible rule becomes "hunted or fished legally in Argentina and
+commonly eaten there". Six Argentine names are pinned with `wikipediaTitle`, and four
+with an `overrides.scientificName`, where GBIF lumps a species into a neighbour (the
+guanaco into the llama, the gray fox into the pampas fox). Each region writes its own
+report, `cache/report-argentina.txt`.
+
 ## Running it
 
 ```bash

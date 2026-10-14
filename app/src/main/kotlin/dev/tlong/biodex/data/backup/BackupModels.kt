@@ -51,6 +51,11 @@ data class BackupManifest(
 @Serializable
 data class BackupSpecies(
     val id: String,
+    /**
+     * D94: the regional dex the species belongs to. Null in an archive written before there was
+     * a second region, which [planImport] reads as the manifest's region — the Pacific.
+     */
+    val regionId: String? = null,
     val source: String,
     val dexNumber: Int,
     val commonName: String,

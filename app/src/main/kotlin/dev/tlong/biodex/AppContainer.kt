@@ -7,7 +7,7 @@ import dev.tlong.biodex.data.backup.BackupGateway
 import dev.tlong.biodex.data.backup.BackupService
 import dev.tlong.biodex.data.catalogue.AndroidAssetReader
 import dev.tlong.biodex.data.catalogue.CatalogueImporter
-import dev.tlong.biodex.data.catalogue.ImportOutcome
+import dev.tlong.biodex.data.catalogue.CATALOGUE_ASSET_PATHS
 import dev.tlong.biodex.data.catalogue.RoomCatalogueStore
 import dev.tlong.biodex.data.db.AppDatabase
 import dev.tlong.biodex.data.net.GbifClient
@@ -37,9 +37,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -56,7 +53,7 @@ class AppContainer(val appContext: Context) {
 
     val database: AppDatabase by lazy { AppDatabase.build(appContext) }
 
-    val dexRepository: DexRepository by lazy { DexRepository(database) }
+    val dexRepository: DexRepository by lazy { DexRepository(database, settings.activeRegion) }
 
     /** The platform half of the photo layer (ARCHITECTURE.md 4). */
     val photoGateway: PhotoGateway by lazy { AndroidPhotoGateway(appContext) }
@@ -143,7 +140,7 @@ class AppContainer(val appContext: Context) {
     val addSpeciesDrafts: AddSpeciesDraftHolder by lazy { AddSpeciesDraftHolder() }
 
     val addSpeciesRegistrar: AddSpeciesRegistrar by lazy {
-        AddSpeciesRegistrar(store = dexRepository)
+        AddSpeciesRegistrar(store = dexRepository, regionId = { settings.activeRegion.value })
     }
 
     // -----------------------------------------------------------------------
@@ -158,17 +155,14 @@ class AppContainer(val appContext: Context) {
         BackupService(store = dexRepository, gateway = backupGateway)
     }
 
-    private val catalogueImporter: CatalogueImporter by lazy {
-        CatalogueImporter(
-            assets = AndroidAssetReader(appContext),
-            store = RoomCatalogueStore(database),
-        )
+    /** D94: one importer per bundled region, each with its own catalogue version. */
+    private val catalogueImporters: List<CatalogueImporter> by lazy {
+        val assets = AndroidAssetReader(appContext)
+        val store = RoomCatalogueStore(database)
+        CATALOGUE_ASSET_PATHS.mapIndexed { index, path ->
+            CatalogueImporter(assets = assets, store = store, assetPath = path, regionSortOrder = index)
+        }
     }
-
-    private val _importOutcome = MutableStateFlow<ImportOutcome?>(null)
-
-    /** Null until the first-run import finishes. Nothing blocks on it. */
-    val importOutcome: StateFlow<ImportOutcome?> = _importOutcome.asStateFlow()
 
     /**
      * ARCHITECTURE.md 3.3: runs on `Application` start on a background dispatcher. The grid
@@ -177,7 +171,7 @@ class AppContainer(val appContext: Context) {
      */
     fun startCatalogueImport() {
         applicationScope.launch {
-            _importOutcome.value = catalogueImporter.import()
+            catalogueImporters.forEach { it.import() }
             // D45: after the catalogue is settled, spell the user's own rows the way M45 spells
             // a new one. Idempotent, and a handful of rows, so it needs no flag to remember.
             UserNameSweep(database).run()

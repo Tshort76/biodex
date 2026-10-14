@@ -1,0 +1,68 @@
+{
+  "gazetteerVersion": 1,
+  "country": "AR",
+  "stateNames": {
+    "01": "Buenos Aires",
+    "02": "Catamarca",
+    "03": "Chaco",
+    "04": "Chubut",
+    "05": "Córdoba",
+    "06": "Corrientes",
+    "07": "Ciudad Autónoma de Buenos Aires",
+    "08": "Entre Ríos",
+    "09": "Formosa",
+    "10": "Jujuy",
+    "11": "La Pampa",
+    "12": "La Rioja",
+    "13": "Mendoza",
+    "14": "Misiones",
+    "15": "Neuquén",
+    "16": "Río Negro",
+    "17": "Salta",
+    "18": "San Juan",
+    "19": "San Luis",
+    "20": "Santa Cruz",
+    "21": "Santa Fe",
+    "22": "Santiago del Estero",
+    "23": "Tierra del Fuego",
+    "24": "Tucumán"
+  },
+  "tiers": {
+    "0": [
+      "P.PPL",
+      "P.PPLA",
+      "P.PPLA2",
+      "P.PPLA3",
+      "P.PPLC"
+    ],
+    "1": [
+      "L.PRK",
+      "L.RES",
+      "L.RESF",
+      "L.RESN",
+      "L.RESV",
+      "L.RESW",
+      "S.CMP",
+      "R.TRL",
+      "T.BCH"
+    ],
+    "2": [
+      "T.MT",
+      "T.PK",
+      "T.CAPE",
+      "T.ISL",
+      "T.CLF",
+      "H.LK",
+      "H.BAY",
+      "H.ESTY",
+      "H.SWMP",
+      "L.RGN"
+    ]
+  },
+  "_notes": [
+    "The Argentina dex's place list (DESIGN.md D94), the same feature codes and tiers as",
+    "places.json over GeoNames' AR dump. The whole country rather than the eight stops, since a",
+    "trip wanders. Provinces are numbered in the dump, so 'stateNames' writes each one the way",
+    "Android's geocoder spells it, which is what a sighting's label is compared against."
+  ]
+}

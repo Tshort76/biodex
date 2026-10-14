@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tlong.biodex.AppContainer
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.data.settings.AppSettings
+import dev.tlong.biodex.domain.Region
 import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.TaxClass
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,6 +80,22 @@ class DexGridViewModel(
 
     fun onClearFilters() {
         filters.value = DexGridFilters()
+    }
+
+    /** D94: the regions the header's pill switches between, and the one on screen. */
+    val regions: StateFlow<List<Region>> = repository.regions()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val activeRegion: StateFlow<String> = settings.activeRegion
+
+    /**
+     * D94. The ecosystem filter names one region's ecosystem, so it cannot survive the switch;
+     * the search and the other filters mean the same thing in either dex and are kept.
+     */
+    fun onRegion(regionId: String) {
+        if (regionId == settings.activeRegion.value) return
+        filters.update { it.copy(ecosystemId = null) }
+        settings.setActiveRegion(regionId)
     }
 
     companion object {

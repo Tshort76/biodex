@@ -93,9 +93,9 @@ data class SpeciesEntity(
 
 /**
  * The regions the catalogue knows, seeded by the importer from the asset's `regionId` and
- * `regionName`. v1 ships exactly one row (`pacific` / "Pacific USA"); the table exists so
- * the header reads a name rather than title-casing an id, which is what the `regionLabelFor`
- * shim used to do (ARCHITECTURE.md 6.5, 11.1).
+ * `regionName` — one row per bundled asset (`pacific` / "Pacific USA", `argentina` /
+ * "Argentina", D94), ordered by [sortOrder] in the region picker. The table exists so the
+ * header reads a name rather than title-casing an id (ARCHITECTURE.md 6.5, 11.1).
  */
 @Entity(tableName = "regions")
 data class RegionEntity(
@@ -223,6 +223,13 @@ data class MetaEntity(
     companion object {
         const val KEY_CATALOGUE_VERSION = "catalogueVersion"
         const val KEY_SCHEMA_SEEDED_AT = "schemaSeededAt"
+
+        /**
+         * D94: each region keeps its own imported version, so bumping one asset re-imports that
+         * region alone. The Pacific keeps the bare key every install already holds.
+         */
+        fun catalogueVersionKey(regionId: String): String =
+            if (regionId == "pacific") KEY_CATALOGUE_VERSION else "$KEY_CATALOGUE_VERSION:$regionId"
         // `placeBackfillDone` was written once by v22.5's one-time sweep (D67) and is left in
         // place on the owner's phone; nothing reads it.
     }

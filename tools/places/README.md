@@ -59,3 +59,11 @@ it, but it is still a bug here.
 
 GeoNames is CC BY 4.0, so the attribution in `README.md`, `LICENSE` and
 `app/src/main/assets/licenses.md` is a condition of shipping this file.
+
+## Argentina
+
+`places-argentina.json` builds `argentina.tsv` from GeoNames' AR dump, with the same feature
+codes and tiers, across the whole country (DESIGN.md D94). The dump numbers its provinces, so
+the config's `stateNames` writes each one as Android's geocoder spells it ("Río Negro"),
+which is what the app shows and compares against. `make places` builds both lists, and the
+app reads them together.

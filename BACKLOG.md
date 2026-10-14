@@ -10,7 +10,6 @@ These were considered during a design pass, judged worth doing eventually, and c
 
 | Id | What | Why it is worth doing |
 |---|---|---|
-| `C03` | **A second region.** | The largest coherent feature left, and the schema was built for it — the `regions` table, `regionId` on every species, and the region pill in the header all exist and are exercised by the one region that ships. What it needs is a second curated input set and a pipeline run, not a schema change. |
 | `C09`–`C11` | See `DESIGN.md` §5. | Recorded with their reasoning at the point they were cut. |
 | ~~`C12`~~ | ~~**The offline add-your-own plant keeps its photo.**~~ Struck with the plants (D59). | A known inconsistency with `M41`, deliberately left: offline there is no lookup, so no kingdom, so the rule cannot be applied at that moment. The owner's answer was to photograph offline and add the species later online, which closes it in practice. Only worth building if that stops being true. |
 

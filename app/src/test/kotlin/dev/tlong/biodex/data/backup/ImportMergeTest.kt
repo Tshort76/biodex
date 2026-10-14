@@ -287,5 +287,22 @@ class ImportMergeTest {
         assertEquals(1, applied.report.thumbnailsRestored)
     }
 
+    @Test
+    fun `a restored species keeps the region it was added in (D94)`() {
+        val plan = planImport(
+            manifest(species = listOf(userSpecies("user-1", 9001).copy(regionId = "argentina"))),
+            freshInstall,
+        )
+
+        assertEquals("argentina", plan.speciesToInsert.single().regionId)
+    }
+
+    @Test
+    fun `a species from an archive older than regions restores into the manifest's region`() {
+        val plan = planImport(manifest(species = listOf(userSpecies("user-1", 9001))), freshInstall)
+
+        assertEquals("pacific", plan.speciesToInsert.single().regionId)
+    }
+
     private fun ImportPlan.capturesAdded() = capturesToInsert.size
 }

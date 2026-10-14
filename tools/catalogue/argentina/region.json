@@ -1,0 +1,28 @@
+{
+  "catalogueVersion": 1,
+  "regionId": "argentina",
+  "regionName": "Argentina",
+  "idPrefix": "ar-",
+  "ecosystems": [
+    { "id": "ar-pampas",          "name": "Pampas & Delta Wetlands",           "sortOrder": 1 },
+    { "id": "ar-coast",           "name": "Patagonian Coast & Sea",            "sortOrder": 2 },
+    { "id": "ar-steppe",          "name": "Patagonian Steppe",                 "sortOrder": 3 },
+    { "id": "ar-andean-forest",   "name": "Andean-Patagonian Forest & Lakes",  "sortOrder": 4 },
+    { "id": "ar-monte",           "name": "Monte Desert & Foothills",          "sortOrder": 5 },
+    { "id": "ar-puna",            "name": "Puna & High Andes",                 "sortOrder": 6 },
+    { "id": "ar-yungas",          "name": "Yungas Cloud Forest",               "sortOrder": 7 },
+    { "id": "ar-atlantic-forest", "name": "Atlantic Forest & Iguazú",          "sortOrder": 8 },
+    { "id": "ar-cities",          "name": "Cities & Parks",                    "sortOrder": 9 }
+  ],
+
+  "_notes": [
+    "The second region (DESIGN.md D94, C03). Its own catalogueVersion: the app keeps one",
+    "imported version per region, so bumping this number re-imports Argentina only.",
+    "'idPrefix' goes on every species id the build writes, because the species table is",
+    "shared with the Pacific region and a slug such as 'house-sparrow' exists in both.",
+    "Ecosystem ids carry the same prefix by hand, since they share a table too.",
+    "The ecosystems follow the trip: Buenos Aires (pampas, delta, cities), Puerto Madryn",
+    "(coast, steppe), Bariloche and El Chaltén (Andean forest), El Calafate (steppe),",
+    "Mendoza (monte, high Andes), Salta (yungas, puna, monte) and Iguazú (Atlantic forest)."
+  ]
+}

@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Meter
+import dev.tlong.biodex.domain.Region
 import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
@@ -86,6 +88,8 @@ fun DexGridRoute(
     val container = LocalContext.current.appContainer
     val viewModel: DexGridViewModel = viewModel(factory = DexGridViewModel.factory(container))
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val regions by viewModel.regions.collectAsStateWithLifecycle()
+    val activeRegion by viewModel.activeRegion.collectAsStateWithLifecycle()
     // D77 (revised): home from a capture is a fresh start, and a search left in the box would
     // hide the species being scrolled to.
     LaunchedEffect(scrollToSpeciesId) {
@@ -109,6 +113,9 @@ fun DexGridRoute(
         scrollToSpeciesId = scrollToSpeciesId,
         note = note,
         onArrivalHandled = onArrivalHandled,
+        regions = regions,
+        activeRegionId = activeRegion,
+        onRegion = viewModel::onRegion,
     )
 }
 
@@ -130,9 +137,22 @@ fun DexGridScreen(
     scrollToSpeciesId: String? = null,
     note: String? = null,
     onArrivalHandled: () -> Unit = {},
+    regions: List<Region> = emptyList(),
+    activeRegionId: String = "",
+    onRegion: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     val gridState = rememberLazyGridState()
+    // D94: another region is another dex, so it opens at its first species. Compared against
+    // the region last shown rather than keyed alone, because the effect also runs when the grid
+    // comes back from an entry, and that must keep the position it saved.
+    var shownRegionId by rememberSaveable { mutableStateOf(activeRegionId) }
+    LaunchedEffect(activeRegionId) {
+        if (activeRegionId != shownRegionId) {
+            shownRegionId = activeRegionId
+            gridState.scrollToItem(0)
+        }
+    }
     // D77. Held here rather than read from the arguments, so it outlives [onArrivalHandled]
     // clearing them and still shows for its moment.
     var shownNote by remember { mutableStateOf<String?>(null) }
@@ -163,6 +183,9 @@ fun DexGridScreen(
             ) {
                 GridAppBar(
                     regionLabel = state.regionLabel,
+                    regions = regions,
+                    activeRegionId = activeRegionId,
+                    onRegion = onRegion,
                     animals = state.animals,
                     fungi = state.fungi.takeIf { state.showFungiPill },
                     onAddPhoto = onAddPhoto,
@@ -184,7 +207,7 @@ fun DexGridScreen(
                     AddToDexButton(name = state.addableName, onClick = { onAddSpecies(state.addableName) })
                 }
                 when {
-                    state.loading -> CentredNote("Loading the Pacific catalogue…")
+                    state.loading -> CentredNote("Loading the catalogue…")
                     state.species.isEmpty() && state.addableName != null -> Unit
                     state.species.isEmpty() -> CentredNote(
                         if (state.isFiltered) "No species match." else "The catalogue is empty.",
@@ -230,6 +253,9 @@ fun DexGridScreen(
 @Composable
 private fun GridAppBar(
     regionLabel: String,
+    regions: List<Region>,
+    activeRegionId: String,
+    onRegion: (String) -> Unit,
     animals: Meter,
     fungi: Meter?,
     onAddPhoto: () -> Unit,
@@ -253,7 +279,7 @@ private fun GridAppBar(
             // product name to "Bio…" at three. The name is a fixed short string; it should
             // measure at its own size and let the spacer absorb whatever is left.
         )
-        if (regionLabel.isNotEmpty()) RegionPill(regionLabel)
+        if (regionLabel.isNotEmpty()) RegionPicker(regionLabel, regions, activeRegionId, onRegion)
         Box(modifier = Modifier.weight(1f))
         ProgressPill(caught = animals.caught, total = animals.total)
         fungi?.let {
@@ -269,6 +295,50 @@ private fun GridAppBar(
         // The ＋ had to come from somewhere: matching the gear to it costs the
         // header less width than it did before, rather than more.
         HeaderIconButton(glyph = "⚙", tint = DexTheme.colors.muted, onClick = onOpenSettings)
+    }
+}
+
+/**
+ * D94: the region pill is the switch between regional dexes. With one region bundled it is the
+ * plain pill it always was; with more, a ▾ says it opens, and the menu ticks the one on screen.
+ */
+@Composable
+private fun RegionPicker(
+    label: String,
+    regions: List<Region>,
+    activeRegionId: String,
+    onRegion: (String) -> Unit,
+) {
+    if (regions.size < 2) {
+        RegionPill(label)
+        return
+    }
+    val colors = DexTheme.colors
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        RegionPill("$label ▾", modifier = Modifier.clip(CircleShape).clickable { expanded = true })
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = colors.card,
+        ) {
+            regions.forEach { region ->
+                val isSelected = region.id == activeRegionId
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = if (isSelected) "✓  ${region.name} BioDex" else "${region.name} BioDex",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) colors.accent else colors.fg,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onRegion(region.id)
+                    },
+                )
+            }
+        }
     }
 }
 

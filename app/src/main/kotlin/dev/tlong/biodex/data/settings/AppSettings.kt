@@ -1,6 +1,7 @@
 package dev.tlong.biodex.data.settings
 
 import android.content.Context
+import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,8 +75,26 @@ class AppSettings(context: Context) {
         _dexSort.value = wireName
     }
 
+    // -----------------------------------------------------------------------
+    // The regional dex on screen (D94). Every screen reads the region through the repository,
+    // which follows this flow, so a switch on the grid reaches Stats, Identify and the add
+    // card without any of them knowing there is more than one region.
+    // -----------------------------------------------------------------------
+
+    private val _activeRegion = MutableStateFlow(prefs.getString(KEY_ACTIVE_REGION, null) ?: DEFAULT_REGION_ID)
+
+    val activeRegion: StateFlow<String> = _activeRegion.asStateFlow()
+
+    fun setActiveRegion(regionId: String) {
+        prefs.edit().putString(KEY_ACTIVE_REGION, regionId).apply()
+        _activeRegion.value = regionId
+    }
+
     companion object {
         const val PREFS_NAME = "settings"
+
+        /** D94: absent until the user first switches region; the Pacific stands in. */
+        const val KEY_ACTIVE_REGION = "active_region"
 
         /** D47: absent until the user picks an order; the grid's own default stands in. */
         const val KEY_DEX_SORT = "dex_sort"

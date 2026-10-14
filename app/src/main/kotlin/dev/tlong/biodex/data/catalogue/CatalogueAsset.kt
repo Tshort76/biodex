@@ -93,6 +93,12 @@ data class LineageAsset(
 /** The asset path the app reads at runtime (ARCHITECTURE.md 3.2). */
 const val CATALOGUE_ASSET_PATH = "catalogue/pacific.json"
 
+/**
+ * D94: every bundled region, in the order the region picker lists them. Each is imported on
+ * its own, under its own catalogue version, so one region's update never re-imports another.
+ */
+val CATALOGUE_ASSET_PATHS = listOf(CATALOGUE_ASSET_PATH, "catalogue/argentina.json")
+
 val catalogueJson: Json = Json {
     ignoreUnknownKeys = true
     isLenient = true

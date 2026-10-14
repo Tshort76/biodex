@@ -1,0 +1,44 @@
+{
+  "_notes": [
+    "The Argentina dex's fungi (DESIGN.md D94), in dex order by growth form:",
+    "  1-13  mushrooms (cap and stem)",
+    "  14-20  brackets (shelf and conk)",
+    "  21-30  other fungi (cup, jelly, puffball, morel, Cyttaria)",
+    "The Pacific file's rules hold unchanged: fungusClass is editorial judgment, a",
+    "usesNote is one short 'Caution:' sentence written only for a dangerous species,",
+    "and the build refuses any edibility claim on a fungus."
+  ],
+
+  "species": [
+    { "dexNumber": 1, "commonName": "Fly Agaric", "scientificName": "Amanita muscaria", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-cities"], "usesNote": "Caution: poisonous — the red-and-white toadstool of every storybook." },
+    { "dexNumber": 2, "commonName": "Death Cap", "scientificName": "Amanita phalloides", "fungusClass": "mushroom", "ecosystemIds": ["ar-cities", "ar-pampas"], "usesNote": "Caution: deadly. Half a cap can kill an adult, and the symptoms start half a day late." },
+    { "dexNumber": 3, "commonName": "Slippery Jack", "scientificName": "Suillus luteus", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-cities"] },
+    { "dexNumber": 4, "commonName": "Saffron Milk Cap", "scientificName": "Lactarius deliciosus", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-cities"] },
+    { "dexNumber": 5, "commonName": "Shaggy Ink Cap", "scientificName": "Coprinus comatus", "fungusClass": "mushroom", "ecosystemIds": ["ar-cities", "ar-pampas"] },
+    { "dexNumber": 6, "commonName": "Oyster Mushroom", "scientificName": "Pleurotus ostreatus", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas", "ar-andean-forest"] },
+    { "dexNumber": 7, "commonName": "Parasol Mushroom", "scientificName": "Macrolepiota procera", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas"] },
+    { "dexNumber": 8, "commonName": "Green-spored Parasol", "scientificName": "Chlorophyllum molybdites", "fungusClass": "mushroom", "ecosystemIds": ["ar-cities", "ar-pampas"], "usesNote": "Caution: poisonous — it causes hours of severe vomiting and diarrhoea." },
+    { "dexNumber": 9, "commonName": "Sulphur Tuft", "scientificName": "Hypholoma fasciculare", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest", "ar-pampas"], "usesNote": "Caution: poisonous, and the symptoms arrive five to ten hours late." },
+    { "dexNumber": 10, "commonName": "Spectacular Rustgill", "scientificName": "Gymnopilus junonius", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas", "ar-andean-forest"] },
+    { "dexNumber": 11, "commonName": "Fairy Ring Champignon", "scientificName": "Marasmius oreades", "fungusClass": "mushroom", "ecosystemIds": ["ar-pampas", "ar-cities"] },
+    { "dexNumber": 12, "commonName": "Flowerpot Parasol", "scientificName": "Leucocoprinus birnbaumii", "fungusClass": "mushroom", "ecosystemIds": ["ar-atlantic-forest", "ar-cities"], "usesNote": "Caution: poisonous. It turns up in flowerpots and greenhouses." },
+    { "dexNumber": 13, "commonName": "Magellanic Webcap", "scientificName": "Cortinarius magellanicus", "fungusClass": "mushroom", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 14, "commonName": "Cinnabar Polypore", "scientificName": "Pycnoporus sanguineus", "fungusClass": "bracket", "ecosystemIds": ["ar-atlantic-forest", "ar-yungas", "ar-pampas"], "wikipediaTitle": "Pycnoporus sanguineus", "overrides": { "scientificName": "Pycnoporus sanguineus" }},
+    { "dexNumber": 15, "commonName": "Turkey Tail", "scientificName": "Trametes versicolor", "fungusClass": "bracket", "ecosystemIds": ["ar-andean-forest", "ar-pampas"] },
+    { "dexNumber": 16, "commonName": "Splitgill", "scientificName": "Schizophyllum commune", "fungusClass": "bracket", "ecosystemIds": ["ar-pampas", "ar-atlantic-forest", "ar-cities"] },
+    { "dexNumber": 17, "commonName": "Artist's Bracket", "scientificName": "Ganoderma applanatum", "fungusClass": "bracket", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 18, "commonName": "Gargal", "scientificName": "Grifola gargal", "fungusClass": "bracket", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 19, "commonName": "Southern Chicken of the Woods", "scientificName": "Laetiporus portentosus", "fungusClass": "bracket", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 20, "commonName": "Hairy Curtain Crust", "scientificName": "Stereum hirsutum", "fungusClass": "bracket", "ecosystemIds": ["ar-andean-forest", "ar-pampas"] },
+    { "dexNumber": 21, "commonName": "Llao Llao", "scientificName": "Cyttaria hariotii", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 22, "commonName": "Darwin's Fungus", "scientificName": "Cyttaria darwinii", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 23, "commonName": "Jelly Ear", "scientificName": "Auricularia auricula-judae", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest", "ar-pampas"] },
+    { "dexNumber": 24, "commonName": "Black Morel", "scientificName": "Morchella elata", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest"] },
+    { "dexNumber": 25, "commonName": "Hairy Cup", "scientificName": "Cookeina tricholoma", "fungusClass": "other_fungus", "ecosystemIds": ["ar-atlantic-forest"] },
+    { "dexNumber": 26, "commonName": "Collared Earthstar", "scientificName": "Geastrum triplex", "fungusClass": "other_fungus", "ecosystemIds": ["ar-pampas", "ar-atlantic-forest"] },
+    { "dexNumber": 27, "commonName": "Bridal Veil Stinkhorn", "scientificName": "Phallus indusiatus", "fungusClass": "other_fungus", "ecosystemIds": ["ar-atlantic-forest"] },
+    { "dexNumber": 28, "commonName": "Common Puffball", "scientificName": "Lycoperdon perlatum", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest", "ar-pampas"] },
+    { "dexNumber": 29, "commonName": "Dead Man's Fingers", "scientificName": "Xylaria polymorpha", "fungusClass": "other_fungus", "ecosystemIds": ["ar-pampas"] },
+    { "dexNumber": 30, "commonName": "Orange Peel Fungus", "scientificName": "Aleuria aurantia", "fungusClass": "other_fungus", "ecosystemIds": ["ar-andean-forest"] }
+  ]
+}

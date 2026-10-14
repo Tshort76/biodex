@@ -36,7 +36,7 @@ CACHE_DIR = HERE / "cache"
 ASSET_DIR = HERE / ".." / ".." / "app" / "src" / "main" / "assets" / "places"
 DEFAULT_OUT = ASSET_DIR / "pacific.tsv"
 
-DUMP_URL = "https://download.geonames.org/export/dump/US.zip"
+DUMP_URL = "https://download.geonames.org/export/dump/{country}.zip"
 USER_AGENT = "BioDex/1.0 (personal Android app; https://github.com/Tshort76/biodex)"
 
 # GeoNames' columns, as the dump's readme.txt names them. Only these six matter.
@@ -55,7 +55,7 @@ COORDINATE_DECIMALS = 4
 def load_config(path: Path) -> tuple[set[str], dict[str, int]]:
     """The states to keep, and the tier each `class.code` pair earns."""
     config = json.loads(path.read_text(encoding="utf-8"))
-    states = set(config["states"])
+    states = set(config.get("states") or config.get("stateNames", {}))
     tiers = {}
     for tier, codes in config["tiers"].items():
         for code in codes:
@@ -63,23 +63,25 @@ def load_config(path: Path) -> tuple[set[str], dict[str, int]]:
     return states, tiers
 
 
-def fetch_dump(refresh: bool = False) -> bytes:
-    """The GeoNames US dump, from the cache unless [refresh] says otherwise."""
+def fetch_dump(refresh: bool = False, country: str = "US") -> bytes:
+    """A GeoNames country dump, from the cache unless [refresh] says otherwise."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cached = CACHE_DIR / "US.zip"
+    cached = CACHE_DIR / f"{country}.zip"
     if cached.exists() and not refresh:
         return cached.read_bytes()
-    request = urllib.request.Request(DUMP_URL, headers={"User-Agent": USER_AGENT})
+    request = urllib.request.Request(
+        DUMP_URL.format(country=country), headers={"User-Agent": USER_AGENT}
+    )
     with urllib.request.urlopen(request, timeout=300) as response:
         payload = response.read()
     cached.write_bytes(payload)
     return payload
 
 
-def dump_lines(payload: bytes):
+def dump_lines(payload: bytes, country: str = "US"):
     """The dump's one text member, line by line, without holding it all decoded."""
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-        with archive.open("US.txt") as member:
+        with archive.open(f"{country}.txt") as member:
             for raw in io.TextIOWrapper(member, encoding="utf-8"):
                 yield raw
 
@@ -97,7 +99,7 @@ def usable_name(name: str) -> bool:
     return any(character.isalpha() for character in stripped)
 
 
-def select_places(lines, states: set[str], tiers: dict[str, int]):
+def select_places(lines, states: set[str], tiers: dict[str, int], state_names: dict[str, str] | None = None):
     """
     Every row of the dump that is in one of [states] and carries a feature code
     in [tiers], as `(name, state, tier, lat, lng)`, deduplicated on name and state.
@@ -109,6 +111,9 @@ def select_places(lines, states: set[str], tiers: dict[str, int]):
     Where two rows share a name and a state, the better tier wins, and so do its
     coordinates; between two rows of the same tier the first in the dump wins, so
     the output is stable from one build to the next.
+
+    [state_names] writes a name in place of the dump's code — Argentina's provinces
+    are numbered ("16"), and the app shows the column as written ("Río Negro").
     """
     best: dict[tuple[str, str], tuple[int, float, float]] = {}
     for raw in lines:
@@ -118,6 +123,8 @@ def select_places(lines, states: set[str], tiers: dict[str, int]):
         state = fields[COL_ADMIN1]
         if state not in states:
             continue
+        if state_names:
+            state = state_names[state]
         tier = tiers.get(f"{fields[COL_FEATURE_CLASS]}.{fields[COL_FEATURE_CODE]}")
         if tier is None:
             continue
@@ -152,9 +159,12 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     states, tiers = load_config(args.config)
-    print(f"states: {', '.join(sorted(states))}; feature codes: {len(tiers)}")
-    payload = fetch_dump(refresh=args.refresh)
-    places = select_places(dump_lines(payload), states, tiers)
+    config = json.loads(args.config.read_text(encoding="utf-8"))
+    country = config.get("country", "US")
+    state_names = config.get("stateNames")
+    print(f"{country} states: {', '.join(sorted(states))}; feature codes: {len(tiers)}")
+    payload = fetch_dump(refresh=args.refresh, country=country)
+    places = select_places(dump_lines(payload, country), states, tiers, state_names)
     if not places:
         print("refusing to write an empty place list", file=sys.stderr)
         return 1

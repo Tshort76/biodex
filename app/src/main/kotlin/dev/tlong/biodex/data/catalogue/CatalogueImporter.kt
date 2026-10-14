@@ -56,6 +56,8 @@ class CatalogueImporter(
     private val assets: AssetReader,
     private val store: CatalogueStore,
     private val assetPath: String = CATALOGUE_ASSET_PATH,
+    /** D94: where this asset's region sits in the region picker. */
+    private val regionSortOrder: Int = 0,
 ) {
 
     suspend fun import(): ImportOutcome {
@@ -74,7 +76,7 @@ class CatalogueImporter(
         val existing = store.existingSpecies(document.regionId)
         return when (
             val decision =
-                CatalogueReconciler.decide(store.catalogueVersion(), document, existing)
+                CatalogueReconciler.decide(store.catalogueVersion(document.regionId), document, existing)
         ) {
             is CatalogueReconciler.ImportDecision.UpToDate -> {
                 Log.i(TAG, "Catalogue v${document.catalogueVersion} already imported.")
@@ -82,7 +84,7 @@ class CatalogueImporter(
             }
 
             is CatalogueReconciler.ImportDecision.Apply -> {
-                val plan = decision.plan
+                val plan = decision.plan.let { it.copy(region = it.region.copy(sortOrder = regionSortOrder)) }
                 store.apply(plan)
                 Log.i(
                     TAG,

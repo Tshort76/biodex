@@ -11,16 +11,16 @@ import dev.tlong.biodex.domain.nameCorrections
  * finds nothing to change. The decision is [nameCorrections]; this class is the read and the
  * write around it.
  */
-class UserNameSweep(
-    private val db: AppDatabase,
-    private val regionId: String = DEFAULT_REGION_ID,
-) {
+class UserNameSweep(private val db: AppDatabase) {
 
-    /** Returns how many rows were respelled. */
+    /** Returns how many rows were respelled, across every region (D94). */
     suspend fun run(): Int {
-        val rows = db.speciesDao().userSpeciesOnce(regionId)
-            .map { NamedSpecies(it.id, it.commonName, it.scientificName) }
-        val corrections = nameCorrections(rows)
+        val corrections = db.regionDao().regionsOnce().flatMap { region ->
+            nameCorrections(
+                db.speciesDao().userSpeciesOnce(region.id)
+                    .map { NamedSpecies(it.id, it.commonName, it.scientificName) },
+            )
+        }
         if (corrections.isEmpty()) return 0
         db.withTransaction {
             for (c in corrections) db.speciesDao().rename(c.id, c.commonName, c.scientificName)

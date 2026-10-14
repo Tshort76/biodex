@@ -14,8 +14,8 @@ import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
  */
 interface CatalogueStore {
 
-    /** `meta.catalogueVersion`, or null when the catalogue has never been imported. */
-    suspend fun catalogueVersion(): Int?
+    /** The region's imported catalogue version, or null when it has never been imported (D94). */
+    suspend fun catalogueVersion(regionId: String): Int?
 
     suspend fun existingSpecies(regionId: String): List<ExistingSpecies>
 
@@ -25,8 +25,8 @@ interface CatalogueStore {
 
 class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
 
-    override suspend fun catalogueVersion(): Int? =
-        db.metaDao().value(MetaEntity.KEY_CATALOGUE_VERSION)?.trim()?.toIntOrNull()
+    override suspend fun catalogueVersion(regionId: String): Int? =
+        db.metaDao().value(MetaEntity.catalogueVersionKey(regionId))?.trim()?.toIntOrNull()
 
     override suspend fun existingSpecies(regionId: String): List<ExistingSpecies> {
         val caught = db.entryDao().speciesIdsWithEntries().toSet()
@@ -78,7 +78,7 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
         }
 
         db.metaDao().put(
-            MetaEntity(MetaEntity.KEY_CATALOGUE_VERSION, plan.catalogueVersion.toString()),
+            MetaEntity(MetaEntity.catalogueVersionKey(plan.regionId), plan.catalogueVersion.toString()),
         )
         db.metaDao().put(
             MetaEntity(MetaEntity.KEY_SCHEMA_SEEDED_AT, System.currentTimeMillis().toString()),

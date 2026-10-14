@@ -68,6 +68,24 @@ class AddSpeciesRegistrarTest {
     }
 
     @Test
+    fun `a species lands in the region on screen when it is added, numbered within it (D94)`() = runBlocking {
+        var onScreen = "pacific"
+        val switching = AddSpeciesRegistrar(
+            store = store,
+            regionId = { onScreen },
+            newSpeciesId = { "user-${store.species.size + 1}" },
+        )
+        switching.create(thrush, emptyList())
+
+        onScreen = "argentina"
+        val created = switching.create(thrush.copy(commonName = "Rufous Hornero"), emptyList())
+
+        val record = store.species.getValue(created.speciesId)
+        assertEquals("argentina", record.regionId)
+        assertEquals(9001, created.dexNumber)
+    }
+
+    @Test
     fun `user dex numbers climb, so U01 keeps its place`() = runBlocking {
         val first = registrar.create(thrush, emptyList())
         val second = registrar.create(thrush.copy(commonName = "Something else"), emptyList())

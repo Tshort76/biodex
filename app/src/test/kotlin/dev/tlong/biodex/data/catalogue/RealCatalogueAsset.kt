@@ -19,13 +19,20 @@ import java.io.File
  */
 object RealCatalogueAsset {
 
-    val path: File by lazy {
+    val path: File by lazy { fileFor(CATALOGUE_ASSET_PATH) }
+
+    /** Any shipped asset — D94 bundles one per region. */
+    fun fileFor(assetPath: String): File =
         // Unit tests run from `app/`, but a runner rooted at the repository is not worth a
         // mystery failure over.
         listOf("src/main/assets", "app/src/main/assets")
-            .map { File("$it/$CATALOGUE_ASSET_PATH") }
+            .map { File("$it/$assetPath") }
             .firstOrNull { it.isFile }
-            ?: error("the shipped catalogue asset is missing; the pipeline must run first")
+            ?: error("the shipped asset $assetPath is missing; the pipeline must run first")
+
+    /** Serves every shipped catalogue, for driving one importer per region. */
+    fun allRegionsReader() = AssetReader { requested ->
+        if (requested in CATALOGUE_ASSET_PATHS) fileFor(requested).inputStream() else null
     }
 
     val document: CatalogueDocument by lazy {

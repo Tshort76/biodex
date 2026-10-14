@@ -58,6 +58,10 @@ interface SpeciesDao {
     @Query("SELECT * FROM species WHERE regionId = :regionId ORDER BY dexNumber ASC")
     suspend fun speciesOnce(regionId: String): List<SpeciesEntity>
 
+    /** D94: a backup carries every region's species, not only the one on screen. */
+    @Query("SELECT * FROM species ORDER BY regionId, dexNumber ASC")
+    suspend fun allSpeciesOnce(): List<SpeciesEntity>
+
     /** Slice 7's backfill reads the stored row — including `userEditedFields` — before merging. */
     @Query("SELECT * FROM species WHERE id = :speciesId")
     suspend fun speciesOnceById(speciesId: String): SpeciesEntity?
@@ -96,6 +100,12 @@ interface EcosystemDao {
 
     @Query("SELECT * FROM ecosystems WHERE regionId = :regionId ORDER BY sortOrder ASC")
     suspend fun ecosystemsOnce(regionId: String): List<EcosystemEntity>
+
+    @Query("SELECT * FROM ecosystems")
+    suspend fun allEcosystemsOnce(): List<EcosystemEntity>
+
+    @Query("SELECT * FROM species_ecosystems")
+    suspend fun allMembershipsOnce(): List<SpeciesEcosystemCrossRef>
 
     @Upsert
     suspend fun upsertAll(ecosystems: List<EcosystemEntity>)
@@ -276,6 +286,9 @@ interface RegionDao {
 
     @Query("SELECT * FROM regions ORDER BY sortOrder ASC")
     suspend fun regionsOnce(): List<RegionEntity>
+
+    @Query("SELECT * FROM regions ORDER BY sortOrder ASC")
+    fun observeRegions(): Flow<List<RegionEntity>>
 
     @Upsert
     suspend fun upsertAll(regions: List<RegionEntity>)

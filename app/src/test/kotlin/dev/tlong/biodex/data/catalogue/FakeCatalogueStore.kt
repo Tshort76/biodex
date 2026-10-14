@@ -33,8 +33,8 @@ class FakeCatalogueStore : CatalogueStore {
     var applyCount = 0
         private set
 
-    override suspend fun catalogueVersion(): Int? =
-        meta[MetaEntity.KEY_CATALOGUE_VERSION]?.trim()?.toIntOrNull()
+    override suspend fun catalogueVersion(regionId: String): Int? =
+        meta[MetaEntity.catalogueVersionKey(regionId)]?.trim()?.toIntOrNull()
 
     override suspend fun existingSpecies(regionId: String): List<ExistingSpecies> =
         species.values
@@ -51,7 +51,7 @@ class FakeCatalogueStore : CatalogueStore {
             memberships.removeAll { it.first == speciesId }
             ecosystemIds.forEach { memberships += speciesId to it }
         }
-        meta[MetaEntity.KEY_CATALOGUE_VERSION] = plan.catalogueVersion.toString()
+        meta[MetaEntity.catalogueVersionKey(plan.regionId)] = plan.catalogueVersion.toString()
         meta[MetaEntity.KEY_SCHEMA_SEEDED_AT] = "0"
     }
 

@@ -100,6 +100,7 @@ CLASS_MAP = {
     "reptilia": "reptile",
     "squamata": "reptile",
     "testudines": "reptile",
+    "crocodylia": "reptile",
     "amphibia": "amphibian",
     "insecta": "insect",
     "actinopterygii": "fish",
@@ -1429,6 +1430,12 @@ def main():
     kingdom_order = {"animal": 0, "fungus": 1}
     built.sort(key=lambda s: (kingdom_order[s["kingdom"]], s["dexNumber"]))
 
+    # C03: every region's species share one table, keyed by a slug of the common name, so a
+    # second region's House Sparrow needs an id the Pacific's cannot already hold.
+    id_prefix = region.get("idPrefix", "")
+    for record in built:
+        record["id"] = id_prefix + record["id"]
+
     # Lift the pipeline-only facts out of the records before anything is written.
     internals = {}
     for record in built:
@@ -1452,7 +1459,10 @@ def main():
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     # Where a caution is written FROM, because nothing else sources one.
-    caution_path = CACHE_DIR / "fungi_caution_review.txt"
+    caution_path = CACHE_DIR / (
+        "fungi_caution_review.txt" if not id_prefix
+        else f"fungi_caution_review-{region['regionId']}.txt"
+    )
     caution_path.write_text(
         "Wikipedia toxicity / similar-species / identification section text, for\n"
         "WRITING and then CHECKING the hand-written cautions in curated_fungi.json.\n"
@@ -1463,7 +1473,9 @@ def main():
 
     out = Path(args.out).resolve()
 
-    report_text = write_report(catalogue, report, CACHE_DIR / "report.txt", internals)
+    # One report per region, so building the second does not overwrite the first's.
+    report_name = "report.txt" if not id_prefix else f"report-{region['regionId']}.txt"
+    report_text = write_report(catalogue, report, CACHE_DIR / report_name, internals)
     print("\n" + report_text)
 
     if failures:
@@ -1499,7 +1511,7 @@ def main():
                     f"REFUSING TO WRITE: the catalogue's content changed but "
                     f"catalogueVersion is still {catalogue.get('catalogueVersion')}. "
                     f"A phone that already imported that version would ignore this "
-                    f"asset. Bump catalogueVersion in tools/catalogue/region.json.",
+                    f"asset. Bump catalogueVersion in {args.region}.",
                     file=sys.stderr,
                 )
                 return 1
@@ -1509,7 +1521,7 @@ def main():
         json.dump(catalogue, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     print(f"\nwrote {out} ({len(built)} species)")
-    print(f"report: {CACHE_DIR / 'report.txt'}")
+    print(f"report: {CACHE_DIR / report_name}")
     print(f"caution review: {caution_path}")
     return 0
 

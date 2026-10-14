@@ -32,8 +32,9 @@ Taxonomy through the GBIF API. GBIF's backbone is published under CC BY 4.0.
 ## Place names — GeoNames
 
 The places the "Where was this?" prompt suggests are a filtered extract of the GeoNames dump
-for the United States: the towns, parks, trails, beaches and landmarks of California, Oregon
-and Washington. GeoNames is published under CC BY 4.0.
+for the United States and Argentina: the towns, parks, trails, beaches and landmarks of
+California, Oregon and Washington, and of every Argentine province. GeoNames is published
+under CC BY 4.0.
 
 - GeoNames: https://www.geonames.org
 - CC BY 4.0: https://creativecommons.org/licenses/by/4.0/

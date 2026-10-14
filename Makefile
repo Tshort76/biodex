@@ -21,7 +21,7 @@ ADB := $(SDK_DIR)/platform-tools/adb
 PKG := dev.tlong.biodex
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor debug release install test test-device check catalogue catalogue-test places places-test dexdb-test classifier-test screenshot clean
+.PHONY: help doctor debug release install test test-device check catalogue catalogue-pacific catalogue-argentina catalogue-test places places-test dexdb-test classifier-test screenshot clean
 
 help: ## List the targets
 	@echo "BioDex â€” make targets"
@@ -89,15 +89,26 @@ test-device: ## Run the instrumented tests (needs a phone; UNINSTALLS the app â€
 check: catalogue-test places-test dexdb-test classifier-test ## Everything runnable without a phone: JVM tests + catalogue, place-list and dexdb tests
 	@$(GRADLE) testDebugUnitTest --rerun-tasks
 
-catalogue: ## Rebuild the bundled catalogue asset (network on a cold cache; slow)
+catalogue: catalogue-pacific catalogue-argentina ## Rebuild both regions' catalogue assets (network on a cold cache; slow)
+
+catalogue-pacific: ## Rebuild the Pacific USA catalogue asset
 	@cd tools/catalogue && python3 build_catalogue.py \
 		--out ../../app/src/main/assets/catalogue/pacific.json
+
+catalogue-argentina: ## Rebuild the Argentina catalogue asset (D94)
+	@cd tools/catalogue && python3 build_catalogue.py \
+		--region argentina/region.json \
+		--animals argentina/curated_animals.json \
+		--fungi argentina/curated_fungi.json \
+		--out ../../app/src/main/assets/catalogue/argentina.json
 
 catalogue-test: ## Run the catalogue pipeline's Python tests
 	@cd tools/catalogue && python3 -m unittest test_build_catalogue
 
-places: ## Rebuild the bundled place list (downloads a 71 MB GeoNames dump on a cold cache)
+places: ## Rebuild both regions' place lists (downloads the GeoNames US and AR dumps on a cold cache)
 	@cd tools/places && python3 build_places.py
+	@cd tools/places && python3 build_places.py --config places-argentina.json \
+		--out ../../app/src/main/assets/places/argentina.tsv
 
 places-test: ## Run the place-list pipeline's Python tests
 	@cd tools/places && python3 -m unittest test_build_places

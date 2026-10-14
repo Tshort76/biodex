@@ -11,7 +11,6 @@ import dev.tlong.biodex.data.net.LookupOutcome
 import dev.tlong.biodex.data.net.SpeciesLookupRepository
 import dev.tlong.biodex.data.photo.CaptureRegistrar
 import dev.tlong.biodex.data.repo.AddSpeciesRegistrar
-import dev.tlong.biodex.data.repo.DEFAULT_REGION_ID
 import dev.tlong.biodex.data.repo.DexRepository
 import dev.tlong.biodex.domain.Ecosystem
 import dev.tlong.biodex.domain.Kingdom
@@ -96,7 +95,7 @@ class ConfirmSpeciesViewModel(
     private fun start(draft: AddSpeciesDraft) = viewModelScope.launch {
         ecosystems = repository.ecosystems().first()
         held = repository.speciesSummaries().first()
-        nextDexNumber = nextUserDexNumber(repository.maxUserDexNumber(DEFAULT_REGION_ID))
+        nextDexNumber = nextUserDexNumber(repository.maxUserDexNumber(repository.activeRegionNow()))
         existing = draft.backfillSpeciesId?.let { repository.userSpecies(it) }
         if (draft.isBackfill && existing == null) {
             _uiState.value = ConfirmSpeciesUiState.Missing

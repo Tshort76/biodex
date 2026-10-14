@@ -113,7 +113,10 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
         if (SpeciesSource.fromWireName(species.source) == SpeciesSource.USER) {
             val dexNumber = nextFreeUserDexNumber(assignedDexNumbers)
             assignedDexNumbers += dexNumber
-            speciesToInsert += species.copy(dexNumber = dexNumber)
+            speciesToInsert += species.copy(
+                dexNumber = dexNumber,
+                regionId = species.regionId ?: manifest.regionId,
+            )
             memberships[species.id] =
                 species.ecosystemIds.distinct().filter { it in local.ecosystemIds }
         } else {
