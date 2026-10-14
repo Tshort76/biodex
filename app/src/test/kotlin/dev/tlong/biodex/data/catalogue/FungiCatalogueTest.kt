@@ -130,8 +130,8 @@ class FungiCatalogueTest {
         val fungal = stored.filter { it.kingdom == Kingdom.FUNGUS }.map { it.dexNumber }
 
         assertTrue(animals.max() < fungal.min())
-        // The unique (regionId, dexNumber) index is what would fail the whole import if two
-        // kingdoms ever overlapped, so the gap is the assertion, not the exact bases.
+        // Overlapping kingdoms would give two species one number in the dex, so the gap is the
+        // assertion, not the exact bases.
         assertEquals(stored.size, stored.map { it.dexNumber }.distinct().size)
     }
 

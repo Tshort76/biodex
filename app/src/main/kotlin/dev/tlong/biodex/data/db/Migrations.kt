@@ -210,3 +210,18 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         )
     }
 }
+
+/**
+ * D96: `(regionId, dexNumber)` on `species` stops being unique. A catalogue rename is a new row
+ * that takes the number its old row still holds until the import merges the old one away, and
+ * a unique index made Room's upsert skip the new row. Since D95 the number a dex shows comes
+ * from `species_regions`, so the index guarded nothing.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP INDEX IF EXISTS `index_species_regionId_dexNumber`")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_species_regionId_dexNumber` ON `species` (`regionId`, `dexNumber`)",
+        )
+    }
+}

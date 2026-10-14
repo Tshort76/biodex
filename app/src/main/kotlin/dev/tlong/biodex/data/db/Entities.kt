@@ -18,7 +18,9 @@ import dev.tlong.biodex.domain.TaxClass
 @Entity(
     tableName = "species",
     indices = [
-        Index(value = ["regionId", "dexNumber"], unique = true),
+        // Not unique since D96: a renamed species takes its old row's number before the old row
+        // is merged away, in the same import.
+        Index(value = ["regionId", "dexNumber"]),
         Index(value = ["commonName"]),
         Index(value = ["scientificName"]),
     ],
@@ -29,8 +31,9 @@ data class SpeciesEntity(
     /**
      * Curated animals 1–224, curated fungi 4001–4030, user-added 9001 upward — see
      * `storedDexNumber`, `FUNGUS_DEX_NUMBER_BASE` and `USER_DEX_NUMBER_BASE`. One sortable
-     * column orders the whole grid, and `(regionId, dexNumber)` is unique, which is exactly
-     * why each kingdom needs a stored range of its own. (2001–2080 held the plants, D59.)
+     * column orders the whole grid, which is why each kingdom needs a stored range of its own.
+     * The home region's number (D95); a dex reads its own from `species_regions`. (2001–2080
+     * held the plants, D59.)
      */
     val dexNumber: Int,
     val source: SpeciesSource,

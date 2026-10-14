@@ -33,8 +33,7 @@ import dev.tlong.biodex.domain.storedDexNumber
  *  - Ecosystem links are replaced only for species the asset actually carries. A curated
  *    species kept because it has an entry keeps its existing links untouched.
  *  - The asset numbers each kingdom from 1, and the stored number carries the kingdom's
- *    base — the plant range is what keeps the unique `(regionId, dexNumber)` index from
- *    rejecting plant 47 because animal 47 already exists (11.1).
+ *    base, so fungus 47 sorts after every animal rather than beside animal 47 (11.1).
  *  - D95: one species is one row, whichever dexes list it, and `species_regions` says which.
  *    A region's import replaces that region's listing and its own ecosystems' links, and
  *    writes a row's text only when it is the row's home region (or the home no longer lists

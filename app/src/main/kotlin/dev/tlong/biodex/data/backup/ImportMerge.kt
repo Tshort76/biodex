@@ -256,7 +256,7 @@ fun withRestoredFiles(plan: ImportPlan, restoredEntries: Set<String>): ImportPla
 /**
  * Every restored user species is renumbered; the archived number is never kept.
  *
- * U-numbers are unique per region by a database index, so an archive's numbering could
+ * U-numbers were unique per region by a database index until D96, so an archive's numbering could
  * never be trusted against a database that already had user species of its own — allocation
  * was always the fallback. The BioDex base move from 1000 to 9000 makes it the only path
  * (ARCHITECTURE.md 11.1): a v3 archive's 1001 now sits below the plant range, where it

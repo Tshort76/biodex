@@ -110,9 +110,9 @@ enum class SpeciesSource(val wireName: String) {
  * the base and renders `#021`, `F007` or `U01`.
  *
  * The bases are wide apart on purpose. A catalogue that grows — it went from 120 animals
- * to 224 (D50) — must not walk into the next range, and the unique `(regionId, dexNumber)`
- * index is what would fail the whole import if it did. The 2001–2080 block held the plants
- * until D59 and stays empty.
+ * to 224 (D50) — must not walk into the next range, or its last species would sort and
+ * display as the next kingdom's. The 2001–2080 block held the plants until D59 and stays
+ * empty.
  */
 const val USER_DEX_NUMBER_BASE = 9000
 
