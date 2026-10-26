@@ -22,7 +22,7 @@ import org.junit.Test
 /** D78. The Identify screen: which species a search offers, and what the capture button does. */
 class IdentifyStateTest {
 
-    private fun species(id: String, number: Int, common: String, scientific: String?) =
+    private fun species(id: String, number: Int, common: String, scientific: String?, caughtAt: Long? = null) =
         SpeciesSummary(
             id = id,
             regionId = "pacific",
@@ -35,14 +35,14 @@ class IdentifyStateTest {
             kingdom = Kingdom.ANIMAL,
             silhouetteRes = "sil_bird",
             ecosystemIds = emptyList(),
-            caughtAt = null,
+            caughtAt = caughtAt,
             thumbPath = null,
             captureCount = 0,
         )
 
     private val catalogue = listOf(
         species("tanager-hunter", 5, "Tanager Hunter", null),
-        species("great-blue-heron", 3, "Great Blue Heron", "Ardea herodias"),
+        species("great-blue-heron", 3, "Great Blue Heron", "Ardea herodias", caughtAt = 1_000L),
         species("western-screech-owl", 21, "Western Screech-Owl", "Megascops kennicottii"),
         species("western-tanager", 34, "Western Tanager", "Piranga ludoviciana"),
     )
@@ -138,6 +138,19 @@ class IdentifyStateTest {
         assertTrue(chosen.canRegister)
         assertEquals("Register — Western Screech-Owl", chosen.registerLabel)
         assertFalse("a capture in flight cannot start twice", state(selectedId = "western-screech-owl", capturing = true).canRegister)
+    }
+
+    @Test
+    fun `a caught species adds a sighting, and only an unlock wears the rainbow (D97)`() {
+        val again = state(selectedId = "great-blue-heron")
+        assertTrue(again.addsSighting)
+        assertEquals("Add Sighting — Great Blue Heron", again.registerLabel)
+        assertFalse(again.unlocksSpecies)
+        assertEquals("a name typed in full reads the same", "Add Sighting — Great Blue Heron", state(query = "great blue heron").registerLabel)
+        assertTrue("an uncaught species unlocks", state(selectedId = "western-tanager").unlocksSpecies)
+        assertTrue("so does a new add", state(query = "Varied Thrush").unlocksSpecies)
+        assertFalse("nothing to register, no rainbow", state().unlocksSpecies)
+        assertFalse("nor while registering", state(selectedId = "western-tanager", capturing = true).unlocksSpecies)
     }
 
     @Test

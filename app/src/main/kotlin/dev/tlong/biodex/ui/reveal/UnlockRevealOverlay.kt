@@ -406,20 +406,6 @@ private val FullSpeedMotion = object : MotionDurationScale {
     override val scaleFactor: Float get() = 1f
 }
 
-/**
- * D62/D66. The ball's upper half, left horizon to right: the confetti palette reordered into a
- * spectrum so it reads as a rainbow rather than a scatter.
- */
-private val RAINBOW_ARC: List<Color> = listOf(
-    CONFETTI_PALETTE[0], // coral
-    CONFETTI_PALETTE[6], // tangerine
-    CONFETTI_PALETTE[1], // gold
-    CONFETTI_PALETTE[4], // mint
-    CONFETTI_PALETTE[2], // sky
-    CONFETTI_PALETTE[3], // lilac
-    CONFETTI_PALETTE[5], // pink
-)
-
 /** Where the halo sits as a fraction of the screen: the wash and the confetti centre on it. */
 private const val WASH_CENTRE_Y = 0.36f
 

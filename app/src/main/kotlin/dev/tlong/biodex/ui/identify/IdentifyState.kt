@@ -47,6 +47,12 @@ data class IdentifyUiState(
 
     val canRegister: Boolean get() = !capturing && (target != null || addableName != null)
 
+    /** D97: the species is caught already, so the button adds a sighting rather than a catch. */
+    val addsSighting: Boolean get() = target?.caught == true
+
+    /** D97: the button unlocks a species — an uncaught one or a new add — and wears the ball's rainbow. */
+    val unlocksSpecies: Boolean get() = canRegister && !addsSighting
+
     /** D90: the lookup runs on a tap, so offer one unless it is running or has answered for this name. */
     val canSearchOnline: Boolean
         get() = onlineName != null && when (val lookup = online) {
@@ -61,6 +67,7 @@ data class IdentifyUiState(
             val species = target
             return when {
                 capturing -> "Registering…"
+                species != null && species.caught -> "Add Sighting — ${species.commonName}"
                 species != null -> "Register — ${species.commonName}"
                 addableName != null -> "Register — add “$addableName”"
                 else -> "Register"

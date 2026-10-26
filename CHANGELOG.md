@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.2 — 2026-10-26
+
+- **Changed** — on Identify, a species you have caught already says so: each matching row reads ✓ caught or uncaught even once picked, and the outline alone marks the one picked. The button reads **Add Sighting — X** for a caught species, and **Register — X** in rainbow for one it would unlock. (`D97`)
+
 ## v28.1 — 2026-10-14
 
 - **Fixed** — the Chilean Flamingo and the Hairy Curtain Crust, which you had added yourself in the Pacific dex, appeared twice in All regions beside Argentina's catalogue entries for them. Each is now merged into the catalogue entry, sighting and all, and stays in your Pacific dex as before. (`D96`)

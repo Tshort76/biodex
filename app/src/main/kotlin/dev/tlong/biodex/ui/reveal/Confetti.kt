@@ -34,6 +34,20 @@ val CONFETTI_PALETTE: List<Color> = listOf(
     Color(0xFFFF9F43), // tangerine
 )
 
+/**
+ * D62/D66. The ball's upper half, left horizon to right: the confetti palette reordered into a
+ * spectrum so it reads as a rainbow rather than a scatter. D97 puts it on Identify's button too.
+ */
+val RAINBOW_ARC: List<Color> = listOf(
+    CONFETTI_PALETTE[0], // coral
+    CONFETTI_PALETTE[6], // tangerine
+    CONFETTI_PALETTE[1], // gold
+    CONFETTI_PALETTE[4], // mint
+    CONFETTI_PALETTE[2], // sky
+    CONFETTI_PALETTE[3], // lilac
+    CONFETTI_PALETTE[5], // pink
+)
+
 /** Gold, for the one label that wants to be warm rather than accent. */
 val CONFETTI_GOLD: Color = CONFETTI_PALETTE[1]
 

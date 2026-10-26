@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +56,7 @@ import dev.tlong.biodex.ui.capture.openInLens
 import dev.tlong.biodex.ui.common.PrimaryCta
 import dev.tlong.biodex.ui.common.SilhouetteIcon
 import dev.tlong.biodex.ui.common.WildToggle
+import dev.tlong.biodex.ui.reveal.RAINBOW_ARC
 import dev.tlong.biodex.ui.theme.DexTheme
 
 /**
@@ -244,6 +246,7 @@ fun IdentifyScreen(
             label = state.registerLabel,
             enabled = state.canRegister,
             onClick = onRegister,
+            fill = if (state.unlocksSpecies) Brush.horizontalGradient(RAINBOW_ARC) else null,
         )
     }
 }
@@ -377,14 +380,14 @@ private fun SpeciesRow(species: SpeciesSummary, selected: Boolean, onClick: () -
                 )
             }
         }
+        // D97: the outline says selected, so this says caught or not, selected or not.
         Text(
-            text = when {
-                selected -> "✓ selected"
-                species.caught -> "caught"
-                else -> "uncaught"
-            },
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-            color = if (selected) colors.accent else colors.faint,
+            text = if (species.caught) "✓ caught" else "uncaught",
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                fontWeight = if (species.caught) FontWeight.SemiBold else FontWeight.Normal,
+            ),
+            color = if (species.caught) colors.accent else colors.faint,
         )
     }
 }
