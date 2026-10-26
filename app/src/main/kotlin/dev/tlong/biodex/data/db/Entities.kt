@@ -239,7 +239,10 @@ data class CaptureEntity(
     val note: String? = null,
     /** Registration time. `isFirst` is derived (`MIN(createdAt)` per species), not stored. */
     val createdAt: Long,
-    /** D80. False for an animal seen in captivity — a zoo, an aquarium. Added by [MIGRATION_7_8]. */
+    /**
+     * D80's column, added by [MIGRATION_7_8] and unread since D98. Kept because minSdk 29's
+     * SQLite has no DROP COLUMN, and the rebuild would rewrite the table holding every sighting.
+     */
     @ColumnInfo(defaultValue = "1") val wild: Boolean = true,
 )
 

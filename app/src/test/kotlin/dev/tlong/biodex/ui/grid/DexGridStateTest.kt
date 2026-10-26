@@ -32,7 +32,6 @@ class DexGridStateTest {
         caught: Boolean = false,
         scientific: String? = null,
         source: SpeciesSource = SpeciesSource.CURATED,
-        seenWild: Boolean = caught,
     ) = SpeciesSummary(
         id = "sp-$n",
         regionId = "pacific",
@@ -48,7 +47,6 @@ class DexGridStateTest {
         caughtAt = if (caught) 1_756_512_000_000L else null,
         thumbPath = null,
         captureCount = if (caught) 1 else 0,
-        seenWild = seenWild,
     )
 
     private val named = listOf(
@@ -71,7 +69,7 @@ class DexGridStateTest {
         species(67, "Western Tanager", TaxClass.BIRD, listOf("alpine")),
         species(88, "Banana Slug", TaxClass.OTHER_INVERTEBRATE, listOf("coastal-rainforest")),
         species(90, "American Beaver", TaxClass.MAMMAL, listOf("riparian-wetland"), scientific = "Castor canadensis"),
-        species(91, "Snow Leopard", TaxClass.MAMMAL, listOf("alpine"), caught = true, seenWild = false),
+        species(91, "Snow Leopard", TaxClass.MAMMAL, listOf("alpine"), caught = true),
     )
 
     /** 120 curated species; the five named ones sit at their own dex numbers. */
@@ -168,12 +166,6 @@ class DexGridStateTest {
         query.value = "orca"
         assertEquals("orca", state().addableName)
         assertFalse(names().contains("American Beaver"))
-    }
-
-    @Test
-    fun `the wild filter keeps species seen wild and leaves out the zoo-only catch (D80, D86)`() {
-        filters.value = DexGridFilters(caught = CaughtFilter.WILD)
-        assertEquals(listOf("Western Screech-Owl"), names())
     }
 
     @Test

@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.3 — 2026-10-26
+
+- **Removed** — wild or captive. The "Seen in the wild" checkbox is gone from Identify and the photo viewer, and the Wild chip is gone from the grid's filters. Your sightings are unchanged. (`D98`)
+
 ## v28.2 — 2026-10-26
 
 - **Changed** — on Identify, a species you have caught already says so: each matching row reads ✓ caught or uncaught even once picked, and the outline alone marks the one picked. The button reads **Add Sighting — X** for a caught species, and **Register — X** in rainbow for one it would unlock. (`D97`)

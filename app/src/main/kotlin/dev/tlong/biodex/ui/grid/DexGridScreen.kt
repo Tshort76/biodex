@@ -492,12 +492,6 @@ private fun FilterRow(
                 selected = state.filters.caught == CaughtFilter.UNCAUGHT,
                 onClick = { onCaughtFilter(CaughtFilter.UNCAUGHT) },
             )
-            // D80/D86: seen in the wild, which leaves out what was caught only in a zoo.
-            DexFilterChip(
-                label = "Wild",
-                selected = state.filters.caught == CaughtFilter.WILD,
-                onClick = { onCaughtFilter(CaughtFilter.WILD) },
-            )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),

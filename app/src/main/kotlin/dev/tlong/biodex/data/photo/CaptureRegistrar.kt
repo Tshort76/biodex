@@ -62,15 +62,13 @@ class CaptureRegistrar(
          */
         placeLat: Double? = null,
         placeLng: Double? = null,
-        /** D80. False for a sighting in captivity. */
-        wild: Boolean = true,
     ): RegisterResult {
         val placePoint = pointOrNull(placeLat, placeLng)
         // A photoless registration skips the grant, the EXIF read and the thumbnail entirely —
         // there is nothing to take a grant on, nothing to read a date out of, and nothing to
         // render. Its `takenAt` is the registration time, which is the honest answer. No screen
         // takes this path since D59; the photoless shape a screen does produce is D61's unlink.
-        if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel, placePoint, wild)
+        if (photoUri == null) return registerWithoutPhoto(speciesId, note, locationLabel, placePoint)
 
         val alreadyReferenced = store.captureCountForUri(photoUri) > 0
         // 4.1 step 1. A refusal is tolerated: the picker's own grant lasts long enough to
@@ -110,7 +108,6 @@ class CaptureRegistrar(
                 locationLabel = resolveLocationLabel(locationLabel, facts),
                 note = note,
                 createdAt = registeredAt,
-                wild = wild,
             ),
             existingEntry = store.entryOnce(speciesId),
         )
@@ -161,7 +158,6 @@ class CaptureRegistrar(
         note: String?,
         locationLabel: String?,
         placePoint: Pair<Double, Double>?,
-        wild: Boolean,
     ): RegisterResult {
         // D60: with no photograph there is no EXIF, so the typed place is the only place.
         if (locationLabel.isNullOrBlank()) return RegisterResult.PlaceMissing
@@ -180,7 +176,6 @@ class CaptureRegistrar(
                 locationLabel = locationLabel,
                 note = note,
                 createdAt = registeredAt,
-                wild = wild,
             ),
             existingEntry = store.entryOnce(speciesId),
         )
@@ -225,11 +220,6 @@ class CaptureRegistrar(
         plan.filesToDelete.forEach(photos::deleteOwnedFile)
         plan.releaseUri?.let(photos::releaseGrant)
         return plan
-    }
-
-    /** D80. */
-    suspend fun setWild(captureId: String, wild: Boolean) {
-        store.setCaptureWild(captureId, wild)
     }
 
     /** S04: one favorite per entry; it becomes the grid thumbnail. */

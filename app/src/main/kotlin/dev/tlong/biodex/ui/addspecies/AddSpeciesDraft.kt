@@ -28,7 +28,7 @@ data class AddSpeciesDraft(
 }
 
 /** A picked photo and its place — null when the photo's EXIF carries one (D60) — and D80's flag. */
-data class DraftPhoto(val uri: String, val place: PlaceAnswer?, val wild: Boolean = true)
+data class DraftPhoto(val uri: String, val place: PlaceAnswer?)
 
 class AddSpeciesDraftHolder(private val newId: () -> String = { UUID.randomUUID().toString() }) {
 

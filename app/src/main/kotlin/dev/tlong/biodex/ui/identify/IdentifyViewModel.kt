@@ -51,7 +51,6 @@ sealed interface IdentifyEvent {
         val name: String,
         val photo: PickedPhoto,
         val place: PlaceAnswer?,
-        val wild: Boolean = true,
         val prefetched: LookupOutcome? = null,
     ) : IdentifyEvent
 
@@ -86,7 +85,6 @@ class IdentifyViewModel(
      */
     private var lensOpened = photo.shared
     private val capturing = MutableStateFlow(false)
-    private val wild = MutableStateFlow(true)
 
     /** Null while the EXIF read runs; then whether the photo carries coordinates. */
     private val located = MutableStateFlow<Boolean?>(null)
@@ -120,7 +118,6 @@ class IdentifyViewModel(
         query = query,
         selectedId = selectedId,
         capturing = capturing,
-        wild = wild,
         online = online,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IdentifyUiState(photo))
 
@@ -184,23 +181,17 @@ class IdentifyViewModel(
         }
     }
 
-    /** D80. */
-    fun onWildChange(value: Boolean) {
-        wild.value = value
-    }
-
     /** D81: capture the species the dex holds, or — when it holds none by that name — add it. */
     fun onRegister() {
         val state = uiState.value
         if (!state.canRegister) return
-        val isWild = state.wild
         val species = state.target
         if (species != null) {
-            withPlace { place -> record(species.id, place, isWild) }
+            withPlace { place -> record(species.id, place) }
         } else {
             val name = state.addableName ?: return
             val prefetched = state.prefetched
-            withPlace { place -> events.send(IdentifyEvent.Add(name, photo, place, isWild, prefetched)) }
+            withPlace { place -> events.send(IdentifyEvent.Add(name, photo, place, prefetched)) }
         }
     }
 
@@ -235,7 +226,7 @@ class IdentifyViewModel(
         }
     }
 
-    private suspend fun record(speciesId: String, place: PlaceAnswer?, wild: Boolean) {
+    private suspend fun record(speciesId: String, place: PlaceAnswer?) {
         capturing.value = true
         val result = registrar.register(
             speciesId,
@@ -243,14 +234,13 @@ class IdentifyViewModel(
             locationLabel = place?.label,
             placeLat = place?.lat,
             placeLng = place?.lng,
-            wild = wild,
         )
         when (result) {
             is CaptureRegistrar.RegisterResult.Registered ->
                 events.send(IdentifyEvent.Captured(speciesId, result.isFirst))
             is CaptureRegistrar.RegisterResult.ThumbnailFailed -> events.send(IdentifyEvent.Unreadable)
             // The door's own rule (D60) disagreeing with the EXIF read: ask, rather than fail.
-            CaptureRegistrar.RegisterResult.PlaceMissing -> pending.value = { p -> record(speciesId, p, wild) }
+            CaptureRegistrar.RegisterResult.PlaceMissing -> pending.value = { p -> record(speciesId, p) }
         }
         capturing.value = false
     }

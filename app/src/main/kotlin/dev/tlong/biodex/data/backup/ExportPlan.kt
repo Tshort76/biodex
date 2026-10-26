@@ -151,7 +151,6 @@ fun buildManifest(
             lng = item.capture.lng,
             locationLabel = item.capture.locationLabel,
             note = item.capture.note,
-            wild = item.capture.wild,
         )
     }
     return BackupManifest(

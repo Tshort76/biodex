@@ -55,7 +55,6 @@ import dev.tlong.biodex.ui.capture.PlacePromptDialog
 import dev.tlong.biodex.ui.capture.openInLens
 import dev.tlong.biodex.ui.common.PrimaryCta
 import dev.tlong.biodex.ui.common.SilhouetteIcon
-import dev.tlong.biodex.ui.common.WildToggle
 import dev.tlong.biodex.ui.reveal.RAINBOW_ARC
 import dev.tlong.biodex.ui.theme.DexTheme
 
@@ -126,7 +125,6 @@ fun IdentifyRoute(
         onQueryChange = viewModel::onQueryChange,
         onSearchOnline = viewModel::onSearchOnline,
         onSelect = viewModel::onSelect,
-        onWildChange = viewModel::onWildChange,
         onRegister = viewModel::onRegister,
     )
 }
@@ -144,7 +142,6 @@ fun IdentifyScreen(
     onQueryChange: (String) -> Unit,
     onSearchOnline: () -> Unit,
     onSelect: (String) -> Unit,
-    onWildChange: (Boolean) -> Unit,
     onRegister: () -> Unit,
     placeForLens: Boolean = false,
 ) {
@@ -236,8 +233,6 @@ fun IdentifyScreen(
                 }
             }
         }
-
-        WildToggle(wild = state.wild, onWildChange = onWildChange)
 
         message?.let {
             Text(text = it, style = MaterialTheme.typography.labelSmall, color = colors.warn)

@@ -186,7 +186,7 @@ fun BioDexNavHost(
                             container.addSpeciesDrafts.put(
                                 typedName = add.name,
                                 prefetched = add.prefetched,
-                                photo = DraftPhoto(add.photo.uri, add.place, add.wild),
+                                photo = DraftPhoto(add.photo.uri, add.place),
                             ),
                         ),
                     )

@@ -280,10 +280,6 @@ class DexRepository(
         db.entryDao().setPreferOwnPhoto(speciesId, preferOwnPhoto)
     }
 
-    override suspend fun setCaptureWild(captureId: String, wild: Boolean) {
-        db.captureDao().setWild(captureId, wild)
-    }
-
     override suspend fun updateCaptureReference(
         captureId: String,
         photoUri: String,
@@ -556,7 +552,6 @@ internal fun Capture.toEntity() = CaptureEntity(
     locationLabel = locationLabel,
     note = note,
     createdAt = createdAt,
-    wild = wild,
 )
 
 /**
@@ -625,7 +620,6 @@ internal fun assembleSummaries(
             imageUrl = row.imageUrl,
             captureCount = status?.captureCount ?: 0,
             preferOwnPhoto = status?.preferOwnPhoto ?: false,
-            seenWild = status?.seenWild ?: false,
             // D36: five columns in, one value out, so nothing downstream has to know the
             // path was ever stored flat.
             lineage = Lineage(
@@ -653,5 +647,4 @@ internal fun CaptureEntity.toDomain() = Capture(
     locationLabel = locationLabel,
     note = note,
     createdAt = createdAt,
-    wild = wild,
 )

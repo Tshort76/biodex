@@ -25,8 +25,6 @@ data class IdentifyUiState(
     val addableName: String? = null,
     /** The species whose name was typed in full — what Lens usually hands back. */
     val exactMatch: SpeciesSummary? = null,
-    /** D80. Unticked for a zoo or aquarium; carried onto the capture either way. */
-    val wild: Boolean = true,
     val capturing: Boolean = false,
     /** D88: the name the online lookup would ask about; null when there is nothing to ask. */
     val onlineName: String? = null,
@@ -102,10 +100,9 @@ fun identifyUiState(
     query: Flow<String>,
     selectedId: Flow<String?>,
     capturing: Flow<Boolean>,
-    wild: Flow<Boolean> = flowOf(true),
     online: Flow<OnlineLookup> = flowOf(OnlineLookup.Idle),
 ): Flow<IdentifyUiState> =
-    combine(species, query, selectedId, capturing, wild) { all, typed, id, busy, isWild ->
+    combine(species, query, selectedId, capturing) { all, typed, id, busy ->
         val results = rankedMatches(all, typed)
         IdentifyUiState(
             photo = photo,
@@ -116,7 +113,6 @@ fun identifyUiState(
             addableName = addableNameFor(all, typed),
             onlineName = onlineLookupName(all, typed, id),
             exactMatch = results.firstOrNull { (bestRank(it, typed) ?: Int.MAX_VALUE) <= SearchMatch.WITHIN },
-            wild = isWild,
             capturing = busy,
         ) to all
     }.combine(online) { (state, all), asked ->
