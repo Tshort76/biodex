@@ -126,6 +126,7 @@ Lessons that cost real time and live nowhere else in the tree. Each is dated so 
 - **The catalogue cache is local and can be partly missing.** `tools/catalogue/cache/` never expires, but it is git-ignored, so a rebuild that should be instant can refetch for 15 minutes and bring in upstream drift: new lead photos, refreshed range maps, reworded descriptions. After any rebuild, diff the asset per field against `HEAD` before committing, and mention real drift in the CHANGELOG. (2026-10-14)
 - **Wikimedia renders each thumbnail on first request and rate-limits.** A fresh tile can show a silhouette once and fill in on the next view; that is not a bug. Pre-warming thumbnails from the build machine hits HTTP 429 after about 20 requests, so do not try. Lead images served from `thumb.wikimedia.org` are rewritten to the 960px `upload.wikimedia.org` rendition by `gridThumbnailUrl`. (2026-10-13)
 - **A Wikipedia lead image is sometimes a chart or a map.** Check new species' pictures and pin a photograph through `overrides` where needed (the Argentine Hake, Darwin's Tree Iguana). (2026-10-13)
+- **There is no second emulator for screenshots.** The one AVD, `traveler`, belongs to other sessions and runs without `-read-only`, so a second copy of it refuses to start; a fresh AVD from the installed `android-36` image hung and died during boot twice. When a screenshot is wanted and the phone is unplugged, ask for the phone rather than spending the time. (2026-10-27)
 
 ## Git
 
