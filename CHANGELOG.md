@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.4 — 2026-10-27
+
+- **Changed** — a species' page links out with **Wikipedia ↗** beside the caught chip, in place of the 🔍 beside Capture!. The two lines of fine print under Capture! are gone, and Sightings starts folded — tap its header to open it. (`D99`)
+
 ## v28.3 — 2026-10-26
 
 - **Removed** — wild or captive. The "Seen in the wild" checkbox is gone from Identify and the photo viewer, and the Wild chip is gone from the grid's filters. Your sightings are unchanged. (`D98`)

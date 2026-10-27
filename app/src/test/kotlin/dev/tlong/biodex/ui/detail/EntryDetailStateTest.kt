@@ -268,4 +268,12 @@ class EntryDetailStateTest {
         assertNull(state(species).rangeMap)
     }
 
+
+    @Test
+    fun `the way out is called Wikipedia only when it goes there (D99)`() {
+        assertEquals("Wikipedia", infoLinkLabel("https://en.wikipedia.org/wiki/Western_screech_owl"))
+        assertEquals("Wikipedia", infoLinkLabel("https://es.m.wikipedia.org/wiki/Hornero"))
+        assertEquals("inaturalist.org", infoLinkLabel("https://www.inaturalist.org/taxa/1"))
+        assertEquals("More", infoLinkLabel(""))
+    }
 }

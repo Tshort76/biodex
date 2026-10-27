@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import dev.tlong.biodex.R
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.data.photo.ownedFileModel
 import dev.tlong.biodex.domain.Capture
@@ -56,7 +59,6 @@ import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesSource
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.domain.TaxClass
-import dev.tlong.biodex.ui.common.AttributionLine
 import dev.tlong.biodex.ui.common.CaughtChip
 import dev.tlong.biodex.ui.common.DIMMED_ALPHA
 import dev.tlong.biodex.ui.common.DIMMED_FILTER
@@ -350,11 +352,20 @@ private fun DetailBody(
         )
     }
 
-    if (summary.caught) {
-        CaughtChip(
-            dateLabel = formatCaughtDate(summary.caughtAt),
-            modifier = Modifier.padding(top = 6.dp),
-        )
+    // D99: the caught chip and the way out to the species' page share a row, so the link
+    // sits up with the facts it adds to rather than beside the button that acts on them.
+    val infoUrl = detail.infoUrl
+    if (summary.caught || infoUrl != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp),
+        ) {
+            if (summary.caught) CaughtChip(dateLabel = formatCaughtDate(summary.caughtAt))
+            Box(modifier = Modifier.weight(1f))
+            infoUrl?.let { url -> ExternalLink(label = infoLinkLabel(url), onClick = { uriHandler.openUri(url) }) }
+        }
     }
 
     // M20. Reached only when the lookup could not run — online, the ViewModel has already
@@ -428,16 +439,28 @@ private fun DetailBody(
         )
         // D56. The when-and-where of every catch, kept on the row and so untouched by what
         // happens to the photo afterwards. Newest first; the strip above stays in its order.
-        SectionHeader("Sightings (${captures.size}) · when and where")
-        SightingsList(rows = sightingRows(captures), onOpen = onOpenPhoto)
+        // D99: folded until asked for, since the strip above already shows each catch.
+        var sightingsOpen by rememberSaveable { mutableStateOf(false) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { sightingsOpen = !sightingsOpen },
+        ) {
+            SectionHeader("Sightings (${captures.size})", modifier = Modifier.weight(1f))
+            Text(
+                text = if (sightingsOpen) "▾" else "▸",
+                color = colors.faint,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        if (sightingsOpen) SightingsList(rows = sightingRows(captures), onOpen = onOpenPhoto)
     }
 
-    // D76. One row: Capture! records a sighting of this species right here, caught or not,
-    // and the magnifier beside it opens the reference link that "Learn more" used to.
+    // D76. Capture! records a sighting of this species right here, caught or not.
     Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 14.dp),
+        modifier = Modifier.padding(top = 14.dp, bottom = 24.dp),
     ) {
         Button(
             onClick = onCapture,
@@ -455,29 +478,33 @@ private fun DetailBody(
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             )
         }
-        detail.infoUrl?.let { url ->
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.accentSoft)
-                    .clickable { uriHandler.openUri(url) },
-            ) {
-                Text(text = "🔍", style = MaterialTheme.typography.titleLarge)
-            }
-        }
     }
+}
 
-    detail.imageAttribution?.let {
-        AttributionLine(text = it, modifier = Modifier.padding(top = 8.dp))
+/** D99: a link that leaves the app, marked with the box-and-arrow every phone uses for one. */
+@Composable
+private fun ExternalLink(label: String, onClick: () -> Unit) {
+    val colors = DexTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = colors.accent,
+        )
+        Icon(
+            painter = painterResource(R.drawable.ic_open_in_new),
+            contentDescription = "Opens in the browser",
+            tint = colors.accent,
+            modifier = Modifier.size(14.dp),
+        )
     }
-    AttributionLine(
-        text = "Your photos stay in your gallery and are linked by reference — the app keeps " +
-            "only a small thumbnail. The reference image streams from its source and is " +
-            "cached after first view.",
-        modifier = Modifier.padding(top = 6.dp, bottom = 24.dp),
-    )
 }
 
 /**

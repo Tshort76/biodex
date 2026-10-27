@@ -120,3 +120,17 @@ internal fun ecosystemNamesFor(
     val ids = detail.summary.ecosystemIds.toSet()
     return ecosystems.filter { it.id in ids }.sortedBy { it.sortOrder }.map { it.name }
 }
+
+/**
+ * D99. What the detail screen's way out is called: "Wikipedia" for the page every catalogue
+ * species and every lookup links to, and the bare host for anything else, so a link never
+ * claims to be somewhere it is not.
+ */
+internal fun infoLinkLabel(url: String): String {
+    val host = url.substringAfter("://").substringBefore('/').removePrefix("www.")
+    return when {
+        host == "wikipedia.org" || host.endsWith(".wikipedia.org") -> "Wikipedia"
+        host.isNotEmpty() -> host
+        else -> "More"
+    }
+}
