@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The themed launcher icon (D100): the flycatcher alone, in one colour the launcher tints.
+     Written by tools/icon/build_icon.py; edit that, not this. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.74" android:scaleY="0.74" android:pivotX="54" android:pivotY="55" android:translateY="1">
+        <path android:fillColor="#FFFFFF" android:pathData="M49,36 C40,31 28,27 15,28 C17,35 24,42 33,46 C40,49 46,50 50,49z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M46,43 C44,45 45,48 49,48 L50,44z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M50,54 C46,66 38,76 27,86 C40,80 49,69 55,58z" />
+        <group android:scaleX="-1" android:pivotX="54">
+            <path android:fillColor="#FFFFFF" android:pathData="M49,36 C40,31 28,27 15,28 C17,35 24,42 33,46 C40,49 46,50 50,49z" />
+            <path android:fillColor="#FFFFFF" android:pathData="M46,43 C44,45 45,48 49,48 L50,44z" />
+            <path android:fillColor="#FFFFFF" android:pathData="M50,54 C46,66 38,76 27,86 C40,80 49,69 55,58z" />
+        </group>
+        <path android:fillColor="#FFFFFF" android:pathData="M50,55 L54,65 L58,55z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M47.4,44a6.6,12.5 0 1,0 13.2,0a6.6,12.5 0 1,0 -13.2,0z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M49,31a5,5 0 1,0 10,0a5,5 0 1,0 -10,0z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M51.8,28 L54,23.6 L56.2,28z" />
+    </group>
+</vector>

@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.5 — 2026-10-29
+
+- **Changed** — a new launcher icon: a scissor-tailed flycatcher seen from below, half in colour and half in silhouette, on a cream face with a walnut rim. It replaces the carved medallion, which was too detailed to read on a phone screen, and themed (one-colour) icons now work. (`D100`)
+
 ## v28.4 — 2026-10-27
 
 - **Changed** — a species' page links out with **Wikipedia ↗** beside the caught chip, in place of the 🔍 beside Capture!. The two lines of fine print under Capture! are gone, and Sightings starts folded — tap its header to open it. (`D99`)
