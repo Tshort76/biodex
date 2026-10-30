@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,10 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -48,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import dev.tlong.biodex.R
 import dev.tlong.biodex.appContainer
 import dev.tlong.biodex.domain.SpeciesSummary
 import dev.tlong.biodex.ui.capture.PickedPhoto
@@ -256,15 +261,13 @@ private fun NameField(
     val colors = DexTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.codeBg)
+            .padding(start = 12.dp, end = 3.dp, top = 3.dp, bottom = 3.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(10.dp))
-                .background(colors.codeBg)
-                .padding(horizontal = 12.dp, vertical = 11.dp),
-        ) {
+        Box(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
             if (query.isEmpty()) {
                 Text(
                     text = "Type or paste its name",
@@ -278,24 +281,37 @@ private fun NameField(
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.fg),
                 cursorBrush = SolidColor(colors.accent),
-                // D90: the keyboard's search key asks online, as the button does.
+                // D90: the keyboard's search key asks online, as the microscope does.
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { if (canSearchOnline) onSearchOnline() }),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        // D101: the field's own icons — the microscope asks online, the x empties the field.
         if (canSearchOnline) {
-            Text(
-                text = "Search online",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.accent,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.card)
-                    .clickable(onClick = onSearchOnline)
-                    .padding(horizontal = 12.dp, vertical = 9.dp),
-            )
+            FieldIcon(R.drawable.ic_biotech, "Search online", colors.accent, onSearchOnline)
         }
+        if (query.isNotEmpty()) {
+            FieldIcon(R.drawable.ic_close, "Clear the name", colors.muted) { onQueryChange("") }
+        }
+    }
+}
+
+@Composable
+private fun FieldIcon(icon: Int, description: String, tint: Color, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = description,
+            tint = tint,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

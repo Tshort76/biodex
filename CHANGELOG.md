@@ -6,6 +6,10 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.6 — 2026-10-30
+
+- **Changed** — on Identify, the name field holds its own controls: a 🔬 microscope in place of the **Search online** button, and an **x** that clears the name in one tap. (`D101`, `D90` revised)
+
 ## v28.5 — 2026-10-29
 
 - **Changed** — a new launcher icon: a scissor-tailed flycatcher seen from below, half in colour and half in silhouette, on a cream face with a walnut rim. It replaces the carved medallion, which was too detailed to read on a phone screen, and themed (one-colour) icons now work. (`D100`)
