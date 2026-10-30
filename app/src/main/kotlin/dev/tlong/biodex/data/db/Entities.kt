@@ -121,6 +121,27 @@ data class SpeciesRegionEntity(
 )
 
 /**
+ * D103: a web page the owner chose for a species, shown in place of the catalogue's link. A
+ * table of its own because a catalogue import rewrites every curated `species` row whole, and
+ * nothing here is the catalogue's to write. Added by [MIGRATION_10_11].
+ */
+@Entity(
+    tableName = "species_links",
+    foreignKeys = [
+        ForeignKey(
+            entity = SpeciesEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["speciesId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
+data class SpeciesLinkEntity(
+    @PrimaryKey val speciesId: String,
+    val url: String,
+)
+
+/**
  * The regions the catalogue knows, seeded by the importer from the asset's `regionId` and
  * `regionName` — one row per bundled asset (`pacific` / "Pacific USA", `argentina` /
  * "Argentina", D94), ordered by [sortOrder] in the region picker. The table exists so the

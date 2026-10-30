@@ -6,6 +6,11 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.7 — 2026-10-30
+
+- **Added** — set a species' link to any web page: tap the pencil beside the link on its page (or **Add link** where there is none) and paste an iNaturalist page, a field guide, anything. The link is named by its site and survives catalogue updates and backups; clear the field to go back to Wikipedia. (`D103`)
+- **Changed** — the Google Lens button on Identify carries the box-and-arrow link mark in place of 🔍. (`D102`)
+
 ## v28.6 — 2026-10-30
 
 - **Changed** — on Identify, the name field holds its own controls: a 🔬 microscope in place of the **Search online** button, and an **x** that clears the name in one tap. (`D101`, `D90` revised)

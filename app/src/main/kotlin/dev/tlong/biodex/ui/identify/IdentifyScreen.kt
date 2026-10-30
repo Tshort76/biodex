@@ -194,10 +194,10 @@ fun IdentifyScreen(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
-            Text(
-                text = "🔍  Google Lens",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.accent,
+            // D102: Lens is another app, so it wears the entry's box-and-arrow (D99).
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(10.dp)
@@ -205,7 +205,19 @@ fun IdentifyScreen(
                     .background(colors.card)
                     .clickable(onClick = onOpenLens)
                     .padding(horizontal = 14.dp, vertical = 9.dp),
-            )
+            ) {
+                Text(
+                    text = "Google Lens",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.accent,
+                )
+                Icon(
+                    painter = painterResource(R.drawable.ic_open_in_new),
+                    contentDescription = "Opens in Google Lens",
+                    tint = colors.accent,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
 
         NameField(

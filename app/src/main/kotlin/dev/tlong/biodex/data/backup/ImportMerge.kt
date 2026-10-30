@@ -35,6 +35,8 @@ data class LocalSnapshot(
      * would fail the transaction and lose the whole import.
      */
     val ecosystemIds: Set<String> = emptySet(),
+    /** D103: the species that already carry a link of the owner's, which an import keeps. */
+    val linkedSpeciesIds: Set<String> = emptySet(),
 )
 
 data class LocalEntry(
@@ -51,6 +53,8 @@ data class ImportPlan(
     val entriesToWrite: List<BackupEntry>,
     val capturesToInsert: List<PlannedCapture>,
     val report: ImportReport,
+    /** D103: species id → the owner's link, for species that have none here yet. */
+    val linksToWrite: Map<String, String> = emptyMap(),
 ) {
     /** ZIP entry name → path relative to `filesDir`, for the extraction pass. */
     val filesToRestore: Map<String, String>
@@ -204,11 +208,17 @@ fun planImport(manifest: BackupManifest, local: LocalSnapshot): ImportPlan {
         }
     }
 
+    val linksToWrite = manifest.species
+        .filter { it.id in availableSpecies && it.id !in local.linkedSpeciesIds }
+        .mapNotNull { species -> species.ownInfoUrl?.let { species.id to it } }
+        .toMap()
+
     return ImportPlan(
         speciesToInsert = speciesToInsert,
         memberships = memberships,
         entriesToWrite = entriesToWrite,
         capturesToInsert = capturesToInsert,
+        linksToWrite = linksToWrite,
         report = ImportReport(
             speciesAdded = speciesToInsert.size,
             entriesAdded = entriesAdded,

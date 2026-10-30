@@ -16,6 +16,7 @@ import dev.tlong.biodex.data.db.EntryEntity
 import dev.tlong.biodex.data.db.EntryStatusRow
 import dev.tlong.biodex.data.db.SpeciesEcosystemCrossRef
 import dev.tlong.biodex.data.db.SpeciesEntity
+import dev.tlong.biodex.data.db.SpeciesLinkEntity
 import dev.tlong.biodex.data.db.SpeciesRegionEntity
 import dev.tlong.biodex.data.photo.CaptureDeletionPlan
 import dev.tlong.biodex.data.photo.CaptureStore
@@ -32,6 +33,7 @@ import dev.tlong.biodex.domain.SpeciesUse
 import dev.tlong.biodex.domain.RangeGrid
 import dev.tlong.biodex.domain.Region
 import dev.tlong.biodex.domain.keptUsesNote
+import dev.tlong.biodex.domain.normalizedWebLink
 import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.SpeciesFields
 import dev.tlong.biodex.domain.SpeciesSource
@@ -169,15 +171,21 @@ class DexRepository(
     fun speciesDetail(speciesId: String): Flow<SpeciesDetail?> =
         db.speciesDao().observeSpeciesById(speciesId).flatMapLatest { species ->
             if (species == null) return@flatMapLatest flowOf(null)
-            combine(dexSpeciesFlow, membershipFlow, entryStatusFlow) { dex, memberships, statuses ->
+            combine(
+                dexSpeciesFlow,
+                membershipFlow,
+                entryStatusFlow,
+                db.speciesLinkDao().observeUrl(speciesId),
+            ) { dex, memberships, statuses, ownLink ->
                 val listed = dex.firstOrNull { it.id == speciesId } ?: species
                 SpeciesDetail(
                     summary = assembleSummaries(listOf(listed), memberships, statuses).first(),
                     habitatText = species.habitatText,
                     description = species.description,
                     imageUrl = species.imageUrl,
-                    infoUrl = species.infoUrl,
+                    infoUrl = ownLink ?: species.infoUrl,
                     imageAttribution = species.imageAttribution,
+                    ownInfoUrl = ownLink,
                     usesNote = species.usesNote,
                     userEditedFields = species.userEditedFields,
                     rangeCells = species.rangeCells,
@@ -280,6 +288,20 @@ class DexRepository(
         db.entryDao().setPreferOwnPhoto(speciesId, preferOwnPhoto)
     }
 
+    /**
+     * D103: the owner's own page for a species, stored as [normalizedWebLink] spells it, or back
+     * to the catalogue's when [typed] is blank. False, and nothing written, when it names no page.
+     */
+    suspend fun setSpeciesLink(speciesId: String, typed: String): Boolean {
+        if (typed.isBlank()) {
+            db.speciesLinkDao().delete(speciesId)
+            return true
+        }
+        val url = normalizedWebLink(typed) ?: return false
+        db.speciesLinkDao().upsert(SpeciesLinkEntity(speciesId, url))
+        return true
+    }
+
     override suspend fun updateCaptureReference(
         captureId: String,
         photoUri: String,
@@ -345,9 +367,12 @@ class DexRepository(
         val species = db.speciesDao().allSpeciesOnce()
         val ecosystemsBySpecies = db.ecosystemDao().allMembershipsOnce()
             .groupBy({ it.speciesId }, { it.ecosystemId })
+        val links = db.speciesLinkDao().allOnce().associate { it.speciesId to it.url }
         return BackupSnapshot(
             regionId = DEFAULT_REGION_ID,
-            species = species.map { it.toBackup(ecosystemsBySpecies[it.id].orEmpty()) },
+            species = species.map {
+                it.toBackup(ecosystemsBySpecies[it.id].orEmpty()).copy(ownInfoUrl = links[it.id])
+            },
             entries = db.entryDao().entriesOnce().map {
                 BackupEntry(it.speciesId, it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
             },
@@ -370,6 +395,7 @@ class DexRepository(
                     it.speciesId to LocalEntry(it.caughtAt, it.favoriteCaptureId, it.preferOwnPhoto)
                 },
             ecosystemIds = db.ecosystemDao().allEcosystemsOnce().map { it.id }.toSet(),
+            linkedSpeciesIds = db.speciesLinkDao().allOnce().map { it.speciesId }.toSet(),
         )
     }
 
@@ -399,6 +425,9 @@ class DexRepository(
                         preferOwnPhoto = it.preferOwnPhoto,
                     ),
                 )
+            }
+            plan.linksToWrite.forEach { (speciesId, url) ->
+                db.speciesLinkDao().insertIfAbsent(SpeciesLinkEntity(speciesId, url))
             }
             // D75: an archive written before v24 carries registration dates.
             db.entryDao().syncAllCaughtAt()

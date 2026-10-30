@@ -225,3 +225,15 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         )
     }
 }
+
+/** D103: the owner's own link for a species, in a table no catalogue import writes. */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(SPECIES_LINKS_V11_CREATE_SQL)
+    }
+}
+
+const val SPECIES_LINKS_V11_CREATE_SQL =
+    "CREATE TABLE IF NOT EXISTS `species_links` (`speciesId` TEXT NOT NULL, `url` TEXT NOT NULL, " +
+        "PRIMARY KEY(`speciesId`), FOREIGN KEY(`speciesId`) REFERENCES `species`(`id`) " +
+        "ON UPDATE NO ACTION ON DELETE CASCADE )"

@@ -68,6 +68,7 @@ class RoomCatalogueStore(private val db: AppDatabase) : CatalogueStore {
                 )
             }
             db.captureDao().moveToSpecies(from, into)
+            db.speciesLinkDao().moveToSpecies(from, into)
         }
         if (plan.merges.isNotEmpty()) {
             db.speciesDao().deleteByIds(plan.merges.keys.toList())
