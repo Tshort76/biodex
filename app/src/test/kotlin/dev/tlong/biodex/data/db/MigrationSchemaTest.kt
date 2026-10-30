@@ -204,19 +204,4 @@ class MigrationSchemaTest {
 
         assertEquals(listOf("index_captures_speciesId"), indices)
     }
-
-    @Test
-    fun `the species_links table created by MIGRATION_10_11 matches Room's exported v11 schema`() {
-        val v11 = File("schemas/dev.tlong.biodex.data.db.AppDatabase/11.json")
-        assertTrue("schema v11 has not been exported — run assembleDebug", v11.exists())
-        val createSql = Json.parseToJsonElement(v11.readText())
-            .jsonObject.getValue("database")
-            .jsonObject.getValue("entities")
-            .jsonArray
-            .map { it.jsonObject }
-            .single { it.getValue("tableName").jsonPrimitive.content == "species_links" }
-            .getValue("createSql").jsonPrimitive.content
-
-        assertEquals(createSql.replace("\${TABLE_NAME}", "species_links"), SPECIES_LINKS_V11_CREATE_SQL)
-    }
 }

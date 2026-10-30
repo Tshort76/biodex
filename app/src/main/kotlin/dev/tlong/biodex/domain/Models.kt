@@ -302,11 +302,8 @@ data class SpeciesDetail(
     val habitatText: String?,
     val description: String?,
     val imageUrl: String?,
-    /** The page the entry links to: the owner's own when set (D103), else the catalogue's. */
     val infoUrl: String?,
     val imageAttribution: String?,
-    /** D103: the page the owner chose for this species; null when the link is the catalogue's. */
-    val ownInfoUrl: String? = null,
     /** The curated note, with any `Caution:` sentence. Null when there is nothing to say. */
     val usesNote: String? = null,
     val userEditedFields: List<String>,

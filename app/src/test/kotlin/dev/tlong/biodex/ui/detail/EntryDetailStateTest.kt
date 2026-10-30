@@ -274,6 +274,17 @@ class EntryDetailStateTest {
         assertEquals("Wikipedia", infoLinkLabel("https://en.wikipedia.org/wiki/Western_screech_owl"))
         assertEquals("Wikipedia", infoLinkLabel("https://es.m.wikipedia.org/wiki/Hornero"))
         assertEquals("inaturalist.org", infoLinkLabel("https://www.inaturalist.org/taxa/1"))
+        assertEquals("Google", infoLinkLabel(googleSearchUrl("x")))
         assertEquals("More", infoLinkLabel(""))
+    }
+
+    @Test
+    fun `a species with no page of its own links to a search on its names (D104)`() {
+        val page = "https://en.wikipedia.org/wiki/Western_screech_owl"
+        assertEquals(page, entryLinkUrl(detail(emptyList()).copy(infoUrl = page)))
+        assertEquals(
+            "https://www.google.com/search?q=Western+Screech-Owl+Megascops+kennicottii",
+            entryLinkUrl(detail(emptyList()).copy(infoUrl = null)),
+        )
     }
 }

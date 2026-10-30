@@ -304,27 +304,5 @@ class ImportMergeTest {
         assertEquals("pacific", plan.speciesToInsert.single().regionId)
     }
 
-    @Test
-    fun `an archived own link restores only where this install has none (D103)`() {
-        val plan = planImport(
-            manifest(
-                species = listOf(
-                    userSpecies("western-screech-owl", 1).copy(source = "curated", ownInfoUrl = "https://a.org/owl"),
-                    userSpecies("banana-slug", 2).copy(source = "curated", ownInfoUrl = "https://a.org/slug"),
-                    userSpecies("absent", 3).copy(source = "curated", ownInfoUrl = "https://a.org/absent"),
-                ),
-            ),
-            freshInstall.copy(
-                speciesSources = mapOf(
-                    "western-screech-owl" to SpeciesSource.CURATED,
-                    "banana-slug" to SpeciesSource.CURATED,
-                ),
-                linkedSpeciesIds = setOf("banana-slug"),
-            ),
-        )
-
-        assertEquals(mapOf("western-screech-owl" to "https://a.org/owl"), plan.linksToWrite)
-    }
-
     private fun ImportPlan.capturesAdded() = capturesToInsert.size
 }

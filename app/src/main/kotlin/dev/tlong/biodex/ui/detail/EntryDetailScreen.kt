@@ -174,7 +174,6 @@ fun EntryDetailRoute(
             onOpenPhoto = onOpenPhoto,
             onOpenNearest = onOpenNearest,
             onPreferOwnPhoto = viewModel::onPreferOwnPhoto,
-            onSetLink = viewModel::onSetLink,
         )
         val detail = state.detail
         if (revealPending && detail != null) {
@@ -237,7 +236,6 @@ fun EntryDetailScreen(
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onPreferOwnPhoto: (Boolean) -> Unit = {},
-    onSetLink: (String) -> Unit = {},
 ) {
     val colors = DexTheme.colors
     Scaffold(containerColor = colors.bg) { inner ->
@@ -278,7 +276,6 @@ fun EntryDetailScreen(
                     onOpenPhoto = onOpenPhoto,
                     onOpenNearest = onOpenNearest,
                     onPreferOwnPhoto = onPreferOwnPhoto,
-                    onSetLink = onSetLink,
                 )
             }
         }
@@ -294,7 +291,6 @@ private fun DetailBody(
     onOpenPhoto: (String) -> Unit,
     onOpenNearest: () -> Unit,
     onPreferOwnPhoto: (Boolean) -> Unit,
-    onSetLink: (String) -> Unit,
 ) {
     val colors = DexTheme.colors
     val uriHandler = LocalUriHandler.current
@@ -358,9 +354,8 @@ private fun DetailBody(
 
     // D99: the caught chip and the way out to the species' page share a row, so the link
     // sits up with the facts it adds to rather than beside the button that acts on them.
-    // D103: the pencil beside it sets a page of the owner's choosing, so the row is always there.
-    val infoUrl = detail.infoUrl
-    var editingLink by rememberSaveable { mutableStateOf(false) }
+    // D104: every species has a way out, a Google search where it has no page of its own.
+    val linkUrl = entryLinkUrl(detail)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -369,18 +364,7 @@ private fun DetailBody(
     ) {
         if (summary.caught) CaughtChip(dateLabel = formatCaughtDate(summary.caughtAt))
         Box(modifier = Modifier.weight(1f))
-        infoUrl?.let { url -> ExternalLink(label = infoLinkLabel(url), onClick = { uriHandler.openUri(url) }) }
-        EditLinkButton(hasLink = infoUrl != null, onClick = { editingLink = true })
-    }
-    if (editingLink) {
-        SpeciesLinkDialog(
-            ownUrl = detail.ownInfoUrl,
-            onSave = { typed ->
-                onSetLink(typed)
-                editingLink = false
-            },
-            onDismiss = { editingLink = false },
-        )
+        ExternalLink(label = infoLinkLabel(linkUrl), onClick = { uriHandler.openUri(linkUrl) })
     }
 
     // M20. Reached only when the lookup could not run — online, the ViewModel has already
@@ -493,34 +477,6 @@ private fun DetailBody(
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             )
         }
-    }
-}
-
-/** D103: the pencil that sets the owner's own link; it says "Add link" when there is none. */
-@Composable
-private fun EditLinkButton(hasLink: Boolean, onClick: () -> Unit) {
-    val colors = DexTheme.colors
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-    ) {
-        if (!hasLink) {
-            Text(
-                text = "Add link",
-                style = MaterialTheme.typography.labelMedium,
-                color = colors.muted,
-            )
-        }
-        Icon(
-            painter = painterResource(R.drawable.ic_edit),
-            contentDescription = if (hasLink) "Change the link" else "Add a link",
-            tint = colors.muted,
-            modifier = Modifier.size(14.dp),
-        )
     }
 }
 

@@ -68,11 +68,6 @@ data class BackupSpecies(
     val imageUrl: String? = null,
     val infoUrl: String? = null,
     val imageAttribution: String? = null,
-    /**
-     * D103: the page the owner chose for this species, curated or not. Defaulted, so an older
-     * archive parses; an import restores it only where this install has no link of its own.
-     */
-    val ownInfoUrl: String? = null,
     val userEditedFields: List<String> = emptyList(),
     val ecosystemIds: List<String> = emptyList(),
     // The uses block (11.1). Every field defaults, so a v3 archive — written before plants

@@ -164,11 +164,6 @@ class EntryDetailViewModel(
         viewModelScope.launch { repository.setPreferOwnPhoto(speciesId, preferOwnPhoto) }
     }
 
-    /** D103: the owner's own page for this species; blank goes back to the catalogue's. */
-    fun onSetLink(typed: String) {
-        viewModelScope.launch { repository.setSpeciesLink(speciesId, typed) }
-    }
-
     /**
      * M20's backfill trigger: "the app backfills automatically the next time it is online and
      * the entry is opened, then presents the same confirmation card."

@@ -6,6 +6,11 @@ Requirement and decision ids (`M##`, `D##`) point into `DESIGN.md`, where the re
 
 ---
 
+## v28.8 — 2026-10-30
+
+- **Changed** — a species with no Wikipedia page now links to **Google ↗**, a search on its common and scientific names. (`D104`)
+- **Removed** — setting your own link for a species, added in v28.7. (`D104`, `D103` struck)
+
 ## v28.7 — 2026-10-30
 
 - **Added** — set a species' link to any web page: tap the pencil beside the link on its page (or **Add link** where there is none) and paste an iNaturalist page, a field guide, anything. The link is named by its site and survives catalogue updates and backups; clear the field to go back to Wikipedia. (`D103`)

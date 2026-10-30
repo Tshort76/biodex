@@ -7,6 +7,7 @@ import dev.tlong.biodex.domain.SpeciesDetail
 import dev.tlong.biodex.domain.UsesNote
 import dev.tlong.biodex.ui.common.UsesContent
 import dev.tlong.biodex.domain.RangeGrid
+import java.net.URLEncoder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -122,6 +123,19 @@ internal fun ecosystemNamesFor(
 }
 
 /**
+ * D104. Where the entry's link goes: the species' own page when it has one, and otherwise a
+ * Google search on its names, so an obscure species with no Wikipedia article still has a way
+ * out and no species carries a link the owner typed.
+ */
+internal fun entryLinkUrl(detail: SpeciesDetail): String =
+    detail.infoUrl ?: googleSearchUrl(
+        listOfNotNull(detail.summary.commonName, detail.summary.scientificName).distinct().joinToString(" "),
+    )
+
+internal fun googleSearchUrl(query: String): String =
+    "https://www.google.com/search?q=" + URLEncoder.encode(query, Charsets.UTF_8.name())
+
+/**
  * D99. What the detail screen's way out is called: "Wikipedia" for the page every catalogue
  * species and every lookup links to, and the bare host for anything else, so a link never
  * claims to be somewhere it is not.
@@ -130,6 +144,7 @@ internal fun infoLinkLabel(url: String): String {
     val host = url.substringAfter("://").substringBefore('/').removePrefix("www.")
     return when {
         host == "wikipedia.org" || host.endsWith(".wikipedia.org") -> "Wikipedia"
+        host == "google.com" -> "Google"
         host.isNotEmpty() -> host
         else -> "More"
     }

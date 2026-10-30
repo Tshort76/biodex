@@ -338,27 +338,3 @@ interface SpeciesRegionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIfAbsent(row: SpeciesRegionEntity)
 }
-
-/** D103: the owner's own link per species. */
-@Dao
-interface SpeciesLinkDao {
-
-    @Query("SELECT url FROM species_links WHERE speciesId = :speciesId")
-    fun observeUrl(speciesId: String): Flow<String?>
-
-    @Query("SELECT * FROM species_links")
-    suspend fun allOnce(): List<SpeciesLinkEntity>
-
-    @Upsert
-    suspend fun upsert(row: SpeciesLinkEntity)
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertIfAbsent(row: SpeciesLinkEntity)
-
-    @Query("DELETE FROM species_links WHERE speciesId = :speciesId")
-    suspend fun delete(speciesId: String)
-
-    /** D89: a merged species hands its link on, unless the row it becomes has one already. */
-    @Query("UPDATE OR IGNORE species_links SET speciesId = :toSpeciesId WHERE speciesId = :fromSpeciesId")
-    suspend fun moveToSpecies(fromSpeciesId: String, toSpeciesId: String)
-}
